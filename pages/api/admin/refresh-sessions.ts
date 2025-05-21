@@ -87,17 +87,28 @@ export default async function handler(
         data: {
           id: sessionData.id,
           companyId: sessionData.companyId,
-          startTime: startTime,
-          // endTime is required in the schema, so use valid startTime if not available
+              startTime: startTime,
           endTime: endTime,
           ipAddress: session.ipAddress || null,
           country: session.country || null,
-          language: session.language || null,
-          sentiment:
-            typeof session.sentiment === "number" ? session.sentiment : null,
+              language: session.language || null,
           messagesSent:
             typeof session.messagesSent === "number" ? session.messagesSent : 0,
+              sentiment:
+                  typeof session.sentiment === "number" ? session.sentiment : null,
+              escalated:
+                  typeof session.escalated === "boolean" ? session.escalated : null,
+              forwardedHr:
+                  typeof session.forwardedHr === "boolean" ? session.forwardedHr : null,
+              fullTranscriptUrl: session.fullTranscriptUrl || null,
+              avgResponseTime:
+                  typeof session.avgResponseTime === "number" ? session.avgResponseTime : null,
+              tokens:
+                  typeof session.tokens === "number" ? session.tokens : null,
+              tokensEur:
+                  typeof session.tokensEur === "number" ? session.tokensEur : null,
           category: session.category || null,
+              initialMsg: session.initialMsg || null,
         },
       });
     }
