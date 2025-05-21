@@ -70,14 +70,26 @@ export default async function handler(
         startTime: session.startTime || new Date(),
       };
 
+      // Validate dates to prevent "Invalid Date" errors
+      const startTime =
+        sessionData.startTime instanceof Date &&
+        !isNaN(sessionData.startTime.getTime())
+          ? sessionData.startTime
+          : new Date();
+
+      const endTime =
+        session.endTime instanceof Date && !isNaN(session.endTime.getTime())
+          ? session.endTime
+          : new Date();
+
       // Only include fields that are properly typed for Prisma
       await prisma.session.create({
         data: {
           id: sessionData.id,
           companyId: sessionData.companyId,
-          startTime: sessionData.startTime,
-          // endTime is required in the schema, so use startTime if not available
-          endTime: session.endTime || new Date(),
+          startTime: startTime,
+          // endTime is required in the schema, so use valid startTime if not available
+          endTime: endTime,
           ipAddress: session.ipAddress || null,
           country: session.country || null,
           language: session.language || null,

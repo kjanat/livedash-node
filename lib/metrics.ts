@@ -96,5 +96,6 @@ export function sessionMetrics(
     totalTokens,
     totalTokensEur,
     sentimentThreshold: threshold,
+    lastUpdated: Date.now(), // Add current timestamp
   } as MetricsResult;
 }

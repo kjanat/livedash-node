@@ -42,18 +42,26 @@ export default function DashboardSettings({
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">
       <h2 className="font-bold text-lg mb-4">Company Config</h2>
-      <div className="grid gap-4">
+      <form
+        className="grid gap-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSave();
+        }}
+      >
         <input
           className="border px-3 py-2 rounded"
           placeholder="CSV URL"
           value={csvUrl}
           onChange={(e) => setCsvUrl(e.target.value)}
+          autoComplete="url"
         />
         <input
           className="border px-3 py-2 rounded"
           placeholder="CSV Username"
           value={csvUsername}
           onChange={(e) => setCsvUsername(e.target.value)}
+          autoComplete="username"
         />
         <input
           className="border px-3 py-2 rounded"
@@ -61,6 +69,7 @@ export default function DashboardSettings({
           placeholder="CSV Password"
           value={csvPassword}
           onChange={(e) => setCsvPassword(e.target.value)}
+          autoComplete="new-password"
         />
         <input
           className="border px-3 py-2 rounded"
@@ -69,14 +78,11 @@ export default function DashboardSettings({
           value={sentimentThreshold}
           onChange={(e) => setSentimentThreshold(e.target.value)}
         />
-        <button
-          className="bg-blue-600 text-white rounded py-2"
-          onClick={handleSave}
-        >
+        <button type="submit" className="bg-blue-600 text-white rounded py-2">
           Save Settings
         </button>
         <div>{message}</div>
-      </div>
+      </form>
     </div>
   );
 }

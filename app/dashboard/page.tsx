@@ -27,21 +27,21 @@ function DashboardContent() {
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [, setLoading] = useState<boolean>(false);
-  const [csvUrl, setCsvUrl] = useState<string>("");
+  // Remove unused csvUrl state variable
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const isAdmin = session?.user?.role === "admin";
   const isAuditor = session?.user?.role === "auditor";
 
   useEffect(() => {
-    // Fetch metrics, company, and CSV URL on mount
+    // Fetch metrics and company on mount
     const fetchData = async () => {
       setLoading(true);
       const res = await fetch("/api/dashboard/metrics");
       const data = await res.json();
       setMetrics(data.metrics);
       setCompany(data.company);
-      setCsvUrl(data.csvUrl);
+      // Removed unused csvUrl assignment
       setLoading(false);
     };
     fetchData();
@@ -51,15 +51,27 @@ function DashboardContent() {
     if (isAuditor) return; // Prevent auditors from refreshing
     try {
       setRefreshing(true);
+
+      // Make sure we have a company ID to send
+      if (!company?.id) {
+        console.error("Cannot refresh: Company ID is missing");
+        return;
+      }
+
       const res = await fetch("/api/admin/refresh-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId: company.id }),
       });
+
       if (res.ok) {
         // Refetch metrics
         const metricsRes = await fetch("/api/dashboard/metrics");
         const data = await metricsRes.json();
         setMetrics(data.metrics);
+      } else {
+        const errorData = await res.json();
+        console.error("Failed to refresh sessions:", errorData.error);
       }
     } finally {
       setRefreshing(false);
@@ -127,11 +139,11 @@ function DashboardContent() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white p-4 rounded-xl shadow">
           <h3 className="font-bold text-lg mb-3">Sessions by Day</h3>
-          <SessionsLineChart data={metrics.days || {}} />
+          <SessionsLineChart sessionsPerDay={metrics.days || {}} />
         </div>
         <div className="bg-white p-4 rounded-xl shadow">
           <h3 className="font-bold text-lg mb-3">Categories</h3>
-          <CategoriesBarChart data={metrics.categories || {}} />
+          <CategoriesBarChart categories={metrics.categories || {}} />
         </div>
       </div>
 

@@ -87,11 +87,18 @@ export async function fetchAndParseCsv(
     trim: true,
   });
 
+  // Helper function to safely parse dates
+  function safeParseDate(dateStr?: string): Date | null {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return !isNaN(date.getTime()) ? date : null;
+  }
+
   // Coerce types for relevant columns
   return records.map((r) => ({
     id: r.session_id,
-    startTime: new Date(r.start_time),
-    endTime: r.end_time ? new Date(r.end_time) : null,
+    startTime: safeParseDate(r.start_time) || new Date(), // Fallback to current date if invalid
+    endTime: safeParseDate(r.end_time),
     ipAddress: r.ip_address,
     country: r.country,
     language: r.language,
