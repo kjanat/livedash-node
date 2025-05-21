@@ -44,6 +44,186 @@ interface SessionData {
 }
 
 /**
+ * Normalizes language values to a standard set
+ * @param languageStr The raw language string from CSV
+ * @returns A normalized language string
+ */
+function normalizeLanguage(languageStr?: string): string | null {
+  if (!languageStr) return null;
+
+  const normalized = languageStr.toLowerCase().trim();
+
+  // Map of language variations to standard names
+  const languageMap: Record<string, string> = {
+    // English variations
+    english: "English",
+    en: "English",
+    eng: "English",
+
+    // Dutch variations
+    dutch: "Dutch",
+    nederlands: "Dutch",
+    nl: "Dutch",
+    nederland: "Dutch",
+    netherland: "Dutch",
+    netherlands: "Dutch",
+    hollands: "Dutch",
+    niederländisch: "Dutch",
+    nizozemski: "Dutch",
+
+    // Other languages that might appear
+    bosnian: "Bosnian",
+    bs: "Bosnian",
+    turkish: "Turkish",
+    tr: "Turkish",
+    turks: "Turkish",
+    german: "German",
+    de: "German",
+    duits: "German",
+    french: "French",
+    fr: "French",
+    frans: "French",
+    spanish: "Spanish",
+    es: "Spanish",
+    spaans: "Spanish",
+  };
+
+  return languageMap[normalized] || "Other";
+}
+
+/**
+ * Normalizes category values to standard groups
+ * @param categoryStr The raw category string from CSV
+ * @returns A normalized category string
+ */
+function normalizeCategory(categoryStr?: string): string | null {
+  if (!categoryStr) return null;
+
+  const normalized = categoryStr.toLowerCase().trim();
+
+  // Define category groups using keywords
+  const categoryMapping: Record<string, string[]> = {
+    "Onboarding": [
+      "onboarding",
+      "start",
+      "begin",
+      "new",
+      "orientation",
+      "welcome",
+      "intro",
+      "getting started",
+      "documents",
+      "documenten",
+      "first day",
+      "eerste dag",
+    ],
+    "General Information": [
+      "general",
+      "algemeen",
+      "info",
+      "information",
+      "informatie",
+      "question",
+      "vraag",
+      "inquiry",
+      "chat",
+      "conversation",
+      "gesprek",
+      "talk",
+    ],
+    "Greeting": [
+      "greeting",
+      "greet",
+      "hello",
+      "hi",
+      "hey",
+      "welcome",
+      "hallo",
+      "hoi",
+      "greetings",
+    ],
+    "HR & Payroll": [
+      "salary",
+      "salaris",
+      "pay",
+      "payroll",
+      "loon",
+      "loonstrook",
+      "hr",
+      "human resources",
+      "benefits",
+      "vacation",
+      "leave",
+      "verlof",
+      "maaltijdvergoeding",
+      "vergoeding",
+    ],
+    "Schedules & Hours": [
+      "schedule",
+      "hours",
+      "tijd",
+      "time",
+      "roster",
+      "rooster",
+      "planning",
+      "shift",
+      "dienst",
+      "working hours",
+      "werktijden",
+      "openingstijden",
+    ],
+    "Role & Responsibilities": [
+      "role",
+      "job",
+      "function",
+      "functie",
+      "task",
+      "taak",
+      "responsibilities",
+      "leidinggevende",
+      "manager",
+      "teamleider",
+      "supervisor",
+      "team",
+      "lead",
+    ],
+    "Technical Support": [
+      "technical",
+      "tech",
+      "support",
+      "laptop",
+      "computer",
+      "system",
+      "systeem",
+      "it",
+      "software",
+      "hardware",
+    ],
+    "Offboarding": [
+      "offboarding",
+      "leave",
+      "exit",
+      "quit",
+      "resign",
+      "resignation",
+      "ontslag",
+      "vertrek",
+      "afsluiting",
+    ],
+  };
+
+  // Try to match the category using keywords
+  for (const [category, keywords] of Object.entries(categoryMapping)) {
+    if (keywords.some((keyword) => normalized.includes(keyword))) {
+      return category;
+    }
+  }
+
+  // If no match, return "Other"
+  return "Other";
+}
+
+/**
  * Converts sentiment string values to numeric scores
  * @param sentimentStr The sentiment string from the CSV
  * @returns A numeric score representing the sentiment
@@ -164,7 +344,7 @@ export async function fetchAndParseCsv(
     endTime: safeParseDate(r.end_time),
     ipAddress: r.ip_address,
     country: r.country,
-    language: r.language,
+    language: normalizeLanguage(r.language),
     messagesSent: Number(r.messages_sent) || 0,
     sentiment: mapSentimentToScore(r.sentiment),
     escalated: isTruthyValue(r.escalated),
@@ -175,7 +355,7 @@ export async function fetchAndParseCsv(
       : null,
     tokens: Number(r.tokens) || 0,
     tokensEur: r.tokens_eur ? parseFloat(r.tokens_eur) : 0,
-    category: r.category,
+    category: normalizeCategory(r.category),
     initialMsg: r.initial_msg,
   }));
 }
