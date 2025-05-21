@@ -1,6 +1,11 @@
 // Fetches, parses, and returns chat session data for a company from a CSV URL
 import fetch from "node-fetch";
 import { parse } from "csv-parse/sync";
+import ISO6391 from "iso-639-1";
+import countries from "i18n-iso-countries";
+
+// Register locales for i18n-iso-countries
+countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
 
 // This type is used internally for parsing the CSV records
 interface CSVRecord {
@@ -29,8 +34,8 @@ interface SessionData {
   startTime: Date;
   endTime: Date | null;
   ipAddress?: string;
-  country?: string;
-  language?: string | null;
+  country?: string | null; // Will store ISO 3166-1 alpha-2 country code or null/undefined
+  language?: string | null; // Will store ISO 639-1 language code or null/undefined
   messagesSent: number;
   sentiment: number | null;
   escalated: boolean;
@@ -44,51 +49,136 @@ interface SessionData {
 }
 
 /**
- * Normalizes language values to a standard set
- * @param languageStr The raw language string from CSV
- * @returns A normalized language string
+ * Converts country names to ISO 3166-1 alpha-2 codes
+ * @param countryStr Raw country string from CSV
+ * @returns ISO 3166-1 alpha-2 country code or null if not found
  */
-function normalizeLanguage(languageStr?: string): string | null {
-  if (!languageStr) return null;
+function getCountryCode(countryStr?: string): string | null | undefined {
+  if (countryStr === undefined) return undefined;
+  if (countryStr === null || countryStr === "") return null;
 
-  const normalized = languageStr.toLowerCase().trim();
+  // Clean the input
+  const normalized = countryStr.trim();
+  if (!normalized) return null;
 
-  // Map of language variations to standard names
-  const languageMap: Record<string, string> = {
-    // English variations
-    english: "English",
-    en: "English",
-    eng: "English",
+  // Direct ISO code check (if already a 2-letter code)
+  if (normalized.length === 2 && normalized === normalized.toUpperCase()) {
+    return countries.isValid(normalized) ? normalized : null;
+  }
 
-    // Dutch variations
-    dutch: "Dutch",
-    nederlands: "Dutch",
-    nl: "Dutch",
-    nederland: "Dutch",
-    netherland: "Dutch",
-    netherlands: "Dutch",
-    hollands: "Dutch",
-    niederländisch: "Dutch",
-    nizozemski: "Dutch",
-
-    // Other languages that might appear
-    bosnian: "Bosnian",
-    bs: "Bosnian",
-    turkish: "Turkish",
-    tr: "Turkish",
-    turks: "Turkish",
-    german: "German",
-    de: "German",
-    duits: "German",
-    french: "French",
-    fr: "French",
-    frans: "French",
-    spanish: "Spanish",
-    es: "Spanish",
-    spaans: "Spanish",
+  // Special case for country codes used in the dataset
+  const countryMapping: Record<string, string> = {
+    BA: "BA", // Bosnia and Herzegovina
+    NL: "NL", // Netherlands
+    USA: "US", // United States
+    UK: "GB", // United Kingdom
+    GB: "GB", // Great Britain
+    Nederland: "NL",
+    Netherlands: "NL",
+    Netherland: "NL",
+    Holland: "NL",
+    Germany: "DE",
+    Deutschland: "DE",
+    Belgium: "BE",
+    België: "BE",
+    Belgique: "BE",
+    France: "FR",
+    Frankreich: "FR",
+    "United States": "US",
+    "United States of America": "US",
+    Bosnia: "BA",
+    "Bosnia and Herzegovina": "BA",
+    "Bosnia & Herzegovina": "BA",
   };
 
-  return languageMap[normalized] || "Other";
+  // Check mapping
+  if (normalized in countryMapping) {
+    return countryMapping[normalized];
+  }
+
+  // Try to get the code from the country name (in English)
+  try {
+    const code = countries.getAlpha2Code(normalized, "en");
+    if (code) return code;
+  } catch (error) {
+    console.error(
+      `Error converting country name to code: ${normalized}`,
+      error,
+    );
+  }
+
+  // If all else fails, return null
+  return null;
+}
+
+/**
+ * Converts language names to ISO 639-1 codes
+ * @param languageStr Raw language string from CSV
+ * @returns ISO 639-1 language code or null if not found
+ */
+function getLanguageCode(languageStr?: string): string | null | undefined {
+  if (languageStr === undefined) return undefined;
+  if (languageStr === null || languageStr === "") return null;
+
+  // Clean the input
+  const normalized = languageStr.trim();
+  if (!normalized) return null;
+
+  // Direct ISO code check (if already a 2-letter code)
+  if (normalized.length === 2 && normalized === normalized.toLowerCase()) {
+    return ISO6391.validate(normalized) ? normalized : null;
+  }
+
+  // Special case mappings
+  const languageMapping: Record<string, string> = {
+    english: "en",
+    English: "en",
+    dutch: "nl",
+    Dutch: "nl",
+    nederlands: "nl",
+    Nederlands: "nl",
+    nl: "nl",
+    bosnian: "bs",
+    Bosnian: "bs",
+    turkish: "tr",
+    Turkish: "tr",
+    german: "de",
+    German: "de",
+    deutsch: "de",
+    Deutsch: "de",
+    french: "fr",
+    French: "fr",
+    français: "fr",
+    Français: "fr",
+    spanish: "es",
+    Spanish: "es",
+    español: "es",
+    Español: "es",
+    italian: "it",
+    Italian: "it",
+    italiano: "it",
+    Italiano: "it",
+    nizozemski: "nl", // "Dutch" in some Slavic languages
+  };
+
+  // Check mapping
+  if (normalized in languageMapping) {
+    return languageMapping[normalized];
+  }
+
+  // Try to get code using the ISO6391 library
+  try {
+    const code = ISO6391.getCode(normalized);
+    if (code) return code;
+  } catch (error) {
+    console.error(
+      `Error converting language name to code: ${normalized}`,
+      error,
+    );
+  }
+
+  // If all else fails, return null
+  return null;
 }
 
 /**
@@ -103,7 +193,7 @@ function normalizeCategory(categoryStr?: string): string | null {
 
   // Define category groups using keywords
   const categoryMapping: Record<string, string[]> = {
-    "Onboarding": [
+    Onboarding: [
       "onboarding",
       "start",
       "begin",
@@ -131,7 +221,7 @@ function normalizeCategory(categoryStr?: string): string | null {
       "gesprek",
       "talk",
     ],
-    "Greeting": [
+    Greeting: [
       "greeting",
       "greet",
       "hello",
@@ -199,7 +289,7 @@ function normalizeCategory(categoryStr?: string): string | null {
       "software",
       "hardware",
     ],
-    "Offboarding": [
+    Offboarding: [
       "offboarding",
       "leave",
       "exit",
@@ -343,8 +433,8 @@ export async function fetchAndParseCsv(
     startTime: safeParseDate(r.start_time) || new Date(), // Fallback to current date if invalid
     endTime: safeParseDate(r.end_time),
     ipAddress: r.ip_address,
-    country: r.country,
-    language: normalizeLanguage(r.language),
+    country: getCountryCode(r.country),
+    language: getLanguageCode(r.language),
     messagesSent: Number(r.messages_sent) || 0,
     sentiment: mapSentimentToScore(r.sentiment),
     escalated: isTruthyValue(r.escalated),

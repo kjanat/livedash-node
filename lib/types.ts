@@ -42,7 +42,10 @@ export interface ChatSession {
   userId?: string | null;
   category?: string | null;
   language?: string | null;
+  country?: string | null;
+  ipAddress?: string | null;
   sentiment?: number | null;
+  messagesSent?: number;
   startTime: Date;
   endTime?: Date | null;
   createdAt: Date;
@@ -55,6 +58,7 @@ export interface ChatSession {
   tokens?: number;
   tokensEur?: number;
   initialMsg?: string;
+  fullTranscriptUrl?: string | null;
 }
 
 export interface DayMetrics {

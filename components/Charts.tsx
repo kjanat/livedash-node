@@ -173,7 +173,26 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
       topLanguages.push(["Other", otherCount]);
     }
 
-    const labels = topLanguages.map(([lang]) => lang);
+    // Use Intl.DisplayNames to get localized language names from ISO codes
+    const languageDisplayNames = new Intl.DisplayNames(["en"], {
+      type: "language",
+    });
+
+    // Store original ISO codes for tooltip
+    const isoCodes = topLanguages.map(([lang]) => lang);
+
+    const labels = topLanguages.map(([lang], index) => {
+      // Check if this is a valid ISO 639-1 language code
+      if (lang && lang !== "Other" && /^[a-z]{2}$/.test(lang)) {
+        try {
+          return languageDisplayNames.of(lang);
+        } catch (e) {
+          return lang; // Fallback to code if display name can't be resolved
+        }
+      }
+      return lang; // Return original string for "Other" or invalid codes
+    });
+
     const data = topLanguages.map(([, count]) => count);
 
     const chart = new Chart(ctx, {
@@ -203,6 +222,27 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
             labels: {
               usePointStyle: true,
               padding: 20,
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                const label = context.label || "";
+                const value = context.formattedValue || "";
+                const index = context.dataIndex;
+                const isoCode = isoCodes[index];
+
+                // Only show ISO code if it's not "Other" and it's a valid 2-letter code
+                if (
+                  isoCode &&
+                  isoCode !== "Other" &&
+                  /^[a-z]{2}$/.test(isoCode)
+                ) {
+                  return `${label} (${isoCode.toUpperCase()}): ${value}`;
+                }
+
+                return `${label}: ${value}`;
+              },
             },
           },
         },
