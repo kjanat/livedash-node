@@ -236,6 +236,10 @@ next-env.d.ts
 *.sublime-workspace
 *-instructions.*
 
+# ShittyParser outputs
+outputs/
+.outputs/
+
 # logs
 logs
 *.log
