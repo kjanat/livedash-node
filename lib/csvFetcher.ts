@@ -49,35 +49,37 @@ interface SessionData {
  * @returns A numeric score representing the sentiment
  */
 function mapSentimentToScore(sentimentStr?: string): number | null {
-    if (!sentimentStr) return null;
+  if (!sentimentStr) return null;
 
-    // Convert to lowercase for case-insensitive matching
-    const sentiment = sentimentStr.toLowerCase();
+  // Convert to lowercase for case-insensitive matching
+  const sentiment = sentimentStr.toLowerCase();
 
-    // Map sentiment strings to numeric values on a scale from -1 to 2
-    const sentimentMap: Record<string, number> = {
-        'happy': 1.0,
-        'excited': 1.5,
-        'positive': 0.8,
-        'neutral': 0.0,
-        'playful': 0.7,
-        'negative': -0.8,
-        'angry': -1.0,
-        'sad': -0.7,
-        'frustrated': -0.9,
-        'positief': 0.8,  // Dutch
-        'neutraal': 0.0,  // Dutch
-        'negatief': -0.8, // Dutch
-        'positivo': 0.8,  // Spanish/Italian
-        'neutro': 0.0,    // Spanish/Italian
-        'negativo': -0.8, // Spanish/Italian
-        'yes': 0.5,       // For any "yes" sentiment
-        'no': -0.5,       // For any "no" sentiment
-    };
+  // Map sentiment strings to numeric values on a scale from -1 to 2
+  const sentimentMap: Record<string, number> = {
+    happy: 1.0,
+    excited: 1.5,
+    positive: 0.8,
+    neutral: 0.0,
+    playful: 0.7,
+    negative: -0.8,
+    angry: -1.0,
+    sad: -0.7,
+    frustrated: -0.9,
+    positief: 0.8, // Dutch
+    neutraal: 0.0, // Dutch
+    negatief: -0.8, // Dutch
+    positivo: 0.8, // Spanish/Italian
+    neutro: 0.0, // Spanish/Italian
+    negativo: -0.8, // Spanish/Italian
+    yes: 0.5, // For any "yes" sentiment
+    no: -0.5, // For any "no" sentiment
+  };
 
-    return sentimentMap[sentiment] !== undefined
-        ? sentimentMap[sentiment]
-        : isNaN(parseFloat(sentiment)) ? null : parseFloat(sentiment);
+  return sentimentMap[sentiment] !== undefined
+    ? sentimentMap[sentiment]
+    : isNaN(parseFloat(sentiment))
+      ? null
+      : parseFloat(sentiment);
 }
 
 /**
@@ -86,13 +88,22 @@ function mapSentimentToScore(sentimentStr?: string): number | null {
  * @returns True if the string indicates a positive/true value
  */
 function isTruthyValue(value?: string): boolean {
-    if (!value) return false;
+  if (!value) return false;
 
-    const truthyValues = [
-        '1', 'true', 'yes', 'y', 'ja', 'si', 'oui', 'да', 'да', 'はい'
-    ];
+  const truthyValues = [
+    "1",
+    "true",
+    "yes",
+    "y",
+    "ja",
+    "si",
+    "oui",
+    "да",
+    "да",
+    "はい",
+  ];
 
-    return truthyValues.includes(value.toLowerCase());
+  return truthyValues.includes(value.toLowerCase());
 }
 
 export async function fetchAndParseCsv(
@@ -155,9 +166,9 @@ export async function fetchAndParseCsv(
     country: r.country,
     language: r.language,
     messagesSent: Number(r.messages_sent) || 0,
-      sentiment: mapSentimentToScore(r.sentiment),
-      escalated: isTruthyValue(r.escalated),
-      forwardedHr: isTruthyValue(r.forwarded_hr),
+    sentiment: mapSentimentToScore(r.sentiment),
+    escalated: isTruthyValue(r.escalated),
+    forwardedHr: isTruthyValue(r.forwarded_hr),
     fullTranscriptUrl: r.full_transcript_url,
     avgResponseTime: r.avg_response_time
       ? parseFloat(r.avg_response_time)

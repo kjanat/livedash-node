@@ -19,6 +19,9 @@ export function sessionMetrics(
   const byDay: DayMetrics = {};
   const byCategory: CategoryMetrics = {};
   const byLanguage: LanguageMetrics = {};
+  const tokensByDay: DayMetrics = {};
+  const tokensCostByDay: DayMetrics = {};
+
   let escalated = 0,
     forwarded = 0;
   let totalSentiment = 0,
@@ -27,6 +30,11 @@ export function sessionMetrics(
     responseCount = 0;
   let totalTokens = 0,
     totalTokensEur = 0;
+
+  // For sentiment distribution
+  let sentimentPositive = 0,
+    sentimentNegative = 0,
+    sentimentNeutral = 0;
 
   // Calculate total session duration in minutes
   let totalDuration = 0;
@@ -38,6 +46,16 @@ export function sessionMetrics(
 
     if (s.category) byCategory[s.category] = (byCategory[s.category] || 0) + 1;
     if (s.language) byLanguage[s.language] = (byLanguage[s.language] || 0) + 1;
+
+    // Process token usage by day
+    if (s.tokens) {
+      tokensByDay[day] = (tokensByDay[day] || 0) + s.tokens;
+    }
+
+    // Process token cost by day
+    if (s.tokensEur) {
+      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + s.tokensEur;
+    }
 
     if (s.endTime) {
       const duration =
@@ -52,6 +70,15 @@ export function sessionMetrics(
     if (s.sentiment != null) {
       totalSentiment += s.sentiment;
       sentimentCount++;
+
+      // Classify sentiment
+      if (s.sentiment > 0.3) {
+        sentimentPositive++;
+      } else if (s.sentiment < -0.3) {
+        sentimentNegative++;
+      } else {
+        sentimentNeutral++;
+      }
     }
 
     if (s.avgResponseTime != null) {
@@ -91,11 +118,18 @@ export function sessionMetrics(
     // Additional metrics not in the interface - using type assertion
     escalatedCount: escalated,
     forwardedCount: forwarded,
-    avgSentiment: sentimentCount ? totalSentiment / sentimentCount : null,
-    avgResponseTime: responseCount ? totalResponse / responseCount : null,
+    avgSentiment: sentimentCount ? totalSentiment / sentimentCount : undefined,
+    avgResponseTime: responseCount ? totalResponse / responseCount : undefined,
     totalTokens,
     totalTokensEur,
     sentimentThreshold: threshold,
     lastUpdated: Date.now(), // Add current timestamp
-  } as MetricsResult;
+
+    // New metrics for enhanced dashboard
+    sentimentPositiveCount: sentimentPositive,
+    sentimentNeutralCount: sentimentNeutral,
+    sentimentNegativeCount: sentimentNegative,
+    tokensByDay,
+    tokensCostByDay,
+  };
 }

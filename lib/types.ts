@@ -86,6 +86,13 @@ export interface MetricsResult {
   totalTokensEur?: number;
   sentimentThreshold?: number | null;
   lastUpdated?: number; // Timestamp for when metrics were last updated
+
+  // New metrics for enhanced dashboard
+  sentimentPositiveCount?: number;
+  sentimentNeutralCount?: number;
+  sentimentNegativeCount?: number;
+  tokensByDay?: DayMetrics;
+  tokensCostByDay?: DayMetrics;
 }
 
 export interface ApiResponse<T> {
