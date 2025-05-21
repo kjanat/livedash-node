@@ -1,94 +1,94 @@
-import { Session as NextAuthSession } from 'next-auth';
+import { Session as NextAuthSession } from "next-auth";
 
 export interface UserSession extends NextAuthSession {
-    user: {
-        id?: string;
-        name?: string;
-        email?: string;
-        image?: string;
-        companyId: string;
-        role: string;
-    };
+  user: {
+    id?: string;
+    name?: string;
+    email?: string;
+    image?: string;
+    companyId: string;
+    role: string;
+  };
 }
 
 export interface Company {
-    id: string;
-    name: string;
-    csvUrl: string;
-    csvUsername?: string;
-    csvPassword?: string;
-    sentimentAlert?: number;  // Match Prisma schema naming
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  name: string;
+  csvUrl: string;
+  csvUsername?: string;
+  csvPassword?: string;
+  sentimentAlert?: number; // Match Prisma schema naming
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface User {
-    id: string;
-    email: string;
-    password: string;
-    role: string;
-    companyId: string;
-    resetToken?: string | null;
-    resetTokenExpiry?: Date | null;
-    company?: Company;
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  email: string;
+  password: string;
+  role: string;
+  companyId: string;
+  resetToken?: string | null;
+  resetTokenExpiry?: Date | null;
+  company?: Company;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ChatSession {
-    id: string;
-    sessionId: string;
-    companyId: string;
-    userId?: string | null;
-    category?: string | null;
-    language?: string | null;
-    sentiment?: number | null;
-    startTime: Date;
-    endTime?: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  sessionId: string;
+  companyId: string;
+  userId?: string | null;
+  category?: string | null;
+  language?: string | null;
+  sentiment?: number | null;
+  startTime: Date;
+  endTime?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
 
-    // Extended session properties that might be used in metrics
-    avgResponseTime?: number | null;
-    escalated?: boolean;
-    forwardedHr?: boolean;
-    tokens?: number;
-    tokensEur?: number;
-    initialMsg?: string;
+  // Extended session properties that might be used in metrics
+  avgResponseTime?: number | null;
+  escalated?: boolean;
+  forwardedHr?: boolean;
+  tokens?: number;
+  tokensEur?: number;
+  initialMsg?: string;
 }
 
 export interface DayMetrics {
-    [day: string]: number;
+  [day: string]: number;
 }
 
 export interface CategoryMetrics {
-    [category: string]: number;
+  [category: string]: number;
 }
 
 export interface LanguageMetrics {
-    [language: string]: number;
+  [language: string]: number;
 }
 
 export interface MetricsResult {
-    totalSessions: number;
-    avgSessionsPerDay: number;
-    avgSessionLength: number | null;
-    days: DayMetrics;
-    languages: LanguageMetrics;
-    categories: CategoryMetrics;
-    belowThresholdCount: number;
-    // Additional properties for dashboard
-    escalatedCount?: number;
-    forwardedCount?: number;
-    avgSentiment?: number;
-    avgResponseTime?: number;
-    totalTokens?: number;
-    totalTokensEur?: number;
-    sentimentThreshold?: number | null;
+  totalSessions: number;
+  avgSessionsPerDay: number;
+  avgSessionLength: number | null;
+  days: DayMetrics;
+  languages: LanguageMetrics;
+  categories: CategoryMetrics;
+  belowThresholdCount: number;
+  // Additional properties for dashboard
+  escalatedCount?: number;
+  forwardedCount?: number;
+  avgSentiment?: number;
+  avgResponseTime?: number;
+  totalTokens?: number;
+  totalTokensEur?: number;
+  sentimentThreshold?: number | null;
 }
 
 export interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
+  success: boolean;
+  data?: T;
+  error?: string;
 }

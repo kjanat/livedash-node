@@ -6,39 +6,43 @@ import { sessionMetrics } from "../../../lib/metrics";
 import { authOptions } from "../auth/[...nextauth]";
 
 interface SessionUser {
-    email: string;
-    name?: string;
+  email: string;
+  name?: string;
 }
 
 interface SessionData {
-    user: SessionUser;
+  user: SessionUser;
 }
 
 export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
+  req: NextApiRequest,
+  res: NextApiResponse,
 ) {
-    const session = await getServerSession(req, res, authOptions) as SessionData | null;
-    if (!session?.user) return res.status(401).json({ error: "Not logged in" });
+  const session = (await getServerSession(
+    req,
+    res,
+    authOptions,
+  )) as SessionData | null;
+  if (!session?.user) return res.status(401).json({ error: "Not logged in" });
 
-    const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: { company: true }
-    });
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    include: { company: true },
+  });
 
-    if (!user) return res.status(401).json({ error: "No user" });
+  if (!user) return res.status(401).json({ error: "No user" });
 
-    const sessions = await prisma.session.findMany({
-        where: { companyId: user.companyId }
-    });
+  const sessions = await prisma.session.findMany({
+    where: { companyId: user.companyId },
+  });
 
-    // Pass company config to metrics
-    // @ts-expect-error - Type conversion is needed between prisma session and ChatSession
-    const metrics = sessionMetrics(sessions, user.company);
+  // Pass company config to metrics
+  // @ts-expect-error - Type conversion is needed between prisma session and ChatSession
+  const metrics = sessionMetrics(sessions, user.company);
 
-    res.json({
-        metrics,
-        csvUrl: user.company.csvUrl,
-        company: user.company
-    });
+  res.json({
+    metrics,
+    csvUrl: user.company.csvUrl,
+    company: user.company,
+  });
 }

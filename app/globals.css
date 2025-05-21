@@ -1,9 +1,9 @@
 body {
-    font-family: system-ui, sans-serif;
-    background: #f3f4f6;
+  font-family: system-ui, sans-serif;
+  background: #f3f4f6;
 }
 
 input,
 button {
-    font-family: inherit;
+  font-family: inherit;
 }

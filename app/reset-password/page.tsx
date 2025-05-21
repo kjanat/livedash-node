@@ -1,26 +1,26 @@
-'use client';
-import { useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+"use client";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 // Component that uses useSearchParams wrapped in Suspense
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const token = searchParams?.get('token');
-  const [password, setPassword] = useState<string>('');
-  const [message, setMessage] = useState<string>('');
+  const token = searchParams?.get("token");
+  const [password, setPassword] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const res = await fetch('/api/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/reset-password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, password }),
     });
     if (res.ok) {
-      setMessage('Password reset! Redirecting to login...');
-      setTimeout(() => router.push('/login'), 2000);
-    } else setMessage('Invalid or expired link.');
+      setMessage("Password reset! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 2000);
+    } else setMessage("Invalid or expired link.");
   }
 
   return (

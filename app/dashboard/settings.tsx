@@ -1,7 +1,7 @@
-'use client';
-import { useState } from 'react';
-import { Company } from '../../lib/types';
-import { Session } from 'next-auth';
+"use client";
+import { useState } from "react";
+import { Company } from "../../lib/types";
+import { Session } from "next-auth";
 
 interface DashboardSettingsProps {
   company: Company;
@@ -14,18 +14,18 @@ export default function DashboardSettings({
 }: DashboardSettingsProps) {
   const [csvUrl, setCsvUrl] = useState<string>(company.csvUrl);
   const [csvUsername, setCsvUsername] = useState<string>(
-    company.csvUsername || ''
+    company.csvUsername || "",
   );
-  const [csvPassword, setCsvPassword] = useState<string>('');
+  const [csvPassword, setCsvPassword] = useState<string>("");
   const [sentimentThreshold, setSentimentThreshold] = useState<string>(
-    company.sentimentAlert?.toString() || ''
+    company.sentimentAlert?.toString() || "",
   );
-  const [message, setMessage] = useState<string>('');
+  const [message, setMessage] = useState<string>("");
 
   async function handleSave() {
-    const res = await fetch('/api/dashboard/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/dashboard/settings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         csvUrl,
         csvUsername,
@@ -33,11 +33,11 @@ export default function DashboardSettings({
         sentimentThreshold,
       }),
     });
-    if (res.ok) setMessage('Settings saved!');
-    else setMessage('Failed.');
+    if (res.ok) setMessage("Settings saved!");
+    else setMessage("Failed.");
   }
 
-  if (session.user.role !== 'admin') return null;
+  if (session.user.role !== "admin") return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">

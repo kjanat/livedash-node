@@ -1,25 +1,25 @@
-'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
-  const [email, setEmail] = useState<string>('');
-  const [company, setCompany] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [csvUrl, setCsvUrl] = useState<string>('');
-  const [role, setRole] = useState<string>('admin'); // Default to admin for company registration
-  const [error, setError] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [company, setCompany] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [csvUrl, setCsvUrl] = useState<string>("");
+  const [role, setRole] = useState<string>("admin"); // Default to admin for company registration
+  const [error, setError] = useState<string>("");
   const router = useRouter();
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    const res = await fetch('/api/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password, company, csvUrl, role }),
     });
-    if (res.ok) router.push('/login');
-    else setError('Registration failed.');
+    if (res.ok) router.push("/login");
+    else setError("Registration failed.");
   }
 
   return (

@@ -1,12 +1,11 @@
-// Main dashboard page: metrics, refresh, config
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { signOut, useSession } from 'next-auth/react';
-import { SessionsLineChart, CategoriesBarChart } from '../../components/Charts';
-import DashboardSettings from './settings';
-import UserManagement from './users';
-import { Company, MetricsResult } from '../../lib/types';
+import { useEffect, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
+import { SessionsLineChart, CategoriesBarChart } from "../../components/Charts";
+import DashboardSettings from "./settings";
+import UserManagement from "./users";
+import { Company, MetricsResult } from "../../lib/types";
 
 interface MetricsCardProps {
   label: string;
@@ -16,29 +15,29 @@ interface MetricsCardProps {
 function MetricsCard({ label, value }: MetricsCardProps) {
   return (
     <div className="bg-white rounded-xl p-4 shadow-md flex flex-col items-center">
-      <span className="text-2xl font-bold">{value ?? '-'}</span>
+      <span className="text-2xl font-bold">{value ?? "-"}</span>
       <span className="text-gray-500">{label}</span>
     </div>
   );
 }
 
-export default function DashboardPage() {
-  const { data: session } = useSession() || { data: null };
+// Safely wrapped component with useSession
+function DashboardContent() {
+  const { data: session } = useSession();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  // Loading state used in the fetchData function
   const [, setLoading] = useState<boolean>(false);
-  const [csvUrl, setCsvUrl] = useState<string>('');
+  const [csvUrl, setCsvUrl] = useState<string>("");
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
-  const isAdmin = session?.user?.role === 'admin';
-  const isAuditor = session?.user?.role === 'auditor';
+  const isAdmin = session?.user?.role === "admin";
+  const isAuditor = session?.user?.role === "auditor";
 
   useEffect(() => {
     // Fetch metrics, company, and CSV URL on mount
     const fetchData = async () => {
       setLoading(true);
-      const res = await fetch('/api/dashboard/metrics');
+      const res = await fetch("/api/dashboard/metrics");
       const data = await res.json();
       setMetrics(data.metrics);
       setCompany(data.company);
@@ -50,122 +49,105 @@ export default function DashboardPage() {
 
   async function handleRefresh() {
     if (isAuditor) return; // Prevent auditors from refreshing
-
-    setRefreshing(true);
-    await fetch('/api/admin/refresh-sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyId: company?.id }),
-    });
-    setRefreshing(false);
-    window.location.reload();
+    try {
+      setRefreshing(true);
+      const res = await fetch("/api/admin/refresh-sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (res.ok) {
+        // Refetch metrics
+        const metricsRes = await fetch("/api/dashboard/metrics");
+        const data = await metricsRes.json();
+        setMetrics(data.metrics);
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }
 
-  async function handleSaveConfig() {
-    if (isAuditor) return; // Prevent auditors from changing config
-
-    await fetch('/api/dashboard/config', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ csvUrl }),
-    });
-    window.location.reload();
+  if (!metrics || !company) {
+    return <div className="text-center py-10">Loading dashboard...</div>;
   }
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        <button className="text-sm underline" onClick={() => signOut()}>
-          Log out
-        </button>
+    <div className="space-y-6">
+      {/* Header with company info */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold">{company.name}</h1>
+          <p className="text-gray-600">
+            Dashboard updated{" "}
+            {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          <button
+            className="bg-blue-600 text-white py-2 px-4 rounded-lg shadow-sm hover:bg-blue-700 disabled:opacity-50"
+            onClick={handleRefresh}
+            disabled={refreshing || isAuditor}
+          >
+            {refreshing ? "Refreshing..." : "Refresh Data"}
+          </button>
+          <button
+            className="bg-gray-200 py-2 px-4 rounded-lg shadow-sm hover:bg-gray-300"
+            onClick={() => signOut()}
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
 
-      {/* Admin-only settings and user management */}
-      {company && isAdmin && (
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricsCard label="Total Sessions" value={metrics.totalSessions} />
+        <MetricsCard
+          label="Avg Sessions/Day"
+          value={metrics.avgSessionsPerDay?.toFixed(1)}
+        />
+        <MetricsCard
+          label="Avg Session Time"
+          value={
+            metrics.avgSessionLength
+              ? `${metrics.avgSessionLength.toFixed(1)} min`
+              : null
+          }
+        />
+        <MetricsCard
+          label="Avg Sentiment"
+          value={
+            metrics.avgSentiment
+              ? metrics.avgSentiment.toFixed(2) + "/10"
+              : null
+          }
+        />
+      </div>
+
+      {/* Charts Row */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h3 className="font-bold text-lg mb-3">Sessions by Day</h3>
+          <SessionsLineChart data={metrics.days || {}} />
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h3 className="font-bold text-lg mb-3">Categories</h3>
+          <CategoriesBarChart data={metrics.categories || {}} />
+        </div>
+      </div>
+
+      {/* Admin Controls */}
+      {isAdmin && (
         <>
           <DashboardSettings company={company} session={session} />
           <UserManagement session={session} />
         </>
       )}
-
-      <div className="bg-white p-4 rounded-xl shadow mb-6 flex items-center gap-4">
-        <input
-          className="flex-1 px-3 py-2 rounded border"
-          value={csvUrl}
-          onChange={(e) => setCsvUrl(e.target.value)}
-          placeholder="CSV feed URL (with basic auth if set in backend)"
-          readOnly={isAuditor}
-        />
-        {!isAuditor && (
-          <>
-            <button
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-              onClick={handleSaveConfig}
-            >
-              Save Config
-            </button>
-            <button
-              className="px-4 py-2 bg-green-600 text-white rounded"
-              onClick={handleRefresh}
-              disabled={refreshing}
-            >
-              {refreshing ? 'Refreshing...' : 'Manual Refresh'}
-            </button>
-          </>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-        <MetricsCard label="Total Sessions" value={metrics?.totalSessions} />
-        <MetricsCard label="Escalated" value={metrics?.escalatedCount} />
-        <MetricsCard
-          label="Avg. Sentiment"
-          value={
-            metrics?.avgSentiment !== undefined ?
-              metrics.avgSentiment.toFixed(2)
-            : undefined
-          }
-        />
-        <MetricsCard
-          label="Total Tokens (€)"
-          value={
-            metrics?.totalTokensEur !== undefined ?
-              metrics.totalTokensEur.toFixed(2)
-            : undefined
-          }
-        />
-        <MetricsCard
-          label="Below Sentiment Threshold"
-          value={metrics?.belowThresholdCount}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div>
-          <h2 className="font-bold mb-2">Sessions Per Day</h2>
-          {metrics?.days && Object.keys(metrics.days).length > 0 ?
-            <SessionsLineChart sessionsPerDay={metrics.days} />
-          : <span>No data</span>}
-        </div>
-        <div>
-          <h2 className="font-bold mb-2">Top Categories</h2>
-          {metrics?.categories && Object.keys(metrics.categories).length > 0 ?
-            <CategoriesBarChart categories={metrics.categories} />
-          : <span>No data</span>}
-        </div>
-        <div>
-          <h2 className="font-bold mb-2">Languages</h2>
-          {metrics?.languages ?
-            Object.entries(metrics.languages).map(([lang, n]) => (
-              <div key={lang} className="flex justify-between">
-                <span>{lang}</span>
-                <span>{String(n)}</span>
-              </div>
-            ))
-          : <span>No data</span>}
-        </div>
-      </div>
     </div>
   );
+}
+
+// Our exported component
+export default function DashboardPage() {
+  // We don't use useSession here to avoid the error outside the provider
+  return <DashboardContent />;
 }

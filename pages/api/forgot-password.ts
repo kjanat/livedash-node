@@ -1,35 +1,38 @@
 import { prisma } from "../../lib/prisma";
 import { sendEmail } from "../../lib/sendEmail";
 import crypto from "crypto";
-import type { IncomingMessage, ServerResponse } from 'http';
+import type { IncomingMessage, ServerResponse } from "http";
 
 type NextApiRequest = IncomingMessage & {
-    body: {
-        email: string;
-        [key: string]: unknown;
-    };
+  body: {
+    email: string;
+    [key: string]: unknown;
+  };
 };
 
 type NextApiResponse = ServerResponse & {
-    status: (code: number) => NextApiResponse;
-    json: (data: Record<string, unknown>) => void;
-    end: () => void;
+  status: (code: number) => NextApiResponse;
+  json: (data: Record<string, unknown>) => void;
+  end: () => void;
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method !== "POST") return res.status(405).end();
-    const { email } = req.body;
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) return res.status(200).end(); // always 200 for privacy
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse,
+) {
+  if (req.method !== "POST") return res.status(405).end();
+  const { email } = req.body;
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) return res.status(200).end(); // always 200 for privacy
 
-    const token = crypto.randomBytes(32).toString("hex");
-    const expiry = new Date(Date.now() + 1000 * 60 * 30); // 30 min expiry
-    await prisma.user.update({
-        where: { email },
-        data: { resetToken: token, resetTokenExpiry: expiry },
-    });
+  const token = crypto.randomBytes(32).toString("hex");
+  const expiry = new Date(Date.now() + 1000 * 60 * 30); // 30 min expiry
+  await prisma.user.update({
+    where: { email },
+    data: { resetToken: token, resetTokenExpiry: expiry },
+  });
 
-    const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
-    await sendEmail(email, "Password Reset", `Reset your password: ${resetUrl}`);
-    res.status(200).end();
+  const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+  await sendEmail(email, "Password Reset", `Reset your password: ${resetUrl}`);
+  res.status(200).end();
 }

@@ -1,6 +1,6 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { UserSession } from '../../lib/types';
+"use client";
+import { useState, useEffect } from "react";
+import { UserSession } from "../../lib/types";
 
 interface UserItem {
   id: string;
@@ -14,27 +14,27 @@ interface UserManagementProps {
 
 export default function UserManagement({ session }: UserManagementProps) {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [email, setEmail] = useState<string>('');
-  const [role, setRole] = useState<string>('user');
-  const [msg, setMsg] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [role, setRole] = useState<string>("user");
+  const [msg, setMsg] = useState<string>("");
 
   useEffect(() => {
-    fetch('/api/dashboard/users')
+    fetch("/api/dashboard/users")
       .then((r) => r.json())
       .then((data) => setUsers(data.users));
   }, []);
 
   async function inviteUser() {
-    const res = await fetch('/api/dashboard/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const res = await fetch("/api/dashboard/users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, role }),
     });
-    if (res.ok) setMsg('User invited.');
-    else setMsg('Failed.');
+    if (res.ok) setMsg("User invited.");
+    else setMsg("Failed.");
   }
 
-  if (session.user.role !== 'admin') return null;
+  if (session.user.role !== "admin") return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">
@@ -66,7 +66,7 @@ export default function UserManagement({ session }: UserManagementProps) {
       <ul className="mt-4">
         {users.map((u) => (
           <li key={u.id} className="flex justify-between border-b py-1">
-            {u.email}{' '}
+            {u.email}{" "}
             <span className="text-xs bg-gray-200 px-2 rounded">{u.role}</span>
           </li>
         ))}

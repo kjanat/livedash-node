@@ -1,6 +1,6 @@
-'use client';
-import { useEffect, useRef } from 'react';
-import Chart from 'chart.js/auto';
+"use client";
+import { useEffect, useRef } from "react";
+import Chart from "chart.js/auto";
 
 interface SessionsData {
   [date: string]: number;
@@ -23,16 +23,16 @@ export function SessionsLineChart({ sessionsPerDay }: SessionsLineChartProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     if (!ref.current || !sessionsPerDay) return;
-    const ctx = ref.current.getContext('2d');
+    const ctx = ref.current.getContext("2d");
     if (!ctx) return;
 
     const chart = new Chart(ctx, {
-      type: 'line',
+      type: "line",
       data: {
         labels: Object.keys(sessionsPerDay),
         datasets: [
           {
-            label: 'Sessions',
+            label: "Sessions",
             data: Object.values(sessionsPerDay),
             borderWidth: 2,
           },
@@ -53,16 +53,16 @@ export function CategoriesBarChart({ categories }: CategoriesBarChartProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     if (!ref.current || !categories) return;
-    const ctx = ref.current.getContext('2d');
+    const ctx = ref.current.getContext("2d");
     if (!ctx) return;
 
     const chart = new Chart(ctx, {
-      type: 'bar',
+      type: "bar",
       data: {
         labels: Object.keys(categories),
         datasets: [
           {
-            label: 'Categories',
+            label: "Categories",
             data: Object.values(categories),
             borderWidth: 2,
           },
