@@ -6,6 +6,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { SessionsLineChart, CategoriesBarChart } from '../../components/Charts';
 import DashboardSettings from './settings';
 import UserManagement from './users';
+import { Company, MetricsResult } from '../../lib/types';
 
 interface MetricsCardProps {
   label: string;
@@ -22,9 +23,9 @@ function MetricsCard({ label, value }: MetricsCardProps) {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
-  const [metrics, setMetrics] = useState<Record<string, unknown> | null>(null);
-  const [company, setCompany] = useState<Record<string, unknown> | null>(null);
+  const { data: session } = useSession() || { data: null };
+  const [metrics, setMetrics] = useState<MetricsResult | null>(null);
+  const [company, setCompany] = useState<Company | null>(null);
   // Loading state used in the fetchData function
   const [, setLoading] = useState<boolean>(false);
   const [csvUrl, setCsvUrl] = useState<string>('');
@@ -120,26 +121,31 @@ export default function DashboardPage() {
         <MetricsCard label="Escalated" value={metrics?.escalatedCount} />
         <MetricsCard
           label="Avg. Sentiment"
-          value={metrics?.avgSentiment?.toFixed(2)}
+          value={
+            metrics?.avgSentiment !== undefined ?
+              metrics.avgSentiment.toFixed(2)
+            : undefined
+          }
         />
         <MetricsCard
           label="Total Tokens (€)"
-          value={metrics?.totalTokensEur?.toFixed(2)}
+          value={
+            metrics?.totalTokensEur !== undefined ?
+              metrics.totalTokensEur.toFixed(2)
+            : undefined
+          }
         />
         <MetricsCard
           label="Below Sentiment Threshold"
-          value={metrics?.belowSentimentThreshold}
+          value={metrics?.belowThresholdCount}
         />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div>
           <h2 className="font-bold mb-2">Sessions Per Day</h2>
-          {(
-            metrics?.sessionsPerDay &&
-            Object.keys(metrics.sessionsPerDay).length > 0
-          ) ?
-            <SessionsLineChart sessionsPerDay={metrics.sessionsPerDay} />
+          {metrics?.days && Object.keys(metrics.days).length > 0 ?
+            <SessionsLineChart sessionsPerDay={metrics.days} />
           : <span>No data</span>}
         </div>
         <div>

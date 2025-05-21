@@ -28,6 +28,7 @@
         "tailwindcss": "^4.1.7"
     },
     "devDependencies": {
+        "@tailwindcss/postcss": "^4.1.7",
         "@types/bcryptjs": "^2.4.2",
         "@types/node": "^22.15.21",
         "@types/node-cron": "^3.0.8",

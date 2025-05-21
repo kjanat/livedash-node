@@ -3,6 +3,14 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { fetchAndParseCsv } from "../../../lib/csvFetcher";
 import { prisma } from "../../../lib/prisma";
 
+interface SessionCreateData {
+    id: string;
+    startTime: Date;
+    companyId: string;
+    sessionId?: string;
+    [key: string]: unknown;
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
     // Check if this is a POST request
     if (req.method !== "POST") {
@@ -36,22 +44,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!company) return res.status(404).json({ error: "Company not found" });
 
     try {
-        // @ts-expect-error - Handle type conversion on session import
         const sessions = await fetchAndParseCsv(company.csvUrl, company.csvUsername as string | undefined, company.csvPassword as string | undefined);
 
         // Replace all session rows for this company (for demo simplicity)
         await prisma.session.deleteMany({ where: { companyId: company.id } });
+        
         for (const session of sessions) {
-            // @ts-expect-error - Proper data mapping would be needed for production
+            const sessionData: SessionCreateData = {
+                ...session,
+                companyId: company.id,
+                id: session.id || session.sessionId || `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                // Ensure startTime is not undefined
+                startTime: session.startTime || new Date()
+            };
+            
+            // Only include fields that are properly typed for Prisma
             await prisma.session.create({
-                // @ts-expect-error - We ensure id is present but TypeScript doesn't know
                 data: {
-                    ...session,
-                    id: session.id || session.sessionId || `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-                    companyId: company.id,
-                },
+                    id: sessionData.id,
+                    companyId: sessionData.companyId,
+                    startTime: sessionData.startTime,
+                    // endTime is required in the schema, so use startTime if not available
+                    endTime: session.endTime || new Date(),
+                    ipAddress: session.ipAddress || null,
+                    country: session.country || null,
+                    language: session.language || null,
+                    sentiment: typeof session.sentiment === 'number' ? session.sentiment : null,
+                    messagesSent: typeof session.messagesSent === 'number' ? session.messagesSent : 0,
+                    category: session.category || null
+                }
             });
         }
+        
         res.json({ ok: true, imported: sessions.length });
     } catch (e) {
         const error = e instanceof Error ? e.message : 'An unknown error occurred';

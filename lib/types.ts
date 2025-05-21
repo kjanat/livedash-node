@@ -77,6 +77,14 @@ export interface MetricsResult {
     languages: LanguageMetrics;
     categories: CategoryMetrics;
     belowThresholdCount: number;
+    // Additional properties for dashboard
+    escalatedCount?: number;
+    forwardedCount?: number;
+    avgSentiment?: number;
+    avgResponseTime?: number;
+    totalTokens?: number;
+    totalTokensEur?: number;
+    sentimentThreshold?: number | null;
 }
 
 export interface ApiResponse<T> {
