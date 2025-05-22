@@ -103,8 +103,7 @@ NEXTAUTH_SECRET=your-secret-here
 
 ## License
 
-This project is not licensed; you are no commercial use is allowed without explicit permission. Free to use for educational purposes/ personal projects.
-Feel free to modify and adapt the code as needed.
+This project is not licensed for commercial use without explicit permission. Free to use for educational or personal projects.
 
 ## Acknowledgments
 
