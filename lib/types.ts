@@ -59,6 +59,7 @@ export interface ChatSession {
   tokensEur?: number;
   initialMsg?: string;
   fullTranscriptUrl?: string | null;
+    transcriptContent?: string | null;
 }
 
 export interface DayMetrics {

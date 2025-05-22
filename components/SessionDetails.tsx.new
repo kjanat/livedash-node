@@ -150,23 +150,21 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
             transcriptUrl={session.fullTranscriptUrl}
           />
         )}
-
+        
         {/* Fallback to link only if we only have the URL but no content */}
-        {(!session.transcriptContent ||
-          session.transcriptContent.length === 0) &&
-          session.fullTranscriptUrl && (
-            <div className="flex justify-between pt-2">
-              <span className="text-gray-600">Transcript:</span>
-              <a
-                href={session.fullTranscriptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-700 underline"
-              >
-                View Full Transcript
-              </a>
-            </div>
-          )}
+        {(!session.transcriptContent || session.transcriptContent.length === 0) && session.fullTranscriptUrl && (
+          <div className="flex justify-between pt-2">
+            <span className="text-gray-600">Transcript:</span>
+            <a
+              href={session.fullTranscriptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
+              View Full Transcript
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

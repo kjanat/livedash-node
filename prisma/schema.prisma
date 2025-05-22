@@ -47,6 +47,7 @@ model Session {
   escalated           Boolean?
   forwardedHr         Boolean?
   fullTranscriptUrl   String?
+  transcriptContent   String?  // Added to store the fetched transcript
   avgResponseTime     Float?
   tokens              Int?
   tokensEur           Float?
