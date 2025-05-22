@@ -13,7 +13,7 @@ interface CompanyConfig {
 
 export function sessionMetrics(
   sessions: ChatSession[],
-  companyConfig: CompanyConfig = {},
+  companyConfig: CompanyConfig = {}
 ): MetricsResult {
   const total = sessions.length;
   const byDay: DayMetrics = {};

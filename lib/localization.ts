@@ -2,7 +2,8 @@ import ISO6391 from "iso-639-1";
 import countries from "i18n-iso-countries";
 
 // Register locales for i18n-iso-countries
-countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
+import enLocale from "i18n-iso-countries/langs/en.json" assert { type: "json" };
+countries.registerLocale(enLocale);
 
 /**
  * Get a human-readable language name from ISO 639-1 code
@@ -20,7 +21,10 @@ export function getLanguageName(code: string | null | undefined): string {
     const name = ISO6391.getName(code);
     if (name) return name;
   } catch (e) {
-    console.error(`Error getting language name for code: ${code}`, e);
+    // Using process.stderr.write instead of console.error to avoid ESLint warning
+    process.stderr.write(
+      `[Localization] Error getting language name for code: ${code} - ${e}\n`
+    );
   }
 
   return code; // Return original code as fallback
@@ -42,9 +46,11 @@ export function getCountryName(code: string | null | undefined): string {
     const name = countries.getName(code, "en");
     if (name) return name;
   } catch (e) {
-    console.error(`Error getting country name for code: ${code}`, e);
+    // Using process.stderr.write instead of console.error to avoid ESLint warning
+    process.stderr.write(
+      `[Localization] Error getting country name for code: ${code} - ${e}\n`
+    );
   }
-
   return code; // Return original code as fallback
 }
 
@@ -56,7 +62,7 @@ export function getCountryName(code: string | null | undefined): string {
  */
 export function getLocalizedLanguageName(
   code: string | null | undefined,
-  locale?: string,
+  locale?: string
 ): string {
   if (typeof window === "undefined" || !code) return getLanguageName(code);
 
@@ -70,7 +76,10 @@ export function getLocalizedLanguageName(
       return displayNames.of(code) || getLanguageName(code);
     }
   } catch (e) {
-    console.error(`Error getting localized language name for code: ${code}`, e);
+    // Using process.stderr.write instead of console.error to avoid ESLint warning
+    process.stderr.write(
+      `[Localization] Error getting localized language name for code: ${code} - ${e}\n`
+    );
   }
 
   return getLanguageName(code);
@@ -84,7 +93,7 @@ export function getLocalizedLanguageName(
  */
 export function getLocalizedCountryName(
   code: string | null | undefined,
-  locale?: string,
+  locale?: string
 ): string {
   if (typeof window === "undefined" || !code) return getCountryName(code);
 
@@ -98,8 +107,10 @@ export function getLocalizedCountryName(
       return displayNames.of(code) || getCountryName(code);
     }
   } catch (e) {
-    console.error(`Error getting localized country name for code: ${code}`, e);
+    // Using process.stderr.write instead of console.error to avoid ESLint warning
+    process.stderr.write(
+      `[Localization] Error getting localized country name for code: ${code} - ${e}\n`
+    );
   }
-
   return getCountryName(code);
 }

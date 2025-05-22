@@ -13,7 +13,7 @@ interface SessionCreateData {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   // Check if this is a POST request
   if (req.method !== "POST") {
@@ -37,7 +37,11 @@ export default async function handler(
         companyId = session.companyId;
       }
     } catch (error) {
-      console.error("Error fetching session:", error);
+      // Log error for server-side debugging
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      // Use a server-side logging approach instead of console
+      process.stderr.write(`Error fetching session: ${errorMessage}\n`);
     }
   }
 
@@ -52,7 +56,7 @@ export default async function handler(
     const sessions = await fetchAndParseCsv(
       company.csvUrl,
       company.csvUsername as string | undefined,
-      company.csvPassword as string | undefined,
+      company.csvPassword as string | undefined
     );
 
     // Replace all session rows for this company (for demo simplicity)

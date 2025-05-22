@@ -13,7 +13,7 @@ interface UserBasicInfo {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   const session = await getServerSession(req, res, authOptions);
   if (!session?.user || session.user.role !== "admin")

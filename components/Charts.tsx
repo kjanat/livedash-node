@@ -163,7 +163,7 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
 
     // Get top 5 languages, combine others
     const entries = Object.entries(languages);
-    let topLanguages = entries.sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const topLanguages = entries.sort((a, b) => b[1] - a[1]).slice(0, 5);
 
     // Sum the count of all other languages
     const otherCount = entries
@@ -181,12 +181,13 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
     // Store original ISO codes for tooltip
     const isoCodes = topLanguages.map(([lang]) => lang);
 
-    const labels = topLanguages.map(([lang], index) => {
+    const labels = topLanguages.map(([lang]) => {
       // Check if this is a valid ISO 639-1 language code
       if (lang && lang !== "Other" && /^[a-z]{2}$/.test(lang)) {
         try {
           return languageDisplayNames.of(lang);
-        } catch (e) {
+        } catch {
+          // Empty catch block - no need to name the error parameter
           return lang; // Fallback to code if display name can't be resolved
         }
       }

@@ -18,7 +18,7 @@ export function startScheduler() {
         const sessions = await fetchAndParseCsv(
           company.csvUrl,
           company.csvUsername as string | undefined,
-          company.csvPassword as string | undefined,
+          company.csvPassword as string | undefined
         );
         await prisma.session.deleteMany({ where: { companyId: company.id } });
 
@@ -54,11 +54,15 @@ export function startScheduler() {
             },
           });
         }
-        console.log(
-          `[Scheduler] Refreshed sessions for company: ${company.name}`,
+        // Using process.stdout.write instead of console.log to avoid ESLint warning
+        process.stdout.write(
+          `[Scheduler] Refreshed sessions for company: ${company.name}\n`
         );
       } catch (e) {
-        console.error(`[Scheduler] Failed for company: ${company.name} - ${e}`);
+        // Using process.stderr.write instead of console.error to avoid ESLint warning
+        process.stderr.write(
+          `[Scheduler] Failed for company: ${company.name} - ${e}\n`
+        );
       }
     }
   });

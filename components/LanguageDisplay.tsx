@@ -17,7 +17,7 @@ export default function LanguageDisplay({
   className,
 }: LanguageDisplayProps) {
   const [languageName, setLanguageName] = useState<string>(
-    languageCode || "Unknown",
+    languageCode || "Unknown"
   );
 
   useEffect(() => {

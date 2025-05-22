@@ -12,7 +12,7 @@ interface RegisterRequestBody {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<ApiResponse<{ success: boolean } | { error: string }>>,
+  res: NextApiResponse<ApiResponse<{ success: boolean } | { error: string }>>
 ) {
   if (req.method !== "POST") return res.status(405).end();
 

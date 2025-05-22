@@ -14,11 +14,11 @@ export default function DashboardSettings({
 }: DashboardSettingsProps) {
   const [csvUrl, setCsvUrl] = useState<string>(company.csvUrl);
   const [csvUsername, setCsvUsername] = useState<string>(
-    company.csvUsername || "",
+    company.csvUsername || ""
   );
   const [csvPassword, setCsvPassword] = useState<string>("");
   const [sentimentThreshold, setSentimentThreshold] = useState<string>(
-    company.sentimentAlert?.toString() || "",
+    company.sentimentAlert?.toString() || ""
   );
   const [message, setMessage] = useState<string>("");
 

@@ -17,7 +17,7 @@ export default function CountryDisplay({
   className,
 }: CountryDisplayProps) {
   const [countryName, setCountryName] = useState<string>(
-    countryCode || "Unknown",
+    countryCode || "Unknown"
   );
 
   useEffect(() => {

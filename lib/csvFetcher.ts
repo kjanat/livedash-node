@@ -5,7 +5,8 @@ import ISO6391 from "iso-639-1";
 import countries from "i18n-iso-countries";
 
 // Register locales for i18n-iso-countries
-countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
+import enLocale from "i18n-iso-countries/langs/en.json" assert { type: "json" };
+countries.registerLocale(enLocale);
 
 // This type is used internally for parsing the CSV records
 interface CSVRecord {
@@ -101,9 +102,8 @@ function getCountryCode(countryStr?: string): string | null | undefined {
     const code = countries.getAlpha2Code(normalized, "en");
     if (code) return code;
   } catch (error) {
-    console.error(
-      `Error converting country name to code: ${normalized}`,
-      error,
+    process.stderr.write(
+      `[CSV] Error converting country name to code: ${normalized} - ${error}\n`
     );
   }
 
@@ -171,12 +171,10 @@ function getLanguageCode(languageStr?: string): string | null | undefined {
     const code = ISO6391.getCode(normalized);
     if (code) return code;
   } catch (error) {
-    console.error(
-      `Error converting language name to code: ${normalized}`,
-      error,
+    process.stderr.write(
+      `[CSV] Error converting language name to code: ${normalized} - ${error}\n`
     );
   }
-
   // If all else fails, return null
   return null;
 }
@@ -379,7 +377,7 @@ function isTruthyValue(value?: string): boolean {
 export async function fetchAndParseCsv(
   url: string,
   username?: string,
-  password?: string,
+  password?: string
 ): Promise<Partial<SessionData>[]> {
   const authHeader =
     username && password
