@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation"; // Import useRouter
 import {
   SessionsLineChart,
   CategoriesBarChart,
@@ -20,29 +21,36 @@ import WelcomeBanner from "../../components/WelcomeBanner";
 
 // Safely wrapped component with useSession
 function DashboardContent() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession(); // Add status from useSession
+  const router = useRouter(); // Initialize useRouter
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
   const [, setLoading] = useState<boolean>(false);
-  // Remove unused csvUrl state variable
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const isAdmin = session?.user?.role === "admin";
   const isAuditor = session?.user?.role === "auditor";
 
   useEffect(() => {
-    // Fetch metrics and company on mount
-    const fetchData = async () => {
-      setLoading(true);
-      const res = await fetch("/api/dashboard/metrics");
-      const data = await res.json();
-      setMetrics(data.metrics);
-      setCompany(data.company);
-      // Removed unused csvUrl assignment
-      setLoading(false);
-    };
-    fetchData();
-  }, []);
+    // Redirect if not authenticated
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return; // Stop further execution in this effect
+    }
+
+    // Fetch metrics and company on mount if authenticated
+    if (status === "authenticated") {
+      const fetchData = async () => {
+        setLoading(true);
+        const res = await fetch("/api/dashboard/metrics");
+        const data = await res.json();
+        setMetrics(data.metrics);
+        setCompany(data.company);
+        setLoading(false);
+      };
+      fetchData();
+    }
+  }, [status, router]); // Add status and router to dependency array
 
   async function handleRefresh() {
     if (isAuditor) return; // Prevent auditors from refreshing
@@ -51,7 +59,6 @@ function DashboardContent() {
 
       // Make sure we have a company ID to send
       if (!company?.id) {
-        // Use a more appropriate error handling approach
         setRefreshing(false);
         alert("Cannot refresh: Company ID is missing");
         return;
@@ -70,7 +77,6 @@ function DashboardContent() {
         setMetrics(data.metrics);
       } else {
         const errorData = await res.json();
-        // Use alert instead of console.error for user feedback
         alert(`Failed to refresh sessions: ${errorData.error}`);
       }
     } finally {
@@ -82,7 +88,6 @@ function DashboardContent() {
   const getSentimentData = () => {
     if (!metrics) return { positive: 0, neutral: 0, negative: 0 };
 
-    // If we have the new sentiment count fields, use those
     if (
       metrics.sentimentPositiveCount !== undefined &&
       metrics.sentimentNeutralCount !== undefined &&
@@ -95,12 +100,11 @@ function DashboardContent() {
       };
     }
 
-    // Fallback to estimating based on total
     const total = metrics.totalSessions || 1;
     return {
-      positive: Math.round(total * 0.6), // 60% positive as fallback
-      neutral: Math.round(total * 0.3), // 30% neutral as fallback
-      negative: Math.round(total * 0.1), // 10% negative as fallback
+      positive: Math.round(total * 0.6),
+      neutral: Math.round(total * 0.3),
+      negative: Math.round(total * 0.1),
     };
   };
 
@@ -111,13 +115,22 @@ function DashboardContent() {
     }
 
     const days = Object.keys(metrics.tokensByDay).sort();
-    // Get the last 7 days if available
     const labels = days.slice(-7);
     const values = labels.map((day) => metrics.tokensByDay?.[day] || 0);
     const costs = labels.map((day) => metrics.tokensCostByDay?.[day] || 0);
 
     return { labels, values, costs };
   };
+
+  // Show loading state while session status is being determined
+  if (status === "loading") {
+    return <div className="text-center py-10">Loading session...</div>;
+  }
+
+  // If unauthenticated and not redirected yet (should be handled by useEffect, but as a fallback)
+  if (status === "unauthenticated") {
+    return <div className="text-center py-10">Redirecting to login...</div>;
+  }
 
   if (!metrics || !company) {
     return <div className="text-center py-10">Loading dashboard...</div>;
@@ -130,12 +143,11 @@ function DashboardContent() {
       .map(([text, value]) => ({ text, value }))
       .filter((item) => item.text.trim() !== "")
       .sort((a, b) => b.value - a.value)
-      .slice(0, 30); // Limit to top 30 categories
+      .slice(0, 30);
   };
 
   // Function to prepare country data for the map - using simulated/dummy data
   const getCountryData = () => {
-    // Use dummy country data as the actual metrics doesn't contain session-level country data
     return {
       US: 42,
       GB: 25,
@@ -156,14 +168,10 @@ function DashboardContent() {
 
   // Function to prepare response time distribution data
   const getResponseTimeData = () => {
-    // Since we have aggregated avgResponseTime, we'll create a simulated distribution
-    // based on the average response time
     const avgTime = metrics.avgResponseTime || 1.5;
     const simulatedData: number[] = [];
 
-    // Generate response times that average to our avgResponseTime
     for (let i = 0; i < 50; i++) {
-      // Random value that's mostly close to the average
       const randomFactor = 0.5 + Math.random();
       simulatedData.push(avgTime * randomFactor);
     }
@@ -173,30 +181,20 @@ function DashboardContent() {
 
   return (
     <div className="space-y-8">
-      {" "}
-      {/* Increased spacing */}
-      {/* Welcome Banner */}
       <WelcomeBanner companyName={company.name} />
-      {/* Header with company info */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-lg ring-1 ring-slate-200/50">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">{company.name}</h1>
           <p className="text-slate-500 mt-1">
-            {" "}
-            {/* Adjusted text color and margin */}
             Dashboard updated{" "}
             <span className="font-medium text-slate-600">
-              {" "}
-              {/* Adjusted text color */}
               {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
             </span>
           </p>
         </div>
         <div className="flex items-center gap-3 mt-4 sm:mt-0">
-          {" "}
-          {/* Adjusted gap and responsive margin */}
           <button
-            className="bg-sky-600 text-white py-2 px-5 rounded-lg shadow hover:bg-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center text-sm font-medium" // Adjusted padding, shadow, colors, and added font style
+            className="bg-sky-600 text-white py-2 px-5 rounded-lg shadow hover:bg-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center text-sm font-medium"
             onClick={handleRefresh}
             disabled={refreshing || isAuditor}
           >
@@ -227,7 +225,7 @@ function DashboardContent() {
             ) : (
               <>
                 <svg
-                  className="w-4 h-4 mr-2" /* Adjusted margin */
+                  className="w-4 h-4 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -245,11 +243,11 @@ function DashboardContent() {
             )}
           </button>
           <button
-            className="bg-slate-100 text-slate-700 py-2 px-5 rounded-lg shadow hover:bg-slate-200 transition-colors flex items-center text-sm font-medium" // Adjusted padding, colors, and added font style
+            className="bg-slate-100 text-slate-700 py-2 px-5 rounded-lg shadow hover:bg-slate-200 transition-colors flex items-center text-sm font-medium"
             onClick={() => signOut()}
           >
             <svg
-              className="w-4 h-4 mr-2" /* Adjusted margin */
+              className="w-4 h-4 mr-2"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -266,7 +264,6 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-      {/* Key Performance Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Sessions"
@@ -303,7 +300,6 @@ function DashboardContent() {
           variant="success"
         />
       </div>
-      {/* Sentiment & Escalation Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow lg:col-span-1">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
@@ -318,9 +314,9 @@ function DashboardContent() {
                 getSentimentData().negative,
               ],
               colors: [
-                "rgba(34, 197, 94, 0.8)", // green
-                "rgba(249, 115, 22, 0.8)", // orange
-                "rgba(239, 68, 68, 0.8)", // red
+                "rgba(34, 197, 94, 0.8)",
+                "rgba(249, 115, 22, 0.8)",
+                "rgba(239, 68, 68, 0.8)",
               ],
             }}
             centerText={{
@@ -367,7 +363,6 @@ function DashboardContent() {
           </div>
         </div>
       </div>
-      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
@@ -382,7 +377,6 @@ function DashboardContent() {
           <CategoriesBarChart categories={metrics.categories || {}} />
         </div>
       </div>
-      {/* Word Cloud and World Map */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow overflow-hidden">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
@@ -397,7 +391,6 @@ function DashboardContent() {
           <GeographicMap countries={getCountryData()} height={300} />
         </div>
       </div>
-      {/* Response Time Distribution and Language Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
@@ -413,7 +406,6 @@ function DashboardContent() {
           <LanguagePieChart languages={metrics.languages || {}} />
         </div>
       </div>
-      {/* Token Usage */}
       <div className="bg-white p-6 rounded-xl shadow">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold text-lg text-gray-800">
@@ -432,7 +424,6 @@ function DashboardContent() {
         </div>
         <TokenUsageChart tokenData={getTokenData()} />
       </div>
-      {/* Admin Controls */}
       {isAdmin && (
         <>
           <DashboardSettings company={company} session={session} />
@@ -445,14 +436,9 @@ function DashboardContent() {
 
 // Our exported component
 export default function DashboardPage() {
-  // We don't use useSession here to avoid the error outside the provider
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 md:p-6">
-      {" "}
-      {/* Added gradient background */}
       <div className="max-w-7xl mx-auto">
-        {" "}
-        {/* Added inner container for content alignment */}
         <DashboardContent />
       </div>
     </div>

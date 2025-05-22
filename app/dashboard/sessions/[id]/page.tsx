@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation"; // Import useRouter
+import { useSession } from "next-auth/react"; // Import useSession
 import SessionDetails from "../../../../components/SessionDetails";
 import TranscriptViewer from "../../../../components/TranscriptViewer";
 import { ChatSession } from "../../../../lib/types";
@@ -9,15 +10,22 @@ import Link from "next/link";
 
 export default function SessionViewPage() {
   const params = useParams();
+  const router = useRouter(); // Initialize useRouter
+  const { status } = useSession(); // Get session status, removed unused sessionData
   const id = params?.id as string;
   const [session, setSession] = useState<ChatSession | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // This will now primarily be for data fetching
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+
+    if (status === "authenticated" && id) {
       const fetchSession = async () => {
-        setLoading(true);
+        if (!session) setLoading(true);
         setError(null);
         try {
           const response = await fetch(`/api/dashboard/session/${id}`);
@@ -40,10 +48,29 @@ export default function SessionViewPage() {
         }
       };
       fetchSession();
+    } else if (status === "authenticated" && !id) {
+      setError("Session ID is missing.");
+      setLoading(false);
     }
-  }, [id]);
+  }, [id, status, router, session]);
 
-  if (loading) {
+  if (status === "loading") {
+    return (
+      <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
+        <p className="text-gray-600 text-lg">Loading session...</p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
+        <p className="text-gray-600 text-lg">Redirecting to login...</p>
+      </div>
+    );
+  }
+
+  if (loading && status === "authenticated") {
     return (
       <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
         <p className="text-gray-600 text-lg">Loading session details...</p>
@@ -112,8 +139,6 @@ export default function SessionViewPage() {
           {session.transcriptContent &&
           session.transcriptContent.trim() !== "" ? (
             <div className="mt-0">
-              {" "}
-              {/* Adjusted margin, TranscriptViewer has its own top margin */}
               <TranscriptViewer
                 transcriptContent={session.transcriptContent}
                 transcriptUrl={session.fullTranscriptUrl}

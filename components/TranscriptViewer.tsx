@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown"; // Import ReactMarkdown
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw"; // Import rehype-raw
 
 interface TranscriptViewerProps {
   transcriptContent: string;
@@ -51,6 +52,7 @@ function formatTranscript(content: string): React.ReactNode[] {
                 // Use ReactMarkdown to render each message part
                 <ReactMarkdown
                   key={i}
+                  rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
                   components={{
                     p: "span",
                     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -102,6 +104,7 @@ function formatTranscript(content: string): React.ReactNode[] {
             // Use ReactMarkdown to render each message part
             <ReactMarkdown
               key={i}
+              rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
               components={{
                 p: "span",
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
