@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image"; // Import the Next.js Image component
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
@@ -195,16 +195,20 @@ export default function Sidebar() {
             src="/favicon.svg"
             alt="LiveDash Logo"
             fill
-            style={{ objectFit: "contain" }}
             className="transition-all duration-300"
-            priority // Added priority prop for LCP optimization
+            // Added priority prop for LCP optimization
+            priority
+            style={{
+              objectFit: "contain",
+              maxWidth: "100%",
+              // height: "auto"
+            }}
           />
         </div>
         {isExpanded && (
           <span className="text-lg font-bold text-sky-700 mt-1">LiveDash</span>
         )}
       </div>
-
       {/* Toggle button */}
       <div className="flex justify-center border-b border-t py-2">
         <button
@@ -225,7 +229,6 @@ export default function Sidebar() {
           )}
         </button>
       </div>
-
       {/* Navigation items */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto overflow-x-visible">
         <NavItem
@@ -279,7 +282,6 @@ export default function Sidebar() {
           isActive={pathname === "/dashboard/users"}
         />
       </nav>
-
       {/* Logout at the bottom */}
       <div className="p-4 border-t mt-auto">
         <button

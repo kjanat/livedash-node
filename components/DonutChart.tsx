@@ -77,7 +77,8 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
                 const label = context.label || "";
                 const value = context.formattedValue;
                 const total = context.chart.data.datasets[0].data.reduce(
-                  (a: number, b: any) => a + (typeof b === "number" ? b : 0),
+                  (a: number, b: number | string | null) =>
+                    a + (typeof b === "number" ? b : 0),
                   0
                 );
                 const percentage = Math.round((context.parsed * 100) / total);
@@ -91,7 +92,7 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
         ? [
             {
               id: "centerText",
-              beforeDraw: function (chart: any) {
+              beforeDraw: function (chart: Chart<"doughnut">) {
                 const height = chart.height;
                 const ctx = chart.ctx;
                 ctx.restore();

@@ -2,7 +2,7 @@ import ISO6391 from "iso-639-1";
 import countries from "i18n-iso-countries";
 
 // Register locales for i18n-iso-countries
-import enLocale from "i18n-iso-countries/langs/en.json" assert { type: "json" };
+import enLocale from "i18n-iso-countries/langs/en.json" with { type: "json" };
 countries.registerLocale(enLocale);
 
 /**

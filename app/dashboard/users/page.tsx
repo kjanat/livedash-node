@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { UserSession } from "../../../lib/types";
 
 interface UserItem {
   id: string;

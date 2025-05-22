@@ -53,7 +53,7 @@ export default function WordCloud({
       )
       .padding(5)
       .rotate(() => (~~(Math.random() * 6) - 3) * 15) // Rotate between -45 and 45 degrees
-      .fontSize((d) => (d as any).size)
+      .fontSize((d: CloudWord) => d.size)
       .on("end", draw);
 
     layout.start();

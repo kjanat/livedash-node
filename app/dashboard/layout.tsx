@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -28,6 +29,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // Defined for potential future use, like adding a logout button in the layout
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
   };

@@ -40,7 +40,7 @@ export default function SessionsPage() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const [pageSize, setPageSize] = useState(10); // Or make this configurable
 
   useEffect(() => {
@@ -283,7 +283,11 @@ export default function SessionsPage() {
                 Session ID: {session.sessionId || session.id}
               </h2>
               <p className="text-sm text-gray-500 mb-1">
-                Start Time: {new Date(session.startTime).toLocaleString()}
+                Start Time (Local):{" "}
+                {new Date(session.startTime).toLocaleString()}
+              </p>
+              <p className="text-xs text-gray-400 mb-1">
+                Start Time (Raw API): {session.startTime.toString()}
               </p>
               {session.category && (
                 <p className="text-sm text-gray-700">
