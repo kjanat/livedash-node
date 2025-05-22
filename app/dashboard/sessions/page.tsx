@@ -37,6 +37,11 @@ export default function SessionsPage() {
   // Debounce search term to avoid excessive API calls
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [pageSize, setPageSize] = useState(10); // Or make this configurable
+
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -47,34 +52,19 @@ export default function SessionsPage() {
   }, [searchTerm]);
 
   const fetchFilterOptions = useCallback(async () => {
-    // TODO: Implement API endpoint to fetch distinct categories and languages
-    // For now, using placeholder data or deriving from fetched sessions if possible
-    // This should ideally be a separate API call: GET /api/dashboard/session-filter-options
     try {
-      // Simulating fetching filter options. Replace with actual API call.
-      // const response = await fetch('/api/dashboard/session-filter-options');
-      // if (!response.ok) {
-      //   throw new Error('Failed to fetch filter options');
-      // }
-      // const data = await response.json();
-      // setFilterOptions(data);
-
-      // Placeholder - In a real scenario, fetch these from the backend
-      // For now, we can extract from all sessions once fetched, but this is not ideal for initial load.
-      // This will be improved when the backend endpoint is ready.
-      if (sessions.length > 0) {
-        const categories = Array.from(
-          new Set(sessions.map((s) => s.category).filter(Boolean))
-        ) as string[];
-        const languages = Array.from(
-          new Set(sessions.map((s) => s.language).filter(Boolean))
-        ) as string[];
-        setFilterOptions({ categories, languages });
+      const response = await fetch("/api/dashboard/session-filter-options");
+      if (!response.ok) {
+        throw new Error("Failed to fetch filter options");
       }
-    } catch {
-      // setError("Failed to load filter options"); // Optionally set an error state
+      const data = await response.json();
+      setFilterOptions(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load filter options"
+      );
     }
-  }, [sessions]); // Re-fetch if sessions change, for placeholder logic.
+  }, []);
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -88,6 +78,8 @@ export default function SessionsPage() {
       if (endDate) params.append("endDate", endDate);
       if (sortKey) params.append("sortKey", sortKey);
       if (sortOrder) params.append("sortOrder", sortOrder);
+      params.append("page", currentPage.toString());
+      params.append("pageSize", pageSize.toString());
 
       const response = await fetch(
         `/api/dashboard/sessions?${params.toString()}`
@@ -97,20 +89,7 @@ export default function SessionsPage() {
       }
       const data = await response.json();
       setSessions(data.sessions || []);
-      // After fetching sessions, update filter options (temporary solution)
-      if (data.sessions && data.sessions.length > 0) {
-        const categories = Array.from(
-          new Set(
-            data.sessions.map((s: ChatSession) => s.category).filter(Boolean)
-          )
-        ) as string[];
-        const languages = Array.from(
-          new Set(
-            data.sessions.map((s: ChatSession) => s.language).filter(Boolean)
-          )
-        ) as string[];
-        setFilterOptions({ categories, languages });
-      }
+      setTotalPages(Math.ceil((data.totalSessions || 0) / pageSize));
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An unknown error occurred"
@@ -127,17 +106,15 @@ export default function SessionsPage() {
     endDate,
     sortKey,
     sortOrder,
+    currentPage,
+    pageSize,
   ]);
 
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
 
-  // Fetch initial filter options (or update if sessions change - placeholder)
   useEffect(() => {
-    // This is a placeholder. Ideally, filter options are fetched once,
-    // or if they are dynamic and dependent on other filters, fetched accordingly.
-    // For now, this re-runs if sessions data changes, which is not optimal.
     fetchFilterOptions();
   }, [fetchFilterOptions]);
 
@@ -336,9 +313,30 @@ export default function SessionsPage() {
           ))}
         </div>
       )}
-      {/* TODO: Add pagination controls (e.g., using a library or custom component) */}
-      {/* TODO: Implement advanced filtering (by date range, category, language, etc.) - Partially done, needs backend support for filter options and robust date filtering */}
-      {/* TODO: Implement sorting options for the session list (e.g., by start time, sentiment) - Partially done, needs backend support */}
+
+      {totalPages > 0 && (
+        <div className="mt-6 flex justify-center items-center space-x-2">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-700">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
