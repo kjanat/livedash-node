@@ -46,8 +46,10 @@
     "eslint": "^9.27.0",
     "eslint-config-next": "^15.3.2",
     "eslint-plugin-prettier": "^5.4.0",
+    "markdownlint-cli2": "^0.18.1",
     "postcss": "^8.5.3",
     "prettier": "^3.5.3",
+    "prettier-plugin-jinja-template": "^2.1.0",
     "prisma": "^6.8.2",
     "tailwindcss": "^4.1.7",
     "ts-node": "^10.9.2",
@@ -64,7 +66,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.mjs",
     "prisma:studio": "prisma studio",
-    "start": "next start"
+    "start": "next start",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\"",
+    "lint:md:fix": "markdownlint-cli2  --fix \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\""
   },
   "prettier": {
     "bracketSpacing": true,
@@ -74,6 +78,45 @@
     "singleQuote": false,
     "tabWidth": 2,
     "trailingComma": "es5",
-    "useTabs": false
+    "useTabs": false,
+    "overrides": [
+      {
+        "files": [
+          "*.md",
+          "*.markdown"
+        ],
+        "options": {
+          "tabWidth": 2,
+          "useTabs": false,
+          "proseWrap": "preserve",
+          "printWidth": 100
+        }
+      }
+    ],
+    "plugins": [
+      "prettier-plugin-jinja-template"
+    ]
+  },
+  "markdownlint-cli2": {
+    "config": {
+      "MD007": {
+        "indent": 4,
+        "start_indented": false,
+        "start_indent": 4
+      },
+      "MD013": false,
+      "MD030": {
+        "ul_single": 3,
+        "ol_single": 2,
+        "ul_multi": 3,
+        "ol_multi": 2
+      },
+      "MD033": false
+    },
+    "ignores": [
+      "node_modules",
+      ".git",
+      "*.json"
+    ]
   }
 }
