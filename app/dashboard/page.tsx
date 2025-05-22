@@ -172,24 +172,31 @@ function DashboardContent() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {" "}
+      {/* Increased spacing */}
       {/* Welcome Banner */}
       <WelcomeBanner companyName={company.name} />
-
       {/* Header with company info */}
-      <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-lg ring-1 ring-slate-200/50">
         <div>
-          <h1 className="text-2xl font-bold text-blue-700">{company.name}</h1>
-          <p className="text-gray-600">
+          <h1 className="text-3xl font-bold text-slate-800">{company.name}</h1>
+          <p className="text-slate-500 mt-1">
+            {" "}
+            {/* Adjusted text color and margin */}
             Dashboard updated{" "}
-            <span className="font-medium">
+            <span className="font-medium text-slate-600">
+              {" "}
+              {/* Adjusted text color */}
               {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
             </span>
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 mt-4 sm:mt-0">
+          {" "}
+          {/* Adjusted gap and responsive margin */}
           <button
-            className="bg-blue-600 text-white py-2 px-4 rounded-lg shadow-sm hover:bg-blue-700 disabled:opacity-50 flex items-center"
+            className="bg-sky-600 text-white py-2 px-5 rounded-lg shadow hover:bg-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center text-sm font-medium" // Adjusted padding, shadow, colors, and added font style
             onClick={handleRefresh}
             disabled={refreshing || isAuditor}
           >
@@ -220,7 +227,7 @@ function DashboardContent() {
             ) : (
               <>
                 <svg
-                  className="w-4 h-4 mr-1"
+                  className="w-4 h-4 mr-2" /* Adjusted margin */
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -238,11 +245,11 @@ function DashboardContent() {
             )}
           </button>
           <button
-            className="bg-gray-200 py-2 px-4 rounded-lg shadow-sm hover:bg-gray-300 flex items-center"
+            className="bg-slate-100 text-slate-700 py-2 px-5 rounded-lg shadow hover:bg-slate-200 transition-colors flex items-center text-sm font-medium" // Adjusted padding, colors, and added font style
             onClick={() => signOut()}
           >
             <svg
-              className="w-4 h-4 mr-1"
+              className="w-4 h-4 mr-2" /* Adjusted margin */
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -259,7 +266,6 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-
       {/* Key Performance Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
@@ -297,7 +303,6 @@ function DashboardContent() {
           variant="success"
         />
       </div>
-
       {/* Sentiment & Escalation Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-xl shadow lg:col-span-1">
@@ -362,7 +367,6 @@ function DashboardContent() {
           </div>
         </div>
       </div>
-
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow">
@@ -378,7 +382,6 @@ function DashboardContent() {
           <CategoriesBarChart categories={metrics.categories || {}} />
         </div>
       </div>
-
       {/* Word Cloud and World Map */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow">
@@ -394,7 +397,6 @@ function DashboardContent() {
           <GeographicMap countries={getCountryData()} height={300} />
         </div>
       </div>
-
       {/* Response Time Distribution and Language Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow">
@@ -411,7 +413,6 @@ function DashboardContent() {
           <LanguagePieChart languages={metrics.languages || {}} />
         </div>
       </div>
-
       {/* Token Usage */}
       <div className="bg-white p-6 rounded-xl shadow">
         <div className="flex justify-between items-center mb-4">
@@ -431,7 +432,6 @@ function DashboardContent() {
         </div>
         <TokenUsageChart tokenData={getTokenData()} />
       </div>
-
       {/* Admin Controls */}
       {isAdmin && (
         <>
@@ -447,8 +447,14 @@ function DashboardContent() {
 export default function DashboardPage() {
   // We don't use useSession here to avoid the error outside the provider
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      <DashboardContent />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 md:p-6">
+      {" "}
+      {/* Added gradient background */}
+      <div className="max-w-7xl mx-auto">
+        {" "}
+        {/* Added inner container for content alignment */}
+        <DashboardContent />
+      </div>
     </div>
   );
 }

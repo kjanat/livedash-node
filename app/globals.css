@@ -7,3 +7,5 @@ input,
 button {
   font-family: inherit;
 }
+
+@import "tailwindcss";
