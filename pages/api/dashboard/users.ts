@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
+import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
@@ -43,7 +44,7 @@ export default async function handler(
       return res.status(400).json({ error: "Missing fields" });
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(409).json({ error: "Email exists" });
-    const tempPassword = Math.random().toString(36).slice(-8); // random initial password
+    const tempPassword = crypto.randomBytes(12).toString('base64').slice(0, 12); // secure random initial password
     await prisma.user.create({
       data: {
         email,
