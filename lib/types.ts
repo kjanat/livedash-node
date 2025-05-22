@@ -74,6 +74,15 @@ export interface LanguageMetrics {
   [language: string]: number;
 }
 
+export interface CountryMetrics {
+  [country: string]: number;
+}
+
+export interface WordCloudWord {
+  text: string;
+  value: number;
+}
+
 export interface MetricsResult {
   totalSessions: number;
   avgSessionsPerDay: number;
@@ -81,6 +90,7 @@ export interface MetricsResult {
   days: DayMetrics;
   languages: LanguageMetrics;
   categories: CategoryMetrics;
+  countries: CountryMetrics; // Added for geographic distribution
   belowThresholdCount: number;
   // Additional properties for dashboard
   escalatedCount?: number;
@@ -98,6 +108,7 @@ export interface MetricsResult {
   sentimentNegativeCount?: number;
   tokensByDay?: DayMetrics;
   tokensCostByDay?: DayMetrics;
+  wordCloudData?: WordCloudWord[]; // Added for transcript-based word cloud
 }
 
 export interface ApiResponse<T> {

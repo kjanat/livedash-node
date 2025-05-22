@@ -3,60 +3,66 @@ import { prisma } from "../../../../lib/prisma";
 import { ChatSession } from "../../../../lib/types";
 
 export default async function handler(
-    req: NextApiRequest,
-    res: NextApiResponse
+  req: NextApiRequest,
+  res: NextApiResponse
 ) {
-    if (req.method !== "GET") {
-        return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "GET") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { id } = req.query;
+
+  if (!id || typeof id !== "string") {
+    return res.status(400).json({ error: "Session ID is required" });
+  }
+
+  try {
+    const prismaSession = await prisma.session.findUnique({
+      where: { id },
+    });
+
+    if (!prismaSession) {
+      return res.status(404).json({ error: "Session not found" });
     }
 
-    const { id } = req.query;
+    // Map Prisma session object to ChatSession type
+    const session: ChatSession = {
+      // Spread prismaSession to include all its properties
+      ...prismaSession,
+      // Override properties that need conversion or specific mapping
+      id: prismaSession.id, // ChatSession.id from Prisma.Session.id
+      sessionId: prismaSession.id, // ChatSession.sessionId from Prisma.Session.id
+      startTime: new Date(prismaSession.startTime),
+      endTime: prismaSession.endTime ? new Date(prismaSession.endTime) : null,
+      createdAt: new Date(prismaSession.createdAt),
+      // Prisma.Session does not have an `updatedAt` field. We'll use `createdAt` as a fallback.
+      // Or, if your business logic implies an update timestamp elsewhere, use that.
+      updatedAt: new Date(prismaSession.createdAt), // Fallback to createdAt
+      // Prisma.Session does not have a `userId` field.
+      userId: null, // Explicitly set to null or map if available from another source
+      // Ensure nullable fields from Prisma are correctly mapped to ChatSession's optional or nullable fields
+      category: prismaSession.category ?? null,
+      language: prismaSession.language ?? null,
+      country: prismaSession.country ?? null,
+      ipAddress: prismaSession.ipAddress ?? null,
+      sentiment: prismaSession.sentiment ?? null,
+      messagesSent: prismaSession.messagesSent ?? undefined, // Use undefined if ChatSession expects number | undefined
+      avgResponseTime: prismaSession.avgResponseTime ?? null,
+      escalated: prismaSession.escalated ?? undefined,
+      forwardedHr: prismaSession.forwardedHr ?? undefined,
+      tokens: prismaSession.tokens ?? undefined,
+      tokensEur: prismaSession.tokensEur ?? undefined,
+      initialMsg: prismaSession.initialMsg ?? undefined,
+      fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
+      transcriptContent: prismaSession.transcriptContent ?? null,
+    };
 
-    if (!id || typeof id !== "string") {
-        return res.status(400).json({ error: "Session ID is required" });
-    }
-
-    try {
-        const prismaSession = await prisma.session.findUnique({
-            where: { id },
-        });
-
-        if (!prismaSession) {
-            return res.status(404).json({ error: "Session not found" });
-        }
-
-        // Map Prisma session object to ChatSession type
-        const session: ChatSession = {
-            ...prismaSession,
-            sessionId: prismaSession.id, // Assuming ChatSession's sessionId is Prisma's id
-            startTime: new Date(prismaSession.startTime),
-            endTime: prismaSession.endTime ? new Date(prismaSession.endTime) : null,
-            createdAt: new Date(prismaSession.createdAt),
-            updatedAt: new Date(prismaSession.updatedAt),
-            userId: prismaSession.userId === undefined ? null : prismaSession.userId,
-            category: prismaSession.category === undefined ? null : prismaSession.category,
-            language: prismaSession.language === undefined ? null : prismaSession.language,
-            country: prismaSession.country === undefined ? null : prismaSession.country,
-            ipAddress: prismaSession.ipAddress === undefined ? null : prismaSession.ipAddress,
-            sentiment: prismaSession.sentiment === undefined ? null : prismaSession.sentiment,
-            messagesSent: prismaSession.messagesSent === undefined ? undefined : prismaSession.messagesSent,
-            avgResponseTime: prismaSession.avgResponseTime === undefined ? null : prismaSession.avgResponseTime,
-            escalated: prismaSession.escalated === undefined ? undefined : prismaSession.escalated,
-            forwardedHr: prismaSession.forwardedHr === undefined ? undefined : prismaSession.forwardedHr,
-            tokens: prismaSession.tokens === undefined ? undefined : prismaSession.tokens,
-            tokensEur: prismaSession.tokensEur === undefined ? undefined : prismaSession.tokensEur,
-            initialMsg: prismaSession.initialMsg === undefined ? null : prismaSession.initialMsg,
-            fullTranscriptUrl: prismaSession.fullTranscriptUrl === undefined ? null : prismaSession.fullTranscriptUrl,
-            transcriptContent: prismaSession.transcriptContent === undefined ? null : prismaSession.transcriptContent,
-        };
-
-        return res.status(200).json({ session });
-    } catch (error) {
-        console.error(`Failed to fetch session ${id}:`, error);
-        const errorMessage =
-            error instanceof Error ? error.message : "An unknown error occurred";
-        return res
-            .status(500)
-            .json({ error: "Failed to fetch session", details: errorMessage });
-    }
+    return res.status(200).json({ session });
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "An unknown error occurred";
+    return res
+      .status(500)
+      .json({ error: "Failed to fetch session", details: errorMessage });
+  }
 }

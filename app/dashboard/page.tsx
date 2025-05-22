@@ -11,7 +11,7 @@ import {
 } from "../../components/Charts";
 import DashboardSettings from "./settings";
 import UserManagement from "./users";
-import { Company, MetricsResult } from "../../lib/types";
+import { Company, MetricsResult, WordCloudWord } from "../../lib/types"; // Added WordCloudWord
 import MetricCard from "../../components/MetricCard";
 import DonutChart from "../../components/DonutChart";
 import WordCloud from "../../components/WordCloud";
@@ -136,14 +136,10 @@ function DashboardContent() {
     return <div className="text-center py-10">Loading dashboard...</div>;
   }
 
-  // Function to prepare word cloud data from categories
-  const getWordCloudData = () => {
-    if (!metrics || !metrics.categories) return [];
-    return Object.entries(metrics.categories)
-      .map(([text, value]) => ({ text, value }))
-      .filter((item) => item.text.trim() !== "")
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 30);
+  // Function to prepare word cloud data from metrics.wordCloudData
+  const getWordCloudData = (): WordCloudWord[] => {
+    if (!metrics || !metrics.wordCloudData) return [];
+    return metrics.wordCloudData;
   };
 
   // Function to prepare country data for the map - using simulated/dummy data
@@ -380,7 +376,7 @@ function DashboardContent() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-6 rounded-xl shadow overflow-hidden">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Categories Word Cloud
+            Transcript Word Cloud
           </h3>
           <WordCloud words={getWordCloudData()} width={500} height={300} />
         </div>
