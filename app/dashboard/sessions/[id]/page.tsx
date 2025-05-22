@@ -25,7 +25,7 @@ export default function SessionViewPage() {
 
     if (status === "authenticated" && id) {
       const fetchSession = async () => {
-        if (!session) setLoading(true);
+        setLoading(true); // Always set loading before fetch
         setError(null);
         try {
           const response = await fetch(`/api/dashboard/session/${id}`);
@@ -52,7 +52,7 @@ export default function SessionViewPage() {
       setError("Session ID is missing.");
       setLoading(false);
     }
-  }, [id, status, router, session]);
+  }, [id, status, router]); // session removed from dependencies
 
   if (status === "loading") {
     return (

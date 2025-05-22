@@ -7,28 +7,30 @@ import annotationPlugin from "chartjs-plugin-annotation";
 Chart.register(annotationPlugin);
 
 interface ResponseTimeDistributionProps {
-  responseTimes: number[];
+  data: number[];
+  average: number;
   targetResponseTime?: number;
 }
 
 export default function ResponseTimeDistribution({
-  responseTimes,
+  data,
+  average,
   targetResponseTime,
 }: ResponseTimeDistributionProps) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
-    if (!ref.current || !responseTimes.length) return;
+    if (!ref.current || !data || !data.length) return;
 
     const ctx = ref.current.getContext("2d");
     if (!ctx) return;
 
     // Create bins for the histogram (0-1s, 1-2s, 2-3s, etc.)
-    const maxTime = Math.ceil(Math.max(...responseTimes));
+    const maxTime = Math.ceil(Math.max(...data));
     const bins = Array(Math.min(maxTime + 1, 10)).fill(0);
 
     // Count responses in each bin
-    responseTimes.forEach((time) => {
+    data.forEach((time) => {
       const binIndex = Math.min(Math.floor(time), bins.length - 1);
       bins[binIndex]++;
     });
@@ -63,26 +65,40 @@ export default function ResponseTimeDistribution({
         responsive: true,
         plugins: {
           legend: { display: false },
-          annotation: targetResponseTime
-            ? {
-                annotations: {
-                  targetLine: {
+          annotation: {
+            annotations: {
+              averageLine: {
+                type: "line",
+                yMin: 0,
+                yMax: Math.max(...bins),
+                xMin: average,
+                xMax: average,
+                borderColor: "rgba(75, 192, 192, 1)",
+                borderWidth: 2,
+                label: {
+                  display: true,
+                  content: "Avg: " + average.toFixed(1) + "s",
+                  position: "start",
+                },
+              },
+              targetLine: targetResponseTime
+                ? {
                     type: "line",
                     yMin: 0,
                     yMax: Math.max(...bins),
                     xMin: targetResponseTime,
                     xMax: targetResponseTime,
-                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderColor: "rgba(75, 192, 192, 0.7)",
                     borderWidth: 2,
                     label: {
                       display: true,
                       content: "Target",
-                      position: "start",
+                      position: "end",
                     },
-                  },
-                },
-              }
-            : undefined,
+                  }
+                : undefined,
+            },
+          },
         },
         scales: {
           y: {
@@ -103,7 +119,7 @@ export default function ResponseTimeDistribution({
     });
 
     return () => chart.destroy();
-  }, [responseTimes, targetResponseTime]);
+  }, [data, average, targetResponseTime]);
 
   return <canvas ref={ref} height={180} />;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import Chart from "chart.js/auto";
+import Chart, { Point, BubbleDataPoint } from "chart.js/auto";
 
 interface DonutChartProps {
   data: {
@@ -77,9 +77,24 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
                 const label = context.label || "";
                 const value = context.formattedValue;
                 const total = context.chart.data.datasets[0].data.reduce(
-                  (a: number, b: any) => a + (typeof b === "number" ? b : 0),
+                  (
+                    a: number,
+                    b:
+                      | number
+                      | Point
+                      | [number, number]
+                      | BubbleDataPoint
+                      | null
+                  ) => {
+                    if (typeof b === "number") {
+                      return a + b;
+                    }
+                    // Handle other types like Point, [number, number], BubbleDataPoint if necessary
+                    // For now, we'll assume they don't contribute to the sum or are handled elsewhere
+                    return a;
+                  },
                   0
-                );
+                ) as number;
                 const percentage = Math.round((context.parsed * 100) / total);
                 return `${label}: ${value} (${percentage}%)`;
               },
@@ -91,7 +106,7 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
         ? [
             {
               id: "centerText",
-              beforeDraw: function (chart: any) {
+              beforeDraw: function (chart: Chart<"doughnut">) {
                 const height = chart.height;
                 const ctx = chart.ctx;
                 ctx.restore();

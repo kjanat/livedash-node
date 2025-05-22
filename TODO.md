@@ -1,45 +1,96 @@
-# Application Improvement TODOs
+# TODO.md
 
-This file lists general areas for improvement and tasks that are broader in scope or don't map to a single specific file.
+## Dashboard Integration
 
-## General Enhancements & Features
-
-- [ ] **Real-time Updates:** Implement real-time updates for the dashboard and session list (e.g., using WebSockets or Server-Sent Events).
-- [ ] **Data Export:** Provide functionality for users (especially admins) to export session data (e.g., to CSV).
-- [ ] **Customizable Dashboard:** Allow users to customize their dashboard view, choosing which metrics or charts are most important to them.
-- [ ] **Resolve `GeographicMap.tsx` and `ResponseTimeDistribution.tsx` data simulation:** The `docs/dashboard-components.md` mentions these use simulated data. Investigate integrating real data sources.
-
-## Robustness and Maintainability
-
-- [ ] **Comprehensive Testing:**
-  - [ ] Implement unit tests (e.g., for utility functions, API logic).
-  - [ ] Implement integration tests (e.g., for API endpoints with the database).
-  - [ ] Implement end-to-end tests (e.g., for user flows using Playwright or Cypress).
-- [ ] **Error Monitoring and Logging:** Integrate a robust error monitoring service (like Sentry) and enhance server-side logging.
-- [ ] **Accessibility (a11y):** Review and improve the application's accessibility according to WCAG guidelines (keyboard navigation, screen reader compatibility, color contrast).
-
-## Security Enhancements
-
-- [ ] **Password Reset Functionality:** Implement a secure password reset mechanism. (Related: `app/forgot-password/page.tsx`, `app/reset-password/page.tsx`, `pages/api/forgot-password.ts`, `pages/api/reset-password.ts` - ensure these are robust and secure if already implemented).
-- [ ] **Two-Factor Authentication (2FA):** Consider adding 2FA, especially for admin accounts.
-- [ ] **Input Validation and Sanitization:** Rigorously review and ensure all user inputs (API request bodies, query parameters) are validated and sanitized.
-
-## Code Quality and Development Practices
-
-- [ ] **Code Reviews:** Enforce code reviews for all changes.
-- [ ] **Environment Configuration:** Ensure secure and effective management of environment-specific configurations.
-- [ ] **Dependency Review:** Periodically review dependencies for vulnerabilities or updates.
-- [ ] **Documentation:**
-  - Ensure `docs/dashboard-components.md` is up-to-date with actual component implementations.
-  - Verify that "Dashboard Enhancements" (Improved Layout, Visual Hierarchies, Color Coding) are consistently applied.
+-   [ ] **Resolve `GeographicMap.tsx` and `ResponseTimeDistribution.tsx` data simulation**
+    -   Investigate integrating real data sources with server-side analytics
+    -   Replace simulated data mentioned in `docs/dashboard-components.md`
 
 ## Component Specific
 
-- [ ] **`components/SessionDetails.tsx.new`:** Review, complete TODOs within the file, and integrate as the primary `SessionDetails.tsx` component, removing/archiving older versions (`SessionDetails.tsx`, `SessionDetails.tsx.bak`).
-- [ ] **`components/GeographicMap.tsx`:** Check if `GeographicMap.tsx.bak` is still needed or can be removed.
-- [ ] **`app/dashboard/sessions/page.tsx`:** Implement pagination, advanced filtering, and sorting.
-- [ ] **`pages/api/dashboard/users.ts`:** Implement robust emailing of temporary passwords.
+-   [ ] **Implement robust emailing of temporary passwords**
+    -   File: `pages/api/dashboard/users.ts`
+    -   Set up proper email service integration
+
+-   [x] **Session page improvements** ✅
+    -   File: `app/dashboard/sessions/page.tsx`
+    -   Implemented pagination, advanced filtering, and sorting
 
 ## File Cleanup
 
-- [ ] Review and remove `.bak` and `.new` files once changes are integrated (e.g., `GeographicMap.tsx.bak`, `SessionDetails.tsx.bak`, `SessionDetails.tsx.new`).
+-   [x] **Remove backup files** ✅
+    -   Reviewed and removed `.bak` and `.new` files after integration
+    -   Cleaned up `GeographicMap.tsx.bak`, `SessionDetails.tsx.bak`, `SessionDetails.tsx.new`
+
+## Database Schema Improvements
+
+-   [ ] **Update EndTime field**
+    -   Make `endTime` field nullable in Prisma schema to match TypeScript interfaces
+
+-   [ ] **Add database indices**
+    -   Add appropriate indices to improve query performance
+    -   Focus on dashboard metrics and session listing queries
+
+-   [ ] **Implement production email service**
+    -   Replace console logging in `lib/sendEmail.ts`
+    -   Consider providers: Nodemailer, SendGrid, AWS SES
+
+## General Enhancements & Features
+
+-   [ ] **Real-time updates**
+    -   Implement for dashboard and session list
+    -   Consider WebSockets or Server-Sent Events
+
+-   [ ] **Data export functionality**
+    -   Allow users (especially admins) to export session data
+    -   Support CSV format initially
+
+-   [ ] **Customizable dashboard**
+    -   Allow users to customize dashboard view
+    -   Let users choose which metrics/charts are most important
+
+## Testing & Quality Assurance
+
+-   [ ] **Comprehensive testing suite**
+    -   [ ] Unit tests for utility functions and API logic
+    -   [ ] Integration tests for API endpoints with database
+    -   [ ] End-to-end tests for user flows (Playwright or Cypress)
+
+-   [ ] **Error monitoring and logging**
+    -   Integrate robust error monitoring service (Sentry)
+    -   Enhance server-side logging
+
+-   [ ] **Accessibility improvements**
+    -   Review application against WCAG guidelines
+    -   Improve keyboard navigation and screen reader compatibility
+    -   Check color contrast ratios
+
+## Security Enhancements
+
+-   [x] **Password reset functionality** ✅
+    -   Implemented secure password reset mechanism
+    -   Files: `app/forgot-password/page.tsx`, `app/reset-password/page.tsx`, `pages/api/forgot-password.ts`, `pages/api/reset-password.ts`
+
+-   [ ] **Two-Factor Authentication (2FA)**
+    -   Consider adding 2FA, especially for admin accounts
+
+-   [ ] **Input validation and sanitization**
+    -   Review all user inputs (API request bodies, query parameters)
+    -   Ensure proper validation and sanitization
+
+## Code Quality & Development
+
+-   [ ] **Code review process**
+    -   Enforce code reviews for all changes
+
+-   [ ] **Environment configuration**
+    -   Ensure secure management of environment-specific configurations
+
+-   [ ] **Dependency management**
+    -   Periodically review dependencies for vulnerabilities
+    -   Keep dependencies updated
+
+-   [ ] **Documentation updates**
+    -   [ ] Ensure `docs/dashboard-components.md` reflects actual implementations
+    -   [ ] Verify "Dashboard Enhancements" are consistently applied
+    -   [ ] Update documentation for improved layout and visual hierarchies

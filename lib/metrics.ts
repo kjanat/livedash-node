@@ -13,295 +13,309 @@ interface CompanyConfig {
   sentimentAlert?: number;
 }
 
+// Helper function to calculate trend percentages
+function calculateTrendPercentage(current: number, previous: number): number {
+  if (previous === 0) return 0; // Avoid division by zero
+  return ((current - previous) / previous) * 100;
+}
+
+// Mock data for previous period - in a real app, this would come from database
+const mockPreviousPeriodData = {
+  totalSessions: 120,
+  uniqueUsers: 85,
+  avgSessionLength: 240, // in seconds
+  avgResponseTime: 1.7, // in seconds
+};
+
 // List of common stop words - this can be expanded
 const stopWords = new Set([
   "assistant",
   "user",
   // Web
+  "bmp",
+  "co",
   "com",
-  "www",
-  "http",
-  "https",
-  "www2",
+  "css",
+  "gif",
   "href",
   "html",
-  "php",
-  "js",
-  "css",
-  "xml",
-  "json",
-  "txt",
-  "jpg",
-  "jpeg",
-  "png",
-  "gif",
-  "bmp",
-  "svg",
-  "org",
-  "net",
-  "co",
+  "http",
+  "https",
   "io",
+  "jpeg",
+  "jpg",
+  "js",
+  "json",
+  "net",
+  "org",
+  "php",
+  "png",
+  "svg",
+  "txt",
+  "www",
+  "www2",
+  "xml",
   // English stop words
   "a",
+  "about",
+  "above",
+  "after",
+  "again",
+  "against",
+  "ain",
+  "all",
+  "am",
   "an",
-  "the",
-  "is",
+  "any",
   "are",
-  "was",
-  "were",
+  "aren",
+  "at",
   "be",
   "been",
+  "before",
   "being",
-  "have",
-  "has",
-  "had",
-  "do",
-  "does",
-  "did",
-  "will",
-  "would",
-  "should",
+  "below",
+  "between",
+  "both",
+  "by",
+  "bye",
   "can",
   "could",
-  "may",
-  "might",
-  "must",
-  "am",
-  "i",
-  "you",
-  "he",
-  "she",
-  "it",
-  "we",
-  "they",
-  "me",
-  "him",
-  "her",
-  "us",
-  "them",
-  "my",
-  "your",
-  "his",
-  "its",
-  "our",
-  "their",
-  "mine",
-  "yours",
-  "hers",
-  "ours",
-  "theirs",
-  "to",
-  "of",
-  "in",
-  "on",
-  "at",
-  "by",
-  "for",
-  "with",
-  "about",
-  "against",
-  "between",
-  "into",
-  "through",
-  "during",
-  "before",
-  "after",
-  "above",
-  "below",
-  "from",
-  "up",
+  "couldn",
+  "d",
+  "did",
+  "didn",
+  "do",
+  "does",
+  "doesn",
+  "don",
   "down",
-  "out",
-  "off",
-  "over",
-  "under",
-  "again",
-  "further",
-  "then",
-  "once",
-  "here",
-  "there",
-  "when",
-  "where",
-  "why",
-  "how",
-  "all",
-  "any",
-  "both",
+  "during",
   "each",
   "few",
+  "for",
+  "from",
+  "further",
+  "goodbye",
+  "had",
+  "hadn",
+  "has",
+  "hasn",
+  "have",
+  "haven",
+  "he",
+  "hello",
+  "her",
+  "here",
+  "hers",
+  "hi",
+  "him",
+  "his",
+  "how",
+  "i",
+  "in",
+  "into",
+  "is",
+  "isn",
+  "it",
+  "its",
+  "just",
+  "ll",
+  "m",
+  "ma",
+  "may",
+  "me",
+  "might",
+  "mightn",
+  "mine",
   "more",
   "most",
-  "other",
-  "some",
-  "such",
+  "must",
+  "mustn",
+  "my",
+  "needn",
   "no",
   "nor",
   "not",
-  "only",
-  "own",
-  "same",
-  "so",
-  "than",
-  "too",
-  "very",
-  "s",
-  "t",
-  "just",
-  "don",
-  "shouldve",
   "now",
-  "d",
-  "ll",
-  "m",
   "o",
-  "re",
-  "ve",
-  "y",
-  "ain",
-  "aren",
-  "couldn",
-  "didn",
-  "doesn",
-  "hadn",
-  "hasn",
-  "haven",
-  "isn",
-  "ma",
-  "mightn",
-  "mustn",
-  "needn",
-  "shan",
-  "shouldn",
-  "wasn",
-  "weren",
-  "won",
-  "wouldn",
-  "hi",
-  "hello",
-  "thanks",
-  "thank",
-  "please",
+  "of",
+  "off",
   "ok",
   "okay",
-  "yes",
+  "on",
+  "once",
+  "only",
+  "other",
+  "our",
+  "ours",
+  "out",
+  "over",
+  "own",
+  "please",
+  "re",
+  "s",
+  "same",
+  "shan",
+  "she",
+  "should",
+  "shouldn",
+  "shouldve",
+  "so",
+  "some",
+  "such",
+  "t",
+  "than",
+  "thank",
+  "thanks",
+  "the",
+  "their",
+  "theirs",
+  "them",
+  "then",
+  "there",
+  "they",
+  "through",
+  "to",
+  "too",
+  "under",
+  "up",
+  "us",
+  "ve",
+  "very",
+  "was",
+  "wasn",
+  "we",
+  "were",
+  "weren",
+  "when",
+  "where",
+  "why",
+  "will",
+  "with",
+  "won",
+  "would",
+  "wouldn",
+  "y",
   "yeah",
-  "bye",
-  "goodbye",
+  "yes",
+  "you",
+  "your",
+  "yours",
   // French stop words
+  "des",
+  "donc",
+  "et",
   "la",
   "le",
   "les",
+  "mais",
+  "ou",
   "un",
   "une",
-  "des",
-  "et",
-  "ou",
-  "mais",
-  "donc",
   // Dutch stop words
-  "dit",
-  "ben",
-  "de",
-  "het",
-  "ik",
-  "jij",
-  "hij",
-  "zij",
-  "wij",
-  "jullie",
-  "deze",
-  "dit",
-  "dat",
-  "die",
-  "een",
-  "en",
-  "of",
-  "maar",
-  "want",
-  "omdat",
-  "dus",
-  "als",
-  "ook",
-  "dan",
-  "nu",
-  "nog",
-  "al",
-  "naar",
-  "voor",
-  "van",
-  "door",
-  "met",
-  "bij",
-  "tot",
-  "om",
-  "over",
-  "tussen",
-  "onder",
-  "boven",
-  "tegen",
   "aan",
-  "uit",
-  "sinds",
-  "tijdens",
-  "binnen",
-  "buiten",
-  "zonder",
-  "volgens",
-  "dankzij",
-  "ondanks",
-  "behalve",
-  "mits",
-  "tenzij",
-  "hoewel",
+  "al",
   "alhoewel",
-  "toch",
+  "als",
   "anders",
-  "echter",
-  "wel",
-  "niet",
-  "geen",
-  "iets",
-  "niets",
-  "veel",
-  "weinig",
-  "meer",
-  "meest",
-  "elk",
-  "ieder",
-  "sommige",
-  "hoe",
-  "wat",
-  "waar",
-  "wie",
-  "wanneer",
-  "waarom",
-  "welke",
-  "wordt",
-  "worden",
-  "werd",
-  "werden",
-  "geworden",
-  "zijn",
+  "behalve",
+  "ben",
   "ben",
   "bent",
-  "was",
-  "waren",
+  "bij",
+  "binnen",
+  "boven",
+  "buiten",
+  "dan",
+  "dankzij",
+  "dat",
+  "de",
+  "deze",
+  "die",
+  "dit",
+  "dit",
+  "door",
+  "dus",
+  "echter",
+  "een",
+  "elk",
+  "en",
+  "geen",
+  "gehad",
   "geweest",
-  "hebben",
-  "heb",
-  "hebt",
-  "heeft",
+  "geworden",
   "had",
   "hadden",
-  "gehad",
-  "kunnen",
+  "heb",
+  "hebben",
+  "hebt",
+  "heeft",
+  "het",
+  "hij",
+  "hoe",
+  "hoewel",
+  "ieder",
+  "iets",
+  "ik",
+  "jij",
+  "jullie",
   "kan",
-  "kunt",
   "kon",
   "konden",
-  "zullen",
+  "kunnen",
+  "kunt",
+  "maar",
+  "meer",
+  "meest",
+  "met",
+  "mits",
+  "naar",
+  "niet",
+  "niets",
+  "nog",
+  "nu",
+  "of",
+  "om",
+  "omdat",
+  "ondanks",
+  "onder",
+  "ook",
+  "over",
+  "sinds",
+  "sommige",
+  "tegen",
+  "tenzij",
+  "tijdens",
+  "toch",
+  "tot",
+  "tussen",
+  "uit",
+  "van",
+  "veel",
+  "volgens",
+  "voor",
+  "waar",
+  "waarom",
+  "wanneer",
+  "want",
+  "waren",
+  "was",
+  "wat",
+  "weinig",
+  "wel",
+  "welke",
+  "werd",
+  "werden",
+  "wie",
+  "wij",
+  "worden",
+  "wordt",
   "zal",
+  "zij",
+  "zijn",
+  "zonder",
+  "zullen",
   "zult",
   // Add more domain-specific stop words if necessary
 ]);
@@ -310,156 +324,266 @@ export function sessionMetrics(
   sessions: ChatSession[],
   companyConfig: CompanyConfig = {}
 ): MetricsResult {
-  const total = sessions.length;
+  const totalSessions = sessions.length; // Renamed from 'total' for clarity
   const byDay: DayMetrics = {};
   const byCategory: CategoryMetrics = {};
   const byLanguage: LanguageMetrics = {};
-  const byCountry: CountryMetrics = {}; // Added for country data
+  const byCountry: CountryMetrics = {};
   const tokensByDay: DayMetrics = {};
   const tokensCostByDay: DayMetrics = {};
 
-  let escalated = 0,
-    forwarded = 0;
-  let totalSentiment = 0,
-    sentimentCount = 0;
-  let totalResponse = 0,
-    responseCount = 0;
-  let totalTokens = 0,
-    totalTokensEur = 0;
+  let escalatedCount = 0; // Renamed from 'escalated' to match MetricsResult
+  let forwardedHrCount = 0; // Renamed from 'forwarded' to match MetricsResult
 
-  // For sentiment distribution
-  let sentimentPositive = 0,
-    sentimentNegative = 0,
-    sentimentNeutral = 0;
+  // Variables for calculations
+  const uniqueUserIds = new Set<string>();
+  let totalSessionDuration = 0;
+  let validSessionsForDuration = 0;
+  let totalResponseTime = 0;
+  let validSessionsForResponseTime = 0;
+  let sentimentPositiveCount = 0;
+  let sentimentNeutralCount = 0;
+  let sentimentNegativeCount = 0;
+  let totalTokens = 0;
+  let totalTokensEur = 0;
+  const wordCounts: { [key: string]: number } = {};
+  let alerts = 0;
 
-  // Calculate total session duration in minutes
-  let totalDuration = 0;
-  let durationCount = 0;
-
-  const wordCounts: { [key: string]: number } = {}; // For WordCloud
-
-  sessions.forEach((s) => {
-    const day = s.startTime.toISOString().slice(0, 10);
-    byDay[day] = (byDay[day] || 0) + 1;
-
-    if (s.category) byCategory[s.category] = (byCategory[s.category] || 0) + 1;
-    if (s.language) byLanguage[s.language] = (byLanguage[s.language] || 0) + 1;
-    if (s.country) byCountry[s.country] = (byCountry[s.country] || 0) + 1; // Populate byCountry
-
-    // Process token usage by day
-    if (s.tokens) {
-      tokensByDay[day] = (tokensByDay[day] || 0) + s.tokens;
+  for (const session of sessions) {
+    // Unique Users: Prefer non-empty ipAddress, fallback to non-empty sessionId
+    let identifierAdded = false;
+    if (session.ipAddress && session.ipAddress.trim() !== "") {
+      uniqueUserIds.add(session.ipAddress.trim());
+      identifierAdded = true;
+    }
+    // Fallback to sessionId only if ipAddress was not usable and sessionId is valid
+    if (
+      !identifierAdded &&
+      session.sessionId &&
+      session.sessionId.trim() !== ""
+    ) {
+      uniqueUserIds.add(session.sessionId.trim());
     }
 
-    // Process token cost by day
-    if (s.tokensEur) {
-      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + s.tokensEur;
-    }
+    // Avg. Session Time
+    if (session.startTime && session.endTime) {
+      const startTimeMs = new Date(session.startTime).getTime();
+      const endTimeMs = new Date(session.endTime).getTime();
 
-    if (s.endTime) {
-      const duration =
-        (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60); // minutes
+      if (isNaN(startTimeMs)) {
+        console.warn(
+          `[metrics] Invalid startTime for session ${session.id || session.sessionId}: ${session.startTime}`
+        );
+      }
+      if (isNaN(endTimeMs)) {
+        console.warn(
+          `[metrics] Invalid endTime for session ${session.id || session.sessionId}: ${session.endTime}`
+        );
+      }
 
-      // Sanity check: Only include sessions with reasonable durations (less than 24 hours)
-      const MAX_REASONABLE_DURATION = 24 * 60; // 24 hours in minutes
-      if (duration > 0 && duration < MAX_REASONABLE_DURATION) {
-        totalDuration += duration;
-        durationCount++;
+      if (!isNaN(startTimeMs) && !isNaN(endTimeMs)) {
+        const timeDifference = endTimeMs - startTimeMs; // Calculate the signed delta
+        // Use the absolute difference for duration, ensuring it's not negative.
+        // If times are identical, duration will be 0.
+        // If endTime is before startTime, this still yields a positive duration representing the magnitude of the difference.
+        const duration = Math.abs(timeDifference);
+        // console.log(
+        //   `[metrics] duration is ${duration} for session ${session.id || session.sessionId}`
+        // );
+
+        totalSessionDuration += duration; // Add this duration
+
+        if (timeDifference < 0) {
+          // Log a specific warning if the original endTime was before startTime
+          console.warn(
+            `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / 1000).toFixed(2)} seconds).`
+          );
+        } else if (timeDifference === 0) {
+          // // Optionally, log if times are identical, though this might be verbose if common
+          // console.log(
+          //   `[metrics] startTime and endTime are identical for session ${session.id || session.sessionId}. Duration is 0.`
+          // );
+        }
+        // If timeDifference > 0, it's a normal positive duration, no special logging needed here for that case.
+
+        validSessionsForDuration++; // Count this session for averaging
+      }
+    } else {
+      if (!session.startTime) {
+        console.warn(
+          `[metrics] Missing startTime for session ${session.id || session.sessionId}`
+        );
+      }
+      if (!session.endTime) {
+        // This is a common case for ongoing sessions, might not always be an error
+        console.log(
+          `[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`
+        );
       }
     }
 
-    if (s.escalated) escalated++;
-    if (s.forwardedHr) forwarded++;
+    // Avg. Response Time
+    if (
+      session.avgResponseTime !== undefined &&
+      session.avgResponseTime !== null &&
+      session.avgResponseTime >= 0
+    ) {
+      totalResponseTime += session.avgResponseTime;
+      validSessionsForResponseTime++;
+    }
 
-    if (s.sentiment != null) {
-      totalSentiment += s.sentiment;
-      sentimentCount++;
+    // Escalated and Forwarded
+    if (session.escalated) escalatedCount++;
+    if (session.forwardedHr) forwardedHrCount++;
 
-      // Classify sentiment
-      if (s.sentiment > 0.3) {
-        sentimentPositive++;
-      } else if (s.sentiment < -0.3) {
-        sentimentNegative++;
-      } else {
-        sentimentNeutral++;
+    // Sentiment
+    if (session.sentiment !== undefined && session.sentiment !== null) {
+      // Example thresholds, adjust as needed
+      if (session.sentiment > 0.3) sentimentPositiveCount++;
+      else if (session.sentiment < -0.3) sentimentNegativeCount++;
+      else sentimentNeutralCount++;
+    }
+
+    // Sentiment Alert Check
+    if (
+      companyConfig.sentimentAlert !== undefined &&
+      session.sentiment !== undefined &&
+      session.sentiment !== null &&
+      session.sentiment < companyConfig.sentimentAlert
+    ) {
+      alerts++;
+    }
+
+    // Tokens
+    if (session.tokens !== undefined && session.tokens !== null) {
+      totalTokens += session.tokens;
+    }
+    if (session.tokensEur !== undefined && session.tokensEur !== null) {
+      totalTokensEur += session.tokensEur;
+    }
+
+    // Daily metrics
+    const day = new Date(session.startTime).toISOString().split("T")[0];
+    byDay[day] = (byDay[day] || 0) + 1; // Sessions per day
+    if (session.tokens !== undefined && session.tokens !== null) {
+      tokensByDay[day] = (tokensByDay[day] || 0) + session.tokens;
+    }
+    if (session.tokensEur !== undefined && session.tokensEur !== null) {
+      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + session.tokensEur;
+    }
+
+    // Category metrics
+    if (session.category) {
+      byCategory[session.category] = (byCategory[session.category] || 0) + 1;
+    }
+
+    // Language metrics
+    if (session.language) {
+      byLanguage[session.language] = (byLanguage[session.language] || 0) + 1;
+    }
+
+    // Country metrics
+    if (session.country) {
+      byCountry[session.country] = (byCountry[session.country] || 0) + 1;
+    }
+
+    // Word Cloud Data (from initial message and transcript content)
+    const processTextForWordCloud = (text: string | undefined | null) => {
+      if (!text) return;
+      const words = text
+        .toLowerCase()
+        .replace(/[^\w\s'-]/gi, "")
+        .split(/\s+/); // Keep apostrophes and hyphens
+      for (const word of words) {
+        const cleanedWord = word.replace(/^['-]|['-]$/g, ""); // Remove leading/trailing apostrophes/hyphens
+        if (
+          cleanedWord &&
+          !stopWords.has(cleanedWord) &&
+          cleanedWord.length > 2
+        ) {
+          wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
+        }
       }
-    }
-
-    if (s.avgResponseTime != null) {
-      totalResponse += s.avgResponseTime;
-      responseCount++;
-    }
-
-    totalTokens += s.tokens || 0;
-    totalTokensEur += s.tokensEur || 0;
-
-    // Process transcript for WordCloud
-    if (s.transcriptContent) {
-      const words = s.transcriptContent.toLowerCase().match(/\b\w+\b/g); // Split into words, lowercase
-      if (words) {
-        words.forEach((word) => {
-          const cleanedWord = word.replace(/[^a-z0-9]/gi, ""); // Remove punctuation
-          if (
-            cleanedWord &&
-            !stopWords.has(cleanedWord) &&
-            cleanedWord.length > 2
-          ) {
-            // Check if not a stop word and length > 2
-            wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
-          }
-        });
-      }
-    }
-  });
-
-  // Now add sentiment alert logic:
-  let belowThreshold = 0;
-  const threshold = companyConfig.sentimentAlert ?? null;
-  if (threshold != null) {
-    for (const s of sessions) {
-      if (s.sentiment != null && s.sentiment < threshold) belowThreshold++;
-    }
+    };
+    processTextForWordCloud(session.initialMsg);
+    processTextForWordCloud(session.transcriptContent);
   }
 
-  // Calculate average sessions per day
-  const dayCount = Object.keys(byDay).length;
-  const avgSessionsPerDay = dayCount > 0 ? total / dayCount : 0;
-
-  // Calculate average session length
+  const uniqueUsers = uniqueUserIds.size;
   const avgSessionLength =
-    durationCount > 0 ? totalDuration / durationCount : null;
+    validSessionsForDuration > 0
+      ? totalSessionDuration / validSessionsForDuration / 1000 // Convert ms to minutes
+      : 0;
+  const avgResponseTime =
+    validSessionsForResponseTime > 0
+      ? totalResponseTime / validSessionsForResponseTime
+      : 0; // in seconds
 
-  // Prepare wordCloudData
   const wordCloudData: WordCloudWord[] = Object.entries(wordCounts)
-    .map(([text, value]) => ({ text, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 500); // Take top 500 words
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 50) // Top 50 words
+    .map(([text, value]) => ({ text, value }));
+
+  // Calculate avgSessionsPerDay
+  const numDaysWithSessions = Object.keys(byDay).length;
+  const avgSessionsPerDay =
+    numDaysWithSessions > 0 ? totalSessions / numDaysWithSessions : 0;
+
+  // Calculate trends
+  const totalSessionsTrend = calculateTrendPercentage(
+    totalSessions,
+    mockPreviousPeriodData.totalSessions
+  );
+  const uniqueUsersTrend = calculateTrendPercentage(
+    uniqueUsers,
+    mockPreviousPeriodData.uniqueUsers
+  );
+  const avgSessionLengthTrend = calculateTrendPercentage(
+    avgSessionLength,
+    mockPreviousPeriodData.avgSessionLength
+  );
+  const avgResponseTimeTrend = calculateTrendPercentage(
+    avgResponseTime,
+    mockPreviousPeriodData.avgResponseTime
+  );
+
+  // console.log("Debug metrics calculation:", {
+  //   totalSessionDuration,
+  //   validSessionsForDuration,
+  //   calculatedAvgSessionLength: avgSessionLength,
+  // });
 
   return {
-    totalSessions: total,
-    avgSessionsPerDay,
-    avgSessionLength,
-    days: byDay,
-    languages: byLanguage,
-    categories: byCategory, // This will be empty if we are not using categories for word cloud
-    countries: byCountry, // Added countries to the result
-    belowThresholdCount: belowThreshold,
-    // Additional metrics not in the interface - using type assertion
-    escalatedCount: escalated,
-    forwardedCount: forwarded,
-    avgSentiment: sentimentCount ? totalSentiment / sentimentCount : undefined,
-    avgResponseTime: responseCount ? totalResponse / responseCount : undefined,
-    totalTokens,
-    totalTokensEur,
-    sentimentThreshold: threshold,
-    lastUpdated: Date.now(), // Add current timestamp
-
-    // New metrics for enhanced dashboard
-    sentimentPositiveCount: sentimentPositive,
-    sentimentNeutralCount: sentimentNeutral,
-    sentimentNegativeCount: sentimentNegative,
+    totalSessions,
+    uniqueUsers,
+    avgSessionLength, // Corrected to match MetricsResult interface
+    avgResponseTime, // Corrected to match MetricsResult interface
+    escalatedCount,
+    forwardedCount: forwardedHrCount, // Corrected to match MetricsResult interface (forwardedCount)
+    sentimentPositiveCount,
+    sentimentNeutralCount,
+    sentimentNegativeCount,
+    days: byDay, // Corrected to match MetricsResult interface (days)
+    categories: byCategory, // Corrected to match MetricsResult interface (categories)
+    languages: byLanguage, // Corrected to match MetricsResult interface (languages)
+    countries: byCountry, // Corrected to match MetricsResult interface (countries)
     tokensByDay,
     tokensCostByDay,
-    wordCloudData, // Added word cloud data
+    totalTokens,
+    totalTokensEur,
+    wordCloudData,
+    belowThresholdCount: alerts, // Corrected to match MetricsResult interface (belowThresholdCount)
+    avgSessionsPerDay, // Added to satisfy MetricsResult interface
+    // Map trend values to the expected property names in MetricsResult
+    sessionTrend: totalSessionsTrend,
+    usersTrend: uniqueUsersTrend,
+    avgSessionTimeTrend: avgSessionLengthTrend,
+    // For response time, a negative trend is actually positive (faster responses are better)
+    avgResponseTimeTrend: -avgResponseTimeTrend, // Invert as lower response time is better
+    // Additional fields
+    sentimentThreshold: companyConfig.sentimentAlert,
+    lastUpdated: Date.now(),
+    totalSessionDuration,
+    validSessionsForDuration,
   };
 }

@@ -26,13 +26,13 @@ const eslintConfig = [
       "coverage/",
     ],
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-unused-vars": "warn",
-      "react/no-unescaped-entities": "off",
-      "no-console": "warn",
-      "no-trailing-spaces": "error",
+      "react/no-unescaped-entities": "warn",
+      "no-console": "off",
+      "no-trailing-spaces": "warn",
       "prefer-const": "error",
-      "no-unused-vars": "off",
+      "no-unused-vars": "warn",
     },
   },
 ];
