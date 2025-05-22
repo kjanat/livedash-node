@@ -82,6 +82,7 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
                     : "text-orange-500"
               }`}
             >
+              {/* TODO: Ensure sentiment display is accurate and potentially use icons/color-coding more explicitly */}
               {session.sentiment > 0.3
                 ? "Positive"
                 : session.sentiment < -0.3
@@ -115,6 +116,7 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           session.avgResponseTime !== undefined && (
             <div className="flex justify-between border-b pb-2">
               <span className="text-gray-600">Avg Response Time:</span>
+              {/* TODO: Populate average response time, ensure formatting (e.g., "s" or "ms") */}
               <span className="font-medium">
                 {session.avgResponseTime.toFixed(2)}s
               </span>
@@ -169,3 +171,5 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
     </div>
   );
 }
+
+// TODO: Review and finalize this component. Consider renaming to SessionDetails.tsx and removing/archiving SessionDetails.tsx and SessionDetails.tsx.bak.

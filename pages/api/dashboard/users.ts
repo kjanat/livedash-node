@@ -44,7 +44,7 @@ export default async function handler(
       return res.status(400).json({ error: "Missing fields" });
     const exists = await prisma.user.findUnique({ where: { email } });
     if (exists) return res.status(409).json({ error: "Email exists" });
-    const tempPassword = crypto.randomBytes(12).toString('base64').slice(0, 12); // secure random initial password
+    const tempPassword = crypto.randomBytes(12).toString("base64").slice(0, 12); // secure random initial password
     await prisma.user.create({
       data: {
         email,
@@ -53,7 +53,7 @@ export default async function handler(
         role,
       },
     });
-    // TODO: Email user their temp password (stub, for demo)
+    // TODO: Email user their temp password (stub, for demo) - Implement a robust and secure email sending mechanism. Consider using a transactional email service.
     res.json({ ok: true, tempPassword });
   } else res.status(405).end();
 }
