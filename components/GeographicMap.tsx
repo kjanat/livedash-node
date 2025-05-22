@@ -99,14 +99,13 @@ export default function GeographicMap({
   }
 
   return (
-    <div className="h-full w-full" style={{ height }}>
-      {Object.keys(countries).length > 0 ? (
-        <Map countryData={countryData} maxCount={maxCount} />
-      ) : (
-        <div className="h-full w-full bg-gray-100 flex items-center justify-center">
-          No geographic data available
-        </div>
-      )}
+    <div style={{ height: `${height}px`, width: "100%" }} className="relative">
+      <Map countryData={countryData} maxCount={maxCount} />
+      <style jsx global>{`
+        .leaflet-control-attribution {
+          display: none !important;
+        }
+      `}</style>
     </div>
   );
 }

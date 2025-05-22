@@ -97,28 +97,30 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
                 const ctx = chart.ctx;
                 ctx.restore();
 
+                const centerX = width / 2;
+                const centerY = height / 2;
+
                 // Title text
                 if (centerText.title) {
-                  ctx.font = "14px Arial";
-                  ctx.fillStyle = "#6B7280"; // text-gray-500
-                  ctx.textBaseline = "middle";
+                  ctx.font = "1rem sans-serif"; // Consistent font
+                  ctx.fillStyle = "#6B7280"; // Tailwind gray-500
                   ctx.textAlign = "center";
-                  ctx.fillText(centerText.title, width / 2, height / 2 - 10);
+                  ctx.textBaseline = "middle"; // Align vertically
+                  ctx.fillText(centerText.title, centerX, centerY - 10); // Adjust Y offset
                 }
 
                 // Value text
                 if (centerText.value !== undefined) {
-                  ctx.font = "bold 20px Arial";
-                  ctx.fillStyle = "#111827"; // text-gray-900
-                  ctx.textBaseline = "middle";
+                  ctx.font = "bold 1.5rem sans-serif"; // Consistent font, larger
+                  ctx.fillStyle = "#1F2937"; // Tailwind gray-800
                   ctx.textAlign = "center";
+                  ctx.textBaseline = "middle"; // Align vertically
                   ctx.fillText(
-                    String(centerText.value),
-                    width / 2,
-                    height / 2 + 10
-                  );
+                    centerText.value.toString(),
+                    centerX,
+                    centerY + 15
+                  ); // Adjust Y offset
                 }
-
                 ctx.save();
               },
             },

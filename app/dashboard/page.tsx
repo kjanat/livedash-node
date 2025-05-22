@@ -384,7 +384,7 @@ function DashboardContent() {
       </div>
       {/* Word Cloud and World Map */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow">
+        <div className="bg-white p-6 rounded-xl shadow overflow-hidden">
           <h3 className="font-bold text-lg text-gray-800 mb-4">
             Categories Word Cloud
           </h3>

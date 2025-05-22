@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import { getLocalizedLanguageName } from "../lib/localization"; // Corrected import path
 
 interface SessionsData {
   [date: string]: number;
@@ -173,25 +174,16 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
       topLanguages.push(["Other", otherCount]);
     }
 
-    // Use Intl.DisplayNames to get localized language names from ISO codes
-    const languageDisplayNames = new Intl.DisplayNames(["en"], {
-      type: "language",
-    });
-
     // Store original ISO codes for tooltip
     const isoCodes = topLanguages.map(([lang]) => lang);
 
     const labels = topLanguages.map(([lang]) => {
-      // Check if this is a valid ISO 639-1 language code
-      if (lang && lang !== "Other" && /^[a-z]{2}$/.test(lang)) {
-        try {
-          return languageDisplayNames.of(lang);
-        } catch {
-          // Empty catch block - no need to name the error parameter
-          return lang; // Fallback to code if display name can't be resolved
-        }
+      if (lang === "Other") {
+        return "Other";
       }
-      return lang; // Return original string for "Other" or invalid codes
+      // Use getLocalizedLanguageName for robust name resolution
+      // Pass "en" to maintain consistency with previous behavior if navigator.language is different
+      return getLocalizedLanguageName(lang, "en");
     });
 
     const data = topLanguages.map(([, count]) => count);
@@ -231,15 +223,16 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
                 const label = context.label || "";
                 const value = context.formattedValue || "";
                 const index = context.dataIndex;
-                const isoCode = isoCodes[index];
+                const originalIsoCode = isoCodes[index]; // Get the original code
 
-                // Only show ISO code if it's not "Other" and it's a valid 2-letter code
+                // Only show ISO code if it's not "Other"
+                // and it's a valid 2-letter code (check lowercase version)
                 if (
-                  isoCode &&
-                  isoCode !== "Other" &&
-                  /^[a-z]{2}$/.test(isoCode)
+                  originalIsoCode &&
+                  originalIsoCode !== "Other" &&
+                  /^[a-z]{2}$/.test(originalIsoCode.toLowerCase())
                 ) {
-                  return `${label} (${isoCode.toUpperCase()}): ${value}`;
+                  return `${label} (${originalIsoCode.toUpperCase()}): ${value}`;
                 }
 
                 return `${label}: ${value}`;

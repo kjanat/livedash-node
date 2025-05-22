@@ -39,15 +39,15 @@ export default function UserManagement({ session }: UserManagementProps) {
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">
       <h2 className="font-bold text-lg mb-4">User Management</h2>
-      <div className="flex gap-2 mb-3">
+      <div className="flex flex-col sm:flex-row gap-2 mb-3">
         <input
-          className="border px-3 py-2 rounded"
+          className="border px-3 py-2 rounded w-full sm:w-auto"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
         <select
-          className="border px-3 py-2 rounded"
+          className="border px-3 py-2 rounded w-full sm:w-auto"
           value={role}
           onChange={(e) => setRole(e.target.value)}
         >
@@ -56,7 +56,7 @@ export default function UserManagement({ session }: UserManagementProps) {
           <option value="auditor">Auditor</option>
         </select>
         <button
-          className="bg-blue-600 text-white rounded px-4"
+          className="bg-blue-600 text-white rounded px-4 py-2 sm:py-0 w-full sm:w-auto"
           onClick={inviteUser}
         >
           Invite
