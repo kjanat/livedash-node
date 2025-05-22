@@ -21,9 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="bg-gray-100 min-h-screen font-sans">
-        <Providers>
-          <div className="max-w-5xl mx-auto py-8">{children}</div>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

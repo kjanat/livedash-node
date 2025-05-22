@@ -24,6 +24,12 @@ export default async function handler(
       data: { csvUrl },
     });
     res.json({ ok: true });
+  } else if (req.method === "GET") {
+    // Get company data
+    const company = await prisma.company.findUnique({
+      where: { id: user.companyId },
+    });
+    res.json({ company });
   } else {
     res.status(405).end();
   }

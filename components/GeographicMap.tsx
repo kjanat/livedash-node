@@ -79,11 +79,11 @@ export default function GeographicMap({
 
   // Process country data when client is ready and dependencies change
   useEffect(() => {
-    if (!isClient) return;
+    if (!isClient || !countries) return;
 
     try {
       // Generate CountryData array for the Map component
-      const data: CountryData[] = Object.entries(countries)
+      const data: CountryData[] = Object.entries(countries || {})
         // Only include countries with known coordinates
         .filter(([code]) => {
           // If no coordinates found, log to help with debugging
@@ -115,8 +115,8 @@ export default function GeographicMap({
     }
   }, [countries, countryCoordinates, isClient]);
 
-  // Find the max count for scaling circles - handle empty countries object
-  const countryValues = Object.values(countries);
+  // Find the max count for scaling circles - handle empty or null countries object
+  const countryValues = countries ? Object.values(countries) : [];
   const maxCount = countryValues.length > 0 ? Math.max(...countryValues, 1) : 1;
 
   // Show loading state during SSR or until client-side rendering takes over
