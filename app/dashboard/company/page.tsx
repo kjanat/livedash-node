@@ -27,6 +27,9 @@ export default function CompanySettingsPage() {
           setCsvUrl(data.company.csvUrl || "");
           setCsvUsername(data.company.csvUsername || "");
           setSentimentThreshold(data.company.sentimentAlert?.toString() || "");
+          if (data.company.csvPassword) {
+            setCsvPassword(data.company.csvPassword);
+          }
         } catch (error) {
           console.error("Failed to fetch company settings:", error);
           setMessage("Failed to load company settings.");
