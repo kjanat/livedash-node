@@ -246,12 +246,12 @@ function DashboardContent() {
             </svg>
           }
           trend={{
-            value: metrics.sessionTrend,
+            value: metrics.sessionTrend ?? 0,
             label:
-              metrics.sessionTrend > 0
-                ? `${metrics.sessionTrend}% increase`
-                : `${Math.abs(metrics.sessionTrend || 0)}% decrease`,
-            positive: metrics.sessionTrend >= 0,
+              (metrics.sessionTrend ?? 0) > 0
+                ? `${metrics.sessionTrend ?? 0}% increase`
+                : `${Math.abs(metrics.sessionTrend ?? 0)}% decrease`,
+            isPositive: (metrics.sessionTrend ?? 0) >= 0,
           }}
         />
         <MetricCard
@@ -274,12 +274,12 @@ function DashboardContent() {
             </svg>
           }
           trend={{
-            value: metrics.usersTrend,
+            value: metrics.usersTrend ?? 0,
             label:
               metrics.usersTrend > 0
                 ? `${metrics.usersTrend}% increase`
                 : `${Math.abs(metrics.usersTrend || 0)}% decrease`,
-            positive: metrics.usersTrend >= 0,
+            isPositive: metrics.usersTrend >= 0,
           }}
         />
         <MetricCard
@@ -302,12 +302,12 @@ function DashboardContent() {
             </svg>
           }
           trend={{
-            value: metrics.sessionTimeTrend,
+            value: metrics.sessionTimeTrend ?? 0,
             label:
               metrics.sessionTimeTrend > 0
                 ? `${metrics.sessionTimeTrend}% increase`
                 : `${Math.abs(metrics.sessionTimeTrend || 0)}% decrease`,
-            positive: metrics.sessionTimeTrend >= 0,
+            isPositive: metrics.sessionTimeTrend >= 0,
           }}
         />
         <MetricCard
@@ -330,12 +330,12 @@ function DashboardContent() {
             </svg>
           }
           trend={{
-            value: metrics.responseTimeTrend,
+            value: metrics.avgResponseTimeTrend ?? 0,
             label:
-              metrics.responseTimeTrend > 0
-                ? `${metrics.responseTimeTrend}% increase`
-                : `${Math.abs(metrics.responseTimeTrend || 0)}% decrease`,
-            positive: metrics.responseTimeTrend <= 0, // Lower response time is better
+              (metrics.avgResponseTimeTrend ?? 0) > 0
+                ? `${metrics.avgResponseTimeTrend ?? 0}% increase`
+                : `${Math.abs(metrics.avgResponseTimeTrend ?? 0)}% decrease`,
+            isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0, // Lower response time is better
           }}
         />
       </div>
@@ -345,7 +345,7 @@ function DashboardContent() {
           <h3 className="font-bold text-lg text-gray-800 mb-4">
             Sessions Over Time
           </h3>
-          <SessionsLineChart sessions={metrics.sessionsByDate || {}} />
+          <SessionsLineChart sessionsPerDay={metrics.days} />
         </div>
         <div className="bg-white p-6 rounded-xl shadow">
           <h3 className="font-bold text-lg text-gray-800 mb-4">

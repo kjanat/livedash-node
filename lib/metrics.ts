@@ -314,7 +314,7 @@ export function sessionMetrics(
   const byDay: DayMetrics = {};
   const byCategory: CategoryMetrics = {};
   const byLanguage: LanguageMetrics = {};
-  const byCountry: CountryMetrics = {}; // Added for country data
+  const byCountry: CountryMetrics = {};
   const tokensByDay: DayMetrics = {};
   const tokensCostByDay: DayMetrics = {};
 
@@ -322,49 +322,68 @@ export function sessionMetrics(
     forwarded = 0;
   let totalSentiment = 0,
     sentimentCount = 0;
-  let totalResponse = 0,
-    responseCount = 0;
+  let totalResponseTimeCurrent = 0, // Renamed to avoid conflict
+    responseCountCurrent = 0; // Renamed to avoid conflict
   let totalTokens = 0,
     totalTokensEur = 0;
 
-  // For sentiment distribution
   let sentimentPositive = 0,
     sentimentNegative = 0,
     sentimentNeutral = 0;
 
-  // Calculate total session duration in minutes
-  let totalDuration = 0;
-  let durationCount = 0;
+  let totalDurationCurrent = 0, // Renamed to avoid conflict
+    durationCountCurrent = 0; // Renamed to avoid conflict
 
-  const wordCounts: { [key: string]: number } = {}; // For WordCloud
+  const wordCounts: { [key: string]: number } = {};
+  const uniqueUserIdsCurrent = new Set<string>();
+
+  let minDateCurrentPeriod = new Date();
+  if (sessions.length > 0) {
+    minDateCurrentPeriod = new Date(
+      Math.min(...sessions.map((s) => s.startTime.getTime()))
+    );
+  }
+
+  const prevPeriodEndDate = new Date(minDateCurrentPeriod);
+  prevPeriodEndDate.setDate(prevPeriodEndDate.getDate() - 1);
+  const prevPeriodStartDate = new Date(prevPeriodEndDate);
+  prevPeriodStartDate.setDate(prevPeriodStartDate.getDate() - 6); // 7-day previous period
+
+  let prevPeriodSessionsCount = 0;
+  const prevPeriodUniqueUserIds = new Set<string>();
+  let prevPeriodTotalDuration = 0;
+  let prevPeriodDurationCount = 0;
+  let prevPeriodTotalResponseTime = 0;
+  let prevPeriodResponseCount = 0;
 
   sessions.forEach((s) => {
-    const day = s.startTime.toISOString().slice(0, 10);
+    const sessionDate = s.startTime;
+    const day = sessionDate.toISOString().slice(0, 10);
+
+    // Aggregate current period data
     byDay[day] = (byDay[day] || 0) + 1;
+    if (s.userId) {
+      uniqueUserIdsCurrent.add(s.userId);
+    }
 
     if (s.category) byCategory[s.category] = (byCategory[s.category] || 0) + 1;
     if (s.language) byLanguage[s.language] = (byLanguage[s.language] || 0) + 1;
-    if (s.country) byCountry[s.country] = (byCountry[s.country] || 0) + 1; // Populate byCountry
+    if (s.country) byCountry[s.country] = (byCountry[s.country] || 0) + 1;
 
-    // Process token usage by day
     if (s.tokens) {
       tokensByDay[day] = (tokensByDay[day] || 0) + s.tokens;
     }
-
-    // Process token cost by day
     if (s.tokensEur) {
       tokensCostByDay[day] = (tokensCostByDay[day] || 0) + s.tokensEur;
     }
 
     if (s.endTime) {
       const duration =
-        (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60); // minutes
-
-      // Sanity check: Only include sessions with reasonable durations (less than 24 hours)
-      const MAX_REASONABLE_DURATION = 24 * 60; // 24 hours in minutes
+        (s.endTime.getTime() - sessionDate.getTime()) / (1000 * 60); // minutes
+      const MAX_REASONABLE_DURATION = 24 * 60;
       if (duration > 0 && duration < MAX_REASONABLE_DURATION) {
-        totalDuration += duration;
-        durationCount++;
+        totalDurationCurrent += duration;
+        durationCountCurrent++;
       }
     }
 
@@ -374,45 +393,98 @@ export function sessionMetrics(
     if (s.sentiment != null) {
       totalSentiment += s.sentiment;
       sentimentCount++;
-
-      // Classify sentiment
-      if (s.sentiment > 0.3) {
-        sentimentPositive++;
-      } else if (s.sentiment < -0.3) {
-        sentimentNegative++;
-      } else {
-        sentimentNeutral++;
-      }
+      if (s.sentiment > 0.3) sentimentPositive++;
+      else if (s.sentiment < -0.3) sentimentNegative++;
+      else sentimentNeutral++;
     }
 
     if (s.avgResponseTime != null) {
-      totalResponse += s.avgResponseTime;
-      responseCount++;
+      totalResponseTimeCurrent += s.avgResponseTime;
+      responseCountCurrent++;
     }
 
     totalTokens += s.tokens || 0;
     totalTokensEur += s.tokensEur || 0;
 
-    // Process transcript for WordCloud
     if (s.transcriptContent) {
-      const words = s.transcriptContent.toLowerCase().match(/\b\w+\b/g); // Split into words, lowercase
+      const words = s.transcriptContent.toLowerCase().match(/\b\w+\b/g);
       if (words) {
         words.forEach((word) => {
-          const cleanedWord = word.replace(/[^a-z0-9]/gi, ""); // Remove punctuation
+          const cleanedWord = word.replace(/[^a-z0-9]/gi, "");
           if (
             cleanedWord &&
             !stopWords.has(cleanedWord) &&
             cleanedWord.length > 2
           ) {
-            // Check if not a stop word and length > 2
             wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
           }
         });
       }
     }
+
+    // Aggregate previous period data (if session falls within the previous period range)
+    if (
+      sessionDate >= prevPeriodStartDate &&
+      sessionDate <= prevPeriodEndDate
+    ) {
+      prevPeriodSessionsCount++;
+      if (s.userId) {
+        prevPeriodUniqueUserIds.add(s.userId);
+      }
+      if (s.endTime) {
+        const duration =
+          (s.endTime.getTime() - sessionDate.getTime()) / (1000 * 60);
+        const MAX_REASONABLE_DURATION = 24 * 60;
+        if (duration > 0 && duration < MAX_REASONABLE_DURATION) {
+          prevPeriodTotalDuration += duration;
+          prevPeriodDurationCount++;
+        }
+      }
+      if (s.avgResponseTime != null) {
+        prevPeriodTotalResponseTime += s.avgResponseTime;
+        prevPeriodResponseCount++;
+      }
+    }
   });
 
-  // Now add sentiment alert logic:
+  const calculateTrend = (current: number, previous: number): number => {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
+    const trend = ((current - previous) / previous) * 100;
+    return parseFloat(trend.toFixed(1));
+  };
+
+  const sessionTrend = calculateTrend(total, prevPeriodSessionsCount);
+  const usersTrend = calculateTrend(
+    uniqueUserIdsCurrent.size,
+    prevPeriodUniqueUserIds.size
+  );
+
+  const avgSessionLengthCurrent =
+    durationCountCurrent > 0 ? totalDurationCurrent / durationCountCurrent : 0;
+  const avgSessionLengthPrevious =
+    prevPeriodDurationCount > 0
+      ? prevPeriodTotalDuration / prevPeriodDurationCount
+      : 0;
+  const avgSessionTimeTrend = calculateTrend(
+    avgSessionLengthCurrent,
+    avgSessionLengthPrevious
+  );
+
+  const avgResponseTimeCurrentPeriod =
+    responseCountCurrent > 0
+      ? totalResponseTimeCurrent / responseCountCurrent
+      : 0;
+  const avgResponseTimePreviousPeriod =
+    prevPeriodResponseCount > 0
+      ? prevPeriodTotalResponseTime / prevPeriodResponseCount
+      : 0;
+  const avgResponseTimeTrend = calculateTrend(
+    avgResponseTimeCurrentPeriod,
+    avgResponseTimePreviousPeriod
+  );
+
   let belowThreshold = 0;
   const threshold = companyConfig.sentimentAlert ?? null;
   if (threshold != null) {
@@ -421,45 +493,43 @@ export function sessionMetrics(
     }
   }
 
-  // Calculate average sessions per day
   const dayCount = Object.keys(byDay).length;
   const avgSessionsPerDay = dayCount > 0 ? total / dayCount : 0;
 
-  // Calculate average session length
-  const avgSessionLength =
-    durationCount > 0 ? totalDuration / durationCount : null;
-
-  // Prepare wordCloudData
   const wordCloudData: WordCloudWord[] = Object.entries(wordCounts)
     .map(([text, value]) => ({ text, value }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 500); // Take top 500 words
+    .slice(0, 500);
 
   return {
     totalSessions: total,
-    avgSessionsPerDay,
-    avgSessionLength,
+    avgSessionsPerDay: parseFloat(avgSessionsPerDay.toFixed(1)),
+    avgSessionLength: parseFloat(avgSessionLengthCurrent.toFixed(1)),
     days: byDay,
     languages: byLanguage,
-    categories: byCategory, // This will be empty if we are not using categories for word cloud
-    countries: byCountry, // Added countries to the result
+    categories: byCategory,
+    countries: byCountry,
     belowThresholdCount: belowThreshold,
-    // Additional metrics not in the interface - using type assertion
     escalatedCount: escalated,
     forwardedCount: forwarded,
-    avgSentiment: sentimentCount ? totalSentiment / sentimentCount : undefined,
-    avgResponseTime: responseCount ? totalResponse / responseCount : undefined,
+    avgSentiment: sentimentCount
+      ? parseFloat((totalSentiment / sentimentCount).toFixed(2))
+      : undefined,
+    avgResponseTime: parseFloat(avgResponseTimeCurrentPeriod.toFixed(2)),
     totalTokens,
     totalTokensEur,
     sentimentThreshold: threshold,
-    lastUpdated: Date.now(), // Add current timestamp
-
-    // New metrics for enhanced dashboard
+    lastUpdated: Date.now(),
     sentimentPositiveCount: sentimentPositive,
     sentimentNeutralCount: sentimentNeutral,
     sentimentNegativeCount: sentimentNegative,
     tokensByDay,
     tokensCostByDay,
-    wordCloudData, // Added word cloud data
+    wordCloudData,
+    uniqueUsers: uniqueUserIdsCurrent.size,
+    sessionTrend,
+    usersTrend,
+    avgSessionTimeTrend,
+    avgResponseTimeTrend,
   };
 }

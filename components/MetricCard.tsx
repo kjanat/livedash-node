@@ -4,7 +4,7 @@ interface MetricCardProps {
   title: string;
   value: string | number | null | undefined;
   description?: string;
-  icon?: string;
+  icon?: React.ReactNode;
   trend?: {
     value: number;
     label?: string;

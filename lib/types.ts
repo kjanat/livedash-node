@@ -131,6 +131,13 @@ export interface MetricsResult {
   tokensByDay?: DayMetrics;
   tokensCostByDay?: DayMetrics;
   wordCloudData?: WordCloudWord[]; // Added for transcript-based word cloud
+
+  // Properties for overview page cards and trends
+  uniqueUsers?: number;
+  sessionTrend?: number; // e.g., percentage change in totalSessions
+  usersTrend?: number; // e.g., percentage change in uniqueUsers
+  avgSessionTimeTrend?: number; // e.g., percentage change in avgSessionLength
+  avgResponseTimeTrend?: number; // e.g., percentage change in avgResponseTime
 }
 
 export interface ApiResponse<T> {

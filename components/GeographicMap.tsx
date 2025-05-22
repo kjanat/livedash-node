@@ -44,7 +44,6 @@ const getCountryCoordinates = (): Record<string, [number, number]> => {
 
     return coordinates;
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error loading country coordinates:", error);
     return coordinates;
   }
@@ -88,8 +87,6 @@ export default function GeographicMap({
         .filter(([code]) => {
           // If no coordinates found, log to help with debugging
           if (!countryCoordinates[code] && !DEFAULT_COORDINATES[code]) {
-            // eslint-disable-next-line no-console
-            console.warn(`Missing coordinates for country code: ${code}`);
             return false;
           }
           return true;
@@ -102,14 +99,12 @@ export default function GeographicMap({
         }));
 
       // Log for debugging
-      // eslint-disable-next-line no-console
       console.log(
         `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
       );
 
       setCountryData(data);
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("Error processing geographic data:", error);
       setCountryData([]);
     }

@@ -77,7 +77,7 @@ export default function CompanySettingsPage() {
     return (
       <div className="text-center py-10 bg-white rounded-xl shadow p-6">
         <h2 className="font-bold text-xl text-red-600 mb-2">Access Denied</h2>
-        <p>You don't have permission to view company settings.</p>
+        <p>You don&apos;t have permission to view company settings.</p>
       </div>
     );
   }
@@ -103,6 +103,7 @@ export default function CompanySettingsPage() {
             e.preventDefault();
             handleSave();
           }}
+          autoComplete="off"
         >
           <div className="grid gap-2">
             <label className="font-medium text-gray-700">
@@ -114,6 +115,7 @@ export default function CompanySettingsPage() {
               value={csvUrl}
               onChange={(e) => setCsvUrl(e.target.value)}
               placeholder="https://example.com/data.csv"
+              autoComplete="off"
             />
           </div>
 
@@ -125,6 +127,7 @@ export default function CompanySettingsPage() {
               value={csvUsername}
               onChange={(e) => setCsvUsername(e.target.value)}
               placeholder="Username for CSV access (if needed)"
+              autoComplete="off"
             />
           </div>
 
@@ -136,6 +139,7 @@ export default function CompanySettingsPage() {
               value={csvPassword}
               onChange={(e) => setCsvPassword(e.target.value)}
               placeholder="Password will be updated only if provided"
+              autoComplete="new-password"
             />
             <p className="text-sm text-gray-500">
               Leave blank to keep current password
@@ -154,6 +158,7 @@ export default function CompanySettingsPage() {
               placeholder="Threshold value (0-100)"
               min="0"
               max="100"
+              autoComplete="off"
             />
             <p className="text-sm text-gray-500">
               Percentage of negative sentiment sessions to trigger alert (0-100)

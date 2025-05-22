@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image"; // Import the Next.js Image component
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
@@ -190,10 +191,13 @@ export default function Sidebar() {
         <div
           className={`relative ${isExpanded ? "w-16" : "w-10"} aspect-square mb-1`}
         >
-          <img
+          <Image
             src="/favicon.svg"
             alt="LiveDash Logo"
-            className="w-full h-full transition-all duration-300"
+            fill
+            style={{ objectFit: "contain" }}
+            className="transition-all duration-300"
+            priority // Added priority prop for LCP optimization
           />
         </div>
         {isExpanded && (
@@ -213,7 +217,7 @@ export default function Sidebar() {
             <div
               className="fixed ml-6 w-auto p-2 min-w-max rounded-md shadow-md text-xs font-medium
               text-white bg-gray-800 z-50
-              invisible opacity-0 -translate-x-3 transition-all 
+              invisible opacity-0 -translate-x-3 transition-all
               group-hover:visible group-hover:opacity-100 group-hover:translate-x-0"
             >
               {isExpanded ? "Collapse sidebar" : "Expand sidebar"}
@@ -292,8 +296,8 @@ export default function Sidebar() {
           ) : (
             <div
               className="fixed ml-6 w-auto p-2 min-w-max rounded-md shadow-md text-xs font-medium
-              text-white bg-gray-800 z-50 
-              invisible opacity-0 -translate-x-3 transition-all 
+              text-white bg-gray-800 z-50
+              invisible opacity-0 -translate-x-3 transition-all
               group-hover:visible group-hover:opacity-100 group-hover:translate-x-0"
             >
               Logout

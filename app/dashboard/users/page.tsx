@@ -74,7 +74,7 @@ export default function UserManagementPage() {
     return (
       <div className="text-center py-10 bg-white rounded-xl shadow p-6">
         <h2 className="font-bold text-xl text-red-600 mb-2">Access Denied</h2>
-        <p>You don't have permission to view user management.</p>
+        <p>You don&apos;t have permission to view user management.</p>
       </div>
     );
   }
@@ -102,6 +102,7 @@ export default function UserManagementPage() {
               e.preventDefault();
               inviteUser();
             }}
+            autoComplete="off" // Disable autofill for the form
           >
             <div className="grid gap-2">
               <label className="font-medium text-gray-700">Email</label>
@@ -112,6 +113,7 @@ export default function UserManagementPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="off" // Disable autofill for this input
               />
             </div>
 
