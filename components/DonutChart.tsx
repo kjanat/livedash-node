@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import Chart, { Point, BubbleDataPoint } from "chart.js/auto";
+import ChartJS, { Point, BubbleDataPoint } from "chart.js/auto";
 
 interface DonutChartProps {
   data: {
