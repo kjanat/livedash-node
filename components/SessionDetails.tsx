@@ -3,7 +3,6 @@
 import { ChatSession } from "../lib/types";
 import LanguageDisplay from "./LanguageDisplay";
 import CountryDisplay from "./CountryDisplay";
-import TranscriptViewer from "./TranscriptViewer";
 
 interface SessionDetailsProps {
   session: ChatSession;
@@ -143,15 +142,8 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         )}
 
-        {/* Display transcript using TranscriptViewer if content is available */}
-        {session.transcriptContent && session.transcriptContent.length > 0 && (
-          <TranscriptViewer
-            transcriptContent={session.transcriptContent}
-            transcriptUrl={session.fullTranscriptUrl}
-          />
-        )}
-
-        {/* Fallback to link only if we only have the URL but no content */}
+        {/* Transcript rendering is now handled by the parent page (app/dashboard/sessions/[id]/page.tsx) */}
+        {/* Fallback to link only if we only have the URL but no content - this might also be redundant if parent handles all transcript display */}
         {(!session.transcriptContent ||
           session.transcriptContent.length === 0) &&
           session.fullTranscriptUrl && (
