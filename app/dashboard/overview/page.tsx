@@ -253,10 +253,6 @@ function DashboardContent() {
           }
           trend={{
             value: metrics.sessionTrend ?? 0,
-            label:
-              (metrics.sessionTrend ?? 0) > 0
-                ? `${metrics.sessionTrend ?? 0}% increase`
-                : `${Math.abs(metrics.sessionTrend ?? 0)}% decrease`,
             isPositive: (metrics.sessionTrend ?? 0) >= 0,
           }}
         />
@@ -281,10 +277,6 @@ function DashboardContent() {
           }
           trend={{
             value: metrics.usersTrend ?? 0,
-            label:
-              (metrics.usersTrend ?? 0) > 0
-                ? `${metrics.usersTrend}% increase`
-                : `${Math.abs(metrics.usersTrend ?? 0)}% decrease`,
             isPositive: (metrics.usersTrend ?? 0) >= 0,
           }}
         />
@@ -309,10 +301,6 @@ function DashboardContent() {
           }
           trend={{
             value: metrics.avgSessionTimeTrend ?? 0,
-            label:
-              (metrics.avgSessionTimeTrend ?? 0) > 0
-                ? `${metrics.avgSessionTimeTrend}% increase`
-                : `${Math.abs(metrics.avgSessionTimeTrend ?? 0)}% decrease`,
             isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
           }}
         />
@@ -337,10 +325,6 @@ function DashboardContent() {
           }
           trend={{
             value: metrics.avgResponseTimeTrend ?? 0,
-            label:
-              (metrics.avgResponseTimeTrend ?? 0) > 0
-                ? `${metrics.avgResponseTimeTrend ?? 0}% increase`
-                : `${Math.abs(metrics.avgResponseTimeTrend ?? 0)}% decrease`,
             isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0, // Lower response time is better
           }}
         />
@@ -402,7 +386,9 @@ function DashboardContent() {
           <h3 className="font-bold text-lg text-gray-800 mb-4">
             Common Topics
           </h3>
-          <WordCloud words={getWordCloudData()} />
+          <div className="h-[300px]">
+            <WordCloud words={getWordCloudData()} width={500} height={400} />
+          </div>
         </div>
       </div>
 

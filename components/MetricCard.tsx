@@ -67,9 +67,6 @@ export default function MetricCard({
               >
                 {trend.isPositive !== false ? "↑" : "↓"}{" "}
                 {Math.abs(trend.value).toFixed(1)}%
-                {trend.label && (
-                  <span className="text-gray-500 ml-1">{trend.label}</span>
-                )}
               </span>
             )}
           </div>

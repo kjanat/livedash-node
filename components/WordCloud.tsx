@@ -11,20 +11,55 @@ interface WordCloudProps {
   }[];
   width?: number;
   height?: number;
+  minWidth?: number;
+  minHeight?: number;
 }
 
 export default function WordCloud({
   words,
-  width = 500,
-  height = 300,
+  width: initialWidth = 500,
+  height: initialHeight = 300,
+  minWidth = 200,
+  minHeight = 200,
 }: WordCloudProps) {
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [isClient, setIsClient] = useState(false);
+  const [dimensions, setDimensions] = useState({
+    width: initialWidth,
+    height: initialHeight,
+  });
 
+  // Set isClient to true on initial render
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  // Add effect to detect container size changes
+  useEffect(() => {
+    if (!containerRef.current || !isClient) return;
+
+    // Create ResizeObserver to detect size changes
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const { width, height } = entry.contentRect;
+        // Ensure minimum dimensions
+        const newWidth = Math.max(width, minWidth);
+        const newHeight = Math.max(height, minHeight);
+        setDimensions({ width: newWidth, height: newHeight });
+      }
+    });
+
+    // Start observing the container
+    resizeObserver.observe(containerRef.current);
+
+    // Cleanup
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [isClient, minWidth, minHeight]);
+
+  // Effect to render the word cloud whenever dimensions or words change
   useEffect(() => {
     if (!svgRef.current || !isClient || !words.length) return;
 
@@ -36,7 +71,7 @@ export default function WordCloud({
 
     // Configure the layout
     const layout = cloud()
-      .size([width, height])
+      .size([dimensions.width, dimensions.height])
       .words(
         words.map((d) => ({
           text: d.text,
@@ -53,7 +88,10 @@ export default function WordCloud({
     function draw(words: Word[]) {
       svg
         .append("g")
-        .attr("transform", `translate(${width / 2},${height / 2})`)
+        .attr(
+          "transform",
+          `translate(${dimensions.width / 2},${dimensions.height / 2})`
+        )
         .selectAll("text")
         .data(words)
         .enter()
@@ -87,7 +125,7 @@ export default function WordCloud({
     return () => {
       svg.selectAll("*").remove();
     };
-  }, [words, width, height, isClient]);
+  }, [words, dimensions, isClient]);
 
   if (!isClient) {
     return (
@@ -98,12 +136,21 @@ export default function WordCloud({
   }
 
   return (
-    <div className="flex justify-center w-full h-full">
+    <div
+      ref={containerRef}
+      className="flex justify-center w-full h-full"
+      style={{ minHeight: `${minHeight}px` }}
+    >
       <svg
         ref={svgRef}
-        width={width}
-        height={height}
+        width={dimensions.width}
+        height={dimensions.height}
+        className="w-full h-full"
         aria-label="Word cloud visualization of categories"
+        style={{
+          maxWidth: "100%",
+          maxHeight: "100%",
+        }}
       />
     </div>
   );
