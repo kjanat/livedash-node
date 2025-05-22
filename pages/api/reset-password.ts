@@ -34,12 +34,9 @@ export default async function handler(
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Invalid or expired token. Please request a new password reset.",
-        });
+      return res.status(400).json({
+        error: "Invalid or expired token. Please request a new password reset.",
+      });
     }
 
     const hash = await bcrypt.hash(password, 10);
@@ -59,10 +56,8 @@ export default async function handler(
   } catch (error) {
     console.error("Reset password error:", error); // Log the error for server-side debugging
     // Provide a generic error message to the client
-    return res
-      .status(500)
-      .json({
-        error: "An internal server error occurred. Please try again later.",
-      });
+    return res.status(500).json({
+      error: "An internal server error occurred. Please try again later.",
+    });
   }
 }

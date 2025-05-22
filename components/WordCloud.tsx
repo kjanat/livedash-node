@@ -2,15 +2,7 @@
 
 import { useRef, useEffect, useState } from "react";
 import { select } from "d3-selection";
-import cloud from "d3-cloud";
-
-interface CloudWord {
-  text: string;
-  size: number;
-  x?: number;
-  y?: number;
-  rotate?: number;
-}
+import cloud, { Word } from "d3-cloud";
 
 interface WordCloudProps {
   words: {
@@ -53,12 +45,12 @@ export default function WordCloud({
       )
       .padding(5)
       .rotate(() => (~~(Math.random() * 6) - 3) * 15) // Rotate between -45 and 45 degrees
-      .fontSize((d: CloudWord) => d.size)
+      .fontSize((d: Word) => d.size || 10)
       .on("end", draw);
 
     layout.start();
 
-    function draw(words: CloudWord[]) {
+    function draw(words: Word[]) {
       svg
         .append("g")
         .attr("transform", `translate(${width / 2},${height / 2})`)
@@ -66,7 +58,7 @@ export default function WordCloud({
         .data(words)
         .enter()
         .append("text")
-        .style("font-size", (d: CloudWord) => `${d.size}px`)
+        .style("font-size", (d: Word) => `${d.size || 10}px`)
         .style("font-family", "Inter, Arial, sans-serif")
         .style("fill", () => {
           // Create a nice gradient of colors
@@ -85,10 +77,10 @@ export default function WordCloud({
         .attr("text-anchor", "middle")
         .attr(
           "transform",
-          (d: CloudWord) =>
+          (d: Word) =>
             `translate(${d.x || 0},${d.y || 0}) rotate(${d.rotate || 0})`
         )
-        .text((d: CloudWord) => d.text);
+        .text((d: Word) => d.text || "");
     }
 
     // Cleanup function

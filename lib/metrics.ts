@@ -373,19 +373,22 @@ export function sessionMetrics(
         // If times are identical, duration will be 0.
         // If endTime is before startTime, this still yields a positive duration representing the magnitude of the difference.
         const duration = Math.abs(timeDifference);
+        // console.log(
+        //   `[metrics] duration is ${duration} for session ${session.id || session.sessionId}`
+        // );
 
         totalSessionDuration += duration; // Add this duration
 
         if (timeDifference < 0) {
           // Log a specific warning if the original endTime was before startTime
           console.warn(
-            `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / (1000 * 60)).toFixed(2)} mins).`
+            `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / 1000).toFixed(2)} seconds).`
           );
         } else if (timeDifference === 0) {
-          // Optionally, log if times are identical, though this might be verbose if common
-          console.log(
-            `[metrics] startTime and endTime are identical for session ${session.id || session.sessionId}. Duration is 0.`
-          );
+          // // Optionally, log if times are identical, though this might be verbose if common
+          // console.log(
+          //   `[metrics] startTime and endTime are identical for session ${session.id || session.sessionId}. Duration is 0.`
+          // );
         }
         // If timeDifference > 0, it's a normal positive duration, no special logging needed here for that case.
 
@@ -399,7 +402,9 @@ export function sessionMetrics(
       }
       if (!session.endTime) {
         // This is a common case for ongoing sessions, might not always be an error
-        // console.log(`[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`);
+        console.log(
+          `[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`
+        );
       }
     }
 
@@ -493,7 +498,7 @@ export function sessionMetrics(
   const uniqueUsers = uniqueUserIds.size;
   const avgSessionLength =
     validSessionsForDuration > 0
-      ? totalSessionDuration / validSessionsForDuration / 1000 / 60 // Convert ms to minutes
+      ? totalSessionDuration / validSessionsForDuration / 1000 // Convert ms to minutes
       : 0;
   const avgResponseTime =
     validSessionsForResponseTime > 0
@@ -509,6 +514,12 @@ export function sessionMetrics(
   const numDaysWithSessions = Object.keys(byDay).length;
   const avgSessionsPerDay =
     numDaysWithSessions > 0 ? totalSessions / numDaysWithSessions : 0;
+
+  // console.log("Debug metrics calculation:", {
+  //   totalSessionDuration,
+  //   validSessionsForDuration,
+  //   calculatedAvgSessionLength: avgSessionLength,
+  // });
 
   return {
     totalSessions,

@@ -1,16 +1,44 @@
 "use client";
 
-import { ReactNode } from "react";
-import { useSession, signOut } from "next-auth/react";
+import { ReactNode, useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Sidebar from "../../components/Sidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
 
-  // Redirect if not authenticated
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const updateStatesBasedOnScreen = () => {
+      const screenIsMobile = window.innerWidth < 640; // sm breakpoint for mobile
+      const screenIsSmallDesktop = window.innerWidth < 768 && !screenIsMobile; // between sm and md
+
+      setIsMobile(screenIsMobile);
+      setIsSidebarExpanded(!screenIsSmallDesktop && !screenIsMobile);
+    };
+
+    updateStatesBasedOnScreen();
+    window.addEventListener("resize", updateStatesBasedOnScreen);
+    return () =>
+      window.removeEventListener("resize", updateStatesBasedOnScreen);
+  }, []);
+
+  // Toggle sidebar handler - used for clicking the toggle button
+  const toggleSidebarHandler = useCallback(() => {
+    setIsSidebarExpanded((prev) => !prev);
+  }, []);
+
+  // Collapse sidebar handler - used when clicking navigation links on mobile
+  const collapseSidebar = useCallback(() => {
+    if (isMobile) {
+      setIsSidebarExpanded(false);
+    }
+  }, [isMobile]);
+
   if (status === "unauthenticated") {
     router.push("/login");
     return (
@@ -20,7 +48,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // Show loading state while session status is being determined
   if (status === "loading") {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -29,20 +56,26 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // Defined for potential future use, like adding a logout button in the layout
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const handleLogout = () => {
-    signOut({ callbackUrl: "/login" });
-  };
-
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar with logout handler passed as prop */}
-      <Sidebar />
+      <Sidebar
+        isExpanded={isSidebarExpanded}
+        isMobile={isMobile}
+        onToggle={toggleSidebarHandler}
+        onNavigate={collapseSidebar}
+      />
 
-      {/* Main content */}
-      <div className="flex-1 overflow-auto p-8">
-        <div className="mx-auto max-w-7xl">{children}</div>
+      <div
+        className={`flex-1 overflow-auto transition-all duration-300 py-4 pr-4
+          ${
+            isSidebarExpanded
+              ? "pl-4 sm:pl-6 md:pl-10"
+              : "pl-20 sm:pl-20 md:pl-6"
+          }
+          sm:pr-6 md:py-6 md:pr-10`}
+      >
+        {/* <div className="w-full mx-auto">{children}</div> */}
+        <div className="max-w-7xl mx-auto">{children}</div>
       </div>
     </div>
   );

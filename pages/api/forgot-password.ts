@@ -1,27 +1,20 @@
 import { prisma } from "../../lib/prisma";
 import { sendEmail } from "../../lib/sendEmail";
 import crypto from "crypto";
-import type { IncomingMessage, ServerResponse } from "http";
-
-type NextApiRequest = IncomingMessage & {
-  body: {
-    email: string;
-    [key: string]: unknown;
-  };
-};
-
-type NextApiResponse = ServerResponse & {
-  status: (code: number) => NextApiResponse;
-  json: (data: Record<string, unknown>) => void;
-  end: () => void;
-};
+import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "POST") return res.status(405).end();
-  const { email } = req.body;
+  if (req.method !== "POST") {
+    res.setHeader("Allow", ["POST"]);
+    return res.status(405).end(`Method ${req.method} Not Allowed`);
+  }
+
+  // Type the body with a type assertion
+  const { email } = req.body as { email: string };
+
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return res.status(200).end(); // always 200 for privacy
 

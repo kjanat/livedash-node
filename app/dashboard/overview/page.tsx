@@ -41,6 +41,12 @@ function DashboardContent() {
         setLoading(true);
         const res = await fetch("/api/dashboard/metrics");
         const data = await res.json();
+        console.log("Metrics from API:", {
+          avgSessionLength: data.metrics.avgSessionLength,
+          avgSessionTimeTrend: data.metrics.avgSessionTimeTrend,
+          totalSessionDuration: data.metrics.totalSessionDuration,
+          validSessionsForDuration: data.metrics.validSessionsForDuration,
+        });
         setMetrics(data.metrics);
         setCompany(data.company);
         setLoading(false);
@@ -284,7 +290,7 @@ function DashboardContent() {
         />
         <MetricCard
           title="Avg. Session Time"
-          value={`${Math.round(metrics.avgSessionTimeTrend || 0)}m`}
+          value={`${Math.round(metrics.avgSessionLength || 0)}s`}
           icon={
             <svg
               className="h-5 w-5"
@@ -410,11 +416,11 @@ function DashboardContent() {
         />
       </div>
       <div className="bg-white p-6 rounded-xl shadow">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
           <h3 className="font-bold text-lg text-gray-800">
             Token Usage & Costs
           </h3>
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
             <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full flex items-center">
               <span className="font-semibold mr-1">Total Tokens:</span>
               {metrics.totalTokens?.toLocaleString() || 0}

@@ -138,6 +138,10 @@ export interface MetricsResult {
   usersTrend?: number; // e.g., percentage change in uniqueUsers
   avgSessionTimeTrend?: number; // e.g., percentage change in avgSessionLength
   avgResponseTimeTrend?: number; // e.g., percentage change in avgResponseTime
+
+  // Debug properties
+  totalSessionDuration?: number;
+  validSessionsForDuration?: number;
 }
 
 export interface ApiResponse<T> {
