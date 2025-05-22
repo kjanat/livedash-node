@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import countryLookup from "country-code-lookup";
 
 // Define types for country data
 interface CountryData {
@@ -17,24 +18,40 @@ interface GeographicMapProps {
   height?: number; // Optional height for the container
 }
 
-// Default coordinates for commonly used countries (latitude, longitude)
-const DEFAULT_COORDINATES: Record<string, [number, number]> = {
-  US: [37.0902, -95.7129],
-  GB: [55.3781, -3.436],
-  DE: [51.1657, 10.4515],
-  FR: [46.2276, 2.2137],
-  CA: [56.1304, -106.3468],
-  AU: [-25.2744, 133.7751],
-  JP: [36.2048, 138.2529],
-  BR: [-14.235, -51.9253],
-  IN: [20.5937, 78.9629],
-  ZA: [-30.5595, 22.9375],
-  ES: [40.4637, -3.7492],
-  NL: [52.1326, 5.2913],
-  IT: [41.8719, 12.5674],
-  SE: [60.1282, 18.6435],
-  // Add more country coordinates as needed
+// Get country coordinates from the country-code-lookup package
+const getCountryCoordinates = (): Record<string, [number, number]> => {
+  // Initialize with some fallback coordinates for common countries that might be missing
+  const coordinates: Record<string, [number, number]> = {
+    // These are just in case the lookup fails for common countries
+    US: [37.0902, -95.7129],
+    GB: [55.3781, -3.436],
+    BA: [43.9159, 17.6791],
+  };
+
+  try {
+    // Get all countries from the package
+    const allCountries = countryLookup.countries;
+
+    // Map through all countries and extract coordinates
+    allCountries.forEach((country) => {
+      if (country.iso2 && country.latitude && country.longitude) {
+        coordinates[country.iso2] = [
+          parseFloat(country.latitude),
+          parseFloat(country.longitude),
+        ];
+      }
+    });
+
+    return coordinates;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error("Error loading country coordinates:", error);
+    return coordinates;
+  }
 };
+
+// Load coordinates once when module is imported
+const DEFAULT_COORDINATES = getCountryCoordinates();
 
 // Dynamically import the Map component to avoid SSR issues
 // This ensures the component only loads on the client side
@@ -68,15 +85,27 @@ export default function GeographicMap({
       // Generate CountryData array for the Map component
       const data: CountryData[] = Object.entries(countries)
         // Only include countries with known coordinates
-        .filter(
-          ([code]) => countryCoordinates[code] || DEFAULT_COORDINATES[code]
-        )
+        .filter(([code]) => {
+          // If no coordinates found, log to help with debugging
+          if (!countryCoordinates[code] && !DEFAULT_COORDINATES[code]) {
+            // eslint-disable-next-line no-console
+            console.warn(`Missing coordinates for country code: ${code}`);
+            return false;
+          }
+          return true;
+        })
         .map(([code, count]) => ({
           code,
           count,
           coordinates: countryCoordinates[code] ||
             DEFAULT_COORDINATES[code] || [0, 0],
         }));
+
+      // Log for debugging
+      // eslint-disable-next-line no-console
+      console.log(
+        `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
+      );
 
       setCountryData(data);
     } catch (error) {
@@ -86,8 +115,9 @@ export default function GeographicMap({
     }
   }, [countries, countryCoordinates, isClient]);
 
-  // Find the max count for scaling circles
-  const maxCount = Math.max(...Object.values(countries), 1);
+  // Find the max count for scaling circles - handle empty countries object
+  const countryValues = Object.values(countries);
+  const maxCount = countryValues.length > 0 ? Math.max(...countryValues, 1) : 1;
 
   // Show loading state during SSR or until client-side rendering takes over
   if (!isClient) {
@@ -100,7 +130,13 @@ export default function GeographicMap({
 
   return (
     <div style={{ height: `${height}px`, width: "100%" }} className="relative">
-      <Map countryData={countryData} maxCount={maxCount} />
+      {countryData.length > 0 ? (
+        <Map countryData={countryData} maxCount={maxCount} />
+      ) : (
+        <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-500">
+          No geographic data available
+        </div>
+      )}
       <style jsx global>{`
         .leaflet-control-attribution {
           display: none !important;

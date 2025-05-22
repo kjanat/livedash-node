@@ -142,24 +142,22 @@ function DashboardContent() {
     return metrics.wordCloudData;
   };
 
-  // Function to prepare country data for the map - using simulated/dummy data
+  // Function to prepare country data for the map using actual metrics
   const getCountryData = () => {
-    return {
-      US: 42,
-      GB: 25,
-      DE: 18,
-      FR: 15,
-      CA: 12,
-      AU: 10,
-      JP: 8,
-      BR: 6,
-      IN: 5,
-      ZA: 3,
-      ES: 7,
-      NL: 9,
-      IT: 6,
-      SE: 4,
-    };
+    if (!metrics || !metrics.countries) return {};
+
+    // Convert the countries object from metrics to the format expected by GeographicMap
+    const result = Object.entries(metrics.countries).reduce(
+      (acc, [code, count]) => {
+        if (code && count) {
+          acc[code] = count;
+        }
+        return acc;
+      },
+      {} as Record<string, number>
+    );
+
+    return result;
   };
 
   // Function to prepare response time distribution data
@@ -378,7 +376,7 @@ function DashboardContent() {
           <h3 className="font-bold text-lg text-gray-800 mb-4">
             Transcript Word Cloud
           </h3>
-          <WordCloud words={getWordCloudData()} width={500} height={300} />
+          <WordCloud words={getWordCloudData()} width={400} height={300} />
         </div>
         <div className="bg-white p-6 rounded-xl shadow">
           <h3 className="font-bold text-lg text-gray-800 mb-4">

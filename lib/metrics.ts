@@ -359,7 +359,7 @@ export function sessionMetrics(
     if (s.endTime) {
       const duration =
         (s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60); // minutes
-      
+
       // Sanity check: Only include sessions with reasonable durations (less than 24 hours)
       const MAX_REASONABLE_DURATION = 24 * 60; // 24 hours in minutes
       if (duration > 0 && duration < MAX_REASONABLE_DURATION) {

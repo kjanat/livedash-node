@@ -92,12 +92,17 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
             {
               id: "centerText",
               beforeDraw: function (chart: any) {
-                const width = chart.width;
                 const height = chart.height;
                 const ctx = chart.ctx;
                 ctx.restore();
 
-                const centerX = width / 2;
+                // Calculate the actual chart area width (excluding legend)
+                // Legend is positioned on the right, so we adjust the center X coordinate
+                const chartArea = chart.chartArea;
+                const chartWidth = chartArea.right - chartArea.left;
+
+                // Get the center of just the chart area (not including the legend)
+                const centerX = chartArea.left + chartWidth / 2;
                 const centerY = height / 2;
 
                 // Title text
