@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown"; // Import ReactMarkdown
 
 interface TranscriptViewerProps {
   transcriptContent: string;
@@ -47,7 +48,22 @@ function formatTranscript(content: string): React.ReactNode[] {
               }`}
             >
               {currentMessages.map((msg, i) => (
-                <p key={i}>{msg}</p>
+                // Use ReactMarkdown to render each message part
+                <ReactMarkdown
+                  key={i}
+                  components={{
+                    p: "span",
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                    a: ({ node: _node, ...props }) => (
+                      <a
+                        className="text-sky-600 hover:text-sky-800 underline"
+                        {...props}
+                      />
+                    ),
+                  }}
+                >
+                  {msg}
+                </ReactMarkdown>
               ))}
             </div>
           </div>
@@ -83,7 +99,22 @@ function formatTranscript(content: string): React.ReactNode[] {
           }`}
         >
           {currentMessages.map((msg, i) => (
-            <p key={i}>{msg}</p>
+            // Use ReactMarkdown to render each message part
+            <ReactMarkdown
+              key={i}
+              components={{
+                p: "span",
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                a: ({ node: _node, ...props }) => (
+                  <a
+                    className="text-sky-600 hover:text-sky-800 underline"
+                    {...props}
+                  />
+                ),
+              }}
+            >
+              {msg}
+            </ReactMarkdown>
           ))}
         </div>
       </div>
@@ -100,36 +131,51 @@ export default function TranscriptViewer({
   transcriptContent,
   transcriptUrl,
 }: TranscriptViewerProps) {
-  const [showTranscript, setShowTranscript] = useState(false);
+  const [showRaw, setShowRaw] = useState(false);
+
+  const formattedElements = formatTranscript(transcriptContent);
 
   return (
-    <div>
-      <div className="flex justify-between pt-2">
-        <span className="text-gray-600">Transcript:</span>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowTranscript(!showTranscript)}
-            className="text-blue-500 hover:text-blue-700 underline"
-          >
-            {showTranscript ? "Hide Transcript" : "Show Transcript"}
-          </button>
+    <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 mt-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-gray-800">
+          Session Transcript
+        </h2>
+        <div className="flex items-center space-x-3">
           {transcriptUrl && (
             <a
               href={transcriptUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-700 underline"
+              className="text-sm text-sky-600 hover:text-sky-800 hover:underline"
+              title="View full raw transcript"
             >
-              View Source
+              View Full Raw
             </a>
           )}
+          <button
+            onClick={() => setShowRaw(!showRaw)}
+            className="text-sm text-sky-600 hover:text-sky-800 hover:underline"
+            title={
+              showRaw ? "Show formatted transcript" : "Show raw transcript"
+            }
+          >
+            {showRaw ? "Formatted" : "Raw Text"}
+          </button>
         </div>
       </div>
 
-      {/* Display transcript content if expanded */}
-      {showTranscript && (
-        <div className="mt-4 p-4 bg-gray-50 rounded-lg max-h-96 overflow-auto">
-          <div className="space-y-2">{formatTranscript(transcriptContent)}</div>
+      {showRaw ? (
+        <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-50 p-3 rounded-md overflow-x-auto">
+          {transcriptContent}
+        </pre>
+      ) : (
+        <div className="space-y-2">
+          {formattedElements.length > 0 ? (
+            formattedElements
+          ) : (
+            <p className="text-gray-500">No transcript content available.</p>
+          )}
         </div>
       )}
     </div>

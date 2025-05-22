@@ -17,19 +17,19 @@ interface SessionCreateData {
  * @returns The transcript content or null if fetching fails
  */
 async function fetchTranscriptContent(url: string): Promise<string | null> {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            process.stderr.write(
-                `Error fetching transcript: ${response.statusText}\n`
-            );
-            return null;
-        }
-        return await response.text();
-    } catch (error) {
-        process.stderr.write(`Failed to fetch transcript: ${error}\n`);
-        return null;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      process.stderr.write(
+        `Error fetching transcript: ${response.statusText}\n`
+      );
+      return null;
     }
+    return await response.text();
+  } catch (error) {
+    process.stderr.write(`Failed to fetch transcript: ${error}\n`);
+    return null;
+  }
 }
 
 export default async function handler(
@@ -107,13 +107,13 @@ export default async function handler(
           ? session.endTime
           : new Date();
 
-        // Fetch transcript content if URL is available
-        let transcriptContent: string | null = null;
-        if (session.fullTranscriptUrl) {
-            transcriptContent = await fetchTranscriptContent(
-                session.fullTranscriptUrl
-            );
-        }
+      // Fetch transcript content if URL is available
+      let transcriptContent: string | null = null;
+      if (session.fullTranscriptUrl) {
+        transcriptContent = await fetchTranscriptContent(
+          session.fullTranscriptUrl
+        );
+      }
 
       // Only include fields that are properly typed for Prisma
       await prisma.session.create({
@@ -136,7 +136,7 @@ export default async function handler(
               ? session.forwardedHr
               : null,
           fullTranscriptUrl: session.fullTranscriptUrl || null,
-              transcriptContent: transcriptContent, // Add the transcript content
+          transcriptContent: transcriptContent, // Add the transcript content
           avgResponseTime:
             typeof session.avgResponseTime === "number"
               ? session.avgResponseTime
