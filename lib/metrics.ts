@@ -310,7 +310,7 @@ export function sessionMetrics(
   sessions: ChatSession[],
   companyConfig: CompanyConfig = {}
 ): MetricsResult {
-  const total = sessions.length;
+  const totalSessions = sessions.length; // Renamed from 'total' for clarity
   const byDay: DayMetrics = {};
   const byCategory: CategoryMetrics = {};
   const byLanguage: LanguageMetrics = {};
@@ -318,218 +318,220 @@ export function sessionMetrics(
   const tokensByDay: DayMetrics = {};
   const tokensCostByDay: DayMetrics = {};
 
-  let escalated = 0,
-    forwarded = 0;
-  let totalSentiment = 0,
-    sentimentCount = 0;
-  let totalResponseTimeCurrent = 0, // Renamed to avoid conflict
-    responseCountCurrent = 0; // Renamed to avoid conflict
-  let totalTokens = 0,
-    totalTokensEur = 0;
+  let escalatedCount = 0; // Renamed from 'escalated' to match MetricsResult
+  let forwardedHrCount = 0; // Renamed from 'forwarded' to match MetricsResult
 
-  let sentimentPositive = 0,
-    sentimentNegative = 0,
-    sentimentNeutral = 0;
-
-  let totalDurationCurrent = 0, // Renamed to avoid conflict
-    durationCountCurrent = 0; // Renamed to avoid conflict
-
+  // Variables for calculations
+  const uniqueUserIds = new Set<string>();
+  let totalSessionDuration = 0;
+  let validSessionsForDuration = 0;
+  let totalResponseTime = 0;
+  let validSessionsForResponseTime = 0;
+  let sentimentPositiveCount = 0;
+  let sentimentNeutralCount = 0;
+  let sentimentNegativeCount = 0;
+  let totalTokens = 0;
+  let totalTokensEur = 0;
   const wordCounts: { [key: string]: number } = {};
-  const uniqueUserIdsCurrent = new Set<string>();
+  let alerts = 0;
 
-  let minDateCurrentPeriod = new Date();
-  if (sessions.length > 0) {
-    minDateCurrentPeriod = new Date(
-      Math.min(...sessions.map((s) => s.startTime.getTime()))
-    );
-  }
-
-  const prevPeriodEndDate = new Date(minDateCurrentPeriod);
-  prevPeriodEndDate.setDate(prevPeriodEndDate.getDate() - 1);
-  const prevPeriodStartDate = new Date(prevPeriodEndDate);
-  prevPeriodStartDate.setDate(prevPeriodStartDate.getDate() - 6); // 7-day previous period
-
-  let prevPeriodSessionsCount = 0;
-  const prevPeriodUniqueUserIds = new Set<string>();
-  let prevPeriodTotalDuration = 0;
-  let prevPeriodDurationCount = 0;
-  let prevPeriodTotalResponseTime = 0;
-  let prevPeriodResponseCount = 0;
-
-  sessions.forEach((s) => {
-    const sessionDate = s.startTime;
-    const day = sessionDate.toISOString().slice(0, 10);
-
-    // Aggregate current period data
-    byDay[day] = (byDay[day] || 0) + 1;
-    if (s.userId) {
-      uniqueUserIdsCurrent.add(s.userId);
+  for (const session of sessions) {
+    // Unique Users: Prefer non-empty ipAddress, fallback to non-empty sessionId
+    let identifierAdded = false;
+    if (session.ipAddress && session.ipAddress.trim() !== "") {
+      uniqueUserIds.add(session.ipAddress.trim());
+      identifierAdded = true;
     }
-
-    if (s.category) byCategory[s.category] = (byCategory[s.category] || 0) + 1;
-    if (s.language) byLanguage[s.language] = (byLanguage[s.language] || 0) + 1;
-    if (s.country) byCountry[s.country] = (byCountry[s.country] || 0) + 1;
-
-    if (s.tokens) {
-      tokensByDay[day] = (tokensByDay[day] || 0) + s.tokens;
-    }
-    if (s.tokensEur) {
-      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + s.tokensEur;
-    }
-
-    if (s.endTime) {
-      const duration =
-        (s.endTime.getTime() - sessionDate.getTime()) / (1000 * 60); // minutes
-      const MAX_REASONABLE_DURATION = 24 * 60;
-      if (duration > 0 && duration < MAX_REASONABLE_DURATION) {
-        totalDurationCurrent += duration;
-        durationCountCurrent++;
-      }
-    }
-
-    if (s.escalated) escalated++;
-    if (s.forwardedHr) forwarded++;
-
-    if (s.sentiment != null) {
-      totalSentiment += s.sentiment;
-      sentimentCount++;
-      if (s.sentiment > 0.3) sentimentPositive++;
-      else if (s.sentiment < -0.3) sentimentNegative++;
-      else sentimentNeutral++;
-    }
-
-    if (s.avgResponseTime != null) {
-      totalResponseTimeCurrent += s.avgResponseTime;
-      responseCountCurrent++;
-    }
-
-    totalTokens += s.tokens || 0;
-    totalTokensEur += s.tokensEur || 0;
-
-    if (s.transcriptContent) {
-      const words = s.transcriptContent.toLowerCase().match(/\b\w+\b/g);
-      if (words) {
-        words.forEach((word) => {
-          const cleanedWord = word.replace(/[^a-z0-9]/gi, "");
-          if (
-            cleanedWord &&
-            !stopWords.has(cleanedWord) &&
-            cleanedWord.length > 2
-          ) {
-            wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
-          }
-        });
-      }
-    }
-
-    // Aggregate previous period data (if session falls within the previous period range)
+    // Fallback to sessionId only if ipAddress was not usable and sessionId is valid
     if (
-      sessionDate >= prevPeriodStartDate &&
-      sessionDate <= prevPeriodEndDate
+      !identifierAdded &&
+      session.sessionId &&
+      session.sessionId.trim() !== ""
     ) {
-      prevPeriodSessionsCount++;
-      if (s.userId) {
-        prevPeriodUniqueUserIds.add(s.userId);
+      uniqueUserIds.add(session.sessionId.trim());
+    }
+
+    // Avg. Session Time
+    if (session.startTime && session.endTime) {
+      const startTimeMs = new Date(session.startTime).getTime();
+      const endTimeMs = new Date(session.endTime).getTime();
+
+      if (isNaN(startTimeMs)) {
+        console.warn(
+          `[metrics] Invalid startTime for session ${session.id || session.sessionId}: ${session.startTime}`
+        );
       }
-      if (s.endTime) {
-        const duration =
-          (s.endTime.getTime() - sessionDate.getTime()) / (1000 * 60);
-        const MAX_REASONABLE_DURATION = 24 * 60;
-        if (duration > 0 && duration < MAX_REASONABLE_DURATION) {
-          prevPeriodTotalDuration += duration;
-          prevPeriodDurationCount++;
+      if (isNaN(endTimeMs)) {
+        console.warn(
+          `[metrics] Invalid endTime for session ${session.id || session.sessionId}: ${session.endTime}`
+        );
+      }
+
+      if (!isNaN(startTimeMs) && !isNaN(endTimeMs)) {
+        const timeDifference = endTimeMs - startTimeMs; // Calculate the signed delta
+        // Use the absolute difference for duration, ensuring it's not negative.
+        // If times are identical, duration will be 0.
+        // If endTime is before startTime, this still yields a positive duration representing the magnitude of the difference.
+        const duration = Math.abs(timeDifference);
+
+        totalSessionDuration += duration; // Add this duration
+
+        if (timeDifference < 0) {
+          // Log a specific warning if the original endTime was before startTime
+          console.warn(
+            `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / (1000 * 60)).toFixed(2)} mins).`
+          );
+        } else if (timeDifference === 0) {
+          // Optionally, log if times are identical, though this might be verbose if common
+          console.log(
+            `[metrics] startTime and endTime are identical for session ${session.id || session.sessionId}. Duration is 0.`
+          );
+        }
+        // If timeDifference > 0, it's a normal positive duration, no special logging needed here for that case.
+
+        validSessionsForDuration++; // Count this session for averaging
+      }
+    } else {
+      if (!session.startTime) {
+        console.warn(
+          `[metrics] Missing startTime for session ${session.id || session.sessionId}`
+        );
+      }
+      if (!session.endTime) {
+        // This is a common case for ongoing sessions, might not always be an error
+        // console.log(`[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`);
+      }
+    }
+
+    // Avg. Response Time
+    if (
+      session.avgResponseTime !== undefined &&
+      session.avgResponseTime !== null &&
+      session.avgResponseTime >= 0
+    ) {
+      totalResponseTime += session.avgResponseTime;
+      validSessionsForResponseTime++;
+    }
+
+    // Escalated and Forwarded
+    if (session.escalated) escalatedCount++;
+    if (session.forwardedHr) forwardedHrCount++;
+
+    // Sentiment
+    if (session.sentiment !== undefined && session.sentiment !== null) {
+      // Example thresholds, adjust as needed
+      if (session.sentiment > 0.3) sentimentPositiveCount++;
+      else if (session.sentiment < -0.3) sentimentNegativeCount++;
+      else sentimentNeutralCount++;
+    }
+
+    // Sentiment Alert Check
+    if (
+      companyConfig.sentimentAlert !== undefined &&
+      session.sentiment !== undefined &&
+      session.sentiment !== null &&
+      session.sentiment < companyConfig.sentimentAlert
+    ) {
+      alerts++;
+    }
+
+    // Tokens
+    if (session.tokens !== undefined && session.tokens !== null) {
+      totalTokens += session.tokens;
+    }
+    if (session.tokensEur !== undefined && session.tokensEur !== null) {
+      totalTokensEur += session.tokensEur;
+    }
+
+    // Daily metrics
+    const day = new Date(session.startTime).toISOString().split("T")[0];
+    byDay[day] = (byDay[day] || 0) + 1; // Sessions per day
+    if (session.tokens !== undefined && session.tokens !== null) {
+      tokensByDay[day] = (tokensByDay[day] || 0) + session.tokens;
+    }
+    if (session.tokensEur !== undefined && session.tokensEur !== null) {
+      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + session.tokensEur;
+    }
+
+    // Category metrics
+    if (session.category) {
+      byCategory[session.category] = (byCategory[session.category] || 0) + 1;
+    }
+
+    // Language metrics
+    if (session.language) {
+      byLanguage[session.language] = (byLanguage[session.language] || 0) + 1;
+    }
+
+    // Country metrics
+    if (session.country) {
+      byCountry[session.country] = (byCountry[session.country] || 0) + 1;
+    }
+
+    // Word Cloud Data (from initial message and transcript content)
+    const processTextForWordCloud = (text: string | undefined | null) => {
+      if (!text) return;
+      const words = text
+        .toLowerCase()
+        .replace(/[^\w\s'-]/gi, "")
+        .split(/\s+/); // Keep apostrophes and hyphens
+      for (const word of words) {
+        const cleanedWord = word.replace(/^['-]|['-]$/g, ""); // Remove leading/trailing apostrophes/hyphens
+        if (
+          cleanedWord &&
+          !stopWords.has(cleanedWord) &&
+          cleanedWord.length > 2
+        ) {
+          wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
         }
       }
-      if (s.avgResponseTime != null) {
-        prevPeriodTotalResponseTime += s.avgResponseTime;
-        prevPeriodResponseCount++;
-      }
-    }
-  });
-
-  const calculateTrend = (current: number, previous: number): number => {
-    if (previous === 0) {
-      return current > 0 ? 100 : 0;
-    }
-    const trend = ((current - previous) / previous) * 100;
-    return parseFloat(trend.toFixed(1));
-  };
-
-  const sessionTrend = calculateTrend(total, prevPeriodSessionsCount);
-  const usersTrend = calculateTrend(
-    uniqueUserIdsCurrent.size,
-    prevPeriodUniqueUserIds.size
-  );
-
-  const avgSessionLengthCurrent =
-    durationCountCurrent > 0 ? totalDurationCurrent / durationCountCurrent : 0;
-  const avgSessionLengthPrevious =
-    prevPeriodDurationCount > 0
-      ? prevPeriodTotalDuration / prevPeriodDurationCount
-      : 0;
-  const avgSessionTimeTrend = calculateTrend(
-    avgSessionLengthCurrent,
-    avgSessionLengthPrevious
-  );
-
-  const avgResponseTimeCurrentPeriod =
-    responseCountCurrent > 0
-      ? totalResponseTimeCurrent / responseCountCurrent
-      : 0;
-  const avgResponseTimePreviousPeriod =
-    prevPeriodResponseCount > 0
-      ? prevPeriodTotalResponseTime / prevPeriodResponseCount
-      : 0;
-  const avgResponseTimeTrend = calculateTrend(
-    avgResponseTimeCurrentPeriod,
-    avgResponseTimePreviousPeriod
-  );
-
-  let belowThreshold = 0;
-  const threshold = companyConfig.sentimentAlert ?? null;
-  if (threshold != null) {
-    for (const s of sessions) {
-      if (s.sentiment != null && s.sentiment < threshold) belowThreshold++;
-    }
+    };
+    processTextForWordCloud(session.initialMsg);
+    processTextForWordCloud(session.transcriptContent);
   }
 
-  const dayCount = Object.keys(byDay).length;
-  const avgSessionsPerDay = dayCount > 0 ? total / dayCount : 0;
+  const uniqueUsers = uniqueUserIds.size;
+  const avgSessionLength =
+    validSessionsForDuration > 0
+      ? totalSessionDuration / validSessionsForDuration / 1000 / 60 // Convert ms to minutes
+      : 0;
+  const avgResponseTime =
+    validSessionsForResponseTime > 0
+      ? totalResponseTime / validSessionsForResponseTime
+      : 0; // in seconds
 
   const wordCloudData: WordCloudWord[] = Object.entries(wordCounts)
-    .map(([text, value]) => ({ text, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 500);
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 50) // Top 50 words
+    .map(([text, value]) => ({ text, value }));
+
+  // Calculate avgSessionsPerDay
+  const numDaysWithSessions = Object.keys(byDay).length;
+  const avgSessionsPerDay =
+    numDaysWithSessions > 0 ? totalSessions / numDaysWithSessions : 0;
 
   return {
-    totalSessions: total,
-    avgSessionsPerDay: parseFloat(avgSessionsPerDay.toFixed(1)),
-    avgSessionLength: parseFloat(avgSessionLengthCurrent.toFixed(1)),
-    days: byDay,
-    languages: byLanguage,
-    categories: byCategory,
-    countries: byCountry,
-    belowThresholdCount: belowThreshold,
-    escalatedCount: escalated,
-    forwardedCount: forwarded,
-    avgSentiment: sentimentCount
-      ? parseFloat((totalSentiment / sentimentCount).toFixed(2))
-      : undefined,
-    avgResponseTime: parseFloat(avgResponseTimeCurrentPeriod.toFixed(2)),
-    totalTokens,
-    totalTokensEur,
-    sentimentThreshold: threshold,
-    lastUpdated: Date.now(),
-    sentimentPositiveCount: sentimentPositive,
-    sentimentNeutralCount: sentimentNeutral,
-    sentimentNegativeCount: sentimentNegative,
+    totalSessions,
+    uniqueUsers,
+    avgSessionLength, // Corrected to match MetricsResult interface
+    avgResponseTime, // Corrected to match MetricsResult interface
+    escalatedCount,
+    forwardedCount: forwardedHrCount, // Corrected to match MetricsResult interface (forwardedCount)
+    sentimentPositiveCount,
+    sentimentNeutralCount,
+    sentimentNegativeCount,
+    days: byDay, // Corrected to match MetricsResult interface (days)
+    categories: byCategory, // Corrected to match MetricsResult interface (categories)
+    languages: byLanguage, // Corrected to match MetricsResult interface (languages)
+    countries: byCountry, // Corrected to match MetricsResult interface (countries)
     tokensByDay,
     tokensCostByDay,
+    totalTokens,
+    totalTokensEur,
     wordCloudData,
-    uniqueUsers: uniqueUserIdsCurrent.size,
-    sessionTrend,
-    usersTrend,
-    avgSessionTimeTrend,
-    avgResponseTimeTrend,
+    belowThresholdCount: alerts, // Corrected to match MetricsResult interface (belowThresholdCount)
+    avgSessionsPerDay, // Added to satisfy MetricsResult interface
+    // Optional fields from MetricsResult that are not yet calculated can be added here or handled by the consumer
+    // avgSentiment, sentimentThreshold, lastUpdated, sessionTrend, usersTrend, avgSessionTimeTrend, avgResponseTimeTrend
   };
 }

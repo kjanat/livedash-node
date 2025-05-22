@@ -40,7 +40,7 @@ export default async function handler(
   const pageSize = Number(queryPageSize) || 10;
 
   try {
-      const whereClause: Prisma.SessionWhereInput = { companyId };
+    const whereClause: Prisma.SessionWhereInput = { companyId };
 
     // Search Term
     if (
@@ -49,10 +49,10 @@ export default async function handler(
       searchTerm.trim() !== ""
     ) {
       const searchConditions = [
-          { id: { contains: searchTerm } },
-          { category: { contains: searchTerm } },
-          { initialMsg: { contains: searchTerm } },
-          { transcriptContent: { contains: searchTerm } },
+        { id: { contains: searchTerm } },
+        { category: { contains: searchTerm } },
+        { initialMsg: { contains: searchTerm } },
+        { transcriptContent: { contains: searchTerm } },
       ];
       whereClause.OR = searchConditions;
     }
@@ -69,59 +69,59 @@ export default async function handler(
 
     // Date Range Filter
     if (startDate && typeof startDate === "string") {
-        whereClause.startTime = {
-            ...((whereClause.startTime as object) || {}),
-            gte: new Date(startDate),
-        };
+      whereClause.startTime = {
+        ...((whereClause.startTime as object) || {}),
+        gte: new Date(startDate),
+      };
     }
-      if (endDate && typeof endDate === "string") {
+    if (endDate && typeof endDate === "string") {
       const inclusiveEndDate = new Date(endDate);
       inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
-        whereClause.startTime = {
-            ...((whereClause.startTime as object) || {}),
-            lt: inclusiveEndDate,
-        };
-    }
-
-      // Sorting
-      const validSortKeys: { [key: string]: string; } = {
-          startTime: "startTime",
-          category: "category",
-          language: "language",
-          sentiment: "sentiment",
-          messagesSent: "messagesSent",
-          avgResponseTime: "avgResponseTime",
+      whereClause.startTime = {
+        ...((whereClause.startTime as object) || {}),
+        lt: inclusiveEndDate,
       };
-
-      let orderByCondition:
-          | Prisma.SessionOrderByWithRelationInput
-          | Prisma.SessionOrderByWithRelationInput[];
-
-      const primarySortField =
-          sortKey && typeof sortKey === "string" && validSortKeys[sortKey]
-              ? validSortKeys[sortKey]
-              : "startTime"; // Default to startTime field if sortKey is invalid/missing
-
-      const primarySortOrder =
-          sortOrder === "asc" || sortOrder === "desc" ? sortOrder : "desc"; // Default to desc order
-
-      if (primarySortField === "startTime") {
-          // If sorting by startTime, it's the only sort criteria
-          orderByCondition = { [primarySortField]: primarySortOrder };
-      } else {
-          // If sorting by another field, use startTime: "desc" as secondary sort
-          orderByCondition = [
-              { [primarySortField]: primarySortOrder },
-              { startTime: "desc" },
-          ];
     }
-      // Note: If sortKey was initially undefined or invalid, primarySortField defaults to "startTime",
-      // and primarySortOrder defaults to "desc". This makes orderByCondition = { startTime: "desc" },
-      // which is the correct overall default sort.
+
+    // Sorting
+    const validSortKeys: { [key: string]: string } = {
+      startTime: "startTime",
+      category: "category",
+      language: "language",
+      sentiment: "sentiment",
+      messagesSent: "messagesSent",
+      avgResponseTime: "avgResponseTime",
+    };
+
+    let orderByCondition:
+      | Prisma.SessionOrderByWithRelationInput
+      | Prisma.SessionOrderByWithRelationInput[];
+
+    const primarySortField =
+      sortKey && typeof sortKey === "string" && validSortKeys[sortKey]
+        ? validSortKeys[sortKey]
+        : "startTime"; // Default to startTime field if sortKey is invalid/missing
+
+    const primarySortOrder =
+      sortOrder === "asc" || sortOrder === "desc" ? sortOrder : "desc"; // Default to desc order
+
+    if (primarySortField === "startTime") {
+      // If sorting by startTime, it's the only sort criteria
+      orderByCondition = { [primarySortField]: primarySortOrder };
+    } else {
+      // If sorting by another field, use startTime: "desc" as secondary sort
+      orderByCondition = [
+        { [primarySortField]: primarySortOrder },
+        { startTime: "desc" },
+      ];
+    }
+    // Note: If sortKey was initially undefined or invalid, primarySortField defaults to "startTime",
+    // and primarySortOrder defaults to "desc". This makes orderByCondition = { startTime: "desc" },
+    // which is the correct overall default sort.
 
     const prismaSessions = await prisma.session.findMany({
       where: whereClause,
-        orderBy: orderByCondition,
+      orderBy: orderByCondition,
       skip: (page - 1) * pageSize,
       take: pageSize,
     });

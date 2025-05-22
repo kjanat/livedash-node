@@ -283,12 +283,12 @@ export default function SessionsPage() {
                 Session ID: {session.sessionId || session.id}
               </h2>
               <p className="text-sm text-gray-500 mb-1">
-                Start Time (Local):{" "}
+                Start Time{/*  (Local) */}:{" "}
                 {new Date(session.startTime).toLocaleString()}
               </p>
-              <p className="text-xs text-gray-400 mb-1">
+              {/* <p className="text-xs text-gray-400 mb-1">
                 Start Time (Raw API): {session.startTime.toString()}
-              </p>
+              </p> */}
               {session.category && (
                 <p className="text-sm text-gray-700">
                   Category:{" "}

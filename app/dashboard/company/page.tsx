@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { Company } from "../../lib/types";
+import { Company } from "../../../lib/types";
 
 export default function CompanySettingsPage() {
   const { data: session, status } = useSession();

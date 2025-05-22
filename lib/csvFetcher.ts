@@ -381,51 +381,53 @@ function isTruthyValue(value?: string): boolean {
  * @returns A Date object or null if parsing fails.
  */
 function safeParseDate(dateStr?: string): Date | null {
-    if (!dateStr) return null;
+  if (!dateStr) return null;
 
-    // Try to parse D-M-YYYY HH:MM:SS format (with hyphens or dots)
-    const dateTimeRegex =
-        /^(\d{1,2})[\.-](\d{1,2})[\.-](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/;
-    const match = dateStr.match(dateTimeRegex);
+  // Try to parse D-M-YYYY HH:MM:SS format (with hyphens or dots)
+  const dateTimeRegex =
+    /^(\d{1,2})[.-](\d{1,2})[.-](\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/;
+  const match = dateStr.match(dateTimeRegex);
 
-    if (match) {
-        const day = match[1];
-        const month = match[2];
-        const year = match[3];
-        const hour = match[4];
-        const minute = match[5];
-        const second = match[6];
+  if (match) {
+    const day = match[1];
+    const month = match[2];
+    const year = match[3];
+    const hour = match[4];
+    const minute = match[5];
+    const second = match[6];
 
-        // Reformat to YYYY-MM-DDTHH:MM:SS (ISO-like, but local time)
-        // Ensure month and day are two digits
-        const formattedDateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:${second.padStart(2, '0')}`;
+    // Reformat to YYYY-MM-DDTHH:MM:SS (ISO-like, but local time)
+    // Ensure month and day are two digits
+    const formattedDateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}T${hour.padStart(2, "0")}:${minute.padStart(2, "0")}:${second.padStart(2, "0")}`;
 
-        try {
-            const date = new Date(formattedDateStr);
-            // Basic validation: check if the constructed date is valid
-            if (!isNaN(date.getTime())) {
-                console.log(`[safeParseDate] Parsed from D-M-YYYY: ${dateStr} -> ${formattedDateStr} -> ${date.toISOString()}`);
-                return date;
-            }
-        } catch (e) {
-            console.warn(`[safeParseDate] Error parsing reformatted string ${formattedDateStr} from ${dateStr}:`, e);
-        }
-    }
-
-    // Fallback for other potential formats (e.g., direct ISO 8601) or if the primary parse failed
     try {
-        const parsedDate = new Date(dateStr);
-        if (!isNaN(parsedDate.getTime())) {
-            console.log(`[safeParseDate] Parsed with fallback: ${dateStr} -> ${parsedDate.toISOString()}`);
-            return parsedDate;
-        }
+      const date = new Date(formattedDateStr);
+      // Basic validation: check if the constructed date is valid
+      if (!isNaN(date.getTime())) {
+        // console.log(`[safeParseDate] Parsed from D-M-YYYY: ${dateStr} -> ${formattedDateStr} -> ${date.toISOString()}`);
+        return date;
+      }
     } catch (e) {
-        console.warn(`[safeParseDate] Error parsing with fallback ${dateStr}:`, e);
+      console.warn(
+        `[safeParseDate] Error parsing reformatted string ${formattedDateStr} from ${dateStr}:`,
+        e
+      );
     }
+  }
 
+  // Fallback for other potential formats (e.g., direct ISO 8601) or if the primary parse failed
+  try {
+    const parsedDate = new Date(dateStr);
+    if (!isNaN(parsedDate.getTime())) {
+      // console.log(`[safeParseDate] Parsed with fallback: ${dateStr} -> ${parsedDate.toISOString()}`);
+      return parsedDate;
+    }
+  } catch (e) {
+    console.warn(`[safeParseDate] Error parsing with fallback ${dateStr}:`, e);
+  }
 
-    console.warn(`Failed to parse date string: ${dateStr}`);
-    return null;
+  console.warn(`Failed to parse date string: ${dateStr}`);
+  return null;
 }
 
 export async function fetchAndParseCsv(

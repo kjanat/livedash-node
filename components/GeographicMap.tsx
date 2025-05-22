@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import countryLookup from "country-code-lookup";
+import * as countryCoder from "@rapideditor/country-coder";
 
 // Define types for country data
 interface CountryData {
@@ -18,35 +18,17 @@ interface GeographicMapProps {
   height?: number; // Optional height for the container
 }
 
-// Get country coordinates from the country-code-lookup package
+// Get country coordinates from the @rapideditor/country-coder package
 const getCountryCoordinates = (): Record<string, [number, number]> => {
-  // Initialize with some fallback coordinates for common countries that might be missing
+  // Initialize with some fallback coordinates for common countries
   const coordinates: Record<string, [number, number]> = {
-    // These are just in case the lookup fails for common countries
     US: [37.0902, -95.7129],
     GB: [55.3781, -3.436],
     BA: [43.9159, 17.6791],
   };
-
-  try {
-    // Get all countries from the package
-    const allCountries = countryLookup.countries;
-
-    // Map through all countries and extract coordinates
-    allCountries.forEach((country) => {
-      if (country.iso2 && country.latitude && country.longitude) {
-        coordinates[country.iso2] = [
-          parseFloat(country.latitude),
-          parseFloat(country.longitude),
-        ];
-      }
-    });
-
-    return coordinates;
-  } catch (error) {
-    console.error("Error loading country coordinates:", error);
-    return coordinates;
-  }
+  // This function now primarily returns fallbacks.
+  // The actual fetching using @rapideditor/country-coder will be in the component's useEffect.
+  return coordinates;
 };
 
 // Load coordinates once when module is imported
@@ -83,22 +65,50 @@ export default function GeographicMap({
     try {
       // Generate CountryData array for the Map component
       const data: CountryData[] = Object.entries(countries || {})
-        // Only include countries with known coordinates
-        .filter(([code]) => {
-          // If no coordinates found, log to help with debugging
-          if (!countryCoordinates[code] && !DEFAULT_COORDINATES[code]) {
-            return false;
-          }
-          return true;
-        })
-        .map(([code, count]) => ({
-          code,
-          count,
-          coordinates: countryCoordinates[code] ||
-            DEFAULT_COORDINATES[code] || [0, 0],
-        }));
+        .map(([code, count]) => {
+          let countryCoords: [number, number] | undefined =
+            countryCoordinates[code] || DEFAULT_COORDINATES[code];
 
-      // Log for debugging
+          if (!countryCoords) {
+            const feature = countryCoder.feature(code);
+            if (feature && feature.geometry) {
+              if (feature.geometry.type === "Point") {
+                const [lon, lat] = feature.geometry.coordinates;
+                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
+              } else if (
+                feature.geometry.type === "Polygon" &&
+                feature.geometry.coordinates &&
+                feature.geometry.coordinates[0] &&
+                feature.geometry.coordinates[0][0]
+              ) {
+                // For Polygons, use the first coordinate of the first ring as a fallback representative point
+                const [lon, lat] = feature.geometry.coordinates[0][0];
+                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
+              } else if (
+                feature.geometry.type === "MultiPolygon" &&
+                feature.geometry.coordinates &&
+                feature.geometry.coordinates[0] &&
+                feature.geometry.coordinates[0][0] &&
+                feature.geometry.coordinates[0][0][0]
+              ) {
+                // For MultiPolygons, use the first coordinate of the first ring of the first polygon
+                const [lon, lat] = feature.geometry.coordinates[0][0][0];
+                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
+              }
+            }
+          }
+
+          if (countryCoords) {
+            return {
+              code,
+              count,
+              coordinates: countryCoords,
+            };
+          }
+          return null; // Skip if no coordinates found
+        })
+        .filter((item): item is CountryData => item !== null);
+
       console.log(
         `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
       );

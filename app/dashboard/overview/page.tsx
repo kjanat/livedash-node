@@ -276,15 +276,15 @@ function DashboardContent() {
           trend={{
             value: metrics.usersTrend ?? 0,
             label:
-              metrics.usersTrend > 0
+              (metrics.usersTrend ?? 0) > 0
                 ? `${metrics.usersTrend}% increase`
-                : `${Math.abs(metrics.usersTrend || 0)}% decrease`,
-            isPositive: metrics.usersTrend >= 0,
+                : `${Math.abs(metrics.usersTrend ?? 0)}% decrease`,
+            isPositive: (metrics.usersTrend ?? 0) >= 0,
           }}
         />
         <MetricCard
           title="Avg. Session Time"
-          value={`${Math.round(metrics.avgSessionTime || 0)}m`}
+          value={`${Math.round(metrics.avgSessionTimeTrend || 0)}m`}
           icon={
             <svg
               className="h-5 w-5"
@@ -302,12 +302,12 @@ function DashboardContent() {
             </svg>
           }
           trend={{
-            value: metrics.sessionTimeTrend ?? 0,
+            value: metrics.avgSessionTimeTrend ?? 0,
             label:
-              metrics.sessionTimeTrend > 0
-                ? `${metrics.sessionTimeTrend}% increase`
-                : `${Math.abs(metrics.sessionTimeTrend || 0)}% decrease`,
-            isPositive: metrics.sessionTimeTrend >= 0,
+              (metrics.avgSessionTimeTrend ?? 0) > 0
+                ? `${metrics.avgSessionTimeTrend}% increase`
+                : `${Math.abs(metrics.avgSessionTimeTrend ?? 0)}% decrease`,
+            isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
           }}
         />
         <MetricCard
