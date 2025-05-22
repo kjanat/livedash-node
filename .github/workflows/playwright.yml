@@ -15,7 +15,7 @@ jobs:
           node-version: lts/*
       - name: Install dependencies
         run: npm ci
-      - name: Install dependencies
+      - name: Build dashboard
         run: npm run build
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
