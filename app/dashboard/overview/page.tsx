@@ -18,8 +18,8 @@ import ResponseTimeDistribution from "../../../components/ResponseTimeDistributi
 import WelcomeBanner from "../../../components/WelcomeBanner";
 
 interface MetricsApiResponse {
-    metrics: MetricsResult;
-    company: Company;
+  metrics: MetricsResult;
+  company: Company;
 }
 
 // Safely wrapped component with useSession
@@ -45,7 +45,7 @@ function DashboardContent() {
       const fetchData = async () => {
         setLoading(true);
         const res = await fetch("/api/dashboard/metrics");
-          const data = (await res.json()) as MetricsApiResponse;
+        const data = (await res.json()) as MetricsApiResponse;
         console.log("Metrics from API:", {
           avgSessionLength: data.metrics.avgSessionLength,
           avgSessionTimeTrend: data.metrics.avgSessionTimeTrend,
@@ -81,10 +81,10 @@ function DashboardContent() {
       if (res.ok) {
         // Refetch metrics
         const metricsRes = await fetch("/api/dashboard/metrics");
-          const data = (await metricsRes.json()) as MetricsApiResponse;
+        const data = (await metricsRes.json()) as MetricsApiResponse;
         setMetrics(data.metrics);
       } else {
-          const errorData = (await res.json()) as { error: string; };
+        const errorData = (await res.json()) as { error: string };
         alert(`Failed to refresh sessions: ${errorData.error}`);
       }
     } finally {

@@ -25,7 +25,7 @@ export default async function handler(
     data: { resetToken: token, resetTokenExpiry: expiry },
   });
 
-  const resetUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
+    const resetUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/reset-password?token=${token}`;
   await sendEmail(email, "Password Reset", `Reset your password: ${resetUrl}`);
   res.status(200).end();
 }

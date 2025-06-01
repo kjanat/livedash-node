@@ -31,11 +31,28 @@ export default function UserManagementPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/dashboard/users");
-        const data = (await res.json()) as UsersApiResponse;
-      setUsers(data.users);
+        const data = await res.json() as UsersApiResponse | { error: string; };
+
+        if (res.ok && 'users' in data) {
+            setUsers(data.users);
+      } else {
+          const errorMessage = 'error' in data ? data.error : "Unknown error";
+          console.error("Failed to fetch users:", errorMessage);
+
+          if (errorMessage === "Admin access required") {
+              setMessage("You need admin privileges to manage users.");
+          } else if (errorMessage === "Not logged in") {
+              setMessage("Please log in to access this page.");
+          } else {
+              setMessage(`Failed to load users: ${errorMessage}`);
+          }
+
+          setUsers([]); // Set empty array to prevent undefined errors
+      }
     } catch (error) {
       console.error("Failed to fetch users:", error);
       setMessage("Failed to load users.");
+        setUsers([]); // Set empty array to prevent undefined errors
     } finally {
       setLoading(false);
     }
@@ -169,13 +186,22 @@ export default function UserManagementPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {users.length === 0 ? (
+                              {loading ? (
+                                  <tr>
+                                      <td
+                                          colSpan={3}
+                                          className="px-6 py-4 text-center text-sm text-gray-500"
+                                      >
+                                          Loading users...
+                                      </td>
+                                  </tr>
+                              ) : users.length === 0 ? (
                   <tr>
                     <td
                       colSpan={3}
                       className="px-6 py-4 text-center text-sm text-gray-500"
                     >
-                      No users found
+                                              {message || "No users found"}
                     </td>
                   </tr>
                 ) : (

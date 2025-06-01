@@ -447,3 +447,4 @@ build/
 
 .dev.vars*
 test-transcript-format.js
+my-next-app/
