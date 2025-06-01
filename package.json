@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev:old": "next dev --turbopack",
     "format": "pnpm dlx prettier --write .",
     "format:check": "pnpm dlx prettier --check .",
     "format:standard": "pnpm dlx standard . --fix",
@@ -21,11 +20,23 @@
     "cf-typegen": "wrangler types",
     "check": "tsc && wrangler deploy --dry-run",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev",
+    "dev": "next dev",
+    "dev:old": "next dev --turbopack",
+    "dev:cf": "wrangler dev",
     "predeploy": "wrangler d1 migrations apply DB --remote",
-    "seedLocalD1": "wrangler d1 migrations apply DB --local"
+    "seedLocalD1": "wrangler d1 migrations apply DB --local",
+    "d1:list": "wrangler d1 list",
+    "d1:info": "wrangler d1 info d1-notso-livedash",
+    "d1:info:remote": "wrangler d1 info d1-notso-livedash --remote",
+    "d1:query": "node scripts/d1-query.js",
+    "d1:export": "wrangler d1 export d1-notso-livedash",
+    "d1:export:remote": "wrangler d1 export d1-notso-livedash --remote",
+    "d1:backup": "wrangler d1 export d1-notso-livedash --output backups/$(date +%Y%m%d_%H%M%S)_backup.sql",
+    "d1:schema": "wrangler d1 export d1-notso-livedash --no-data --output schema.sql",
+    "d1": "node scripts/d1.js"
   },
   "dependencies": {
+    "@prisma/adapter-d1": "^6.8.2",
     "@prisma/client": "^6.8.2",
     "@rapideditor/country-coder": "^5.4.0",
     "@types/d3": "^7.4.3",

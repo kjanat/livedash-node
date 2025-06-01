@@ -6,7 +6,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "compatibility_date": "2025-04-01",
   "main": "src/index.ts",
-  "name": "livedash-node",
+  "name": "livedash",
   "upload_source_maps": true,
   "d1_databases": [
     {
