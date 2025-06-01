@@ -14,6 +14,11 @@ interface FilterOptions {
   languages: string[];
 }
 
+interface SessionsApiResponse {
+    sessions: ChatSession[];
+    totalSessions: number;
+}
+
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +63,7 @@ export default function SessionsPage() {
       if (!response.ok) {
         throw new Error("Failed to fetch filter options");
       }
-      const data = await response.json();
+        const data = (await response.json()) as FilterOptions;
       setFilterOptions(data);
     } catch (err) {
       setError(
@@ -88,7 +93,7 @@ export default function SessionsPage() {
       if (!response.ok) {
         throw new Error(`Failed to fetch sessions: ${response.statusText}`);
       }
-      const data = await response.json();
+        const data = (await response.json()) as SessionsApiResponse;
       setSessions(data.sessions || []);
       setTotalPages(Math.ceil((data.totalSessions || 0) / pageSize));
     } catch (err) {

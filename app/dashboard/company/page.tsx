@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Company } from "../../../lib/types";
 
+interface CompanyConfigResponse {
+    company: Company;
+}
+
 export default function CompanySettingsPage() {
   const { data: session, status } = useSession();
   // We store the full company object for future use and updates after save operations
@@ -22,7 +26,7 @@ export default function CompanySettingsPage() {
         setLoading(true);
         try {
           const res = await fetch("/api/dashboard/config");
-          const data = await res.json();
+            const data = (await res.json()) as CompanyConfigResponse;
           setCompany(data.company);
           setCsvUrl(data.company.csvUrl || "");
           setCsvUsername(data.company.csvUsername || "");
@@ -58,10 +62,10 @@ export default function CompanySettingsPage() {
       if (res.ok) {
         setMessage("Settings saved successfully!");
         // Update local state if needed
-        const data = await res.json();
+          const data = (await res.json()) as CompanyConfigResponse;
         setCompany(data.company);
       } else {
-        const error = await res.json();
+          const error = (await res.json()) as { message?: string; };
         setMessage(
           `Failed to save settings: ${error.message || "Unknown error"}`
         );

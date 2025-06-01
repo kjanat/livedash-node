@@ -146,7 +146,8 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
         {/* Fallback to link only if we only have the URL but no content - this might also be redundant if parent handles all transcript display */}
         {(!session.transcriptContent ||
           session.transcriptContent.length === 0) &&
-          session.fullTranscriptUrl && (
+          session.fullTranscriptUrl &&
+          process.env.NODE_ENV !== "production" && (
             <div className="flex justify-between pt-2">
               <span className="text-gray-600">Transcript:</span>
               <a

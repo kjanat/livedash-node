@@ -9,6 +9,10 @@ interface UserItem {
   role: string;
 }
 
+interface UsersApiResponse {
+    users: UserItem[];
+}
+
 export default function UserManagementPage() {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -27,7 +31,7 @@ export default function UserManagementPage() {
     setLoading(true);
     try {
       const res = await fetch("/api/dashboard/users");
-      const data = await res.json();
+        const data = (await res.json()) as UsersApiResponse;
       setUsers(data.users);
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -52,7 +56,7 @@ export default function UserManagementPage() {
         // Refresh the user list
         fetchUsers();
       } else {
-        const error = await res.json();
+          const error = (await res.json()) as { message?: string; };
         setMessage(
           `Failed to invite user: ${error.message || "Unknown error"}`
         );

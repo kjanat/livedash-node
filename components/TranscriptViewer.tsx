@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw"; // Import rehype-raw
+import rehypeRaw from "rehype-raw";
 
 interface TranscriptViewerProps {
   transcriptContent: string;
@@ -23,6 +23,7 @@ function formatTranscript(content: string): React.ReactNode[] {
   const elements: React.ReactNode[] = [];
   let currentSpeaker: string | null = null;
   let currentMessages: string[] = [];
+  let currentTimestamp: string | null = null;
 
   // Process each line
   lines.forEach((line) => {
@@ -32,8 +33,15 @@ function formatTranscript(content: string): React.ReactNode[] {
       return;
     }
 
-    // Check if this is a new speaker line
-    if (line.startsWith("User:") || line.startsWith("Assistant:")) {
+    // Check if this is a new speaker line with or without datetime
+    // Format 1: [29.05.2025 21:26:44] User: message
+    // Format 2: User: message
+    const datetimeMatch = line.match(
+      /^\[([^\]]+)\]\s*(User|Assistant):\s*(.*)$/
+    );
+    const simpleMatch = line.match(/^(User|Assistant):\s*(.*)$/);
+
+    if (datetimeMatch || simpleMatch) {
       // If we have accumulated messages for a previous speaker, add them
       if (currentSpeaker && currentMessages.length > 0) {
         elements.push(
@@ -48,6 +56,11 @@ function formatTranscript(content: string): React.ReactNode[] {
                   : "bg-gray-100 text-gray-800"
               }`}
             >
+              {currentTimestamp && (
+                <div className="text-xs opacity-60 mb-1">
+                  {currentTimestamp}
+                </div>
+              )}
               {currentMessages.map((msg, i) => (
                 // Use ReactMarkdown to render each message part
                 <ReactMarkdown
@@ -73,12 +86,22 @@ function formatTranscript(content: string): React.ReactNode[] {
         currentMessages = [];
       }
 
-      // Set the new current speaker
-      currentSpeaker = line.startsWith("User:") ? "User" : "Assistant";
-      // Add the content after "User:" or "Assistant:"
-      const messageContent = line.substring(line.indexOf(":") + 1).trim();
-      if (messageContent) {
-        currentMessages.push(messageContent);
+      if (datetimeMatch) {
+        // Format with datetime: [29.05.2025 21:26:44] User: message
+        currentTimestamp = datetimeMatch[1];
+        currentSpeaker = datetimeMatch[2];
+        const messageContent = datetimeMatch[3].trim();
+        if (messageContent) {
+          currentMessages.push(messageContent);
+        }
+      } else if (simpleMatch) {
+        // Format without datetime: User: message
+        currentTimestamp = null;
+        currentSpeaker = simpleMatch[1];
+        const messageContent = simpleMatch[2].trim();
+        if (messageContent) {
+          currentMessages.push(messageContent);
+        }
       }
     } else if (currentSpeaker) {
       // This is a continuation of the current speaker's message
@@ -100,6 +123,9 @@ function formatTranscript(content: string): React.ReactNode[] {
               : "bg-gray-100 text-gray-800"
           }`}
         >
+          {currentTimestamp && (
+            <div className="text-xs opacity-60 mb-1">{currentTimestamp}</div>
+          )}
           {currentMessages.map((msg, i) => (
             // Use ReactMarkdown to render each message part
             <ReactMarkdown
@@ -138,6 +164,9 @@ export default function TranscriptViewer({
 
   const formattedElements = formatTranscript(transcriptContent);
 
+  // Hide "View Full Raw" button in production environment
+  const isProduction = process.env.NODE_ENV === "production";
+
   return (
     <div className="bg-white shadow-lg rounded-lg p-4 md:p-6 mt-6">
       <div className="flex justify-between items-center mb-4">
@@ -145,7 +174,7 @@ export default function TranscriptViewer({
           Session Transcript
         </h2>
         <div className="flex items-center space-x-3">
-          {transcriptUrl && (
+          {transcriptUrl && !isProduction && (
             <a
               href={transcriptUrl}
               target="_blank"

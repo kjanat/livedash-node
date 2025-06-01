@@ -12,13 +12,27 @@ interface SessionCreateData {
 }
 
 /**
- * Fetches transcript content from a URL
+ * Fetches transcript content from a URL with optional authentication
  * @param url The URL to fetch the transcript from
+ * @param username Optional username for Basic Auth
+ * @param password Optional password for Basic Auth
  * @returns The transcript content or null if fetching fails
  */
-async function fetchTranscriptContent(url: string): Promise<string | null> {
+async function fetchTranscriptContent(
+  url: string,
+  username?: string,
+  password?: string
+): Promise<string | null> {
   try {
-    const response = await fetch(url);
+    const authHeader =
+      username && password
+        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+        : undefined;
+
+    const response = await fetch(url, {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    });
+
     if (!response.ok) {
       process.stderr.write(
         `Error fetching transcript: ${response.statusText}\n`
@@ -111,7 +125,9 @@ export default async function handler(
       let transcriptContent: string | null = null;
       if (session.fullTranscriptUrl) {
         transcriptContent = await fetchTranscriptContent(
-          session.fullTranscriptUrl
+          session.fullTranscriptUrl,
+          company.csvUsername as string | undefined,
+          company.csvPassword as string | undefined
         );
       }
 
