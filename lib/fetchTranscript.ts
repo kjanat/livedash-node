@@ -21,7 +21,7 @@ export async function fetchTranscriptContent(
     });
 
     if (!response.ok) {
-      process.stderr.write(`Error fetching transcript: ${response.statusText}\n`);
+      process.stderr.write(`Error fetching transcript from ${url}: ${response.statusText}\n`);
       return null;
     }
     return await response.text();
