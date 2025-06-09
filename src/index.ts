@@ -3,6 +3,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { PrismaD1 } from '@prisma/adapter-d1';
+import { formatError } from './utils/error';
 
 export interface Env {
     DB: D1Database;
@@ -209,17 +210,7 @@ export default {
 
         } catch (error) {
             console.error('Worker error:', error);
-            const payload: Record<string, unknown> = {
-                error: 'Internal Server Error',
-                message: error instanceof Error ? error.message : 'Unknown error'
-            };
-            if (
-                typeof process !== 'undefined' &&
-                process.env?.NODE_ENV !== 'production'
-            ) {
-                payload.stack = error instanceof Error ? error.stack : undefined;
-            }
-            return new Response(JSON.stringify(payload), {
+            return new Response(JSON.stringify(formatError(error)), {
                 status: 500,
                 headers: {
                     'Content-Type': 'application/json',
@@ -229,3 +220,4 @@ export default {
         }
     },
 };
+
