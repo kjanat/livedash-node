@@ -9,6 +9,7 @@ export interface Env {
     DB: D1Database;
     NEXTAUTH_SECRET?: string;
     NEXTAUTH_URL?: string;
+    WORKER_ENV?: string; // 'development' | 'production'
 }
 
 export default {
@@ -210,8 +211,12 @@ export default {
 
         } catch (error) {
             console.error('Worker error:', error); // Log full error details, including stack trace
+            
+            // Use the formatError utility to properly format the error response
+            const errorPayload = formatError(error, env);
+            
             return new Response(
-                JSON.stringify({ message: 'An internal server error occurred. Please try again later.' }),
+                JSON.stringify(errorPayload),
                 {
                     status: 500,
                     headers: {
