@@ -17,6 +17,9 @@ importers:
       '@rapideditor/country-coder':
         specifier: ^5.4.0
         version: 5.4.0
+      '@tailwindcss/postcss':
+        specifier: ^4.1.8
+        version: 4.1.8
       '@types/d3':
         specifier: ^7.4.3
         version: 7.4.3
@@ -105,9 +108,6 @@ importers:
       '@playwright/test':
         specifier: ^1.52.0
         version: 1.52.0
-      '@tailwindcss/postcss':
-        specifier: ^4.1.8
-        version: 4.1.8
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
