@@ -512,7 +512,7 @@ export function sessionMetrics(
   const uniqueUsers = uniqueUserIds.size;
   const avgSessionLength =
     validSessionsForDuration > 0
-      ? totalSessionDuration / validSessionsForDuration / 1000 // Convert ms to minutes
+      ? totalSessionDuration / validSessionsForDuration / 1000 // Convert ms to seconds
       : 0;
   const avgResponseTime =
     validSessionsForResponseTime > 0

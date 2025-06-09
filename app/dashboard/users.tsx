@@ -13,7 +13,7 @@ interface UserManagementProps {
 }
 
 interface UsersApiResponse {
-    users: UserItem[];
+  users: UserItem[];
 }
 
 export default function UserManagement({ session }: UserManagementProps) {
@@ -25,7 +25,7 @@ export default function UserManagement({ session }: UserManagementProps) {
   useEffect(() => {
     fetch("/api/dashboard/users")
       .then((r) => r.json())
-        .then((data) => setUsers((data as UsersApiResponse).users));
+      .then((data) => setUsers((data as UsersApiResponse).users));
   }, []);
 
   async function inviteUser() {
