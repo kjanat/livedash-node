@@ -33,6 +33,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Cloudflare Workers
+.dev.vars
+wrangler.toml.local
+.wrangler/
+.open-next/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -218,6 +224,12 @@ yarn-error.log*
 # vercel
 .vercel
 
+# Cloudflare Workers
+.dev.vars
+wrangler.toml.local
+.wrangler/
+.open-next/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
@@ -227,6 +239,9 @@ next-env.d.ts
 *.db-shm
 *.db-wal
 *.sqlite?
+*.sqlite
+*.sqlite3
+prisma/dev.db
 
 # IDE
 .vscode/*
@@ -448,3 +463,8 @@ build/
 .dev.vars*
 test-transcript-format.js
 my-next-app/
+
+# Wiki
+.wiki/
+
+.specstory/
