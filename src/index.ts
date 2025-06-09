@@ -209,14 +209,17 @@ export default {
             });
 
         } catch (error) {
-            console.error('Worker error:', error);
-            return new Response(JSON.stringify(formatError(error)), {
-                status: 500,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
+            console.error('Worker error:', error); // Log full error details, including stack trace
+            return new Response(
+                JSON.stringify({ message: 'An internal server error occurred. Please try again later.' }),
+                {
+                    status: 500,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
                 }
-            });
+            );
         }
     },
 };
