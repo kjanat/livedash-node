@@ -1,9 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
-import { getServerSession } from "next-auth";
 import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
-import { authOptions } from "../auth/[...nextauth]";
+import { getApiSession } from "../../../lib/api-auth";
 // User type from prisma is used instead of the one in lib/types
 
 interface UserBasicInfo {
@@ -16,9 +15,18 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getServerSession(req, res, authOptions);
-  if (!session?.user || session.user.role !== "admin")
-    return res.status(403).json({ error: "Forbidden" });
+    const session = await getApiSession(req, res);
+    console.log("Session in users API:", session);
+
+    if (!session?.user) {
+        console.log("No session or user found");
+        return res.status(401).json({ error: "Not logged in" });
+    }
+
+    if (session.user.role !== "admin") {
+        console.log("User is not admin:", session.user.role);
+        return res.status(403).json({ error: "Admin access required" });
+    }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email as string },

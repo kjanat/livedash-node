@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
+import { getApiSession } from "../../../lib/api-auth";
 import { prisma } from "../../../lib/prisma";
 import {
   ChatSession,
@@ -17,7 +16,7 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const authSession = await getServerSession(req, res, authOptions);
+    const authSession = await getApiSession(req, res);
 
   if (!authSession || !authSession.user?.companyId) {
     return res.status(401).json({ error: "Unauthorized" });

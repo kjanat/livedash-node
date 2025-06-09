@@ -9,7 +9,7 @@ import { ChatSession } from "../../../../lib/types";
 import Link from "next/link";
 
 interface SessionApiResponse {
-    session: ChatSession;
+  session: ChatSession;
 }
 
 export default function SessionViewPage() {
@@ -34,13 +34,13 @@ export default function SessionViewPage() {
         try {
           const response = await fetch(`/api/dashboard/session/${id}`);
           if (!response.ok) {
-              const errorData = (await response.json()) as { error: string; };
+            const errorData = (await response.json()) as { error: string };
             throw new Error(
               errorData.error ||
                 `Failed to fetch session: ${response.statusText}`
             );
           }
-            const data = (await response.json()) as SessionApiResponse;
+          const data = (await response.json()) as SessionApiResponse;
           setSession(data.session);
         } catch (err) {
           setError(
@@ -154,17 +154,17 @@ export default function SessionViewPage() {
               <p className="text-gray-600">
                 No transcript content available for this session.
               </p>
-                              {session.fullTranscriptUrl &&
-                                  process.env.NODE_ENV !== "production" && (
-                                      <a
-                                          href={session.fullTranscriptUrl}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-sky-600 hover:underline mt-2 inline-block"
-                                      >
-                                          View Source Transcript URL
-                                      </a>
-                                  )}
+              {session.fullTranscriptUrl &&
+                process.env.NODE_ENV !== "production" && (
+                  <a
+                    href={session.fullTranscriptUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sky-600 hover:underline mt-2 inline-block"
+                  >
+                    View Source Transcript URL
+                  </a>
+                )}
             </div>
           )}
         </div>
