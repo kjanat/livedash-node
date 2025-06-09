@@ -1,9 +1,8 @@
 // API endpoint: return metrics for current company
 import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth";
+import { getApiSession } from "../../../lib/api-auth";
 import { prisma } from "../../../lib/prisma";
 import { sessionMetrics } from "../../../lib/metrics";
-import { authOptions } from "../auth/[...nextauth]";
 import { ChatSession } from "../../../lib/types"; // Import ChatSession
 
 interface SessionUser {
@@ -19,11 +18,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = (await getServerSession(
-    req,
-    res,
-    authOptions
-  )) as SessionData | null;
+    const session = await getApiSession(req, res);
   if (!session?.user) return res.status(401).json({ error: "Not logged in" });
 
   const user = await prisma.user.findUnique({

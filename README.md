@@ -6,7 +6,7 @@ A real-time analytics dashboard for monitoring user sessions and interactions wi
 ![React](<https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkjanat%2Flivedash-node%2Fmaster%2Fpackage.json&search=%22react%22%5Cs*%3A%5Cs*%22%5C%5E(%3F%3Cversion%3E%5Cd%2B%5C.%5Cd*).*%22&replace=%24%3Cversion%3E&logo=react&label=React&color=%2361DAFB>)
 ![TypeScript](<https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkjanat%2Flivedash-node%2Fmaster%2Fpackage.json&search=%22typescript%22%5Cs*%3A%5Cs*%22%5C%5E(%3F%3Cversion%3E%5Cd%2B%5C.%5Cd*).*%22&replace=%24%3Cversion%3E&logo=typescript&label=TypeScript&color=%233178C6>)
 ![Prisma](<https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkjanat%2Flivedash-node%2Fmaster%2Fpackage.json&search=%22prisma%22%5Cs*%3A%5Cs*%22%5C%5E(%3F%3Cversion%3E%5Cd%2B%5C.%5Cd*).*%22&replace=%24%3Cversion%3E&logo=prisma&label=Prisma&color=%232D3748>)
-![TailwindCSS](<https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkjanat%2Flivedash-node%2Fmaster%2Fpackage.json&search=%22tailwindcss%22%5Cs*%3A%5Cs*%22%5C%5E(%3F%3Cversion%3E%5Cd%2B%5C.%5Cd*).*%22&replace=%24%3Cversion%3E&logo=tailwindcss&label=TailwindCSS&color=%2306B6D4>)
+![TailwindCSS](<https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fkjanat%2Flivedash-node%2Fmaster%2Fpackage.json&search=%22tailwindcss%22%5Cs*%3A%5Cs*%22%5C%5E(%3F%3Cversion%3E%5Cd%2B%5C.%5Cd*).*%22&replace=%24%3Cversion%3E&logo=tailwindcss&label=TailwindCSS&color=%2306B6D4>) 
 
 ## Features
 
@@ -37,30 +37,30 @@ A real-time analytics dashboard for monitoring user sessions and interactions wi
 
 1.  Clone this repository:
 
-```bash
-git clone https://github.com/kjanat/livedash-node.git
-cd livedash-node
-```
+    ```bash
+    git clone https://github.com/kjanat/livedash-node.git
+    cd livedash-node
+    ```
 
 2.  Install dependencies:
 
-```bash
-npm install
-```
+    ```bash
+    npm install
+    ```
 
 3.  Set up the database:
 
-```bash
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:seed
-```
+    ```bash
+    npm run prisma:generate
+    npm run prisma:migrate
+    npm run prisma:seed
+    ```
 
 4.  Start the development server:
 
-```bash
-npm run dev
-```
+    ```bash
+    npm run dev
+    ```
 
 5.  Open your browser and navigate to <http://localhost:3000>
 
@@ -96,9 +96,9 @@ NEXTAUTH_SECRET=your-secret-here
 ## Contributing
 
 1.  Fork the repository
-2.  Create your feature branch: `git checkout -b feature/my-new-feature`
-3.  Commit your changes: `git commit -am 'Add some feature'`
-4.  Push to the branch: `git push origin feature/my-new-feature`
+2.  Create your feature branch: `git checkout -b feature/my-new-feature` 
+3.  Commit your changes: `git commit -am 'Add some feature'` 
+4.  Push to the branch: `git push origin feature/my-new-feature` 
 5.  Submit a pull request
 
 ## License
@@ -107,9 +107,9 @@ This project is not licensed for commercial use without explicit permission. Fre
 
 ## Acknowledgments
 
-- [Next.js](https://nextjs.org/)
-- [Prisma](https://prisma.io/)
-- [TailwindCSS](https://tailwindcss.com/)
-- [Chart.js](https://www.chartjs.org/)
-- [D3.js](https://d3js.org/)
+- [Next.js](https://nextjs.org/) 
+- [Prisma](https://prisma.io/) 
+- [TailwindCSS](https://tailwindcss.com/) 
+- [Chart.js](https://www.chartjs.org/) 
+- [D3.js](https://d3js.org/) 
 - [React Leaflet](https://react-leaflet.js.org/)

@@ -1,15 +1,7 @@
 import { Session as NextAuthSession } from "next-auth";
 
-export interface UserSession extends NextAuthSession {
-  user: {
-    id?: string;
-    name?: string;
-    email?: string;
-    image?: string;
-    companyId: string;
-    role: string;
-  };
-}
+// Use the NextAuth Session directly as it now includes our extended types
+export type UserSession = NextAuthSession;
 
 export interface Company {
   id: string;
