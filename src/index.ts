@@ -209,20 +209,23 @@ export default {
 
         } catch (error) {
             console.error('Worker error:', error);
-            return new Response(
-                JSON.stringify({
-                    error: 'Internal Server Error',
-                    message: error instanceof Error ? error.message : 'Unknown error',
-                    stack: error instanceof Error ? error.stack : undefined
-                }),
-                {
-                    status: 500,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Access-Control-Allow-Origin': '*'
-                    },
+            const payload: Record<string, unknown> = {
+                error: 'Internal Server Error',
+                message: error instanceof Error ? error.message : 'Unknown error'
+            };
+            if (
+                typeof process !== 'undefined' &&
+                process.env?.NODE_ENV !== 'production'
+            ) {
+                payload.stack = error instanceof Error ? error.stack : undefined;
+            }
+            return new Response(JSON.stringify(payload), {
+                status: 500,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
                 }
-            );
+            });
         }
     },
 };
