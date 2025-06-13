@@ -101,7 +101,7 @@
     "postcss": "^8.5.4",
     "prettier": "^3.5.3",
     "prettier-plugin-jinja-template": "^2.1.0",
-    "prisma": "^6.8.2",
+    "prisma": "^6.9.0",
     "tailwindcss": "^4.1.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
