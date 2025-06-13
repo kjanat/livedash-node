@@ -12,6 +12,10 @@ updates:
       day: "tuesday"
       time: "03:00"
       timezone: "Europe/Amsterdam"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -20,6 +24,10 @@ updates:
       day: "tuesday"
       time: "03:00"
       timezone: "Europe/Amsterdam"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -28,6 +36,10 @@ updates:
       day: "tuesday"
       time: "03:00"
       timezone: "Europe/Amsterdam"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker-compose" # See documentation for possible values
     directory: "/" # Location of package manifests
@@ -36,3 +48,7 @@ updates:
       day: "tuesday"
       time: "03:00"
       timezone: "Europe/Amsterdam"
+    groups:
+      actions:
+        patterns:
+          - "*"
