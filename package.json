@@ -50,7 +50,7 @@
     "@auth/d1-adapter": "^1.9.1",
     "@opennextjs/cloudflare": "^1.1.0",
     "@prisma/adapter-d1": "^6.8.2",
-    "@prisma/client": "^6.8.2",
+    "@prisma/client": "^6.9.0",
     "@rapideditor/country-coder": "^5.4.0",
     "@types/d3": "^7.4.3",
     "@types/d3-cloud": "^1.2.9",
