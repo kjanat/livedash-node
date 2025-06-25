@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"; // Import useRouter
 import { useSession } from "next-auth/react"; // Import useSession
 import SessionDetails from "../../../../components/SessionDetails";
 import TranscriptViewer from "../../../../components/TranscriptViewer";
+import MessageViewer from "../../../../components/MessageViewer";
 import { ChatSession } from "../../../../lib/types";
 import Link from "next/link";
 
@@ -136,30 +137,26 @@ export default function SessionViewPage() {
           <div>
             <SessionDetails session={session} />
           </div>
-          {session.transcriptContent &&
-          session.transcriptContent.trim() !== "" ? (
-            <div className="mt-0">
-              <TranscriptViewer
-                transcriptContent={session.transcriptContent}
-                transcriptUrl={session.fullTranscriptUrl}
-              />
+
+          {/* Show parsed messages if available */}
+          {session.messages && session.messages.length > 0 && (
+            <div>
+              <MessageViewer messages={session.messages} />
             </div>
-          ) : (
+          )}
+
+          {/* Show transcript URL if available */}
+          {session.fullTranscriptUrl && (
             <div className="bg-white p-4 rounded-lg shadow">
-              <h3 className="font-bold text-lg mb-3">Transcript</h3>
-              <p className="text-gray-600">
-                No transcript content available for this session.
-              </p>
-              {session.fullTranscriptUrl && (
-                <a
-                  href={session.fullTranscriptUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sky-600 hover:underline mt-2 inline-block"
-                >
-                  View Source Transcript URL
-                </a>
-              )}
+              <h3 className="font-bold text-lg mb-3">Source Transcript</h3>
+              <a
+                href={session.fullTranscriptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sky-600 hover:underline"
+              >
+                View Original Transcript
+              </a>
             </div>
           )}
         </div>

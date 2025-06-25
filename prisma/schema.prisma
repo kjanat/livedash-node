@@ -48,7 +48,6 @@ model Session {
   escalated           Boolean?
   forwardedHr         Boolean?
   fullTranscriptUrl   String?
-  transcriptContent   String?  // Added to store the fetched transcript
   avgResponseTime     Float?
   tokens              Int?
   tokensEur           Float?
@@ -57,5 +56,19 @@ model Session {
   processed           Boolean? // Flag for post-processing status
   questions           String?  // JSON array of questions asked by user
   summary             String?  // Brief summary of the conversation
+  messages            Message[] // Relation to parsed messages
   createdAt           DateTime @default(now())
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+  timestamp DateTime // When the message was sent
+  role      String   // "User", "Assistant", "System", etc.
+  content   String   // The message content
+  order     Int      // Order within the conversation (0, 1, 2, ...)
+  createdAt DateTime @default(now())
+  
+  @@index([sessionId, order]) // Index for efficient ordering queries
 }

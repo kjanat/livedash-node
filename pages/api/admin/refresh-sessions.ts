@@ -32,7 +32,7 @@ async function fetchTranscriptContent(
     const response = await fetch(url, {
       headers: authHeader ? { Authorization: authHeader } : {},
     });
-    
+
     if (!response.ok) {
       process.stderr.write(
         `Error fetching transcript: ${response.statusText}\n`

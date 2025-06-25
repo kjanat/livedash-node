@@ -35,6 +35,16 @@ export interface User {
   updatedAt: Date;
 }
 
+export interface Message {
+  id: string;
+  sessionId: string;
+  timestamp: Date;
+  role: string; // "User", "Assistant", "System", etc.
+  content: string;
+  order: number; // Order within the conversation (0, 1, 2, ...)
+  createdAt: Date;
+}
+
 export interface ChatSession {
   id: string;
   sessionId: string;
@@ -60,10 +70,10 @@ export interface ChatSession {
   tokensEur?: number;
   initialMsg?: string;
   fullTranscriptUrl?: string | null;
-  transcriptContent?: string | null;
   processed?: boolean | null; // Flag for post-processing status
   questions?: string | null; // JSON array of questions asked by user
   summary?: string | null; // Brief summary of the conversation
+  messages?: Message[]; // Parsed messages from transcript
 }
 
 export interface SessionQuery {

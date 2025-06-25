@@ -10,9 +10,9 @@ import { startProcessingScheduler } from "./processingScheduler";
 export function initializeSchedulers() {
   // Start the session refresh scheduler
   startScheduler();
-  
+
   // Start the session processing scheduler
   startProcessingScheduler();
-  
+
   console.log("All schedulers initialized successfully");
 }

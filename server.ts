@@ -19,12 +19,12 @@ app.prepare().then(() => {
   startScheduler();
   startProcessingScheduler();
   console.log('All schedulers initialized successfully');
-  
+
   createServer(async (req, res) => {
     try {
       // Parse the URL
       const parsedUrl = parse(req.url || '', true);
-      
+
       // Let Next.js handle the request
       await handle(req, res, parsedUrl);
     } catch (err) {

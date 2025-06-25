@@ -15,11 +15,10 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h3 className="font-bold text-lg mb-3">Session Details</h3>
-
-      <div className="space-y-2">
+      <div className="space-y-3">
         <div className="flex justify-between border-b pb-2">
           <span className="text-gray-600">Session ID:</span>
-          <span className="font-medium">{session.sessionId || session.id}</span>
+          <span className="font-medium font-mono text-sm">{session.id}</span>
         </div>
 
         <div className="flex justify-between border-b pb-2">
@@ -220,23 +219,19 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         )}
 
-        {/* Transcript rendering is now handled by the parent page (app/dashboard/sessions/[id]/page.tsx) */}
-        {/* Fallback to link only if we only have the URL but no content - this might also be redundant if parent handles all transcript display */}
-        {(!session.transcriptContent ||
-          session.transcriptContent.length === 0) &&
-          session.fullTranscriptUrl && (
-            <div className="flex justify-between pt-2">
-              <span className="text-gray-600">Transcript:</span>
-              <a
-                href={session.fullTranscriptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:text-blue-700 underline"
-              >
-                View Full Transcript
-              </a>
-            </div>
-          )}
+        {session.fullTranscriptUrl && (
+          <div className="flex justify-between pt-2">
+            <span className="text-gray-600">Transcript:</span>
+            <a
+              href={session.fullTranscriptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:text-blue-700 underline"
+            >
+              View Full Transcript
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
