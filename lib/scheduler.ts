@@ -20,8 +20,7 @@ export function startScheduler() {
           company.csvUsername as string | undefined,
           company.csvPassword as string | undefined
         );
-        await prisma.session.deleteMany({ where: { companyId: company.id } });
-
+        // Only add sessions that don't already exist in the database
         for (const session of sessions) {
           const sessionData: SessionCreateData = {
             ...session,
@@ -30,6 +29,16 @@ export function startScheduler() {
             // Ensure startTime is not undefined
             startTime: session.startTime || new Date(),
           };
+
+          // Check if the session already exists
+          const existingSession = await prisma.session.findUnique({
+            where: { id: sessionData.id },
+          });
+
+          if (existingSession) {
+            // Skip this session as it already exists
+            continue;
+          }
 
           // Only include fields that are properly typed for Prisma
           await prisma.session.create({

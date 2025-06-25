@@ -71,7 +71,7 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
 
         {session.sentiment !== null && session.sentiment !== undefined && (
           <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Sentiment:</span>
+            <span className="text-gray-600">Sentiment Score:</span>
             <span
               className={`font-medium ${
                 session.sentiment > 0.3
@@ -87,6 +87,23 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
                   ? "Negative"
                   : "Neutral"}{" "}
               ({session.sentiment.toFixed(2)})
+            </span>
+          </div>
+        )}
+
+        {session.sentimentCategory && (
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-gray-600">AI Sentiment:</span>
+            <span
+              className={`font-medium capitalize ${
+                session.sentimentCategory === "positive"
+                  ? "text-green-500"
+                  : session.sentimentCategory === "negative"
+                    ? "text-red-500"
+                    : "text-orange-500"
+              }`}
+            >
+              {session.sentimentCategory}
             </span>
           </div>
         )}
@@ -139,6 +156,67 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
             >
               {session.forwardedHr ? "Yes" : "No"}
             </span>
+          </div>
+        )}
+
+        {session.ipAddress && (
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-gray-600">IP Address:</span>
+            <span className="font-medium font-mono text-sm">{session.ipAddress}</span>
+          </div>
+        )}
+
+        {session.processed !== null && session.processed !== undefined && (
+          <div className="flex justify-between border-b pb-2">
+            <span className="text-gray-600">AI Processed:</span>
+            <span
+              className={`font-medium ${session.processed ? "text-green-500" : "text-gray-500"}`}
+            >
+              {session.processed ? "Yes" : "No"}
+            </span>
+          </div>
+        )}
+
+        {session.initialMsg && (
+          <div className="border-b pb-2">
+            <span className="text-gray-600 block mb-1">Initial Message:</span>
+            <div className="bg-gray-50 p-2 rounded text-sm italic">
+              "{session.initialMsg}"
+            </div>
+          </div>
+        )}
+
+        {session.summary && (
+          <div className="border-b pb-2">
+            <span className="text-gray-600 block mb-1">AI Summary:</span>
+            <div className="bg-blue-50 p-2 rounded text-sm">
+              {session.summary}
+            </div>
+          </div>
+        )}
+
+        {session.questions && (
+          <div className="border-b pb-2">
+            <span className="text-gray-600 block mb-1">Questions Asked:</span>
+            <div className="bg-yellow-50 p-2 rounded text-sm">
+              {(() => {
+                try {
+                  const questions = JSON.parse(session.questions);
+                  if (Array.isArray(questions) && questions.length > 0) {
+                    return (
+                      <ul className="list-disc list-inside space-y-1">
+                        {questions.map((question: string, index: number) => (
+                          <li key={index}>{question}</li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  return "No questions identified";
+                } catch {
+                  return session.questions;
+                }
+              })()}
+            </div>
           </div>
         )}
 

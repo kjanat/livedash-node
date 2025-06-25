@@ -46,6 +46,7 @@ export default async function handler(
       country: prismaSession.country ?? null,
       ipAddress: prismaSession.ipAddress ?? null,
       sentiment: prismaSession.sentiment ?? null,
+      sentimentCategory: prismaSession.sentimentCategory ?? null, // New field
       messagesSent: prismaSession.messagesSent ?? undefined, // Use undefined if ChatSession expects number | undefined
       avgResponseTime: prismaSession.avgResponseTime ?? null,
       escalated: prismaSession.escalated ?? undefined,
@@ -55,6 +56,9 @@ export default async function handler(
       initialMsg: prismaSession.initialMsg ?? undefined,
       fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
       transcriptContent: prismaSession.transcriptContent ?? null,
+      processed: prismaSession.processed ?? null, // New field
+      questions: prismaSession.questions ?? null, // New field
+      summary: prismaSession.summary ?? null, // New field
     };
 
     return res.status(200).json({ session });

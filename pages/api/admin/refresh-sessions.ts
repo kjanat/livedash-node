@@ -14,11 +14,25 @@ interface SessionCreateData {
 /**
  * Fetches transcript content from a URL
  * @param url The URL to fetch the transcript from
+ * @param username Optional username for authentication
+ * @param password Optional password for authentication
  * @returns The transcript content or null if fetching fails
  */
-async function fetchTranscriptContent(url: string): Promise<string | null> {
+async function fetchTranscriptContent(
+  url: string,
+  username?: string,
+  password?: string
+): Promise<string | null> {
   try {
-    const response = await fetch(url);
+    const authHeader =
+      username && password
+        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+        : undefined;
+
+    const response = await fetch(url, {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    });
+    
     if (!response.ok) {
       process.stderr.write(
         `Error fetching transcript: ${response.statusText}\n`
@@ -80,9 +94,7 @@ export default async function handler(
       company.csvPassword as string | undefined
     );
 
-    // Replace all session rows for this company (for demo simplicity)
-    await prisma.session.deleteMany({ where: { companyId: company.id } });
-
+    // Only add sessions that don't already exist in the database
     for (const session of sessions) {
       const sessionData: SessionCreateData = {
         ...session,
@@ -111,8 +123,20 @@ export default async function handler(
       let transcriptContent: string | null = null;
       if (session.fullTranscriptUrl) {
         transcriptContent = await fetchTranscriptContent(
-          session.fullTranscriptUrl
+          session.fullTranscriptUrl,
+          company.csvUsername as string | undefined,
+          company.csvPassword as string | undefined
         );
+      }
+
+      // Check if the session already exists
+      const existingSession = await prisma.session.findUnique({
+        where: { id: sessionData.id },
+      });
+
+      if (existingSession) {
+        // Skip this session as it already exists
+        continue;
       }
 
       // Only include fields that are properly typed for Prisma
