@@ -21,9 +21,9 @@ export default async function handler(
       where: { id },
       include: {
         messages: {
-          orderBy: { order: 'asc' }
-        }
-      }
+          orderBy: { order: "asc" },
+        },
+      },
     });
 
     if (!prismaSession) {
@@ -63,15 +63,16 @@ export default async function handler(
       processed: prismaSession.processed ?? null, // New field
       questions: prismaSession.questions ?? null, // New field
       summary: prismaSession.summary ?? null, // New field
-      messages: prismaSession.messages?.map(msg => ({
-        id: msg.id,
-        sessionId: msg.sessionId,
-        timestamp: new Date(msg.timestamp),
-        role: msg.role,
-        content: msg.content,
-        order: msg.order,
-        createdAt: new Date(msg.createdAt)
-      })) ?? [], // New field - parsed messages
+      messages:
+        prismaSession.messages?.map((msg) => ({
+          id: msg.id,
+          sessionId: msg.sessionId,
+          timestamp: new Date(msg.timestamp),
+          role: msg.role,
+          content: msg.content,
+          order: msg.order,
+          createdAt: new Date(msg.createdAt),
+        })) ?? [], // New field - parsed messages
     };
 
     return res.status(200).json({ session });

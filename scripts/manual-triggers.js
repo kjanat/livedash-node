@@ -48,7 +48,7 @@ async function triggerProcessingScheduler() {
     });
 
     console.log(`Found ${sessionsToProcess.length} sessions to process:`);
-    sessionsToProcess.forEach(session => {
+    sessionsToProcess.forEach((session) => {
       console.log(`- Session ${session.id}: processed=${session.processed}`);
     });
 
@@ -58,7 +58,9 @@ async function triggerProcessingScheduler() {
     }
 
     // Import and run the processing function
-    const { processUnprocessedSessions } = await import("../lib/processingScheduler.js");
+    const { processUnprocessedSessions } = await import(
+      "../lib/processingScheduler.js"
+    );
     await processUnprocessedSessions();
 
     console.log("✅ Processing scheduler completed");
@@ -74,7 +76,9 @@ async function triggerTranscriptParsing() {
   console.log("=== Manual Transcript Parsing Trigger ===");
   try {
     const result = await processAllUnparsedTranscripts();
-    console.log(`✅ Transcript parsing completed: ${result.processed} processed, ${result.errors} errors`);
+    console.log(
+      `✅ Transcript parsing completed: ${result.processed} processed, ${result.errors} errors`
+    );
   } catch (error) {
     console.error("❌ Transcript parsing failed:", error);
   }
@@ -89,25 +93,22 @@ async function showProcessingStatus() {
   try {
     const totalSessions = await prisma.session.count();
     const processedSessions = await prisma.session.count({
-      where: { processed: true }
+      where: { processed: true },
     });
     const unprocessedSessions = await prisma.session.count({
-      where: { processed: { not: true } }
+      where: { processed: { not: true } },
     });
     const withMessages = await prisma.session.count({
       where: {
         messages: {
-          some: {}
-        }
-      }
+          some: {},
+        },
+      },
     });
     const readyForProcessing = await prisma.session.count({
       where: {
-        AND: [
-          { messages: { some: {} } },
-          { processed: { not: true } }
-        ]
-      }
+        AND: [{ messages: { some: {} } }, { processed: { not: true } }],
+      },
     });
 
     console.log(`📊 Total sessions: ${totalSessions}`);
@@ -121,24 +122,22 @@ async function showProcessingStatus() {
       console.log("\n📋 Sample unprocessed sessions:");
       const samples = await prisma.session.findMany({
         where: {
-          AND: [
-            { messages: { some: {} } },
-            { processed: { not: true } }
-          ]
+          AND: [{ messages: { some: {} } }, { processed: { not: true } }],
         },
         select: {
           id: true,
           processed: true,
           startTime: true,
         },
-        take: 3
+        take: 3,
       });
 
-      samples.forEach(session => {
-        console.log(`- ${session.id} (${session.startTime.toISOString()}) - processed: ${session.processed}`);
+      samples.forEach((session) => {
+        console.log(
+          `- ${session.id} (${session.startTime.toISOString()}) - processed: ${session.processed}`
+        );
       });
     }
-
   } catch (error) {
     console.error("❌ Failed to get processing status:", error);
   }
@@ -148,24 +147,24 @@ async function showProcessingStatus() {
 const command = process.argv[2];
 
 switch (command) {
-  case 'refresh':
+  case "refresh":
     await triggerSessionRefresh();
     break;
-  case 'process':
+  case "process":
     await triggerProcessingScheduler();
     break;
-  case 'parse':
+  case "parse":
     await triggerTranscriptParsing();
     break;
-  case 'status':
+  case "status":
     await showProcessingStatus();
     break;
-  case 'both':
+  case "both":
     await triggerSessionRefresh();
     console.log("\n" + "=".repeat(50) + "\n");
     await triggerProcessingScheduler();
     break;
-  case 'all':
+  case "all":
     await triggerSessionRefresh();
     console.log("\n" + "=".repeat(50) + "\n");
     await triggerTranscriptParsing();
@@ -175,9 +174,13 @@ switch (command) {
   default:
     console.log("Usage: node scripts/manual-triggers.js [command]");
     console.log("Commands:");
-    console.log("  refresh  - Trigger session refresh (fetch new sessions from CSV)");
+    console.log(
+      "  refresh  - Trigger session refresh (fetch new sessions from CSV)"
+    );
     console.log("  parse    - Parse transcripts into structured messages");
-    console.log("  process  - Trigger processing scheduler (process unprocessed sessions)");
+    console.log(
+      "  process  - Trigger processing scheduler (process unprocessed sessions)"
+    );
     console.log("  status   - Show current processing status");
     console.log("  both     - Run both refresh and processing");
     console.log("  all      - Run refresh, parse, and processing in sequence");

@@ -161,7 +161,9 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
         {session.ipAddress && (
           <div className="flex justify-between border-b pb-2">
             <span className="text-gray-600">IP Address:</span>
-            <span className="font-medium font-mono text-sm">{session.ipAddress}</span>
+            <span className="font-medium font-mono text-sm">
+              {session.ipAddress}
+            </span>
           </div>
         )}
 

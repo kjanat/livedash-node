@@ -1,12 +1,12 @@
 // Custom Next.js server with scheduler initialization
-const { createServer } = require('http');
-const { parse } = require('url');
-const next = require('next');
-const { startScheduler } = require('./lib/scheduler');
-const { startProcessingScheduler } = require('./lib/processingScheduler');
+const { createServer } = require("http");
+const { parse } = require("url");
+const next = require("next");
+const { startScheduler } = require("./lib/scheduler");
+const { startProcessingScheduler } = require("./lib/processingScheduler");
 
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const dev = process.env.NODE_ENV !== "production";
+const hostname = "localhost";
 const port = process.env.PORT || 3000;
 
 // Initialize Next.js
@@ -15,10 +15,10 @@ const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
   // Initialize schedulers when the server starts
-  console.log('Starting schedulers...');
+  console.log("Starting schedulers...");
   startScheduler();
   startProcessingScheduler();
-  console.log('All schedulers initialized successfully');
+  console.log("All schedulers initialized successfully");
 
   createServer(async (req, res) => {
     try {
@@ -28,9 +28,9 @@ app.prepare().then(() => {
       // Let Next.js handle the request
       await handle(req, res, parsedUrl);
     } catch (err) {
-      console.error('Error occurred handling', req.url, err);
+      console.error("Error occurred handling", req.url, err);
       res.statusCode = 500;
-      res.end('Internal Server Error');
+      res.end("Internal Server Error");
     }
   }).listen(port, (err) => {
     if (err) throw err;

@@ -103,7 +103,7 @@ async function processTranscriptWithOpenAI(
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const processedData = JSON.parse(data.choices[0].message.content);
 
     // Validate the response against our expected schema
@@ -120,7 +120,9 @@ async function processTranscriptWithOpenAI(
  * Validates the OpenAI response against our expected schema
  * @param data The data to validate
  */
-function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData {
+function validateOpenAIResponse(
+  data: any
+): asserts data is OpenAIProcessedData {
   // Check required fields
   const requiredFields = [
     "language",
@@ -142,7 +144,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
 
   // Validate field types
   if (typeof data.language !== "string" || !/^[a-z]{2}$/.test(data.language)) {
-    throw new Error("Invalid language format. Expected ISO 639-1 code (e.g., 'en')");
+    throw new Error(
+      "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
+    );
   }
 
   if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
@@ -150,7 +154,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
-    throw new Error("Invalid sentiment. Expected 'positive', 'neutral', or 'negative'");
+    throw new Error(
+      "Invalid sentiment. Expected 'positive', 'neutral', or 'negative'"
+    );
   }
 
   if (typeof data.escalated !== "boolean") {
@@ -178,15 +184,23 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   ];
 
   if (!validCategories.includes(data.category)) {
-    throw new Error(`Invalid category. Expected one of: ${validCategories.join(", ")}`);
+    throw new Error(
+      `Invalid category. Expected one of: ${validCategories.join(", ")}`
+    );
   }
 
   if (!Array.isArray(data.questions)) {
     throw new Error("Invalid questions. Expected array of strings");
   }
 
-  if (typeof data.summary !== "string" || data.summary.length < 10 || data.summary.length > 300) {
-    throw new Error("Invalid summary. Expected string between 10-300 characters");
+  if (
+    typeof data.summary !== "string" ||
+    data.summary.length < 10 ||
+    data.summary.length > 300
+  ) {
+    throw new Error(
+      "Invalid summary. Expected string between 10-300 characters"
+    );
   }
 
   if (typeof data.session_id !== "string") {
@@ -198,7 +212,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
  * Process unprocessed sessions
  */
 async function processUnprocessedSessions() {
-  process.stdout.write("[ProcessingScheduler] Starting to process unprocessed sessions...\n");
+  process.stdout.write(
+    "[ProcessingScheduler] Starting to process unprocessed sessions...\n"
+  );
 
   // Find sessions that have transcript content but haven't been processed
   const sessionsToProcess = await prisma.session.findMany({
@@ -217,22 +233,30 @@ async function processUnprocessedSessions() {
   });
 
   if (sessionsToProcess.length === 0) {
-    process.stdout.write("[ProcessingScheduler] No sessions found requiring processing.\n");
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions found requiring processing.\n"
+    );
     return;
   }
 
-  process.stdout.write(`[ProcessingScheduler] Found ${sessionsToProcess.length} sessions to process.\n`);
+  process.stdout.write(
+    `[ProcessingScheduler] Found ${sessionsToProcess.length} sessions to process.\n`
+  );
   let successCount = 0;
   let errorCount = 0;
 
   for (const session of sessionsToProcess) {
     if (!session.transcriptContent) {
       // Should not happen due to query, but good for type safety
-      process.stderr.write(`[ProcessingScheduler] Session ${session.id} has no transcript content, skipping.\n`);
+      process.stderr.write(
+        `[ProcessingScheduler] Session ${session.id} has no transcript content, skipping.\n`
+      );
       continue;
     }
 
-    process.stdout.write(`[ProcessingScheduler] Processing transcript for session ${session.id}...\n`);
+    process.stdout.write(
+      `[ProcessingScheduler] Processing transcript for session ${session.id}...\n`
+    );
     try {
       const processedData = await processTranscriptWithOpenAI(
         session.id,
@@ -263,17 +287,25 @@ async function processUnprocessedSessions() {
         },
       });
 
-      process.stdout.write(`[ProcessingScheduler] Successfully processed session ${session.id}.\n`);
+      process.stdout.write(
+        `[ProcessingScheduler] Successfully processed session ${session.id}.\n`
+      );
       successCount++;
     } catch (error) {
-      process.stderr.write(`[ProcessingScheduler] Error processing session ${session.id}: ${error}\n`);
+      process.stderr.write(
+        `[ProcessingScheduler] Error processing session ${session.id}: ${error}\n`
+      );
       errorCount++;
     }
   }
 
   process.stdout.write("[ProcessingScheduler] Session processing complete.\n");
-  process.stdout.write(`[ProcessingScheduler] Successfully processed: ${successCount} sessions.\n`);
-  process.stdout.write(`[ProcessingScheduler] Failed to process: ${errorCount} sessions.\n`);
+  process.stdout.write(
+    `[ProcessingScheduler] Successfully processed: ${successCount} sessions.\n`
+  );
+  process.stdout.write(
+    `[ProcessingScheduler] Failed to process: ${errorCount} sessions.\n`
+  );
 }
 
 /**
@@ -285,9 +317,13 @@ export function startProcessingScheduler() {
     try {
       await processUnprocessedSessions();
     } catch (error) {
-      process.stderr.write(`[ProcessingScheduler] Error in scheduler: ${error}\n`);
+      process.stderr.write(
+        `[ProcessingScheduler] Error in scheduler: ${error}\n`
+      );
     }
   });
 
-  process.stdout.write("[ProcessingScheduler] Started processing scheduler (runs hourly).\n");
+  process.stdout.write(
+    "[ProcessingScheduler] Started processing scheduler (runs hourly).\n"
+  );
 }

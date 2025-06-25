@@ -30,18 +30,18 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
           <div
             key={message.id}
             className={`flex ${
-              message.role.toLowerCase() === 'user'
-                ? 'justify-end'
-                : 'justify-start'
+              message.role.toLowerCase() === "user"
+                ? "justify-end"
+                : "justify-start"
             }`}
           >
             <div
               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                message.role.toLowerCase() === 'user'
-                  ? 'bg-blue-500 text-white'
-                  : message.role.toLowerCase() === 'assistant'
-                  ? 'bg-gray-200 text-gray-800'
-                  : 'bg-yellow-100 text-yellow-800'
+                message.role.toLowerCase() === "user"
+                  ? "bg-blue-500 text-white"
+                  : message.role.toLowerCase() === "assistant"
+                    ? "bg-gray-200 text-gray-800"
+                    : "bg-yellow-100 text-yellow-800"
               }`}
             >
               <div className="flex items-center justify-between mb-1">
@@ -66,7 +66,8 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
             First message: {new Date(messages[0].timestamp).toLocaleString()}
           </span>
           <span>
-            Last message: {new Date(messages[messages.length - 1].timestamp).toLocaleString()}
+            Last message:{" "}
+            {new Date(messages[messages.length - 1].timestamp).toLocaleString()}
           </span>
         </div>
       </div>

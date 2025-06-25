@@ -101,7 +101,7 @@ async function processTranscriptWithOpenAI(
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
-    const data = await response.json() as any;
+    const data = (await response.json()) as any;
     const processedData = JSON.parse(data.choices[0].message.content);
 
     // Validate the response against our expected schema
@@ -118,7 +118,9 @@ async function processTranscriptWithOpenAI(
  * Validates the OpenAI response against our expected schema
  * @param data The data to validate
  */
-function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData {
+function validateOpenAIResponse(
+  data: any
+): asserts data is OpenAIProcessedData {
   // Check required fields
   const requiredFields = [
     "language",
@@ -140,7 +142,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
 
   // Validate field types
   if (typeof data.language !== "string" || !/^[a-z]{2}$/.test(data.language)) {
-    throw new Error("Invalid language format. Expected ISO 639-1 code (e.g., 'en')");
+    throw new Error(
+      "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
+    );
   }
 
   if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
@@ -148,7 +152,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
-    throw new Error("Invalid sentiment. Expected 'positive', 'neutral', or 'negative'");
+    throw new Error(
+      "Invalid sentiment. Expected 'positive', 'neutral', or 'negative'"
+    );
   }
 
   if (typeof data.escalated !== "boolean") {
@@ -176,15 +182,23 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   ];
 
   if (!validCategories.includes(data.category)) {
-    throw new Error(`Invalid category. Expected one of: ${validCategories.join(", ")}`);
+    throw new Error(
+      `Invalid category. Expected one of: ${validCategories.join(", ")}`
+    );
   }
 
   if (!Array.isArray(data.questions)) {
     throw new Error("Invalid questions. Expected array of strings");
   }
 
-  if (typeof data.summary !== "string" || data.summary.length < 10 || data.summary.length > 300) {
-    throw new Error("Invalid summary. Expected string between 10-300 characters");
+  if (
+    typeof data.summary !== "string" ||
+    data.summary.length < 10 ||
+    data.summary.length > 300
+  ) {
+    throw new Error(
+      "Invalid summary. Expected string between 10-300 characters"
+    );
   }
 
   if (typeof data.session_id !== "string") {
@@ -225,7 +239,9 @@ async function processUnprocessedSessions() {
   for (const session of sessionsToProcess) {
     if (!session.transcriptContent) {
       // Should not happen due to query, but good for type safety
-      console.warn(`Session ${session.id} has no transcript content, skipping.`);
+      console.warn(
+        `Session ${session.id} has no transcript content, skipping.`
+      );
       continue;
     }
 
