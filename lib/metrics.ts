@@ -357,7 +357,7 @@ export function sessionMetrics(
   let totalTokens = 0;
   let totalTokensEur = 0;
   const wordCounts: { [key: string]: number } = {};
-  let alerts = 0;
+  const alerts = 0;
 
   // New metrics variables
   const hourlySessionCounts: { [hour: string]: number } = {};
@@ -463,22 +463,15 @@ export function sessionMetrics(
     if (session.forwardedHr) forwardedHrCount++;
 
     // Sentiment
-    if (session.sentiment !== undefined && session.sentiment !== null) {
-      // Example thresholds, adjust as needed
-      if (session.sentiment > 0.3) sentimentPositiveCount++;
-      else if (session.sentiment < -0.3) sentimentNegativeCount++;
-      else sentimentNeutralCount++;
+    if (session.sentiment === "positive") {
+      sentimentPositiveCount++;
+    } else if (session.sentiment === "neutral") {
+      sentimentNeutralCount++;
+    } else if (session.sentiment === "negative") {
+      sentimentNegativeCount++;
     }
 
-    // Sentiment Alert Check
-    if (
-      companyConfig.sentimentAlert !== undefined &&
-      session.sentiment !== undefined &&
-      session.sentiment !== null &&
-      session.sentiment < companyConfig.sentimentAlert
-    ) {
-      alerts++;
-    }
+
 
     // Tokens
     if (session.tokens !== undefined && session.tokens !== null) {

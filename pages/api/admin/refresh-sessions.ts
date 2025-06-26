@@ -23,7 +23,7 @@ async function triggerCompleteWorkflow(): Promise<{ message: string }> {
 
     if (sessionsWithoutMessages > 0) {
       console.log(`[Complete Workflow] Fetching transcripts for ${sessionsWithoutMessages} sessions`);
-      
+
       // Get sessions that have fullTranscriptUrl but no messages
       const sessionsToProcess = await prisma.session.findMany({
         where: {

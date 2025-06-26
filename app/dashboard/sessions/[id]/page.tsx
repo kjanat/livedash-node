@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation"; // Import useRouter
 import { useSession } from "next-auth/react"; // Import useSession
 import SessionDetails from "../../../../components/SessionDetails";
-import TranscriptViewer from "../../../../components/TranscriptViewer";
+
 import MessageViewer from "../../../../components/MessageViewer";
 import { ChatSession } from "../../../../lib/types";
 import Link from "next/link";

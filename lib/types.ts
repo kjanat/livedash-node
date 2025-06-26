@@ -75,8 +75,7 @@ export interface ChatSession {
   language?: string | null;
   country?: string | null;
   ipAddress?: string | null;
-  sentiment?: number | null;
-  sentimentCategory?: string | null; // "positive", "neutral", "negative" from OpenAPI
+  sentiment?: string | null;
   messagesSent?: number;
   startTime: Date;
   endTime?: Date | null;

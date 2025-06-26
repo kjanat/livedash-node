@@ -36,14 +36,14 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
 interface ProcessedData {
   language: string;
-  messages_sent: number;
-  sentiment: SentimentCategory;
+  sentiment: "positive" | "neutral" | "negative";
   escalated: boolean;
   forwarded_hr: boolean;
   category: ValidCategory;
-  questions: string[];
+  questions: string | string[];
   summary: string;
-  session_id: string;
+  tokens: number;
+  tokens_eur: number;
 }
 
 interface ProcessingResult {
@@ -76,14 +76,16 @@ Here is the schema you must follow:
 
 {
 "language": "ISO 639-1 code, e.g., 'en', 'nl'",
-"messages_sent": "integer, number of messages from the user",
 "sentiment": "'positive', 'neutral', or 'negative'",
 "escalated": "bool: true if the assistant connected or referred to a human agent, otherwise false",
 "forwarded_hr": "bool: true if HR contact info was given, otherwise false",
 "category": "one of: 'Schedule & Hours', 'Leave & Vacation', 'Sick Leave & Recovery', 'Salary & Compensation', 'Contract & Hours', 'Onboarding', 'Offboarding', 'Workwear & Staff Pass', 'Team & Contacts', 'Personal Questions', 'Access & Login', 'Social questions', 'Unrecognized / Other'",
-"questions": array of simplified questions asked by the user formulated in English, try to make a question out of messages,
+"questions": "a single question or an array of simplified questions asked by the user formulated in English, try to make a question out of messages",
 "summary": "Brief summary (1–2 sentences) of the conversation",
+"tokens": "integer, number of tokens used for the API call",
+"tokens_eur": "float, cost of the API call in EUR",
 }
+
 You must format your output as a JSON value that adheres to a given "JSON Schema" instance.
 
 "JSON Schema" is a declarative language that allows you to annotate and validate JSON documents.
@@ -95,9 +97,9 @@ Thus, the object {{"foo": ["bar", "baz"]}} is a well-formatted instance of this 
 Your output will be parsed and type-checked according to the provided schema instance, so make sure all fields in your output match the schema exactly and there are no trailing commas!
 
 Here is the JSON Schema instance your output must adhere to. Include the enclosing markdown codeblock:
-\`\`\`json
-{"type":"object","properties":{"language":{"type":"string","pattern":"^[a-z]{2}$","description":"ISO 639-1 code for the user's primary language"},"messages_sent":{"type":"integer","minimum":0,"description":"Number of messages sent by the user"},"sentiment":{"type":"string","enum":["positive","neutral","negative"],"description":"Overall tone of the user during the conversation"},"escalated":{"type":"boolean","description":"Whether the assistant indicated it could not help"},"forwarded_hr":{"type":"boolean","description":"Whether HR contact was mentioned or provided"},"category":{"type":"string","enum":["Schedule & Hours","Leave & Vacation","Sick Leave & Recovery","Salary & Compensation","Contract & Hours","Onboarding","Offboarding","Workwear & Staff Pass","Team & Contacts","Personal Questions","Access & Login","Social questions","Unrecognized / Other"],"description":"Best-fitting topic category for the conversation"},"questions":{"type":"array","items":{"type":"string","minLength":5},"minItems":0,"maxItems":5,"description":"List of paraphrased questions asked by the user in English"},"summary":{"type":"string","minLength":10,"maxLength":300,"description":"Brief summary of the conversation"},"session_id":{"type":"string","pattern":"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$","minLength":36,"maxLength":36,"description":"Unique identifier for the conversation session"}},"required":["language","messages_sent","sentiment","escalated","forwarded_hr","category","questions","summary","session_id"],"additionalProperties":false,"$schema":"http://json-schema.org/draft-07/schema#"}
-\`\`\`
+
+{{"type":"object","properties":{"language":{"type":"string","pattern":"^[a-z]{2}$","description":"ISO 639-1 code for the user's primary language"},"sentiment":{"type":"string","enum":["positive","neutral","negative"],"description":"Overall tone of the user during the conversation"},"escalated":{"type":"boolean","description":"Whether the assistant indicated it could not help"},"forwarded_hr":{"type":"boolean","description":"Whether HR contact was mentioned or provided"},"category":{"type":"string","enum":["Schedule & Hours","Leave & Vacation","Sick Leave & Recovery","Salary & Compensation","Contract & Hours","Onboarding","Offboarding","Workwear & Staff Pass","Team & Contacts","Personal Questions","Access & Login","Social questions","Unrecognized / Other"],"description":"Best-fitting topic category for the conversation"},"questions":{"oneOf":[{"type":"string"},{"type":"array","items":{"type":"string"}}],"description":"A single question or a list of paraphrased questions asked by the user in English"},"summary":{"type":"string","minLength":10,"maxLength":300,"description":"Brief summary of the conversation"},"tokens":{"type":"integer","description":"Number of tokens used for the API call"},"tokens_eur":{"type":"number","description":"Cost of the API call in EUR"}},"required":["language","sentiment","escalated","forwarded_hr","category","questions","summary","tokens","tokens_eur"],"additionalProperties":false,"$schema":"http://json-schema.org/draft-07/schema#"}}
+
   `;
 
   try {
@@ -149,13 +151,14 @@ function validateOpenAIResponse(data: any): void {
   // Check required fields
   const requiredFields = [
     "language",
-    "messages_sent",
     "sentiment",
     "escalated",
     "forwarded_hr",
     "category",
     "questions",
     "summary",
+    "tokens",
+    "tokens_eur",
   ];
 
   for (const field of requiredFields) {
@@ -169,10 +172,6 @@ function validateOpenAIResponse(data: any): void {
     throw new Error(
       "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
     );
-  }
-
-  if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
-    throw new Error("Invalid messages_sent. Expected non-negative number");
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
@@ -195,8 +194,8 @@ function validateOpenAIResponse(data: any): void {
     );
   }
 
-  if (!Array.isArray(data.questions)) {
-    throw new Error("Invalid questions. Expected array of strings");
+  if (typeof data.questions !== "string" && !Array.isArray(data.questions)) {
+    throw new Error("Invalid questions. Expected string or array of strings");
   }
 
   if (
@@ -209,9 +208,12 @@ function validateOpenAIResponse(data: any): void {
     );
   }
 
-  // session_id is optional in the response, we'll use the one we passed in
-  if (data.session_id && typeof data.session_id !== "string") {
-    throw new Error("Invalid session_id. Expected string");
+  if (typeof data.tokens !== "number" || data.tokens < 0) {
+    throw new Error("Invalid tokens. Expected non-negative number");
+  }
+
+  if (typeof data.tokens_eur !== "number" || data.tokens_eur < 0) {
+    throw new Error("Invalid tokens_eur. Expected non-negative number");
   }
 }
 
@@ -273,7 +275,11 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
     );
 
     // Check if the processed data indicates low quality (empty questions, very short summary, etc.)
-    const hasValidQuestions = processedData.questions && processedData.questions.length > 0;
+    const hasValidQuestions =
+      processedData.questions &&
+      (Array.isArray(processedData.questions)
+        ? processedData.questions.length > 0
+        : typeof processedData.questions === "string");
     const hasValidSummary = processedData.summary && processedData.summary.length >= 10;
     const isValidData = hasValidQuestions && hasValidSummary;
 
@@ -282,14 +288,18 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
       where: { id: session.id },
       data: {
         language: processedData.language,
-        messagesSent: processedData.messages_sent,
-        sentiment: null, // Remove numeric sentiment, use only sentimentCategory
-        sentimentCategory: processedData.sentiment,
+        sentiment: processedData.sentiment,
         escalated: processedData.escalated,
         forwardedHr: processedData.forwarded_hr,
         category: processedData.category,
-        questions: JSON.stringify(processedData.questions),
+        questions: processedData.questions,
         summary: processedData.summary,
+        tokens: {
+          increment: processedData.tokens,
+        },
+        tokensEur: {
+          increment: processedData.tokens_eur,
+        },
         processed: true,
       },
     });

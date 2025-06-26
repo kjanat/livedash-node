@@ -8,14 +8,14 @@ const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 // Define the expected response structure from OpenAI
 interface OpenAIProcessedData {
   language: string;
-  messages_sent: number;
   sentiment: "positive" | "neutral" | "negative";
   escalated: boolean;
   forwarded_hr: boolean;
   category: string;
-  questions: string[];
+  questions: string | string[];
   summary: string;
-  session_id: string;
+  tokens: number;
+  tokens_eur: number;
 }
 
 /**
@@ -37,11 +37,10 @@ async function processTranscriptWithOpenAI(
     You are an AI assistant tasked with analyzing chat transcripts.
     Extract the following information from the transcript:
     1. The primary language used by the user (ISO 639-1 code)
-    2. Number of messages sent by the user
-    3. Overall sentiment (positive, neutral, or negative)
-    4. Whether the conversation was escalated
-    5. Whether HR contact was mentioned or provided
-    6. The best-fitting category for the conversation from this list:
+    2. Overall sentiment (positive, neutral, or negative)
+    3. Whether the conversation was escalated
+    4. Whether HR contact was mentioned or provided
+    5. The best-fitting category for the conversation from this list:
        - Schedule & Hours
        - Leave & Vacation
        - Sick Leave & Recovery
@@ -55,20 +54,22 @@ async function processTranscriptWithOpenAI(
        - Access & Login
        - Social questions
        - Unrecognized / Other
-    7. Up to 5 paraphrased questions asked by the user (in English)
-    8. A brief summary of the conversation (10-300 characters)
+    6. A single question or an array of simplified questions asked by the user formulated in English
+    7. A brief summary of the conversation (10-300 characters)
+    8. The number of tokens used for the API call
+    9. The cost of the API call in EUR
     
     Return the data in JSON format matching this schema:
     {
       "language": "ISO 639-1 code",
-      "messages_sent": number,
       "sentiment": "positive|neutral|negative",
       "escalated": boolean,
       "forwarded_hr": boolean,
       "category": "one of the categories listed above",
-      "questions": ["question 1", "question 2", ...],
+      "questions": "a single question or [\"question 1\", \"question 2\", ...]",
       "summary": "brief summary",
-      "session_id": "${sessionId}"
+      "tokens": number,
+      "tokens_eur": number
     }
   `;
 
@@ -124,14 +125,14 @@ function validateOpenAIResponse(
   // Check required fields
   const requiredFields = [
     "language",
-    "messages_sent",
     "sentiment",
     "escalated",
     "forwarded_hr",
     "category",
     "questions",
     "summary",
-    "session_id",
+    "tokens",
+    "tokens_eur",
   ];
 
   for (const field of requiredFields) {
@@ -145,10 +146,6 @@ function validateOpenAIResponse(
     throw new Error(
       "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
     );
-  }
-
-  if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
-    throw new Error("Invalid messages_sent. Expected non-negative number");
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
@@ -187,8 +184,8 @@ function validateOpenAIResponse(
     );
   }
 
-  if (!Array.isArray(data.questions)) {
-    throw new Error("Invalid questions. Expected array of strings");
+  if (typeof data.questions !== "string" && !Array.isArray(data.questions)) {
+    throw new Error("Invalid questions. Expected string or array of strings");
   }
 
   if (
@@ -201,8 +198,12 @@ function validateOpenAIResponse(
     );
   }
 
-  if (typeof data.session_id !== "string") {
-    throw new Error("Invalid session_id. Expected string");
+  if (typeof data.tokens !== "number" || data.tokens < 0) {
+    throw new Error("Invalid tokens. Expected non-negative number");
+  }
+
+  if (typeof data.tokens_eur !== "number" || data.tokens_eur < 0) {
+    throw new Error("Invalid tokens_eur. Expected non-negative number");
   }
 }
 
@@ -252,26 +253,23 @@ async function processUnprocessedSessions() {
         session.transcriptContent
       );
 
-      // Map sentiment string to float value for compatibility with existing data
-      const sentimentMap: Record<string, number> = {
-        positive: 0.8,
-        neutral: 0.0,
-        negative: -0.8,
-      };
-
       // Update the session with processed data
       await prisma.session.update({
         where: { id: session.id },
         data: {
           language: processedData.language,
-          messagesSent: processedData.messages_sent,
-          sentiment: sentimentMap[processedData.sentiment] || 0,
-          sentimentCategory: processedData.sentiment,
+          sentiment: processedData.sentiment,
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
           category: processedData.category,
-          questions: JSON.stringify(processedData.questions),
+          questions: processedData.questions,
           summary: processedData.summary,
+          tokens: {
+            increment: processedData.tokens,
+          },
+          tokensEur: {
+            increment: processedData.tokens_eur,
+          },
           processed: true,
         },
       });
