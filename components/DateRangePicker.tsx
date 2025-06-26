@@ -63,10 +63,11 @@ export default function DateRangePicker({
   const setLast30Days = () => {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
+    const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
 
     // Use the later of 30 days ago or minDate
-    const newStartDate = thirtyDaysAgoStr > minDate ? thirtyDaysAgoStr : minDate;
+    const newStartDate =
+      thirtyDaysAgoStr > minDate ? thirtyDaysAgoStr : minDate;
     setStartDate(newStartDate);
     setEndDate(maxDate);
   };
@@ -74,7 +75,7 @@ export default function DateRangePicker({
   const setLast7Days = () => {
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
     // Use the later of 7 days ago or minDate
     const newStartDate = sevenDaysAgoStr > minDate ? sevenDaysAgoStr : minDate;
@@ -146,7 +147,8 @@ export default function DateRangePicker({
       </div>
 
       <div className="mt-2 text-xs text-gray-500">
-        Available data: {new Date(minDate).toLocaleDateString()} - {new Date(maxDate).toLocaleDateString()}
+        Available data: {new Date(minDate).toLocaleDateString()} -{" "}
+        {new Date(maxDate).toLocaleDateString()}
       </div>
     </div>
   );

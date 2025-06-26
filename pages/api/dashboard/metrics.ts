@@ -45,7 +45,7 @@ export default async function handler(
   if (startDate && endDate) {
     whereClause.startTime = {
       gte: new Date(startDate as string),
-      lte: new Date(endDate as string + 'T23:59:59.999Z'), // Include full end date
+      lte: new Date((endDate as string) + "T23:59:59.999Z"), // Include full end date
     };
   }
 
@@ -100,10 +100,12 @@ export default async function handler(
   // Calculate date range from sessions
   let dateRange: { minDate: string; maxDate: string } | null = null;
   if (prismaSessions.length > 0) {
-    const dates = prismaSessions.map(s => new Date(s.startTime)).sort((a, b) => a.getTime() - b.getTime());
+    const dates = prismaSessions
+      .map((s) => new Date(s.startTime))
+      .sort((a, b) => a.getTime() - b.getTime());
     dateRange = {
-      minDate: dates[0].toISOString().split('T')[0], // First session date
-      maxDate: dates[dates.length - 1].toISOString().split('T')[0] // Last session date
+      minDate: dates[0].toISOString().split("T")[0], // First session date
+      maxDate: dates[dates.length - 1].toISOString().split("T")[0], // Last session date
     };
   }
 

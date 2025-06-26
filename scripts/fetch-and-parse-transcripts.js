@@ -1,8 +1,8 @@
 // Script to fetch transcripts and parse them into messages
 // Usage: node scripts/fetch-and-parse-transcripts.js
 
-import { PrismaClient } from '@prisma/client';
-import fetch from 'node-fetch';
+import { PrismaClient } from "@prisma/client";
+import fetch from "node-fetch";
 
 const prisma = new PrismaClient();
 
@@ -11,9 +11,10 @@ const prisma = new PrismaClient();
  */
 async function fetchTranscriptContent(url, username, password) {
   try {
-    const authHeader = username && password
-      ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
-      : undefined;
+    const authHeader =
+      username && password
+        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+        : undefined;
 
     const response = await fetch(url, {
       headers: authHeader ? { Authorization: authHeader } : {},
@@ -21,7 +22,9 @@ async function fetchTranscriptContent(url, username, password) {
     });
 
     if (!response.ok) {
-      console.log(`❌ Failed to fetch ${url}: ${response.status} ${response.statusText}`);
+      console.log(
+        `❌ Failed to fetch ${url}: ${response.status} ${response.statusText}`
+      );
       return null;
     }
     return await response.text();
@@ -35,11 +38,11 @@ async function fetchTranscriptContent(url, username, password) {
  * Parses transcript content into messages
  */
 function parseTranscriptToMessages(transcript, sessionId) {
-  if (!transcript || transcript.trim() === '') {
+  if (!transcript || transcript.trim() === "") {
     return [];
   }
 
-  const lines = transcript.split('\n').filter(line => line.trim());
+  const lines = transcript.split("\n").filter((line) => line.trim());
   const messages = [];
   let messageOrder = 0;
   let currentTimestamp = new Date();
@@ -52,7 +55,9 @@ function parseTranscriptToMessages(transcript, sessionId) {
       const [, timestamp, role, content] = timestampMatch;
 
       // Parse timestamp (DD-MM-YYYY HH:MM:SS)
-      const dateMatch = timestamp.match(/^(\d{1,2})-(\d{1,2})-(\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+      const dateMatch = timestamp.match(
+        /^(\d{1,2})-(\d{1,2})-(\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/
+      );
       let parsedTimestamp = new Date();
 
       if (dateMatch) {
@@ -104,7 +109,7 @@ function parseTranscriptToMessages(transcript, sessionId) {
  */
 async function fetchAndParseTranscripts() {
   try {
-    console.log('🔍 Finding sessions without messages...\n');
+    console.log("🔍 Finding sessions without messages...\n");
 
     // Get sessions that have fullTranscriptUrl but no messages
     const sessionsWithoutMessages = await prisma.session.findMany({
@@ -112,7 +117,7 @@ async function fetchAndParseTranscripts() {
         AND: [
           { fullTranscriptUrl: { not: null } },
           { messages: { none: {} } }, // No messages
-        ]
+        ],
       },
       include: {
         company: true,
@@ -121,11 +126,15 @@ async function fetchAndParseTranscripts() {
     });
 
     if (sessionsWithoutMessages.length === 0) {
-      console.log('✅ All sessions with transcript URLs already have messages!');
+      console.log(
+        "✅ All sessions with transcript URLs already have messages!"
+      );
       return;
     }
 
-    console.log(`📥 Found ${sessionsWithoutMessages.length} sessions to process\n`);
+    console.log(
+      `📥 Found ${sessionsWithoutMessages.length} sessions to process\n`
+    );
 
     let successCount = 0;
     let errorCount = 0;
@@ -148,7 +157,10 @@ async function fetchAndParseTranscripts() {
         }
 
         // Parse transcript into messages
-        const messages = parseTranscriptToMessages(transcriptContent, session.id);
+        const messages = parseTranscriptToMessages(
+          transcriptContent,
+          session.id
+        );
 
         if (messages.length === 0) {
           console.log(`   ⚠️  No messages found in transcript`);
@@ -163,7 +175,6 @@ async function fetchAndParseTranscripts() {
 
         console.log(`   ✅ Added ${messages.length} messages`);
         successCount++;
-
       } catch (error) {
         console.log(`   ❌ Error: ${error.message}`);
         errorCount++;
@@ -173,10 +184,11 @@ async function fetchAndParseTranscripts() {
     console.log(`\n📊 Results:`);
     console.log(`   ✅ Successfully processed: ${successCount} sessions`);
     console.log(`   ❌ Failed to process: ${errorCount} sessions`);
-    console.log(`\n💡 Now you can run the processing scheduler to analyze these sessions!`);
-
+    console.log(
+      `\n💡 Now you can run the processing scheduler to analyze these sessions!`
+    );
   } catch (error) {
-    console.error('❌ Error:', error);
+    console.error("❌ Error:", error);
   } finally {
     await prisma.$disconnect();
   }

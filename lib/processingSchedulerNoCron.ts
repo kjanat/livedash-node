@@ -1,6 +1,4 @@
-// Session processing scheduler - TypeScript version
-// Note: Disabled due to Next.js compatibility issues
-// import cron from "node-cron";
+// Session processing without cron dependency - for Next.js API routes
 import { PrismaClient } from "@prisma/client";
 import fetch from "node-fetch";
 import { readFileSync } from "fs";
@@ -436,31 +434,4 @@ export async function processUnprocessedSessions(
   );
 
   return { totalProcessed, totalFailed, totalTime };
-}
-
-/**
- * Start the processing scheduler
- */
-export function startProcessingScheduler(): void {
-  // Note: Scheduler disabled due to Next.js compatibility issues
-  // Use manual triggers via API endpoints instead
-  console.log("Processing scheduler disabled - using manual triggers via API endpoints");
-
-  // Original cron-based implementation commented out due to Next.js compatibility issues
-  // The functionality is now available via the /api/admin/trigger-processing endpoint
-  /*
-  cron.schedule("0 * * * *", async () => {
-    try {
-      await processUnprocessedSessions();
-    } catch (error) {
-      process.stderr.write(
-        `[ProcessingScheduler] Error in scheduler: ${error}\n`
-      );
-    }
-  });
-
-  process.stdout.write(
-    "[ProcessingScheduler] Started processing scheduler (runs hourly).\n"
-  );
-  */
 }

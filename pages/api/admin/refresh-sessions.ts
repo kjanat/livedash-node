@@ -2,6 +2,133 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { fetchAndParseCsv } from "../../../lib/csvFetcher";
 import { prisma } from "../../../lib/prisma";
+import { processUnprocessedSessions } from "../../../lib/processingSchedulerNoCron";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
+
+/**
+ * Triggers the complete workflow: fetch transcripts + process all sessions
+ */
+async function triggerCompleteWorkflow(): Promise<{ message: string }> {
+  try {
+    // Step 1: Fetch missing transcripts
+    const sessionsWithoutMessages = await prisma.session.count({
+      where: {
+        messages: { none: {} },
+        fullTranscriptUrl: { not: null }
+      }
+    });
+
+    if (sessionsWithoutMessages > 0) {
+      console.log(`[Complete Workflow] Fetching transcripts for ${sessionsWithoutMessages} sessions`);
+      
+      // Get sessions that have fullTranscriptUrl but no messages
+      const sessionsToProcess = await prisma.session.findMany({
+        where: {
+          AND: [
+            { fullTranscriptUrl: { not: null } },
+            { messages: { none: {} } },
+          ],
+        },
+        include: {
+          company: true,
+        },
+        take: 20, // Process in batches
+      });
+
+      for (const session of sessionsToProcess) {
+        try {
+          if (!session.fullTranscriptUrl) continue;
+
+          // Fetch transcript content
+          const transcriptContent = await fetchTranscriptContent(
+            session.fullTranscriptUrl,
+            session.company.csvUsername || undefined,
+            session.company.csvPassword || undefined
+          );
+
+          if (!transcriptContent) {
+            console.log(`No transcript content for session ${session.id}`);
+            continue;
+          }
+
+          // Parse transcript into messages
+          const lines = transcriptContent.split("\n").filter((line) => line.trim());
+          const messages: Array<{
+            sessionId: string;
+            role: string;
+            content: string;
+            timestamp: Date;
+            order: number;
+          }> = [];
+          let messageOrder = 0;
+          const currentTimestamp = new Date();
+
+          for (const line of lines) {
+            // Try format: [DD-MM-YYYY HH:MM:SS] Role: Content
+            const timestampMatch = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.+)$/);
+
+            if (timestampMatch) {
+              const [, timestamp, role, content] = timestampMatch;
+              const dateMatch = timestamp.match(/^(\d{1,2})-(\d{1,2})-(\d{4}) (\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+              let parsedTimestamp = new Date();
+
+              if (dateMatch) {
+                const [, day, month, year, hour, minute, second] = dateMatch;
+                parsedTimestamp = new Date(
+                  parseInt(year),
+                  parseInt(month) - 1,
+                  parseInt(day),
+                  parseInt(hour),
+                  parseInt(minute),
+                  parseInt(second)
+                );
+              }
+
+              messages.push({
+                sessionId: session.id,
+                role: role.trim().toLowerCase(),
+                content: content.trim(),
+                timestamp: parsedTimestamp,
+                order: messageOrder++,
+              });
+            }
+          }
+
+          if (messages.length > 0) {
+            // Save messages to database
+            await prisma.message.createMany({
+              data: messages as any, // Type assertion needed due to Prisma types
+            });
+            console.log(`Added ${messages.length} messages for session ${session.id}`);
+          }
+        } catch (error) {
+          console.error(`Error processing session ${session.id}:`, error);
+        }
+      }
+    }
+
+    // Step 2: Process all unprocessed sessions
+    const unprocessedWithMessages = await prisma.session.count({
+      where: {
+        processed: false,
+        messages: { some: {} }
+      }
+    });
+
+    if (unprocessedWithMessages > 0) {
+      console.log(`[Complete Workflow] Processing ${unprocessedWithMessages} sessions`);
+      await processUnprocessedSessions();
+    }
+
+    return { message: `Complete workflow finished successfully` };
+  } catch (error) {
+    console.error('[Complete Workflow] Error:', error);
+    throw error;
+  }
+}
 
 interface SessionCreateData {
   id: string;
@@ -166,7 +293,21 @@ export default async function handler(
       });
     }
 
-    res.json({ ok: true, imported: sessions.length });
+    // After importing sessions, automatically trigger complete workflow (fetch transcripts + process)
+    // This runs in the background without blocking the response
+    triggerCompleteWorkflow()
+      .then((result) => {
+        console.log(`[Refresh Sessions] Complete workflow finished: ${result.message}`);
+      })
+      .catch((error) => {
+        console.error(`[Refresh Sessions] Complete workflow failed:`, error);
+      });
+
+    res.json({
+      ok: true,
+      imported: sessions.length,
+      message: "Sessions imported and complete processing workflow started automatically"
+    });
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred";
     res.status(500).json({ error });

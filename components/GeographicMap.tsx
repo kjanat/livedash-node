@@ -48,7 +48,7 @@ const getCountryCoordinates = (): Record<string, [number, number]> => {
     BG: [42.7339, 25.4858],
     HR: [45.1, 15.2],
     SK: [48.669, 19.699],
-    SI: [46.1512, 14.9955]
+    SI: [46.1512, 14.9955],
   };
   // This function now primarily returns fallbacks.
   // The actual fetching using @rapideditor/country-coder will be in the component's useEffect.

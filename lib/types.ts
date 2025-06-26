@@ -1,5 +1,26 @@
 import { Session as NextAuthSession } from "next-auth";
 
+// Standardized enums
+export type SentimentCategory = "positive" | "neutral" | "negative";
+
+export const VALID_CATEGORIES = [
+  "Schedule & Hours",
+  "Leave & Vacation",
+  "Sick Leave & Recovery",
+  "Salary & Compensation",
+  "Contract & Hours",
+  "Onboarding",
+  "Offboarding",
+  "Workwear & Staff Pass",
+  "Team & Contacts",
+  "Personal Questions",
+  "Access & Login",
+  "Social questions",
+  "Unrecognized / Other",
+] as const;
+
+export type ValidCategory = (typeof VALID_CATEGORIES)[number];
+
 export interface UserSession extends NextAuthSession {
   user: {
     id?: string;
@@ -71,6 +92,7 @@ export interface ChatSession {
   initialMsg?: string;
   fullTranscriptUrl?: string | null;
   processed?: boolean | null; // Flag for post-processing status
+  validData?: boolean | null; // Flag for data quality (false = exclude from analytics)
   questions?: string | null; // JSON array of questions asked by user
   summary?: string | null; // Brief summary of the conversation
   messages?: Message[]; // Parsed messages from transcript

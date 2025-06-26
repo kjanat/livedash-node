@@ -1,14 +1,17 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { TopQuestion } from '../lib/types';
+import React from "react";
+import { TopQuestion } from "../lib/types";
 
 interface TopQuestionsChartProps {
   data: TopQuestion[];
   title?: string;
 }
 
-export default function TopQuestionsChart({ data, title = "Top 5 Asked Questions" }: TopQuestionsChartProps) {
+export default function TopQuestionsChart({
+  data,
+  title = "Top 5 Asked Questions",
+}: TopQuestionsChartProps) {
   if (!data || data.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -21,7 +24,7 @@ export default function TopQuestionsChart({ data, title = "Top 5 Asked Questions
   }
 
   // Find the maximum count to calculate relative bar widths
-  const maxCount = Math.max(...data.map(q => q.count));
+  const maxCount = Math.max(...data.map((q) => q.count));
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -29,7 +32,8 @@ export default function TopQuestionsChart({ data, title = "Top 5 Asked Questions
 
       <div className="space-y-4">
         {data.map((question, index) => {
-          const percentage = maxCount > 0 ? (question.count / maxCount) * 100 : 0;
+          const percentage =
+            maxCount > 0 ? (question.count / maxCount) * 100 : 0;
 
           return (
             <div key={index} className="relative">

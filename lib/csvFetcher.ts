@@ -50,65 +50,16 @@ interface SessionData {
 }
 
 /**
- * Converts country names to ISO 3166-1 alpha-2 codes
+ * Passes through country data as-is (no mapping)
  * @param countryStr Raw country string from CSV
- * @returns ISO 3166-1 alpha-2 country code or null if not found
+ * @returns The country string as-is or null if empty
  */
 function getCountryCode(countryStr?: string): string | null | undefined {
   if (countryStr === undefined) return undefined;
   if (countryStr === null || countryStr === "") return null;
 
-  // Clean the input
   const normalized = countryStr.trim();
-  if (!normalized) return null;
-
-  // Direct ISO code check (if already a 2-letter code)
-  if (normalized.length === 2 && normalized === normalized.toUpperCase()) {
-    return countries.isValid(normalized) ? normalized : null;
-  }
-
-  // Special case for country codes used in the dataset
-  const countryMapping: Record<string, string> = {
-    BA: "BA", // Bosnia and Herzegovina
-    NL: "NL", // Netherlands
-    USA: "US", // United States
-    UK: "GB", // United Kingdom
-    GB: "GB", // Great Britain
-    Nederland: "NL",
-    Netherlands: "NL",
-    Netherland: "NL",
-    Holland: "NL",
-    Germany: "DE",
-    Deutschland: "DE",
-    Belgium: "BE",
-    België: "BE",
-    Belgique: "BE",
-    France: "FR",
-    Frankreich: "FR",
-    "United States": "US",
-    "United States of America": "US",
-    Bosnia: "BA",
-    "Bosnia and Herzegovina": "BA",
-    "Bosnia & Herzegovina": "BA",
-  };
-
-  // Check mapping
-  if (normalized in countryMapping) {
-    return countryMapping[normalized];
-  }
-
-  // Try to get the code from the country name (in English)
-  try {
-    const code = countries.getAlpha2Code(normalized, "en");
-    if (code) return code;
-  } catch (error) {
-    process.stderr.write(
-      `[CSV] Error converting country name to code: ${normalized} - ${error}\n`
-    );
-  }
-
-  // If all else fails, return null
-  return null;
+  return normalized || null;
 }
 
 /**
@@ -180,135 +131,15 @@ function getLanguageCode(languageStr?: string): string | null | undefined {
 }
 
 /**
- * Normalizes category values to standard groups
+ * Passes through category data as-is (no mapping)
  * @param categoryStr The raw category string from CSV
- * @returns A normalized category string
+ * @returns The category string as-is or null if empty
  */
 function normalizeCategory(categoryStr?: string): string | null {
   if (!categoryStr) return null;
 
-  const normalized = categoryStr.toLowerCase().trim();
-
-  // Define category groups using keywords
-  const categoryMapping: Record<string, string[]> = {
-    Onboarding: [
-      "onboarding",
-      "start",
-      "begin",
-      "new",
-      "orientation",
-      "welcome",
-      "intro",
-      "getting started",
-      "documents",
-      "documenten",
-      "first day",
-      "eerste dag",
-    ],
-    "General Information": [
-      "general",
-      "algemeen",
-      "info",
-      "information",
-      "informatie",
-      "question",
-      "vraag",
-      "inquiry",
-      "chat",
-      "conversation",
-      "gesprek",
-      "talk",
-    ],
-    Greeting: [
-      "greeting",
-      "greet",
-      "hello",
-      "hi",
-      "hey",
-      "welcome",
-      "hallo",
-      "hoi",
-      "greetings",
-    ],
-    "HR & Payroll": [
-      "salary",
-      "salaris",
-      "pay",
-      "payroll",
-      "loon",
-      "loonstrook",
-      "hr",
-      "human resources",
-      "benefits",
-      "vacation",
-      "leave",
-      "verlof",
-      "maaltijdvergoeding",
-      "vergoeding",
-    ],
-    "Schedules & Hours": [
-      "schedule",
-      "hours",
-      "tijd",
-      "time",
-      "roster",
-      "rooster",
-      "planning",
-      "shift",
-      "dienst",
-      "working hours",
-      "werktijden",
-      "openingstijden",
-    ],
-    "Role & Responsibilities": [
-      "role",
-      "job",
-      "function",
-      "functie",
-      "task",
-      "taak",
-      "responsibilities",
-      "leidinggevende",
-      "manager",
-      "teamleider",
-      "supervisor",
-      "team",
-      "lead",
-    ],
-    "Technical Support": [
-      "technical",
-      "tech",
-      "support",
-      "laptop",
-      "computer",
-      "system",
-      "systeem",
-      "it",
-      "software",
-      "hardware",
-    ],
-    Offboarding: [
-      "offboarding",
-      "leave",
-      "exit",
-      "quit",
-      "resign",
-      "resignation",
-      "ontslag",
-      "vertrek",
-      "afsluiting",
-    ],
-  };
-
-  // Try to match the category using keywords
-  for (const [category, keywords] of Object.entries(categoryMapping)) {
-    if (keywords.some((keyword) => normalized.includes(keyword))) {
-      return category;
-    }
-  }
-
-  // If no match, return "Other"
-  return "Other";
+  const normalized = categoryStr.trim();
+  return normalized || null;
 }
 
 /**

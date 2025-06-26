@@ -6,17 +6,17 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --turbopack",
-    "dev:with-schedulers": "node server.mjs",
+    "dev:with-server": "tsx server.ts",
     "format": "npx prettier --write .",
     "format:check": "npx prettier --check .",
     "lint": "next lint",
-    "lint:fix": "npx eslint --fix",
+    "lint:fix": "npx eslint --fix .",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "node prisma/seed.mjs",
+    "prisma:seed": "tsx prisma/seed.ts",
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
-    "start": "node server.mjs",
+    "start": "tsx server.ts",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\"",
     "lint:md:fix": "markdownlint-cli2  --fix \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\""
   },
@@ -70,6 +70,7 @@
     "prisma": "^6.10.1",
     "tailwindcss": "^4.1.7",
     "ts-node": "^10.9.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.0.0"
   },
   "prettier": {

@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import { prisma } from "../../../lib/prisma";
-import { processUnprocessedSessions } from "../../../lib/processingScheduler";
+import { processUnprocessedSessions } from "../../../lib/processingSchedulerNoCron";
 
 interface SessionUser {
   email: string;
@@ -50,8 +50,10 @@ export default async function handler(
     const { batchSize, maxConcurrency } = req.body;
 
     // Validate parameters
-    const validatedBatchSize = batchSize && batchSize > 0 ? parseInt(batchSize) : null;
-    const validatedMaxConcurrency = maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
+    const validatedBatchSize =
+      batchSize && batchSize > 0 ? parseInt(batchSize) : null;
+    const validatedMaxConcurrency =
+      maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
 
     // Check how many unprocessed sessions exist
     const unprocessedCount = await prisma.session.count({
@@ -76,12 +78,17 @@ export default async function handler(
 
     // Note: We're calling the function but not awaiting it to avoid timeout
     // The processing will continue in the background
-    processUnprocessedSessions(validatedBatchSize, validatedMaxConcurrency)
+    processUnprocessedSessions(validatedBatchSize || undefined, validatedMaxConcurrency)
       .then(() => {
-        console.log(`[Manual Trigger] Processing completed for company ${user.companyId}`);
+        console.log(
+          `[Manual Trigger] Processing completed for company ${user.companyId}`
+        );
       })
       .catch((error) => {
-        console.error(`[Manual Trigger] Processing failed for company ${user.companyId}:`, error);
+        console.error(
+          `[Manual Trigger] Processing failed for company ${user.companyId}:`,
+          error
+        );
       });
 
     return res.json({
@@ -92,7 +99,6 @@ export default async function handler(
       maxConcurrency: validatedMaxConcurrency,
       startedAt: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("[Manual Trigger] Error:", error);
     return res.status(500).json({

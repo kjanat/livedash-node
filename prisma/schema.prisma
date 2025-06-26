@@ -34,8 +34,8 @@ model User {
 }
 
 model Session {
-  id                  String   @id
-  company             Company  @relation(fields: [companyId], references: [id])
+  id                  String    @id
+  company             Company   @relation(fields: [companyId], references: [id])
   companyId           String
   startTime           DateTime
   endTime             DateTime
@@ -43,8 +43,7 @@ model Session {
   country             String?
   language            String?
   messagesSent        Int?
-  sentiment           Float?   // Original sentiment score (float)
-  sentimentCategory   String?  // "positive", "neutral", "negative" from OpenAPI
+  sentiment           String? // "positive", "neutral", or "negative"
   escalated           Boolean?
   forwardedHr         Boolean?
   fullTranscriptUrl   String?
@@ -53,11 +52,12 @@ model Session {
   tokensEur           Float?
   category            String?
   initialMsg          String?
-  processed           Boolean  @default(false) // Flag for post-processing status
-  questions           String?  // JSON array of questions asked by user
-  summary             String?  // Brief summary of the conversation
-  messages            Message[] // Relation to parsed messages
-  createdAt           DateTime @default(now())
+  processed           Boolean   @default(false)
+  validData           Boolean   @default(true)
+  questions           Json?
+  summary             String?
+  messages            Message[]
+  createdAt           DateTime  @default(now())
 }
 
 model Message {

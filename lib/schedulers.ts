@@ -1,6 +1,7 @@
 // Combined scheduler initialization
-import { startScheduler } from "./scheduler";
-import { startProcessingScheduler } from "./processingScheduler";
+// Note: Removed cron-based scheduler imports to avoid Next.js compatibility issues
+// import { startScheduler } from "./scheduler";
+// import { startProcessingScheduler } from "./processingScheduler";
 
 /**
  * Initialize all schedulers
@@ -8,11 +9,9 @@ import { startProcessingScheduler } from "./processingScheduler";
  * - Session processing scheduler (runs every hour)
  */
 export function initializeSchedulers() {
-  // Start the session refresh scheduler
-  startScheduler();
-
-  // Start the session processing scheduler
-  startProcessingScheduler();
-
-  console.log("All schedulers initialized successfully");
+  // Note: All schedulers disabled due to Next.js compatibility issues
+  // Use manual triggers via API endpoints instead
+  console.log("Schedulers disabled - using manual triggers via API endpoints");
+  // startScheduler();
+  // startProcessingScheduler();
 }
