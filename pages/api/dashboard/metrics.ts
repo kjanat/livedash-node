@@ -33,8 +33,21 @@ export default async function handler(
 
   if (!user) return res.status(401).json({ error: "No user" });
 
+  // Get date range from query parameters
+  const { startDate, endDate } = req.query;
+  
+  // Build where clause with optional date filtering
+  const whereClause: any = { companyId: user.companyId };
+  
+  if (startDate && endDate) {
+    whereClause.startTime = {
+      gte: new Date(startDate as string),
+      lte: new Date(endDate as string + 'T23:59:59.999Z'), // Include full end date
+    };
+  }
+
   const prismaSessions = await prisma.session.findMany({
-    where: { companyId: user.companyId },
+    where: whereClause,
   });
 
   // Convert Prisma sessions to ChatSession[] type for sessionMetrics
@@ -44,7 +57,7 @@ export default async function handler(
     companyId: ps.companyId,
     startTime: new Date(ps.startTime), // Ensure startTime is a Date object
     endTime: ps.endTime ? new Date(ps.endTime) : null, // Ensure endTime is a Date object or null
-    transcriptContent: ps.transcriptContent || "", // Ensure transcriptContent is a string
+    transcriptContent: "", // Session model doesn't have transcriptContent field
     createdAt: new Date(ps.createdAt), // Map Prisma's createdAt
     updatedAt: new Date(ps.createdAt), // Use createdAt for updatedAt as Session model doesn't have updatedAt
     category: ps.category || undefined,
@@ -75,9 +88,20 @@ export default async function handler(
 
   const metrics = sessionMetrics(chatSessions, companyConfigForMetrics);
 
+  // Calculate date range from sessions
+  let dateRange: { minDate: string; maxDate: string } | null = null;
+  if (prismaSessions.length > 0) {
+    const dates = prismaSessions.map(s => new Date(s.startTime)).sort((a, b) => a.getTime() - b.getTime());
+    dateRange = {
+      minDate: dates[0].toISOString().split('T')[0], // First session date
+      maxDate: dates[dates.length - 1].toISOString().split('T')[0] // Last session date
+    };
+  }
+
   res.json({
     metrics,
     csvUrl: user.company.csvUrl,
     company: user.company,
+    dateRange,
   });
 }

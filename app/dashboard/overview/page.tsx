@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import WordCloud from "../../../components/WordCloud";
 import GeographicMap from "../../../components/GeographicMap";
 import ResponseTimeDistribution from "../../../components/ResponseTimeDistribution";
 import WelcomeBanner from "../../../components/WelcomeBanner";
+import DateRangePicker from "../../../components/DateRangePicker";
 
 // Safely wrapped component with useSession
 function DashboardContent() {
@@ -25,8 +26,46 @@ function DashboardContent() {
   const [company, setCompany] = useState<Company | null>(null);
   const [, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [dateRange, setDateRange] = useState<{ minDate: string; maxDate: string } | null>(null);
+  const [selectedStartDate, setSelectedStartDate] = useState<string>("");
+  const [selectedEndDate, setSelectedEndDate] = useState<string>("");
 
   const isAuditor = session?.user?.role === "auditor";
+
+  // Function to fetch metrics with optional date range
+  const fetchMetrics = useCallback(async (startDate?: string, endDate?: string) => {
+    setLoading(true);
+    try {
+      let url = "/api/dashboard/metrics";
+      if (startDate && endDate) {
+        url += `?startDate=${startDate}&endDate=${endDate}`;
+      }
+      
+      const res = await fetch(url);
+      const data = await res.json();
+      
+      setMetrics(data.metrics);
+      setCompany(data.company);
+      
+      // Set date range from API response (only on initial load)
+      if (data.dateRange && !dateRange) {
+        setDateRange(data.dateRange);
+        setSelectedStartDate(data.dateRange.minDate);
+        setSelectedEndDate(data.dateRange.maxDate);
+      }
+    } catch (error) {
+      console.error("Error fetching metrics:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [dateRange]);
+
+  // Handle date range changes
+  const handleDateRangeChange = useCallback((startDate: string, endDate: string) => {
+    setSelectedStartDate(startDate);
+    setSelectedEndDate(endDate);
+    fetchMetrics(startDate, endDate);
+  }, [fetchMetrics]);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -37,23 +76,9 @@ function DashboardContent() {
 
     // Fetch metrics and company on mount if authenticated
     if (status === "authenticated") {
-      const fetchData = async () => {
-        setLoading(true);
-        const res = await fetch("/api/dashboard/metrics");
-        const data = await res.json();
-        console.log("Metrics from API:", {
-          avgSessionLength: data.metrics.avgSessionLength,
-          avgSessionTimeTrend: data.metrics.avgSessionTimeTrend,
-          totalSessionDuration: data.metrics.totalSessionDuration,
-          validSessionsForDuration: data.metrics.validSessionsForDuration,
-        });
-        setMetrics(data.metrics);
-        setCompany(data.company);
-        setLoading(false);
-      };
-      fetchData();
+      fetchMetrics();
     }
-  }, [status, router]); // Add status and router to dependency array
+  }, [status, router, fetchMetrics]); // Add fetchMetrics to dependency array
 
   async function handleRefresh() {
     if (isAuditor) return; // Prevent auditors from refreshing
@@ -231,6 +256,18 @@ function DashboardContent() {
           </button>
         </div>
       </div>
+      
+      {/* Date Range Picker */}
+      {dateRange && (
+        <DateRangePicker
+          minDate={dateRange.minDate}
+          maxDate={dateRange.maxDate}
+          onDateRangeChange={handleDateRangeChange}
+          initialStartDate={selectedStartDate}
+          initialEndDate={selectedEndDate}
+        />
+      )}
+      
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Total Sessions"
