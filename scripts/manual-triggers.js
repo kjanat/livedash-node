@@ -15,7 +15,7 @@ const envPath = join(__dirname, '..', '.env.local');
 try {
   const envFile = readFileSync(envPath, 'utf8');
   const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-  
+
   envVars.forEach(line => {
     const [key, ...valueParts] = line.split('=');
     if (key && valueParts.length > 0) {
@@ -25,7 +25,7 @@ try {
       }
     }
   });
-  
+
   console.log("✅ Environment variables loaded from .env.local");
 } catch (error) {
   console.warn("⚠️  Could not load .env.local file:", error.message);
@@ -64,7 +64,7 @@ async function triggerProcessingScheduler() {
       where: {
         AND: [
           { messages: { some: {} } },
-          { 
+          {
             OR: [
               { processed: false },
               { processed: null }
@@ -128,7 +128,7 @@ async function showProcessingStatus() {
       where: { processed: true },
     });
     const unprocessedSessions = await prisma.session.count({
-      where: { 
+      where: {
         OR: [
           { processed: false },
           { processed: null }
@@ -145,8 +145,8 @@ async function showProcessingStatus() {
     const readyForProcessing = await prisma.session.count({
       where: {
         AND: [
-          { messages: { some: {} } }, 
-          { 
+          { messages: { some: {} } },
+          {
             OR: [
               { processed: false },
               { processed: null }
@@ -168,8 +168,8 @@ async function showProcessingStatus() {
       const samples = await prisma.session.findMany({
         where: {
           AND: [
-            { messages: { some: {} } }, 
-            { 
+            { messages: { some: {} } },
+            {
               OR: [
                 { processed: false },
                 { processed: null }

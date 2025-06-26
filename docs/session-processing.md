@@ -62,7 +62,8 @@ OPENAI_API_KEY=your_api_key_here
 
 To run the application with schedulers enabled:
 
-- Development: `npm run dev:with-schedulers`
+- Development: `npm run dev`
+- Development (with schedulers disabled): `npm run dev:no-schedulers`
 - Production: `npm run start`
 
 Note: These commands will start a custom Next.js server with the schedulers enabled. You'll need to have an OpenAI API key set in your `.env.local` file for the session processing to work.

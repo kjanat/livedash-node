@@ -349,7 +349,7 @@ export function sessionMetrics(
   let totalTokensEur = 0;
   const wordCounts: { [key: string]: number } = {};
   let alerts = 0;
-  
+
     // New metrics variables
     const hourlySessionCounts: { [hour: string]: number } = {};
     let resolvedChatsCount = 0;
@@ -530,7 +530,7 @@ export function sessionMetrics(
           .forEach(msg => {
             const content = msg.content.trim();
             // Simple heuristic: if message ends with ? or contains question words, treat as question
-            if (content.endsWith('?') || 
+            if (content.endsWith('?') ||
                 /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
               questionCounts[content] = (questionCounts[content] || 0) + 1;
             }
@@ -540,7 +540,7 @@ export function sessionMetrics(
       // 3. Extract questions from initial message as fallback
       if (session.initialMsg) {
         const content = session.initialMsg.trim();
-        if (content.endsWith('?') || 
+        if (content.endsWith('?') ||
             /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
           questionCounts[content] = (questionCounts[content] || 0) + 1;
         }
@@ -611,10 +611,10 @@ export function sessionMetrics(
   );
 
   // Calculate new metrics
-  
+
   // 1. Average Daily Costs (euros)
   const avgDailyCosts = numDaysWithSessions > 0 ? totalTokensEur / numDaysWithSessions : 0;
-  
+
   // 2. Peak Usage Time
   let peakUsageTime = "N/A";
   if (Object.keys(hourlySessionCounts).length > 0) {
@@ -624,7 +624,7 @@ export function sessionMetrics(
     const endHour = (peakHourNum + 1) % 24;
     peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, '0')}:00`;
   }
-  
+
   // 3. Resolved Chats Percentage
   const resolvedChatsPercentage = totalSessions > 0 ? (resolvedChatsCount / totalSessions) * 100 : 0;
 
@@ -672,7 +672,7 @@ export function sessionMetrics(
     lastUpdated: Date.now(),
     totalSessionDuration,
     validSessionsForDuration,
-    
+
     // New metrics
     avgDailyCosts,
     peakUsageTime,

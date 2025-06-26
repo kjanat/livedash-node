@@ -41,13 +41,13 @@ function DashboardContent() {
       if (startDate && endDate) {
         url += `?startDate=${startDate}&endDate=${endDate}`;
       }
-      
+
       const res = await fetch(url);
       const data = await res.json();
-      
+
       setMetrics(data.metrics);
       setCompany(data.company);
-      
+
       // Set date range from API response (only on initial load)
       if (data.dateRange && !dateRange) {
         setDateRange(data.dateRange);
@@ -257,7 +257,7 @@ function DashboardContent() {
           </button>
         </div>
       </div>
-      
+
       {/* Date Range Picker */}
       {dateRange && (
         <DateRangePicker
@@ -268,7 +268,7 @@ function DashboardContent() {
           initialEndDate={selectedEndDate}
         />
       )}
-      
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <MetricCard
           title="Total Sessions"

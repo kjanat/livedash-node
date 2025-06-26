@@ -119,15 +119,8 @@ export default async function handler(
           ? session.endTime
           : new Date();
 
-      // Fetch transcript content if URL is available
-      let transcriptContent: string | null = null;
-      if (session.fullTranscriptUrl) {
-        transcriptContent = await fetchTranscriptContent(
-          session.fullTranscriptUrl,
-          company.csvUsername as string | undefined,
-          company.csvPassword as string | undefined
-        );
-      }
+      // Note: transcriptContent field was removed from schema
+      // Transcript content can be fetched on-demand from fullTranscriptUrl
 
       // Check if the session already exists
       const existingSession = await prisma.session.findUnique({
@@ -160,7 +153,6 @@ export default async function handler(
               ? session.forwardedHr
               : null,
           fullTranscriptUrl: session.fullTranscriptUrl || null,
-          transcriptContent: transcriptContent, // Add the transcript content
           avgResponseTime:
             typeof session.avgResponseTime === "number"
               ? session.avgResponseTime

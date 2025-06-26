@@ -35,10 +35,13 @@ export default async function handler(
 
   // Get date range from query parameters
   const { startDate, endDate } = req.query;
-  
-  // Build where clause with optional date filtering
-  const whereClause: any = { companyId: user.companyId };
-  
+
+  // Build where clause with optional date filtering and only processed sessions
+  const whereClause: any = {
+    companyId: user.companyId,
+    processed: true, // Only show processed sessions in dashboard
+  };
+
   if (startDate && endDate) {
     whereClause.startTime = {
       gte: new Date(startDate as string),

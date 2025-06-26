@@ -1,14 +1,38 @@
-// node-cron job to process unprocessed sessions every hour
+// Session processing scheduler - TypeScript version
 import cron from "node-cron";
 import { PrismaClient } from "@prisma/client";
 import fetch from "node-fetch";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Load environment variables from .env.local
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const envPath = join(__dirname, '..', '.env.local');
+
+try {
+  const envFile = readFileSync(envPath, 'utf8');
+  const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+
+  envVars.forEach(line => {
+    const [key, ...valueParts] = line.split('=');
+    if (key && valueParts.length > 0) {
+      const value = valueParts.join('=').trim();
+      if (!process.env[key.trim()]) {
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+} catch (error) {
+  // Silently fail if .env.local doesn't exist
+}
 
 const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 
-// Define the expected response structure from OpenAI
-interface OpenAIProcessedData {
+interface ProcessedData {
   language: string;
   messages_sent: number;
   sentiment: "positive" | "neutral" | "negative";
@@ -20,16 +44,16 @@ interface OpenAIProcessedData {
   session_id: string;
 }
 
+interface ProcessingResult {
+  sessionId: string;
+  success: boolean;
+  error?: string;
+}
+
 /**
  * Processes a session transcript using OpenAI API
- * @param sessionId The session ID
- * @param transcript The transcript content to process
- * @returns Processed data from OpenAI
  */
-async function processTranscriptWithOpenAI(
-  sessionId: string,
-  transcript: string
-): Promise<OpenAIProcessedData> {
+async function processTranscriptWithOpenAI(sessionId: string, transcript: string): Promise<ProcessedData> {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY environment variable is not set");
   }
@@ -103,7 +127,7 @@ async function processTranscriptWithOpenAI(
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
-    const data = (await response.json()) as any;
+    const data: any = await response.json();
     const processedData = JSON.parse(data.choices[0].message.content);
 
     // Validate the response against our expected schema
@@ -118,11 +142,8 @@ async function processTranscriptWithOpenAI(
 
 /**
  * Validates the OpenAI response against our expected schema
- * @param data The data to validate
  */
-function validateOpenAIResponse(
-  data: any
-): asserts data is OpenAIProcessedData {
+function validateOpenAIResponse(data: any): void {
   // Check required fields
   const requiredFields = [
     "language",
@@ -209,30 +230,145 @@ function validateOpenAIResponse(
 }
 
 /**
+ * Process a single session
+ */
+async function processSingleSession(session: any): Promise<ProcessingResult> {
+  if (session.messages.length === 0) {
+    return {
+      sessionId: session.id,
+      success: false,
+      error: "Session has no messages",
+    };
+  }
+
+  try {
+    // Convert messages back to transcript format for OpenAI processing
+    const transcript = session.messages
+      .map(
+        (msg: any) =>
+          `[${new Date(msg.timestamp)
+            .toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+            .replace(",", "")}] ${msg.role}: ${msg.content}`
+      )
+      .join("\n");
+
+    const processedData = await processTranscriptWithOpenAI(
+      session.id,
+      transcript
+    );
+
+    // Map sentiment string to float value for compatibility with existing data
+    const sentimentMap = {
+      positive: 0.8,
+      neutral: 0.0,
+      negative: -0.8,
+    };
+
+    // Update the session with processed data
+    await prisma.session.update({
+      where: { id: session.id },
+      data: {
+        language: processedData.language,
+        messagesSent: processedData.messages_sent,
+        sentiment: sentimentMap[processedData.sentiment] || 0,
+        sentimentCategory: processedData.sentiment,
+        escalated: processedData.escalated,
+        forwardedHr: processedData.forwarded_hr,
+        category: processedData.category,
+        questions: JSON.stringify(processedData.questions),
+        summary: processedData.summary,
+        processed: true,
+      },
+    });
+
+    return {
+      sessionId: session.id,
+      success: true,
+    };
+  } catch (error) {
+    return {
+      sessionId: session.id,
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
+ * Process sessions in parallel with concurrency limit
+ */
+async function processSessionsInParallel(sessions: any[], maxConcurrency: number = 5): Promise<ProcessingResult[]> {
+  const results: Promise<ProcessingResult>[] = [];
+  const executing: Promise<ProcessingResult>[] = [];
+
+  for (const session of sessions) {
+    const promise = processSingleSession(session).then((result) => {
+      process.stdout.write(
+        result.success
+          ? `[ProcessingScheduler] ✓ Successfully processed session ${result.sessionId}\n`
+          : `[ProcessingScheduler] ✗ Failed to process session ${result.sessionId}: ${result.error}\n`
+      );
+      return result;
+    });
+
+    results.push(promise);
+    executing.push(promise);
+
+    if (executing.length >= maxConcurrency) {
+      await Promise.race(executing);
+      const completedIndex = executing.findIndex(p => p === promise);
+      if (completedIndex !== -1) {
+        executing.splice(completedIndex, 1);
+      }
+    }
+  }
+
+  return Promise.all(results);
+}
+
+/**
  * Process unprocessed sessions
  */
-async function processUnprocessedSessions() {
+export async function processUnprocessedSessions(batchSize: number | null = null, maxConcurrency: number = 5): Promise<void> {
   process.stdout.write(
     "[ProcessingScheduler] Starting to process unprocessed sessions...\n"
   );
 
-  // Find sessions that have transcript content but haven't been processed
-  const sessionsToProcess = await prisma.session.findMany({
+  // Find sessions that have messages but haven't been processed
+  const queryOptions: any = {
     where: {
       AND: [
-        { transcriptContent: { not: null } },
-        { transcriptContent: { not: "" } },
-        { processed: { not: true } }, // Either false or null
+        { messages: { some: {} } }, // Must have messages
+        { processed: false }, // Only unprocessed sessions
       ],
     },
-    select: {
-      id: true,
-      transcriptContent: true,
+    include: {
+      messages: {
+        orderBy: { order: "asc" },
+      },
     },
-    take: 10, // Process in batches to avoid overloading the system
-  });
+  };
 
-  if (sessionsToProcess.length === 0) {
+  // Add batch size limit if specified
+  if (batchSize && batchSize > 0) {
+    queryOptions.take = batchSize;
+  }
+
+  const sessionsToProcess = await prisma.session.findMany(queryOptions);
+
+  // Filter to only sessions that have messages
+  const sessionsWithMessages = sessionsToProcess.filter(
+    (session: any) => session.messages && session.messages.length > 0
+  );
+
+  if (sessionsWithMessages.length === 0) {
     process.stdout.write(
       "[ProcessingScheduler] No sessions found requiring processing.\n"
     );
@@ -240,64 +376,15 @@ async function processUnprocessedSessions() {
   }
 
   process.stdout.write(
-    `[ProcessingScheduler] Found ${sessionsToProcess.length} sessions to process.\n`
+    `[ProcessingScheduler] Found ${sessionsWithMessages.length} sessions to process (max concurrency: ${maxConcurrency}).\n`
   );
-  let successCount = 0;
-  let errorCount = 0;
 
-  for (const session of sessionsToProcess) {
-    if (!session.transcriptContent) {
-      // Should not happen due to query, but good for type safety
-      process.stderr.write(
-        `[ProcessingScheduler] Session ${session.id} has no transcript content, skipping.\n`
-      );
-      continue;
-    }
+  const startTime = Date.now();
+  const results = await processSessionsInParallel(sessionsWithMessages, maxConcurrency);
+  const endTime = Date.now();
 
-    process.stdout.write(
-      `[ProcessingScheduler] Processing transcript for session ${session.id}...\n`
-    );
-    try {
-      const processedData = await processTranscriptWithOpenAI(
-        session.id,
-        session.transcriptContent
-      );
-
-      // Map sentiment string to float value for compatibility with existing data
-      const sentimentMap: Record<string, number> = {
-        positive: 0.8,
-        neutral: 0.0,
-        negative: -0.8,
-      };
-
-      // Update the session with processed data
-      await prisma.session.update({
-        where: { id: session.id },
-        data: {
-          language: processedData.language,
-          messagesSent: processedData.messages_sent,
-          sentiment: sentimentMap[processedData.sentiment] || 0,
-          sentimentCategory: processedData.sentiment,
-          escalated: processedData.escalated,
-          forwardedHr: processedData.forwarded_hr,
-          category: processedData.category,
-          questions: JSON.stringify(processedData.questions),
-          summary: processedData.summary,
-          processed: true,
-        },
-      });
-
-      process.stdout.write(
-        `[ProcessingScheduler] Successfully processed session ${session.id}.\n`
-      );
-      successCount++;
-    } catch (error) {
-      process.stderr.write(
-        `[ProcessingScheduler] Error processing session ${session.id}: ${error}\n`
-      );
-      errorCount++;
-    }
-  }
+  const successCount = results.filter((r) => r.success).length;
+  const errorCount = results.filter((r) => !r.success).length;
 
   process.stdout.write("[ProcessingScheduler] Session processing complete.\n");
   process.stdout.write(
@@ -306,12 +393,15 @@ async function processUnprocessedSessions() {
   process.stdout.write(
     `[ProcessingScheduler] Failed to process: ${errorCount} sessions.\n`
   );
+  process.stdout.write(
+    `[ProcessingScheduler] Total processing time: ${((endTime - startTime) / 1000).toFixed(2)}s\n`
+  );
 }
 
 /**
  * Start the processing scheduler
  */
-export function startProcessingScheduler() {
+export function startProcessingScheduler(): void {
   // Process unprocessed sessions every hour
   cron.schedule("0 * * * *", async () => {
     try {

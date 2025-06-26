@@ -53,7 +53,7 @@ model Session {
   tokensEur           Float?
   category            String?
   initialMsg          String?
-  processed           Boolean? // Flag for post-processing status
+  processed           Boolean  @default(false) // Flag for post-processing status
   questions           String?  // JSON array of questions asked by user
   summary             String?  // Brief summary of the conversation
   messages            Message[] // Relation to parsed messages

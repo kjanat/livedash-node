@@ -157,7 +157,7 @@ export interface MetricsResult {
   usersTrend?: number; // e.g., percentage change in uniqueUsers
   avgSessionTimeTrend?: number; // e.g., percentage change in avgSessionLength
   avgResponseTimeTrend?: number; // e.g., percentage change in avgResponseTime
-  
+
   // New metrics for enhanced dashboard
   avgDailyCosts?: number; // Average daily costs in euros
   peakUsageTime?: string; // Peak usage time (e.g., "14:00-15:00")

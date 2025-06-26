@@ -31,12 +31,12 @@ export default function DateRangePicker({
       setStartDate(minDate);
       return;
     }
-    
+
     // Ensure start date is not after end date
     if (newStartDate > endDate) {
       setEndDate(newStartDate);
     }
-    
+
     setStartDate(newStartDate);
   };
 
@@ -46,12 +46,12 @@ export default function DateRangePicker({
       setEndDate(maxDate);
       return;
     }
-    
+
     // Ensure end date is not before start date
     if (newEndDate < startDate) {
       setStartDate(newEndDate);
     }
-    
+
     setEndDate(newEndDate);
   };
 
@@ -64,7 +64,7 @@ export default function DateRangePicker({
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-    
+
     // Use the later of 30 days ago or minDate
     const newStartDate = thirtyDaysAgoStr > minDate ? thirtyDaysAgoStr : minDate;
     setStartDate(newStartDate);
@@ -75,7 +75,7 @@ export default function DateRangePicker({
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
-    
+
     // Use the later of 7 days ago or minDate
     const newStartDate = sevenDaysAgoStr > minDate ? sevenDaysAgoStr : minDate;
     setStartDate(newStartDate);
@@ -89,7 +89,7 @@ export default function DateRangePicker({
           <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
             Date Range:
           </label>
-          
+
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
             <div className="flex items-center gap-2">
               <label htmlFor="start-date" className="text-sm text-gray-600">
@@ -105,7 +105,7 @@ export default function DateRangePicker({
                 className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
               />
             </div>
-            
+
             <div className="flex items-center gap-2">
               <label htmlFor="end-date" className="text-sm text-gray-600">
                 To:
@@ -122,7 +122,7 @@ export default function DateRangePicker({
             </div>
           </div>
         </div>
-        
+
         <div className="flex flex-wrap gap-2">
           <button
             onClick={setLast7Days}
@@ -144,7 +144,7 @@ export default function DateRangePicker({
           </button>
         </div>
       </div>
-      
+
       <div className="mt-2 text-xs text-gray-500">
         Available data: {new Date(minDate).toLocaleDateString()} - {new Date(maxDate).toLocaleDateString()}
       </div>
