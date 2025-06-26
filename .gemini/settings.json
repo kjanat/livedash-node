@@ -7,6 +7,14 @@
         "--db-path",
         "./prisma/dev.db"
       ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "D:\\Notso\\Product\\Vibe-coding\\livedash-node"
+      ]
     }
   }
 }

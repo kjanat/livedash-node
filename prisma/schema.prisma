@@ -38,7 +38,7 @@ model Session {
   company             Company   @relation(fields: [companyId], references: [id])
   companyId           String
   startTime           DateTime
-  endTime             DateTime
+  endTime             DateTime?
   ipAddress           String?
   country             String?
   language            String?

@@ -66,7 +66,7 @@ async function processTranscriptWithOpenAI(
       "escalated": boolean,
       "forwarded_hr": boolean,
       "category": "one of the categories listed above",
-      "questions": "a single question or [\"question 1\", \"question 2\", ...]",
+      "questions": null, or array of questions,
       "summary": "brief summary",
       "tokens": number,
       "tokens_eur": number
