@@ -3,6 +3,33 @@ import { fetchAndStoreSessionsForAllCompanies } from "../lib/csvFetcher.js";
 import { processAllUnparsedTranscripts } from "../lib/transcriptParser.js";
 import { PrismaClient } from "@prisma/client";
 import fetch from "node-fetch";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// Load environment variables from .env.local
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const envPath = join(__dirname, '..', '.env.local');
+
+try {
+  const envFile = readFileSync(envPath, 'utf8');
+  const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
+  
+  envVars.forEach(line => {
+    const [key, ...valueParts] = line.split('=');
+    if (key && valueParts.length > 0) {
+      const value = valueParts.join('=').trim();
+      if (!process.env[key.trim()]) {
+        process.env[key.trim()] = value;
+      }
+    }
+  });
+  
+  console.log("✅ Environment variables loaded from .env.local");
+} catch (error) {
+  console.warn("⚠️  Could not load .env.local file:", error.message);
+}
 
 const prisma = new PrismaClient();
 
@@ -37,7 +64,12 @@ async function triggerProcessingScheduler() {
       where: {
         AND: [
           { messages: { some: {} } },
-          { processed: { not: true } }, // Either false or null
+          { 
+            OR: [
+              { processed: false },
+              { processed: null }
+            ]
+          }
         ],
       },
       select: {
@@ -96,7 +128,12 @@ async function showProcessingStatus() {
       where: { processed: true },
     });
     const unprocessedSessions = await prisma.session.count({
-      where: { processed: { not: true } },
+      where: { 
+        OR: [
+          { processed: false },
+          { processed: null }
+        ]
+      },
     });
     const withMessages = await prisma.session.count({
       where: {
@@ -107,7 +144,15 @@ async function showProcessingStatus() {
     });
     const readyForProcessing = await prisma.session.count({
       where: {
-        AND: [{ messages: { some: {} } }, { processed: { not: true } }],
+        AND: [
+          { messages: { some: {} } }, 
+          { 
+            OR: [
+              { processed: false },
+              { processed: null }
+            ]
+          }
+        ],
       },
     });
 
@@ -122,7 +167,15 @@ async function showProcessingStatus() {
       console.log("\n📋 Sample unprocessed sessions:");
       const samples = await prisma.session.findMany({
         where: {
-          AND: [{ messages: { some: {} } }, { processed: { not: true } }],
+          AND: [
+            { messages: { some: {} } }, 
+            { 
+              OR: [
+                { processed: false },
+                { processed: null }
+              ]
+            }
+          ],
         },
         select: {
           id: true,
