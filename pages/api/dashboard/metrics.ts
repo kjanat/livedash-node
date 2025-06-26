@@ -48,6 +48,9 @@ export default async function handler(
 
   const prismaSessions = await prisma.session.findMany({
     where: whereClause,
+    include: {
+      messages: true, // Include messages for question extraction
+    },
   });
 
   // Convert Prisma sessions to ChatSession[] type for sessionMetrics
@@ -74,6 +77,9 @@ export default async function handler(
     forwardedHr: ps.forwardedHr || false,
     initialMsg: ps.initialMsg || undefined,
     fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
+    questions: ps.questions || undefined, // Include questions field
+    summary: ps.summary || undefined, // Include summary field
+    messages: ps.messages || [], // Include messages for question extraction
     // userId is missing in Prisma Session model, assuming it's not strictly needed for metrics or can be null
     userId: undefined, // Or some other default/mapping if available
   }));

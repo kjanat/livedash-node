@@ -7,6 +7,7 @@ import {
   CountryMetrics, // Added CountryMetrics
   MetricsResult,
   WordCloudWord, // Added WordCloudWord
+  TopQuestion, // Added TopQuestion
 } from "./types";
 
 interface CompanyConfig {
@@ -348,8 +349,24 @@ export function sessionMetrics(
   let totalTokensEur = 0;
   const wordCounts: { [key: string]: number } = {};
   let alerts = 0;
+  
+    // New metrics variables
+    const hourlySessionCounts: { [hour: string]: number } = {};
+    let resolvedChatsCount = 0;
+    const questionCounts: { [question: string]: number } = {};
 
   for (const session of sessions) {
+    // Track hourly usage for peak time calculation
+    if (session.startTime) {
+      const hour = new Date(session.startTime).getHours();
+      const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+      hourlySessionCounts[hourKey] = (hourlySessionCounts[hourKey] || 0) + 1;
+    }
+
+    // Count resolved chats (sessions that have ended and are not escalated)
+    if (session.endTime && !session.escalated) {
+      resolvedChatsCount++;
+    }
     // Unique Users: Prefer non-empty ipAddress, fallback to non-empty sessionId
     let identifierAdded = false;
     if (session.ipAddress && session.ipAddress.trim() !== "") {
@@ -487,6 +504,51 @@ export function sessionMetrics(
       byCountry[session.country] = (byCountry[session.country] || 0) + 1;
     }
 
+    // Extract questions from session
+    const extractQuestions = () => {
+      // 1. Extract from questions JSON field
+      if (session.questions) {
+        try {
+          const questionsArray = JSON.parse(session.questions);
+          if (Array.isArray(questionsArray)) {
+            questionsArray.forEach((question: string) => {
+              if (question && question.trim().length > 0) {
+                const cleanQuestion = question.trim();
+                questionCounts[cleanQuestion] = (questionCounts[cleanQuestion] || 0) + 1;
+              }
+            });
+          }
+        } catch (error) {
+          console.warn(`[metrics] Failed to parse questions JSON for session ${session.id}: ${error}`);
+        }
+      }
+
+      // 2. Extract questions from user messages (if available)
+      if (session.messages) {
+        session.messages
+          .filter(msg => msg.role === 'User')
+          .forEach(msg => {
+            const content = msg.content.trim();
+            // Simple heuristic: if message ends with ? or contains question words, treat as question
+            if (content.endsWith('?') || 
+                /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
+              questionCounts[content] = (questionCounts[content] || 0) + 1;
+            }
+          });
+      }
+
+      // 3. Extract questions from initial message as fallback
+      if (session.initialMsg) {
+        const content = session.initialMsg.trim();
+        if (content.endsWith('?') || 
+            /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
+          questionCounts[content] = (questionCounts[content] || 0) + 1;
+        }
+      }
+    };
+
+    extractQuestions();
+
     // Word Cloud Data (from initial message and transcript content)
     const processTextForWordCloud = (text: string | undefined | null) => {
       if (!text) return;
@@ -506,7 +568,8 @@ export function sessionMetrics(
       }
     };
     processTextForWordCloud(session.initialMsg);
-    processTextForWordCloud(session.transcriptContent);
+    // Note: transcriptContent is not available in ChatSession type
+    // Could be added later if transcript parsing is implemented
   }
 
   const uniqueUsers = uniqueUserIds.size;
@@ -547,6 +610,30 @@ export function sessionMetrics(
     mockPreviousPeriodData.avgResponseTime
   );
 
+  // Calculate new metrics
+  
+  // 1. Average Daily Costs (euros)
+  const avgDailyCosts = numDaysWithSessions > 0 ? totalTokensEur / numDaysWithSessions : 0;
+  
+  // 2. Peak Usage Time
+  let peakUsageTime = "N/A";
+  if (Object.keys(hourlySessionCounts).length > 0) {
+    const peakHour = Object.entries(hourlySessionCounts)
+      .sort(([, a], [, b]) => b - a)[0][0];
+    const peakHourNum = parseInt(peakHour.split(':')[0]);
+    const endHour = (peakHourNum + 1) % 24;
+    peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, '0')}:00`;
+  }
+  
+  // 3. Resolved Chats Percentage
+  const resolvedChatsPercentage = totalSessions > 0 ? (resolvedChatsCount / totalSessions) * 100 : 0;
+
+  // 4. Top 5 Asked Questions
+  const topQuestions: TopQuestion[] = Object.entries(questionCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5) // Top 5 questions
+    .map(([question, count]) => ({ question, count }));
+
   // console.log("Debug metrics calculation:", {
   //   totalSessionDuration,
   //   validSessionsForDuration,
@@ -585,5 +672,11 @@ export function sessionMetrics(
     lastUpdated: Date.now(),
     totalSessionDuration,
     validSessionsForDuration,
+    
+    // New metrics
+    avgDailyCosts,
+    peakUsageTime,
+    resolvedChatsPercentage,
+    topQuestions,
   };
 }

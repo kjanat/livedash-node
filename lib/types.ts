@@ -119,6 +119,11 @@ export interface WordCloudWord {
   value: number;
 }
 
+export interface TopQuestion {
+  question: string;
+  count: number;
+}
+
 export interface MetricsResult {
   totalSessions: number;
   avgSessionsPerDay: number;
@@ -152,6 +157,12 @@ export interface MetricsResult {
   usersTrend?: number; // e.g., percentage change in uniqueUsers
   avgSessionTimeTrend?: number; // e.g., percentage change in avgSessionLength
   avgResponseTimeTrend?: number; // e.g., percentage change in avgResponseTime
+  
+  // New metrics for enhanced dashboard
+  avgDailyCosts?: number; // Average daily costs in euros
+  peakUsageTime?: string; // Peak usage time (e.g., "14:00-15:00")
+  resolvedChatsPercentage?: number; // Percentage of resolved chats
+  topQuestions?: TopQuestion[]; // Top 5 most asked questions
 
   // Debug properties
   totalSessionDuration?: number;
