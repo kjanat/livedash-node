@@ -52,7 +52,7 @@ export function startCsvImportScheduler() {
                 tokensEur: rawSession.tokensEur,
                 category: rawSession.category,
                 initialMessage: rawSession.initialMessage,
-                status: "QUEUED", // Reset status for reprocessing if needed
+                // Status tracking now handled by ProcessingStatusManager
               },
               create: {
                 companyId: company.id,
@@ -72,7 +72,7 @@ export function startCsvImportScheduler() {
                 tokensEur: rawSession.tokensEur,
                 category: rawSession.category,
                 initialMessage: rawSession.initialMessage,
-                status: "QUEUED",
+                // Status tracking now handled by ProcessingStatusManager
               },
             });
           } catch (error) {

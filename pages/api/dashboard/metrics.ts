@@ -36,10 +36,9 @@ export default async function handler(
   // Get date range from query parameters
   const { startDate, endDate } = req.query;
 
-  // Build where clause with optional date filtering and only processed sessions
+  // Build where clause with optional date filtering
   const whereClause: any = {
     companyId: user.companyId,
-    processed: true, // Only show processed sessions in dashboard
   };
 
   if (startDate && endDate) {
@@ -74,13 +73,10 @@ export default async function handler(
     messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent, // Handle null messagesSent
     avgResponseTime:
       ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
-    tokens: ps.tokens === null ? undefined : ps.tokens,
-    tokensEur: ps.tokensEur === null ? undefined : ps.tokensEur,
     escalated: ps.escalated || false,
     forwardedHr: ps.forwardedHr || false,
     initialMsg: ps.initialMsg || undefined,
     fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
-    questions: ps.questions || undefined, // Include questions field
     summary: ps.summary || undefined, // Include summary field
     messages: ps.messages || [], // Include messages for question extraction
     // userId is missing in Prisma Session model, assuming it's not strictly needed for metrics or can be null

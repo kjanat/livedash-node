@@ -82,7 +82,7 @@ export default async function handler(
             tokensEur: rawSession.tokensEur,
             category: rawSession.category,
             initialMessage: rawSession.initialMessage,
-            status: "QUEUED", // Reset status for reprocessing if needed
+            // Status tracking now handled by ProcessingStatusManager
           },
           create: {
             companyId: company.id,
@@ -102,7 +102,7 @@ export default async function handler(
             tokensEur: rawSession.tokensEur,
             category: rawSession.category,
             initialMessage: rawSession.initialMessage,
-            status: "QUEUED",
+            // Status tracking now handled by ProcessingStatusManager
           },
         });
         importedCount++;

@@ -54,8 +54,7 @@ export interface ChatSession {
   language?: string | null;
   country?: string | null;
   ipAddress?: string | null;
-  sentiment?: number | null;
-  sentimentCategory?: string | null; // "positive", "neutral", "negative" from OpenAPI
+  sentiment?: string | null; // Now a SentimentCategory enum: "POSITIVE", "NEUTRAL", "NEGATIVE"
   messagesSent?: number;
   startTime: Date;
   endTime?: Date | null;
@@ -66,14 +65,11 @@ export interface ChatSession {
   avgResponseTime?: number | null;
   escalated?: boolean;
   forwardedHr?: boolean;
-  tokens?: number;
-  tokensEur?: number;
   initialMsg?: string;
   fullTranscriptUrl?: string | null;
-  processed?: boolean | null; // Flag for post-processing status
-  questions?: string | null; // JSON array of questions asked by user
   summary?: string | null; // Brief summary of the conversation
   messages?: Message[]; // Parsed messages from transcript
+  transcriptContent?: string | null; // Full transcript content
 }
 
 export interface SessionQuery {

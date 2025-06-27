@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
 import { prisma } from "../../../lib/prisma";
 import { processUnprocessedSessions } from "../../../lib/processingScheduler";
+import { ProcessingStatusManager } from "../../../lib/processingStatusManager";
+import { ProcessingStage } from "@prisma/client";
 
 interface SessionUser {
   email: string;
@@ -53,19 +55,23 @@ export default async function handler(
     const validatedBatchSize = batchSize && batchSize > 0 ? parseInt(batchSize) : null;
     const validatedMaxConcurrency = maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
 
-    // Check how many unprocessed sessions exist
-    const unprocessedCount = await prisma.session.count({
-      where: {
-        companyId: user.companyId,
-        processed: false,
-        messages: { some: {} }, // Must have messages
-      },
-    });
+    // Check how many sessions need AI processing using the new status system
+    const sessionsNeedingAI = await ProcessingStatusManager.getSessionsNeedingProcessing(
+      ProcessingStage.AI_ANALYSIS,
+      1000 // Get count only
+    );
+
+    // Filter to sessions for this company
+    const companySessionsNeedingAI = sessionsNeedingAI.filter(
+      statusRecord => statusRecord.session.companyId === user.companyId
+    );
+
+    const unprocessedCount = companySessionsNeedingAI.length;
 
     if (unprocessedCount === 0) {
       return res.json({
         success: true,
-        message: "No unprocessed sessions found",
+        message: "No sessions requiring AI processing found",
         unprocessedCount: 0,
         processedCount: 0,
       });

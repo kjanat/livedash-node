@@ -50,16 +50,16 @@ export default async function handler(
     ) {
       const searchConditions = [
         { id: { contains: searchTerm } },
-        { category: { contains: searchTerm } },
         { initialMsg: { contains: searchTerm } },
-        { transcriptContent: { contains: searchTerm } },
+        { summary: { contains: searchTerm } },
       ];
       whereClause.OR = searchConditions;
     }
 
     // Category Filter
     if (category && typeof category === "string" && category.trim() !== "") {
-      whereClause.category = category;
+      // Cast to SessionCategory enum if it's a valid value
+      whereClause.category = category as any;
     }
 
     // Language Filter
@@ -146,8 +146,6 @@ export default async function handler(
       avgResponseTime: ps.avgResponseTime ?? null,
       escalated: ps.escalated ?? undefined,
       forwardedHr: ps.forwardedHr ?? undefined,
-      tokens: ps.tokens ?? undefined,
-      tokensEur: ps.tokensEur ?? undefined,
       initialMsg: ps.initialMsg ?? undefined,
       fullTranscriptUrl: ps.fullTranscriptUrl ?? null,
       transcriptContent: null, // Transcript content is now fetched from fullTranscriptUrl when needed

@@ -453,41 +453,25 @@ export function sessionMetrics(
     if (session.escalated) escalatedCount++;
     if (session.forwardedHr) forwardedHrCount++;
 
-    // Sentiment
+    // Sentiment (now using enum values)
     if (session.sentiment !== undefined && session.sentiment !== null) {
-      // Example thresholds, adjust as needed
-      if (session.sentiment > 0.3) sentimentPositiveCount++;
-      else if (session.sentiment < -0.3) sentimentNegativeCount++;
-      else sentimentNeutralCount++;
+      if (session.sentiment === "POSITIVE") sentimentPositiveCount++;
+      else if (session.sentiment === "NEGATIVE") sentimentNegativeCount++;
+      else if (session.sentiment === "NEUTRAL") sentimentNeutralCount++;
     }
 
-    // Sentiment Alert Check
+    // Sentiment Alert Check (simplified for enum)
     if (
       companyConfig.sentimentAlert !== undefined &&
-      session.sentiment !== undefined &&
-      session.sentiment !== null &&
-      session.sentiment < companyConfig.sentimentAlert
+      session.sentiment === "NEGATIVE"
     ) {
       alerts++;
-    }
-
-    // Tokens
-    if (session.tokens !== undefined && session.tokens !== null) {
-      totalTokens += session.tokens;
-    }
-    if (session.tokensEur !== undefined && session.tokensEur !== null) {
-      totalTokensEur += session.tokensEur;
     }
 
     // Daily metrics
     const day = new Date(session.startTime).toISOString().split("T")[0];
     byDay[day] = (byDay[day] || 0) + 1; // Sessions per day
-    if (session.tokens !== undefined && session.tokens !== null) {
-      tokensByDay[day] = (tokensByDay[day] || 0) + session.tokens;
-    }
-    if (session.tokensEur !== undefined && session.tokensEur !== null) {
-      tokensCostByDay[day] = (tokensCostByDay[day] || 0) + session.tokensEur;
-    }
+    // Note: tokens and tokensEur are not available in the new schema
 
     // Category metrics
     if (session.category) {
@@ -506,24 +490,7 @@ export function sessionMetrics(
 
     // Extract questions from session
     const extractQuestions = () => {
-      // 1. Extract from questions JSON field
-      if (session.questions) {
-        try {
-          const questionsArray = JSON.parse(session.questions);
-          if (Array.isArray(questionsArray)) {
-            questionsArray.forEach((question: string) => {
-              if (question && question.trim().length > 0) {
-                const cleanQuestion = question.trim();
-                questionCounts[cleanQuestion] = (questionCounts[cleanQuestion] || 0) + 1;
-              }
-            });
-          }
-        } catch (error) {
-          console.warn(`[metrics] Failed to parse questions JSON for session ${session.id}: ${error}`);
-        }
-      }
-
-      // 2. Extract questions from user messages (if available)
+      // 1. Extract questions from user messages (if available)
       if (session.messages) {
         session.messages
           .filter(msg => msg.role === 'User')
