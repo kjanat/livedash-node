@@ -1,51 +1,50 @@
-// API route to refresh (fetch+parse+update) session data for a company
-import { NextApiRequest, NextApiResponse } from "next";
-import { fetchAndParseCsv } from "../../../lib/csvFetcher";
-import { processQueuedImports } from "../../../lib/importProcessor";
-import { prisma } from "../../../lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { fetchAndParseCsv } from "../../../../lib/csvFetcher";
+import { processQueuedImports } from "../../../../lib/importProcessor";
+import { prisma } from "../../../../lib/prisma";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  // Check if this is a POST request
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  // Get companyId from body or query
-  let { companyId } = req.body;
-
-  if (!companyId) {
-    // Try to get user from prisma based on session cookie
-    try {
-      const session = await prisma.session.findFirst({
-        orderBy: { createdAt: "desc" },
-        where: {
-          /* Add session check criteria here */
-        },
-      });
-
-      if (session) {
-        companyId = session.companyId;
-      }
-    } catch (error) {
-      // Log error for server-side debugging
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      // Use a server-side logging approach instead of console
-      process.stderr.write(`Error fetching session: ${errorMessage}\n`);
-    }
-  }
-
-  if (!companyId) {
-    return res.status(400).json({ error: "Company ID is required" });
-  }
-
-  const company = await prisma.company.findUnique({ where: { id: companyId } });
-  if (!company) return res.status(404).json({ error: "Company not found" });
-
+export async function POST(request: NextRequest) {
   try {
+    const body = await request.json();
+    let { companyId } = body;
+
+    if (!companyId) {
+      // Try to get user from prisma based on session cookie
+      try {
+        const session = await prisma.session.findFirst({
+          orderBy: { createdAt: "desc" },
+          where: {
+            /* Add session check criteria here */
+          },
+        });
+
+        if (session) {
+          companyId = session.companyId;
+        }
+      } catch (error) {
+        // Log error for server-side debugging
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        // Use a server-side logging approach instead of console
+        process.stderr.write(`Error fetching session: ${errorMessage}\n`);
+      }
+    }
+
+    if (!companyId) {
+      return NextResponse.json(
+        { error: "Company ID is required" },
+        { status: 400 }
+      );
+    }
+
+    const company = await prisma.company.findUnique({ where: { id: companyId } });
+    if (!company) {
+      return NextResponse.json(
+        { error: "Company not found" },
+        { status: 404 }
+      );
+    }
+
     const rawSessionData = await fetchAndParseCsv(
       company.csvUrl,
       company.csvUsername as string | undefined,
@@ -123,7 +122,7 @@ export default async function handler(
       where: { companyId: company.id }
     });
 
-    res.json({
+    return NextResponse.json({
       ok: true,
       imported: importedCount,
       total: rawSessionData.length,
@@ -132,6 +131,6 @@ export default async function handler(
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred";
-    res.status(500).json({ error });
+    return NextResponse.json({ error }, { status: 500 });
   }
 }

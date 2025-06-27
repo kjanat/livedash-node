@@ -1,9 +1,9 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { prisma } from "../../../lib/prisma";
-import { processUnprocessedSessions } from "../../../lib/processingScheduler";
-import { ProcessingStatusManager } from "../../../lib/processingStatusManager";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { prisma } from "../../../../lib/prisma";
+import { processUnprocessedSessions } from "../../../../lib/processingScheduler";
+import { ProcessingStatusManager } from "../../../../lib/processingStatusManager";
 import { ProcessingStage } from "@prisma/client";
 
 interface SessionUser {
@@ -15,22 +15,11 @@ interface SessionData {
   user: SessionUser;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const session = (await getServerSession(
-    req,
-    res,
-    authOptions
-  )) as SessionData | null;
+export async function POST(request: NextRequest) {
+  const session = (await getServerSession(authOptions)) as SessionData | null;
 
   if (!session?.user) {
-    return res.status(401).json({ error: "Not logged in" });
+    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
   }
 
   const user = await prisma.user.findUnique({
@@ -39,17 +28,21 @@ export default async function handler(
   });
 
   if (!user) {
-    return res.status(401).json({ error: "No user found" });
+    return NextResponse.json({ error: "No user found" }, { status: 401 });
   }
 
   // Check if user has ADMIN role
   if (user.role !== "ADMIN") {
-    return res.status(403).json({ error: "Admin access required" });
+    return NextResponse.json(
+      { error: "Admin access required" },
+      { status: 403 }
+    );
   }
 
   try {
     // Get optional parameters from request body
-    const { batchSize, maxConcurrency } = req.body;
+    const body = await request.json();
+    const { batchSize, maxConcurrency } = body;
 
     // Validate parameters
     const validatedBatchSize = batchSize && batchSize > 0 ? parseInt(batchSize) : null;
@@ -69,7 +62,7 @@ export default async function handler(
     const unprocessedCount = companySessionsNeedingAI.length;
 
     if (unprocessedCount === 0) {
-      return res.json({
+      return NextResponse.json({
         success: true,
         message: "No sessions requiring AI processing found",
         unprocessedCount: 0,
@@ -90,7 +83,7 @@ export default async function handler(
         console.error(`[Manual Trigger] Processing failed for company ${user.companyId}:`, error);
       });
 
-    return res.json({
+    return NextResponse.json({
       success: true,
       message: `Started processing ${unprocessedCount} unprocessed sessions`,
       unprocessedCount,
@@ -101,9 +94,12 @@ export default async function handler(
 
   } catch (error) {
     console.error("[Manual Trigger] Error:", error);
-    return res.status(500).json({
-      error: "Failed to trigger processing",
-      details: error instanceof Error ? error.message : String(error),
-    });
+    return NextResponse.json(
+      {
+        error: "Failed to trigger processing",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }

@@ -21,9 +21,9 @@ export default function DateRangePicker({
   const [endDate, setEndDate] = useState(initialEndDate || maxDate);
 
   useEffect(() => {
-    // Notify parent component when dates change
+    // Only notify parent component when dates change, not when the callback changes
     onDateRangeChange(startDate, endDate);
-  }, [startDate, endDate, onDateRangeChange]);
+  }, [startDate, endDate]);
 
   const handleStartDateChange = (newStartDate: string) => {
     // Ensure start date is not before min date

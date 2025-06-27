@@ -1,19 +1,18 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import { prisma } from "../../../../lib/prisma";
-import { ChatSession } from "../../../../lib/types";
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "../../../../../lib/prisma";
+import { ChatSession } from "../../../../../lib/types";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  const { id } = params;
 
-  const { id } = req.query;
-
-  if (!id || typeof id !== "string") {
-    return res.status(400).json({ error: "Session ID is required" });
+  if (!id) {
+    return NextResponse.json(
+      { error: "Session ID is required" },
+      { status: 400 }
+    );
   }
 
   try {
@@ -27,7 +26,10 @@ export default async function handler(
     });
 
     if (!prismaSession) {
-      return res.status(404).json({ error: "Session not found" });
+      return NextResponse.json(
+        { error: "Session not found" },
+        { status: 404 }
+      );
     }
 
     // Map Prisma session object to ChatSession type
@@ -71,12 +73,13 @@ export default async function handler(
         })) ?? [], // New field - parsed messages
     };
 
-    return res.status(200).json({ session });
+    return NextResponse.json({ session });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch session", details: errorMessage });
+    return NextResponse.json(
+      { error: "Failed to fetch session", details: errorMessage },
+      { status: 500 }
+    );
   }
 }

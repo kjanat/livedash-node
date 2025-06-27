@@ -1,40 +1,33 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { prisma } from "../../../lib/prisma";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { prisma } from "../../../../lib/prisma";
 import {
   ChatSession,
   SessionApiResponse,
   SessionQuery,
-} from "../../../lib/types";
+} from "../../../../lib/types";
 import { Prisma } from "@prisma/client";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<SessionApiResponse | { error: string; details?: string }>
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const authSession = await getServerSession(req, res, authOptions);
+export async function GET(request: NextRequest) {
+  const authSession = await getServerSession(authOptions);
 
   if (!authSession || !authSession.user?.companyId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const companyId = authSession.user.companyId;
-  const {
-    searchTerm,
-    category,
-    language,
-    startDate,
-    endDate,
-    sortKey,
-    sortOrder,
-    page: queryPage,
-    pageSize: queryPageSize,
-  } = req.query as SessionQuery;
+  const { searchParams } = new URL(request.url);
+  
+  const searchTerm = searchParams.get("searchTerm");
+  const category = searchParams.get("category");
+  const language = searchParams.get("language");
+  const startDate = searchParams.get("startDate");
+  const endDate = searchParams.get("endDate");
+  const sortKey = searchParams.get("sortKey");
+  const sortOrder = searchParams.get("sortOrder");
+  const queryPage = searchParams.get("page");
+  const queryPageSize = searchParams.get("pageSize");
 
   const page = Number(queryPage) || 1;
   const pageSize = Number(queryPageSize) || 10;
@@ -43,11 +36,7 @@ export default async function handler(
     const whereClause: Prisma.SessionWhereInput = { companyId };
 
     // Search Term
-    if (
-      searchTerm &&
-      typeof searchTerm === "string" &&
-      searchTerm.trim() !== ""
-    ) {
+    if (searchTerm && searchTerm.trim() !== "") {
       const searchConditions = [
         { id: { contains: searchTerm } },
         { initialMsg: { contains: searchTerm } },
@@ -57,24 +46,24 @@ export default async function handler(
     }
 
     // Category Filter
-    if (category && typeof category === "string" && category.trim() !== "") {
+    if (category && category.trim() !== "") {
       // Cast to SessionCategory enum if it's a valid value
       whereClause.category = category as any;
     }
 
     // Language Filter
-    if (language && typeof language === "string" && language.trim() !== "") {
+    if (language && language.trim() !== "") {
       whereClause.language = language;
     }
 
     // Date Range Filter
-    if (startDate && typeof startDate === "string") {
+    if (startDate) {
       whereClause.startTime = {
         ...((whereClause.startTime as object) || {}),
         gte: new Date(startDate),
       };
     }
-    if (endDate && typeof endDate === "string") {
+    if (endDate) {
       const inclusiveEndDate = new Date(endDate);
       inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
       whereClause.startTime = {
@@ -98,7 +87,7 @@ export default async function handler(
       | Prisma.SessionOrderByWithRelationInput[];
 
     const primarySortField =
-      sortKey && typeof sortKey === "string" && validSortKeys[sortKey]
+      sortKey && validSortKeys[sortKey]
         ? validSortKeys[sortKey]
         : "startTime"; // Default to startTime field if sortKey is invalid/missing
 
@@ -115,9 +104,6 @@ export default async function handler(
         { startTime: "desc" },
       ];
     }
-    // Note: If sortKey was initially undefined or invalid, primarySortField defaults to "startTime",
-    // and primarySortOrder defaults to "desc". This makes orderByCondition = { startTime: "desc" },
-    // which is the correct overall default sort.
 
     const prismaSessions = await prisma.session.findMany({
       where: whereClause,
@@ -151,12 +137,13 @@ export default async function handler(
       transcriptContent: null, // Transcript content is now fetched from fullTranscriptUrl when needed
     }));
 
-    return res.status(200).json({ sessions, totalSessions });
+    return NextResponse.json({ sessions, totalSessions });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
-    return res
-      .status(500)
-      .json({ error: "Failed to fetch sessions", details: errorMessage });
+    return NextResponse.json(
+      { error: "Failed to fetch sessions", details: errorMessage },
+      { status: 500 }
+    );
   }
 }

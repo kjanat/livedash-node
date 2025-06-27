@@ -1,10 +1,9 @@
-// API endpoint: return metrics for current company
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { prisma } from "../../../lib/prisma";
-import { sessionMetrics } from "../../../lib/metrics";
-import { authOptions } from "../auth/[...nextauth]";
-import { ChatSession } from "../../../lib/types"; // Import ChatSession
+import { prisma } from "../../../../lib/prisma";
+import { sessionMetrics } from "../../../../lib/metrics";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { ChatSession } from "../../../../lib/types";
 
 interface SessionUser {
   email: string;
@@ -15,26 +14,25 @@ interface SessionData {
   user: SessionUser;
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  const session = (await getServerSession(
-    req,
-    res,
-    authOptions
-  )) as SessionData | null;
-  if (!session?.user) return res.status(401).json({ error: "Not logged in" });
+export async function GET(request: NextRequest) {
+  const session = (await getServerSession(authOptions)) as SessionData | null;
+  if (!session?.user) {
+    return NextResponse.json({ error: "Not logged in" }, { status: 401 });
+  }
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
     include: { company: true },
   });
 
-  if (!user) return res.status(401).json({ error: "No user" });
+  if (!user) {
+    return NextResponse.json({ error: "No user" }, { status: 401 });
+  }
 
   // Get date range from query parameters
-  const { startDate, endDate } = req.query;
+  const { searchParams } = new URL(request.url);
+  const startDate = searchParams.get("startDate");
+  const endDate = searchParams.get("endDate");
 
   // Build where clause with optional date filtering
   const whereClause: any = {
@@ -43,8 +41,8 @@ export default async function handler(
 
   if (startDate && endDate) {
     whereClause.startTime = {
-      gte: new Date(startDate as string),
-      lte: new Date(endDate as string + 'T23:59:59.999Z'), // Include full end date
+      gte: new Date(startDate),
+      lte: new Date(endDate + 'T23:59:59.999Z'), // Include full end date
     };
   }
 
@@ -103,7 +101,7 @@ export default async function handler(
     };
   }
 
-  res.json({
+  return NextResponse.json({
     metrics,
     csvUrl: user.company.csvUrl,
     company: user.company,

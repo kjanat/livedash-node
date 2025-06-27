@@ -1,40 +1,62 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import {
-  SessionsLineChart,
-  CategoriesBarChart,
-  LanguagePieChart,
-  TokenUsageChart,
-} from "../../../components/Charts";
 import { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
-import MetricCard from "../../../components/MetricCard";
-import DonutChart from "../../../components/DonutChart";
+import MetricCard from "../../../components/ui/metric-card";
+import ModernLineChart from "../../../components/charts/line-chart";
+import ModernBarChart from "../../../components/charts/bar-chart";
+import ModernDonutChart from "../../../components/charts/donut-chart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  MessageSquare,
+  Users,
+  Clock,
+  Zap,
+  Euro,
+  TrendingUp,
+  CheckCircle,
+  RefreshCw,
+  LogOut,
+  Calendar,
+  MoreVertical,
+  Globe,
+  MessageCircle,
+} from "lucide-react";
 import WordCloud from "../../../components/WordCloud";
 import GeographicMap from "../../../components/GeographicMap";
 import ResponseTimeDistribution from "../../../components/ResponseTimeDistribution";
-import WelcomeBanner from "../../../components/WelcomeBanner";
 import DateRangePicker from "../../../components/DateRangePicker";
 import TopQuestionsChart from "../../../components/TopQuestionsChart";
 
 // Safely wrapped component with useSession
 function DashboardContent() {
-  const { data: session, status } = useSession(); // Add status from useSession
-  const router = useRouter(); // Initialize useRouter
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{ minDate: string; maxDate: string } | null>(null);
   const [selectedStartDate, setSelectedStartDate] = useState<string>("");
   const [selectedEndDate, setSelectedEndDate] = useState<string>("");
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   const isAuditor = session?.user?.role === "AUDITOR";
 
   // Function to fetch metrics with optional date range
-  const fetchMetrics = useCallback(async (startDate?: string, endDate?: string) => {
+  const fetchMetrics = async (startDate?: string, endDate?: string, isInitial = false) => {
     setLoading(true);
     try {
       let url = "/api/dashboard/metrics";
@@ -49,44 +71,44 @@ function DashboardContent() {
       setCompany(data.company);
 
       // Set date range from API response (only on initial load)
-      if (data.dateRange && !dateRange) {
+      if (data.dateRange && isInitial) {
         setDateRange(data.dateRange);
         setSelectedStartDate(data.dateRange.minDate);
         setSelectedEndDate(data.dateRange.maxDate);
+        setIsInitialLoad(false);
       }
     } catch (error) {
       console.error("Error fetching metrics:", error);
     } finally {
       setLoading(false);
     }
-  }, [dateRange]);
+  };
 
   // Handle date range changes
   const handleDateRangeChange = useCallback((startDate: string, endDate: string) => {
     setSelectedStartDate(startDate);
     setSelectedEndDate(endDate);
     fetchMetrics(startDate, endDate);
-  }, [fetchMetrics]);
+  }, []);
 
   useEffect(() => {
     // Redirect if not authenticated
     if (status === "unauthenticated") {
       router.push("/login");
-      return; // Stop further execution in this effect
+      return;
     }
 
     // Fetch metrics and company on mount if authenticated
-    if (status === "authenticated") {
-      fetchMetrics();
+    if (status === "authenticated" && isInitialLoad) {
+      fetchMetrics(undefined, undefined, true);
     }
-  }, [status, router, fetchMetrics]); // Add fetchMetrics to dependency array
+  }, [status, router, isInitialLoad]);
 
   async function handleRefresh() {
-    if (isAuditor) return; // Prevent auditors from refreshing
+    if (isAuditor) return;
     try {
       setRefreshing(true);
 
-      // Make sure we have a company ID to send
       if (!company?.id) {
         setRefreshing(false);
         alert("Cannot refresh: Company ID is missing");
@@ -100,7 +122,6 @@ function DashboardContent() {
       });
 
       if (res.ok) {
-        // Refetch metrics
         const metricsRes = await fetch("/api/dashboard/metrics");
         const data = await metricsRes.json();
         setMetrics(data.metrics);
@@ -113,70 +134,129 @@ function DashboardContent() {
     }
   }
 
-  // Calculate sentiment distribution
-  const getSentimentData = () => {
-    if (!metrics) return { positive: 0, neutral: 0, negative: 0 };
-
-    if (
-      metrics.sentimentPositiveCount !== undefined &&
-      metrics.sentimentNeutralCount !== undefined &&
-      metrics.sentimentNegativeCount !== undefined
-    ) {
-      return {
-        positive: metrics.sentimentPositiveCount,
-        neutral: metrics.sentimentNeutralCount,
-        negative: metrics.sentimentNegativeCount,
-      };
-    }
-
-    const total = metrics.totalSessions || 1;
-    return {
-      positive: Math.round(total * 0.6),
-      neutral: Math.round(total * 0.3),
-      negative: Math.round(total * 0.1),
-    };
-  };
-
-  // Prepare token usage data
-  const getTokenData = () => {
-    if (!metrics || !metrics.tokensByDay) {
-      return { labels: [], values: [], costs: [] };
-    }
-
-    const days = Object.keys(metrics.tokensByDay).sort();
-    const labels = days.slice(-7);
-    const values = labels.map((day) => metrics.tokensByDay?.[day] || 0);
-    const costs = labels.map((day) => metrics.tokensCostByDay?.[day] || 0);
-
-    return { labels, values, costs };
-  };
-
   // Show loading state while session status is being determined
   if (status === "loading") {
-    return <div className="text-center py-10">Loading session...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading session...</p>
+        </div>
+      </div>
+    );
   }
 
-  // If unauthenticated and not redirected yet (should be handled by useEffect, but as a fallback)
   if (status === "unauthenticated") {
-    return <div className="text-center py-10">Redirecting to login...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <p className="text-muted-foreground">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!metrics || !company) {
-    return <div className="text-center py-10">Loading dashboard...</div>;
+  if (loading || !metrics || !company) {
+    return (
+      <div className="space-y-8">
+        {/* Header Skeleton */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-4 w-64" />
+              </div>
+              <div className="flex gap-2">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-20" />
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Metrics Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <MetricCard key={i} title="" value="" isLoading />
+          ))}
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2">
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-64 w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
   }
 
-  // Function to prepare word cloud data from metrics.wordCloudData
+  // Data preparation functions
+  const getSentimentData = () => {
+    if (!metrics) return [];
+
+    const sentimentData = {
+      positive: metrics.sentimentPositiveCount ?? 0,
+      neutral: metrics.sentimentNeutralCount ?? 0,
+      negative: metrics.sentimentNegativeCount ?? 0,
+    };
+
+    return [
+      { name: "Positive", value: sentimentData.positive, color: "hsl(var(--chart-1))" },
+      { name: "Neutral", value: sentimentData.neutral, color: "hsl(var(--chart-2))" },
+      { name: "Negative", value: sentimentData.negative, color: "hsl(var(--chart-3))" },
+    ];
+  };
+
+  const getSessionsOverTimeData = () => {
+    if (!metrics?.days) return [];
+    
+    return Object.entries(metrics.days).map(([date, value]) => ({
+      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      value: value as number,
+    }));
+  };
+
+  const getCategoriesData = () => {
+    if (!metrics?.categories) return [];
+    
+    return Object.entries(metrics.categories).map(([name, value]) => ({
+      name: name.length > 15 ? name.substring(0, 15) + '...' : name,
+      value: value as number,
+    }));
+  };
+
+  const getLanguagesData = () => {
+    if (!metrics?.languages) return [];
+    
+    return Object.entries(metrics.languages).map(([name, value]) => ({
+      name,
+      value: value as number,
+    }));
+  };
+
   const getWordCloudData = (): WordCloudWord[] => {
-    if (!metrics || !metrics.wordCloudData) return [];
+    if (!metrics?.wordCloudData) return [];
     return metrics.wordCloudData;
   };
 
-  // Function to prepare country data for the map using actual metrics
   const getCountryData = () => {
-    if (!metrics || !metrics.countries) return {};
-
-    // Convert the countries object from metrics to the format expected by GeographicMap
-    const result = Object.entries(metrics.countries).reduce(
+    if (!metrics?.countries) return {};
+    return Object.entries(metrics.countries).reduce(
       (acc, [code, count]) => {
         if (code && count) {
           acc[code] = count;
@@ -185,11 +265,8 @@ function DashboardContent() {
       },
       {} as Record<string, number>
     );
-
-    return result;
   };
 
-  // Function to prepare response time distribution data
   const getResponseTimeData = () => {
     const avgTime = metrics.avgResponseTime || 1.5;
     const simulatedData: number[] = [];
@@ -204,62 +281,56 @@ function DashboardContent() {
 
   return (
     <div className="space-y-8">
-      <WelcomeBanner companyName={company.name} />
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-lg ring-1 ring-slate-200/50">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-800">{company.name}</h1>
-          <p className="text-slate-500 mt-1">
-            Dashboard updated{" "}
-            <span className="font-medium text-slate-600">
-              {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
-            </span>
-          </p>
-        </div>
-        <div className="flex items-center gap-3 mt-4 sm:mt-0">
-          <button
-            className="bg-sky-600 text-white py-2 px-5 rounded-lg shadow hover:bg-sky-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center text-sm font-medium"
-            onClick={handleRefresh}
-            disabled={refreshing || isAuditor}
-          >
-            {refreshing ? (
-              <>
-                <svg
-                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Refreshing...
-              </>
-            ) : (
-              "Refresh Data"
-            )}
-          </button>
-          <button
-            className="bg-slate-100 text-slate-700 py-2 px-5 rounded-lg shadow hover:bg-slate-200 transition-colors flex items-center text-sm font-medium"
-            onClick={() => signOut({ callbackUrl: "/login" })}
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
+      {/* Modern Header */}
+      <Card className="border-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
+                <Badge variant="secondary" className="text-xs">
+                  Analytics Dashboard
+                </Badge>
+              </div>
+              <p className="text-muted-foreground">
+                Last updated{" "}
+                <span className="font-medium">
+                  {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
+                </span>
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleRefresh}
+                disabled={refreshing || isAuditor}
+                size="sm"
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? "Refreshing..." : "Refresh"}
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Sign out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
 
-      {/* Date Range Picker */}
-      {dateRange && (
+      {/* Date Range Picker - Temporarily disabled to debug infinite loop */}
+      {/* {dateRange && (
         <DateRangePicker
           minDate={dateRange.minDate}
           maxDate={dateRange.maxDate}
@@ -267,268 +338,192 @@ function DashboardContent() {
           initialStartDate={selectedStartDate}
           initialEndDate={selectedEndDate}
         />
-      )}
+      )} */}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+      {/* Modern Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Total Sessions"
-          value={metrics.totalSessions}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"
-              />
-            </svg>
-          }
+          value={metrics.totalSessions?.toLocaleString()}
+          icon={<MessageSquare className="h-5 w-5" />}
           trend={{
             value: metrics.sessionTrend ?? 0,
             isPositive: (metrics.sessionTrend ?? 0) >= 0,
           }}
+          variant="primary"
         />
+        
         <MetricCard
           title="Unique Users"
-          value={metrics.uniqueUsers}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          }
+          value={metrics.uniqueUsers?.toLocaleString()}
+          icon={<Users className="h-5 w-5" />}
           trend={{
             value: metrics.usersTrend ?? 0,
             isPositive: (metrics.usersTrend ?? 0) >= 0,
           }}
+          variant="success"
         />
+        
         <MetricCard
           title="Avg. Session Time"
           value={`${Math.round(metrics.avgSessionLength || 0)}s`}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
+          icon={<Clock className="h-5 w-5" />}
           trend={{
             value: metrics.avgSessionTimeTrend ?? 0,
             isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
           }}
         />
+        
         <MetricCard
           title="Avg. Response Time"
           value={`${metrics.avgResponseTime?.toFixed(1) || 0}s`}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M13 10V3L4 14h7v7l9-11h-7z"
-              />
-            </svg>
-          }
+          icon={<Zap className="h-5 w-5" />}
           trend={{
             value: metrics.avgResponseTimeTrend ?? 0,
-            isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0, // Lower response time is better
+            isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0,
           }}
+          variant="warning"
         />
+        
         <MetricCard
-          title="Avg. Daily Costs"
+          title="Daily Costs"
           value={`€${metrics.avgDailyCosts?.toFixed(4) || '0.0000'}`}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
+          icon={<Euro className="h-5 w-5" />}
+          description="Average per day"
         />
+        
         <MetricCard
-          title="Peak Usage Time"
+          title="Peak Usage"
           value={metrics.peakUsageTime || 'N/A'}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-              />
-            </svg>
-          }
+          icon={<TrendingUp className="h-5 w-5" />}
+          description="Busiest hour"
         />
+        
         <MetricCard
-          title="Resolved Chats"
+          title="Resolution Rate"
           value={`${metrics.resolvedChatsPercentage?.toFixed(1) || '0.0'}%`}
-          icon={
-            <svg
-              className="h-5 w-5"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          }
+          icon={<CheckCircle className="h-5 w-5" />}
           trend={{
             value: metrics.resolvedChatsPercentage ?? 0,
-            isPositive: (metrics.resolvedChatsPercentage ?? 0) >= 80, // 80%+ resolution rate is good
+            isPositive: (metrics.resolvedChatsPercentage ?? 0) >= 80,
           }}
+          variant={metrics.resolvedChatsPercentage && metrics.resolvedChatsPercentage >= 80 ? "success" : "warning"}
+        />
+        
+        <MetricCard
+          title="Active Languages"
+          value={Object.keys(metrics.languages || {}).length}
+          icon={<Globe className="h-5 w-5" />}
+          description="Languages detected"
         />
       </div>
 
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow lg:col-span-2">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Sessions Over Time
-          </h3>
-          <SessionsLineChart sessionsPerDay={metrics.days} />
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Conversation Sentiment
-          </h3>
-          <DonutChart
-            data={{
-              labels: ["Positive", "Neutral", "Negative"],
-              values: [
-                getSentimentData().positive,
-                getSentimentData().neutral,
-                getSentimentData().negative,
-              ],
-              colors: ["#1cad7c", "#a1a1a1", "#dc2626"],
-            }}
-            centerText={{
-              title: "Total",
-              value: metrics.totalSessions,
-            }}
-          />
-        </div>
+        <ModernLineChart
+          data={getSessionsOverTimeData()}
+          title="Sessions Over Time"
+          className="lg:col-span-2"
+          height={350}
+        />
+        
+        <ModernDonutChart
+          data={getSentimentData()}
+          title="Conversation Sentiment"
+          centerText={{
+            title: "Total",
+            value: metrics.totalSessions || 0,
+          }}
+          height={350}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Sessions by Category
-          </h3>
-          <CategoriesBarChart categories={metrics.categories || {}} />
-        </div>
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Languages Used
-          </h3>
-          <LanguagePieChart languages={metrics.languages || {}} />
-        </div>
+        <ModernBarChart
+          data={getCategoriesData()}
+          title="Sessions by Category"
+          height={350}
+        />
+        
+        <ModernDonutChart
+          data={getLanguagesData()}
+          title="Languages Used"
+          height={350}
+        />
       </div>
 
+      {/* Geographic and Topics Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Geographic Distribution
-          </h3>
-          <GeographicMap countries={getCountryData()} />
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" />
+              Geographic Distribution
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GeographicMap countries={getCountryData()} />
+          </CardContent>
+        </Card>
 
-        <div className="bg-white p-6 rounded-xl shadow">
-          <h3 className="font-bold text-lg text-gray-800 mb-4">
-            Common Topics
-          </h3>
-          <div className="h-[300px]">
-            <WordCloud words={getWordCloudData()} width={500} height={400} />
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageCircle className="h-5 w-5" />
+              Common Topics
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px]">
+              <WordCloud words={getWordCloudData()} width={500} height={300} />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Top Questions Chart */}
       <TopQuestionsChart data={metrics.topQuestions || []} />
 
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h3 className="font-bold text-lg text-gray-800 mb-4">
-          Response Time Distribution
-        </h3>
-        <ResponseTimeDistribution
-          data={getResponseTimeData()}
-          average={metrics.avgResponseTime || 0}
-        />
-      </div>
-      <div className="bg-white p-6 rounded-xl shadow">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4">
-          <h3 className="font-bold text-lg text-gray-800">
-            Token Usage & Costs
-          </h3>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 w-full sm:w-auto">
-            <div className="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full flex items-center">
-              <span className="font-semibold mr-1">Total Tokens:</span>
-              {metrics.totalTokens?.toLocaleString() || 0}
-            </div>
-            <div className="text-sm bg-green-50 text-green-700 px-3 py-1 rounded-full flex items-center">
-              <span className="font-semibold mr-1">Total Cost:</span>€
-              {metrics.totalTokensEur?.toFixed(4) || 0}
+      {/* Response Time Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Response Time Distribution</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ResponseTimeDistribution
+            data={getResponseTimeData()}
+            average={metrics.avgResponseTime || 0}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Token Usage Summary */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle>AI Usage & Costs</CardTitle>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline" className="gap-1">
+                <span className="font-semibold">Total Tokens:</span>
+                {metrics.totalTokens?.toLocaleString() || 0}
+              </Badge>
+              <Badge variant="outline" className="gap-1">
+                <span className="font-semibold">Total Cost:</span>
+                €{metrics.totalTokensEur?.toFixed(4) || 0}
+              </Badge>
             </div>
           </div>
-        </div>
-        <TokenUsageChart tokenData={getTokenData()} />
-      </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <p>Token usage chart will be implemented with historical data</p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
 
-// Our exported component
 export default function DashboardPage() {
   return <DashboardContent />;
 }

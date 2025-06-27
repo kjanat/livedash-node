@@ -1,23 +1,14 @@
-import { NextApiRequest, NextApiResponse } from "next";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]";
-import { prisma } from "../../../lib/prisma";
-import { SessionFilterOptions } from "../../../lib/types";
+import { authOptions } from "../../auth/[...nextauth]/route";
+import { prisma } from "../../../../lib/prisma";
+import { SessionFilterOptions } from "../../../../lib/types";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<
-    SessionFilterOptions | { error: string; details?: string }
-  >
-) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  const authSession = await getServerSession(req, res, authOptions);
+export async function GET(request: NextRequest) {
+  const authSession = await getServerSession(authOptions);
 
   if (!authSession || !authSession.user?.companyId) {
-    return res.status(401).json({ error: "Unauthorized" });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const companyId = authSession.user.companyId;
@@ -62,15 +53,19 @@ export default async function handler(
       .map((s) => s.language)
       .filter(Boolean) as string[]; // Filter out any nulls and assert as string[]
 
-    return res
-      .status(200)
-      .json({ categories: distinctCategories, languages: distinctLanguages });
+    return NextResponse.json({ 
+      categories: distinctCategories, 
+      languages: distinctLanguages 
+    });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "An unknown error occurred";
-    return res.status(500).json({
-      error: "Failed to fetch filter options",
-      details: errorMessage,
-    });
+    return NextResponse.json(
+      {
+        error: "Failed to fetch filter options",
+        details: errorMessage,
+      },
+      { status: 500 }
+    );
   }
 }

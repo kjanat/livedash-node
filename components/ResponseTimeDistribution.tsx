@@ -1,10 +1,15 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import Chart from "chart.js/auto";
-import annotationPlugin from "chartjs-plugin-annotation";
-
-Chart.register(annotationPlugin);
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 
 interface ResponseTimeDistributionProps {
   data: number[];
@@ -12,114 +17,145 @@ interface ResponseTimeDistributionProps {
   targetResponseTime?: number;
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="rounded-lg border bg-background p-3 shadow-md">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {payload[0].value}
+          </span>{" "}
+          responses
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 export default function ResponseTimeDistribution({
   data,
   average,
   targetResponseTime,
 }: ResponseTimeDistributionProps) {
-  const ref = useRef<HTMLCanvasElement | null>(null);
+  if (!data || !data.length) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        No response time data available
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!ref.current || !data || !data.length) return;
+  // Create bins for the histogram (0-1s, 1-2s, 2-3s, etc.)
+  const maxTime = Math.ceil(Math.max(...data));
+  const bins = Array(Math.min(maxTime + 1, 10)).fill(0);
 
-    const ctx = ref.current.getContext("2d");
-    if (!ctx) return;
+  // Count responses in each bin
+  data.forEach((time) => {
+    const binIndex = Math.min(Math.floor(time), bins.length - 1);
+    bins[binIndex]++;
+  });
 
-    // Create bins for the histogram (0-1s, 1-2s, 2-3s, etc.)
-    const maxTime = Math.ceil(Math.max(...data));
-    const bins = Array(Math.min(maxTime + 1, 10)).fill(0);
+  // Create chart data
+  const chartData = bins.map((count, i) => {
+    let label;
+    if (i === bins.length - 1 && bins.length < maxTime + 1) {
+      label = `${i}+ sec`;
+    } else {
+      label = `${i}-${i + 1} sec`;
+    }
 
-    // Count responses in each bin
-    data.forEach((time) => {
-      const binIndex = Math.min(Math.floor(time), bins.length - 1);
-      bins[binIndex]++;
-    });
+    // Determine color based on response time
+    let color;
+    if (i <= 2) color = "hsl(var(--chart-1))"; // Green for fast
+    else if (i <= 5) color = "hsl(var(--chart-4))"; // Yellow for medium
+    else color = "hsl(var(--chart-3))"; // Red for slow
 
-    // Create labels for each bin
-    const labels = bins.map((_, i) => {
-      if (i === bins.length - 1 && bins.length < maxTime + 1) {
-        return `${i}+ seconds`;
-      }
-      return `${i}-${i + 1} seconds`;
-    });
+    return {
+      name: label,
+      value: count,
+      color,
+    };
+  });
 
-    const chart = new Chart(ctx, {
-      type: "bar",
-      data: {
-        labels,
-        datasets: [
-          {
-            label: "Responses",
-            data: bins,
-            backgroundColor: bins.map((_, i) => {
-              // Green for fast, yellow for medium, red for slow
-              if (i <= 2) return "rgba(34, 197, 94, 0.7)"; // Green
-              if (i <= 5) return "rgba(250, 204, 21, 0.7)"; // Yellow
-              return "rgba(239, 68, 68, 0.7)"; // Red
-            }),
-            borderWidth: 1,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          annotation: {
-            annotations: {
-              averageLine: {
-                type: "line",
-                yMin: 0,
-                yMax: Math.max(...bins),
-                xMin: average,
-                xMax: average,
-                borderColor: "rgba(75, 192, 192, 1)",
-                borderWidth: 2,
-                label: {
-                  display: true,
-                  content: "Avg: " + average.toFixed(1) + "s",
-                  position: "start",
-                },
-              },
-              targetLine: targetResponseTime
-                ? {
-                    type: "line",
-                    yMin: 0,
-                    yMax: Math.max(...bins),
-                    xMin: targetResponseTime,
-                    xMax: targetResponseTime,
-                    borderColor: "rgba(75, 192, 192, 0.7)",
-                    borderWidth: 2,
-                    label: {
-                      display: true,
-                      content: "Target",
-                      position: "end",
-                    },
-                  }
-                : undefined,
-            },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Number of Responses",
-            },
-          },
-          x: {
-            title: {
-              display: true,
-              text: "Response Time",
-            },
-          },
-        },
-      },
-    });
+  return (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            stroke="hsl(var(--border))" 
+            strokeOpacity={0.3}
+          />
+          <XAxis
+            dataKey="name"
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            label={{ 
+              value: 'Number of Responses', 
+              angle: -90, 
+              position: 'insideLeft',
+              style: { textAnchor: 'middle' }
+            }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          
+          <Bar 
+            dataKey="value" 
+            radius={[4, 4, 0, 0]}
+            fill="hsl(var(--chart-1))"
+          >
+            {chartData.map((entry, index) => (
+              <Bar key={`cell-${index}`} fill={entry.color} />
+            ))}
+          </Bar>
 
-    return () => chart.destroy();
-  }, [data, average, targetResponseTime]);
+          {/* Average line */}
+          <ReferenceLine 
+            x={Math.floor(average)} 
+            stroke="hsl(var(--primary))" 
+            strokeWidth={2}
+            strokeDasharray="5 5"
+            label={{ 
+              value: `Avg: ${average.toFixed(1)}s`, 
+              position: "top" as const,
+              style: { 
+                fill: "hsl(var(--primary))",
+                fontSize: "12px",
+                fontWeight: "500"
+              }
+            }}
+          />
 
-  return <canvas ref={ref} height={180} />;
+          {/* Target line (if provided) */}
+          {targetResponseTime && (
+            <ReferenceLine 
+              x={Math.floor(targetResponseTime)} 
+              stroke="hsl(var(--chart-2))" 
+              strokeWidth={2}
+              strokeDasharray="3 3"
+              label={{ 
+                value: `Target: ${targetResponseTime}s`, 
+                position: "top" as const,
+                style: { 
+                  fill: "hsl(var(--chart-2))",
+                  fontSize: "12px",
+                  fontWeight: "500"
+                }
+              }}
+            />
+          )}
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
