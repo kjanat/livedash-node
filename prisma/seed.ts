@@ -10,7 +10,7 @@ async function main() {
     const company = await prisma.company.create({
       data: {
         name: "Demo Company",
-        csvUrl: "https://example.com/data.csv", // Replace with a real URL if available
+        csvUrl: "https://proto.notso.ai/jumbo/chats", // Replace with a real URL if available
       },
     });
 

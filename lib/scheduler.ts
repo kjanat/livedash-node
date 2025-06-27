@@ -1,10 +1,20 @@
-// node-cron job to auto-refresh session data every 15 mins
+// CSV import scheduler with configurable intervals
 import cron from "node-cron";
 import { prisma } from "./prisma";
 import { fetchAndParseCsv } from "./csvFetcher";
+import { getSchedulerConfig } from "./schedulerConfig";
 
-export function startScheduler() {
-  cron.schedule("*/15 * * * *", async () => {
+export function startCsvImportScheduler() {
+  const config = getSchedulerConfig();
+  
+  if (!config.enabled) {
+    console.log('[CSV Import Scheduler] Disabled via configuration');
+    return;
+  }
+
+  console.log(`[CSV Import Scheduler] Starting with interval: ${config.csvImport.interval}`);
+  
+  cron.schedule(config.csvImport.interval, async () => {
     const companies = await prisma.company.findMany();
     for (const company of companies) {
       try {

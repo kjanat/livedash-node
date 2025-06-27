@@ -1,32 +1,8 @@
-// Session processing scheduler - TypeScript version
+// Session processing scheduler with configurable intervals and batch sizes
 import cron from "node-cron";
 import { PrismaClient } from "@prisma/client";
 import fetch from "node-fetch";
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
-
-// Load environment variables from .env.local
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-const envPath = join(__dirname, '..', '.env.local');
-
-try {
-  const envFile = readFileSync(envPath, 'utf8');
-  const envVars = envFile.split('\n').filter(line => line.trim() && !line.startsWith('#'));
-
-  envVars.forEach(line => {
-    const [key, ...valueParts] = line.split('=');
-    if (key && valueParts.length > 0) {
-      const value = valueParts.join('=').trim();
-      if (!process.env[key.trim()]) {
-        process.env[key.trim()] = value;
-      }
-    }
-  });
-} catch (error) {
-  // Silently fail if .env.local doesn't exist
-}
+import { getSchedulerConfig } from "./schedulerConfig";
 
 const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -399,21 +375,30 @@ export async function processUnprocessedSessions(batchSize: number | null = null
 }
 
 /**
- * Start the processing scheduler
+ * Start the processing scheduler with configurable settings
  */
 export function startProcessingScheduler(): void {
-  // Process unprocessed sessions every hour
-  cron.schedule("0 * * * *", async () => {
+  const config = getSchedulerConfig();
+  
+  if (!config.enabled) {
+    console.log('[Processing Scheduler] Disabled via configuration');
+    return;
+  }
+
+  console.log(`[Processing Scheduler] Starting with interval: ${config.sessionProcessing.interval}`);
+  console.log(`[Processing Scheduler] Batch size: ${config.sessionProcessing.batchSize === 0 ? 'unlimited' : config.sessionProcessing.batchSize}`);
+  console.log(`[Processing Scheduler] Concurrency: ${config.sessionProcessing.concurrency}`);
+
+  cron.schedule(config.sessionProcessing.interval, async () => {
     try {
-      await processUnprocessedSessions();
+      await processUnprocessedSessions(
+        config.sessionProcessing.batchSize === 0 ? null : config.sessionProcessing.batchSize,
+        config.sessionProcessing.concurrency
+      );
     } catch (error) {
       process.stderr.write(
         `[ProcessingScheduler] Error in scheduler: ${error}\n`
       );
     }
   });
-
-  process.stdout.write(
-    "[ProcessingScheduler] Started processing scheduler (runs hourly).\n"
-  );
 }

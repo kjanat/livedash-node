@@ -1,9 +1,10 @@
-// Custom Next.js server with scheduler initialization
+// Custom Next.js server with configurable scheduler initialization
 import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
-import { startScheduler } from "./lib/scheduler.js";
+import { startCsvImportScheduler } from "./lib/scheduler.js";
 import { startProcessingScheduler } from "./lib/processingScheduler.js";
+import { getSchedulerConfig, logSchedulerConfig } from "./lib/schedulerConfig.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -14,11 +15,17 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  // Initialize schedulers when the server starts
-  console.log("Starting schedulers...");
-  startScheduler();
-  startProcessingScheduler();
-  console.log("All schedulers initialized successfully");
+  // Get and log scheduler configuration
+  const config = getSchedulerConfig();
+  logSchedulerConfig(config);
+
+  // Initialize schedulers based on configuration
+  if (config.enabled) {
+    console.log("Initializing schedulers...");
+    startCsvImportScheduler();
+    startProcessingScheduler();
+    console.log("All schedulers initialized successfully");
+  }
 
   createServer(async (req, res) => {
     try {
