@@ -7,18 +7,47 @@ import cron from "node-cron";
 const prisma = new PrismaClient();
 
 /**
+ * Parse European date format (DD.MM.YYYY HH:mm:ss) to JavaScript Date
+ */
+function parseEuropeanDate(dateStr: string): Date {
+  if (!dateStr || typeof dateStr !== 'string') {
+    throw new Error(`Invalid date string: ${dateStr}`);
+  }
+
+  // Handle format: "DD.MM.YYYY HH:mm:ss"
+  const [datePart, timePart] = dateStr.trim().split(' ');
+  
+  if (!datePart || !timePart) {
+    throw new Error(`Invalid date format: ${dateStr}. Expected format: DD.MM.YYYY HH:mm:ss`);
+  }
+
+  const [day, month, year] = datePart.split('.');
+  
+  if (!day || !month || !year) {
+    throw new Error(`Invalid date part: ${datePart}. Expected format: DD.MM.YYYY`);
+  }
+
+  // Convert to ISO format: YYYY-MM-DD HH:mm:ss
+  const isoDateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timePart}`;
+  const date = new Date(isoDateStr);
+  
+  if (isNaN(date.getTime())) {
+    throw new Error(`Failed to parse date: ${dateStr} -> ${isoDateStr}`);
+  }
+  
+  return date;
+}
+
+/**
  * Process a single SessionImport record into a Session record
  */
 async function processSingleImport(importRecord: any): Promise<{ success: boolean; error?: string }> {
   try {
-    // Parse dates
-    const startTime = new Date(importRecord.startTimeRaw);
-    const endTime = new Date(importRecord.endTimeRaw);
+    // Parse dates using European format parser
+    const startTime = parseEuropeanDate(importRecord.startTimeRaw);
+    const endTime = parseEuropeanDate(importRecord.endTimeRaw);
 
-    // Validate dates
-    if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-      throw new Error(`Invalid date format: start=${importRecord.startTimeRaw}, end=${importRecord.endTimeRaw}`);
-    }
+    console.log(`[Import Processor] Parsed dates for ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`);
 
     // Process sentiment
     let sentiment: number | null = null;
