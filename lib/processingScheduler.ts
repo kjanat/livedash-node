@@ -1,8 +1,9 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
 import cron from "node-cron";
-import { PrismaClient, SentimentCategory, SessionCategory } from "@prisma/client";
+import { PrismaClient, SentimentCategory, SessionCategory, ProcessingStage } from "@prisma/client";
 import fetch from "node-fetch";
 import { getSchedulerConfig } from "./schedulerConfig";
+import { ProcessingStatusManager } from "./processingStatusManager";
 
 const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -382,6 +383,9 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
   }
 
   try {
+    // Mark AI analysis as started
+    await ProcessingStatusManager.startStage(session.id, ProcessingStage.AI_ANALYSIS);
+
     // Convert messages back to transcript format for OpenAI processing
     const transcript = session.messages
       .map((msg: any) =>
@@ -406,9 +410,6 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
     // Calculate endTime from latest Message timestamp
     const calculatedEndTime = await calculateEndTime(session.id, session.endTime);
 
-    // Process questions into separate tables
-    await processQuestions(session.id, processedData.questions);
-
     // Update the session with processed data
     await prisma.session.update({
       where: { id: session.id },
@@ -421,8 +422,26 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
         forwardedHr: processedData.forwarded_hr,
         category: processedData.category as SessionCategory,
         summary: processedData.summary,
-        processed: true,
       },
+    });
+
+    // Mark AI analysis as completed
+    await ProcessingStatusManager.completeStage(session.id, ProcessingStage.AI_ANALYSIS, {
+      language: processedData.language,
+      sentiment: processedData.sentiment,
+      category: processedData.category,
+      questionsCount: processedData.questions.length
+    });
+
+    // Start question extraction stage
+    await ProcessingStatusManager.startStage(session.id, ProcessingStage.QUESTION_EXTRACTION);
+
+    // Process questions into separate tables
+    await processQuestions(session.id, processedData.questions);
+
+    // Mark question extraction as completed
+    await ProcessingStatusManager.completeStage(session.id, ProcessingStage.QUESTION_EXTRACTION, {
+      questionsProcessed: processedData.questions.length
     });
 
     return {
@@ -430,6 +449,13 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
       success: true,
     };
   } catch (error) {
+    // Mark AI analysis as failed
+    await ProcessingStatusManager.failStage(
+      session.id, 
+      ProcessingStage.AI_ANALYSIS, 
+      error instanceof Error ? error.message : String(error)
+    );
+
     return {
       sessionId: session.id,
       success: false,
@@ -471,32 +497,36 @@ async function processSessionsInParallel(sessions: any[], maxConcurrency: number
 }
 
 /**
- * Process unprocessed sessions
+ * Process unprocessed sessions using the new processing status system
  */
 export async function processUnprocessedSessions(batchSize: number | null = null, maxConcurrency: number = 5): Promise<void> {
-  process.stdout.write("[ProcessingScheduler] Starting to process unprocessed sessions...\n");
+  process.stdout.write("[ProcessingScheduler] Starting to process sessions needing AI analysis...\n");
 
-  // Find sessions that have messages but haven't been processed
-  const queryOptions: any = {
+  // Get sessions that need AI processing using the new status system
+  const sessionsNeedingAI = await ProcessingStatusManager.getSessionsNeedingProcessing(
+    ProcessingStage.AI_ANALYSIS,
+    batchSize || 50
+  );
+
+  if (sessionsNeedingAI.length === 0) {
+    process.stdout.write("[ProcessingScheduler] No sessions found requiring AI processing.\n");
+    return;
+  }
+
+  // Get session IDs that need processing
+  const sessionIds = sessionsNeedingAI.map(statusRecord => statusRecord.sessionId);
+
+  // Fetch full session data with messages
+  const sessionsToProcess = await prisma.session.findMany({
     where: {
-      AND: [
-        { messages: { some: {} } }, // Must have messages
-        { processed: false }, // Only unprocessed sessions
-      ],
+      id: { in: sessionIds }
     },
     include: {
       messages: {
         orderBy: { order: "asc" },
       },
     },
-  };
-
-  // Add batch size limit if specified
-  if (batchSize && batchSize > 0) {
-    queryOptions.take = batchSize;
-  }
-
-  const sessionsToProcess = await prisma.session.findMany(queryOptions);
+  });
 
   // Filter to only sessions that have messages
   const sessionsWithMessages = sessionsToProcess.filter(
@@ -504,7 +534,7 @@ export async function processUnprocessedSessions(batchSize: number | null = null
   );
 
   if (sessionsWithMessages.length === 0) {
-    process.stdout.write("[ProcessingScheduler] No sessions found requiring processing.\n");
+    process.stdout.write("[ProcessingScheduler] No sessions with messages found requiring processing.\n");
     return;
   }
 
