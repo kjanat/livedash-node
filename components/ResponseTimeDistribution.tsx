@@ -68,8 +68,10 @@ export default function ResponseTimeDistribution({
 
     // Determine color based on response time
     let color;
-    if (i <= 2) color = "hsl(var(--chart-1))"; // Green for fast
-    else if (i <= 5) color = "hsl(var(--chart-4))"; // Yellow for medium
+    if (i <= 2)
+      color = "hsl(var(--chart-1))"; // Green for fast
+    else if (i <= 5)
+      color = "hsl(var(--chart-4))"; // Yellow for medium
     else color = "hsl(var(--chart-3))"; // Red for slow
 
     return {
@@ -82,10 +84,13 @@ export default function ResponseTimeDistribution({
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke="hsl(var(--border))" 
+        <BarChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="hsl(var(--border))"
             strokeOpacity={0.3}
           />
           <XAxis
@@ -100,57 +105,53 @@ export default function ResponseTimeDistribution({
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            label={{ 
-              value: 'Number of Responses', 
-              angle: -90, 
-              position: 'insideLeft',
-              style: { textAnchor: 'middle' }
+            label={{
+              value: "Number of Responses",
+              angle: -90,
+              position: "insideLeft",
+              style: { textAnchor: "middle" },
             }}
           />
           <Tooltip content={<CustomTooltip />} />
-          
-          <Bar 
-            dataKey="value" 
-            radius={[4, 4, 0, 0]}
-            fill="hsl(var(--chart-1))"
-          >
+
+          <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
             {chartData.map((entry, index) => (
               <Bar key={`cell-${index}`} fill={entry.color} />
             ))}
           </Bar>
 
           {/* Average line */}
-          <ReferenceLine 
-            x={Math.floor(average)} 
-            stroke="hsl(var(--primary))" 
+          <ReferenceLine
+            x={Math.floor(average)}
+            stroke="hsl(var(--primary))"
             strokeWidth={2}
             strokeDasharray="5 5"
-            label={{ 
-              value: `Avg: ${average.toFixed(1)}s`, 
+            label={{
+              value: `Avg: ${average.toFixed(1)}s`,
               position: "top" as const,
-              style: { 
+              style: {
                 fill: "hsl(var(--primary))",
                 fontSize: "12px",
-                fontWeight: "500"
-              }
+                fontWeight: "500",
+              },
             }}
           />
 
           {/* Target line (if provided) */}
           {targetResponseTime && (
-            <ReferenceLine 
-              x={Math.floor(targetResponseTime)} 
-              stroke="hsl(var(--chart-2))" 
+            <ReferenceLine
+              x={Math.floor(targetResponseTime)}
+              stroke="hsl(var(--chart-2))"
               strokeWidth={2}
               strokeDasharray="3 3"
-              label={{ 
-                value: `Target: ${targetResponseTime}s`, 
+              label={{
+                value: `Target: ${targetResponseTime}s`,
                 position: "top" as const,
-                style: { 
+                style: {
                   fill: "hsl(var(--chart-2))",
                   fontSize: "12px",
-                  fontWeight: "500"
-                }
+                  fontWeight: "500",
+                },
               }}
             />
           )}

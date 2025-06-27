@@ -1,6 +1,13 @@
 "use client";
 
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DonutChartProps {
@@ -22,9 +29,7 @@ const CustomTooltip = ({ active, payload }: any) => {
       <div className="rounded-lg border bg-background p-3 shadow-md">
         <p className="text-sm font-medium">{data.name}</p>
         <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">
-            {data.value}
-          </span>{" "}
+          <span className="font-medium text-foreground">{data.value}</span>{" "}
           sessions ({((data.value / data.payload.total) * 100).toFixed(1)}%)
         </p>
       </div>
@@ -77,7 +82,7 @@ export default function ModernDonutChart({
   className,
 }: DonutChartProps) {
   const total = data.reduce((sum, item) => sum + item.value, 0);
-  const dataWithTotal = data.map(item => ({ ...item, total }));
+  const dataWithTotal = data.map((item) => ({ ...item, total }));
 
   return (
     <Card className={className}>

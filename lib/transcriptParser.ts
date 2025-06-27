@@ -1,5 +1,5 @@
 // Transcript parsing utility for converting raw transcript content into structured messages
-import { prisma } from './prisma.js';
+import { prisma } from "./prisma.js";
 
 export interface ParsedMessage {
   sessionId: string;
@@ -19,7 +19,9 @@ export interface TranscriptParseResult {
  * Parse European date format (DD.MM.YYYY HH:mm:ss) to Date object
  */
 function parseEuropeanDate(dateStr: string): Date {
-  const match = dateStr.match(/(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})/);
+  const match = dateStr.match(
+    /(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2}):(\d{2})/
+  );
   if (!match) {
     throw new Error(`Invalid date format: ${dateStr}`);
   }
@@ -51,13 +53,17 @@ export function parseTranscriptToMessages(
     if (!content || !content.trim()) {
       return {
         success: false,
-        error: 'Empty transcript content'
+        error: "Empty transcript content",
       };
     }
 
     const messages: ParsedMessage[] = [];
-    const lines = content.split('\n');
-    let currentMessage: { role: string; content: string; timestamp?: string } | null = null;
+    const lines = content.split("\n");
+    let currentMessage: {
+      role: string;
+      content: string;
+      timestamp?: string;
+    } | null = null;
     let order = 0;
 
     for (const line of lines) {
@@ -69,56 +75,64 @@ export function parseTranscriptToMessages(
       }
 
       // Check if line starts with a timestamp and role [DD.MM.YYYY HH:MM:SS] Role: content
-      const timestampRoleMatch = trimmedLine.match(/^\[(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})\]\s+(User|Assistant|System|user|assistant|system):\s*(.*)$/i);
+      const timestampRoleMatch = trimmedLine.match(
+        /^\[(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})\]\s+(User|Assistant|System|user|assistant|system):\s*(.*)$/i
+      );
 
       // Check if line starts with just a role (User:, Assistant:, System:, etc.)
-      const roleMatch = trimmedLine.match(/^(User|Assistant|System|user|assistant|system):\s*(.*)$/i);
+      const roleMatch = trimmedLine.match(
+        /^(User|Assistant|System|user|assistant|system):\s*(.*)$/i
+      );
 
       if (timestampRoleMatch) {
         // Save previous message if exists
         if (currentMessage) {
           messages.push({
-            sessionId: '', // Will be set by caller
+            sessionId: "", // Will be set by caller
             timestamp: new Date(), // Will be calculated below
             role: currentMessage.role,
             content: currentMessage.content.trim(),
-            order: order++
+            order: order++,
           });
         }
 
         // Start new message with timestamp
         const timestamp = timestampRoleMatch[1];
-        const role = timestampRoleMatch[2].charAt(0).toUpperCase() + timestampRoleMatch[2].slice(1).toLowerCase();
-        const content = timestampRoleMatch[3] || '';
+        const role =
+          timestampRoleMatch[2].charAt(0).toUpperCase() +
+          timestampRoleMatch[2].slice(1).toLowerCase();
+        const content = timestampRoleMatch[3] || "";
 
         currentMessage = {
           role,
           content,
-          timestamp // Store the timestamp for later parsing
+          timestamp, // Store the timestamp for later parsing
         };
       } else if (roleMatch) {
         // Save previous message if exists
         if (currentMessage) {
           messages.push({
-            sessionId: '', // Will be set by caller
+            sessionId: "", // Will be set by caller
             timestamp: new Date(), // Will be calculated below
             role: currentMessage.role,
             content: currentMessage.content.trim(),
-            order: order++
+            order: order++,
           });
         }
 
         // Start new message without timestamp
-        const role = roleMatch[1].charAt(0).toUpperCase() + roleMatch[1].slice(1).toLowerCase();
-        const content = roleMatch[2] || '';
+        const role =
+          roleMatch[1].charAt(0).toUpperCase() +
+          roleMatch[1].slice(1).toLowerCase();
+        const content = roleMatch[2] || "";
 
         currentMessage = {
           role,
-          content
+          content,
         };
       } else if (currentMessage) {
         // Continue previous message (multi-line)
-        currentMessage.content += '\n' + trimmedLine;
+        currentMessage.content += "\n" + trimmedLine;
       }
       // If no current message and no role match, skip the line (orphaned content)
     }
@@ -126,23 +140,23 @@ export function parseTranscriptToMessages(
     // Save the last message
     if (currentMessage) {
       messages.push({
-        sessionId: '', // Will be set by caller
+        sessionId: "", // Will be set by caller
         timestamp: new Date(), // Will be calculated below
         role: currentMessage.role,
         content: currentMessage.content.trim(),
-        order: order++
+        order: order++,
       });
     }
 
     if (messages.length === 0) {
       return {
         success: false,
-        error: 'No messages found in transcript'
+        error: "No messages found in transcript",
       };
     }
 
     // Calculate timestamps - use parsed timestamps if available, otherwise distribute across session duration
-    const hasTimestamps = messages.some(msg => (msg as any).timestamp);
+    const hasTimestamps = messages.some((msg) => (msg as any).timestamp);
 
     if (hasTimestamps) {
       // Use parsed timestamps from the transcript
@@ -154,35 +168,45 @@ export function parseTranscriptToMessages(
           } catch (error) {
             // Fallback to distributed timestamp if parsing fails
             const sessionDurationMs = endTime.getTime() - startTime.getTime();
-            const messageInterval = messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
-            message.timestamp = new Date(startTime.getTime() + (index * messageInterval));
+            const messageInterval =
+              messages.length > 1
+                ? sessionDurationMs / (messages.length - 1)
+                : 0;
+            message.timestamp = new Date(
+              startTime.getTime() + index * messageInterval
+            );
           }
         } else {
           // Fallback to distributed timestamp
           const sessionDurationMs = endTime.getTime() - startTime.getTime();
-          const messageInterval = messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
-          message.timestamp = new Date(startTime.getTime() + (index * messageInterval));
+          const messageInterval =
+            messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
+          message.timestamp = new Date(
+            startTime.getTime() + index * messageInterval
+          );
         }
       });
     } else {
       // Distribute messages across session duration
       const sessionDurationMs = endTime.getTime() - startTime.getTime();
-      const messageInterval = messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
+      const messageInterval =
+        messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
 
       messages.forEach((message, index) => {
-        message.timestamp = new Date(startTime.getTime() + (index * messageInterval));
+        message.timestamp = new Date(
+          startTime.getTime() + index * messageInterval
+        );
       });
     }
 
     return {
       success: true,
-      messages
+      messages,
     };
-
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -198,17 +222,17 @@ export async function storeMessagesForSession(
 ): Promise<void> {
   // Delete existing messages for this session (in case of re-processing)
   await prisma.message.deleteMany({
-    where: { sessionId }
+    where: { sessionId },
   });
 
   // Create new messages
-  const messagesWithSessionId = messages.map(msg => ({
+  const messagesWithSessionId = messages.map((msg) => ({
     ...msg,
-    sessionId
+    sessionId,
   }));
 
   await prisma.message.createMany({
-    data: messagesWithSessionId
+    data: messagesWithSessionId,
   });
 }
 
@@ -216,13 +240,15 @@ export async function storeMessagesForSession(
  * Process transcript for a single session
  * @param sessionId The session ID to process
  */
-export async function processSessionTranscript(sessionId: string): Promise<void> {
+export async function processSessionTranscript(
+  sessionId: string
+): Promise<void> {
   // Get the session and its import data
   const session = await prisma.session.findUnique({
     where: { id: sessionId },
     include: {
-      import: true
-    }
+      import: true,
+    },
   });
 
   if (!session) {
@@ -255,35 +281,37 @@ export async function processSessionTranscript(sessionId: string): Promise<void>
   // Store the messages
   await storeMessagesForSession(sessionId, parseResult.messages!);
 
-  console.log(`✅ Processed ${parseResult.messages!.length} messages for session ${sessionId}`);
+  console.log(
+    `✅ Processed ${parseResult.messages!.length} messages for session ${sessionId}`
+  );
 }
 
 /**
  * Process all sessions that have transcript content but no messages
  */
 export async function processAllUnparsedTranscripts(): Promise<void> {
-  console.log('🔍 Finding sessions with unparsed transcripts...');
+  console.log("🔍 Finding sessions with unparsed transcripts...");
 
   // Find sessions that have transcript content but no messages
   const sessionsToProcess = await prisma.session.findMany({
     where: {
       import: {
         rawTranscriptContent: {
-          not: null
-        }
+          not: null,
+        },
       },
       messages: {
-        none: {}
-      }
+        none: {},
+      },
     },
     include: {
       import: true,
       _count: {
         select: {
-          messages: true
-        }
-      }
-    }
+          messages: true,
+        },
+      },
+    },
   });
 
   console.log(`📋 Found ${sessionsToProcess.length} sessions to process`);
@@ -323,7 +351,7 @@ export async function getTotalMessageCount(): Promise<number> {
 export async function getMessagesForSession(sessionId: string) {
   return await prisma.message.findMany({
     where: { sessionId },
-    orderBy: { order: 'asc' }
+    orderBy: { order: "asc" },
   });
 }
 
@@ -336,17 +364,17 @@ export async function getParsingStats() {
     where: {
       import: {
         rawTranscriptContent: {
-          not: null
-        }
-      }
-    }
+          not: null,
+        },
+      },
+    },
   });
   const sessionsWithMessages = await prisma.session.count({
     where: {
       messages: {
-        some: {}
-      }
-    }
+        some: {},
+      },
+    },
   });
   const totalMessages = await getTotalMessageCount();
 
@@ -355,6 +383,6 @@ export async function getParsingStats() {
     sessionsWithTranscripts,
     sessionsWithMessages,
     unparsedSessions: sessionsWithTranscripts - sessionsWithMessages,
-    totalMessages
+    totalMessages,
   };
 }

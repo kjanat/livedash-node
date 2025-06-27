@@ -350,16 +350,16 @@ export function sessionMetrics(
   const wordCounts: { [key: string]: number } = {};
   let alerts = 0;
 
-    // New metrics variables
-    const hourlySessionCounts: { [hour: string]: number } = {};
-    let resolvedChatsCount = 0;
-    const questionCounts: { [question: string]: number } = {};
+  // New metrics variables
+  const hourlySessionCounts: { [hour: string]: number } = {};
+  let resolvedChatsCount = 0;
+  const questionCounts: { [question: string]: number } = {};
 
   for (const session of sessions) {
     // Track hourly usage for peak time calculation
     if (session.startTime) {
       const hour = new Date(session.startTime).getHours();
-      const hourKey = `${hour.toString().padStart(2, '0')}:00`;
+      const hourKey = `${hour.toString().padStart(2, "0")}:00`;
       hourlySessionCounts[hourKey] = (hourlySessionCounts[hourKey] || 0) + 1;
     }
 
@@ -493,12 +493,16 @@ export function sessionMetrics(
       // 1. Extract questions from user messages (if available)
       if (session.messages) {
         session.messages
-          .filter(msg => msg.role === 'User')
-          .forEach(msg => {
+          .filter((msg) => msg.role === "User")
+          .forEach((msg) => {
             const content = msg.content.trim();
             // Simple heuristic: if message ends with ? or contains question words, treat as question
-            if (content.endsWith('?') ||
-                /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
+            if (
+              content.endsWith("?") ||
+              /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(
+                content
+              )
+            ) {
               questionCounts[content] = (questionCounts[content] || 0) + 1;
             }
           });
@@ -507,8 +511,12 @@ export function sessionMetrics(
       // 3. Extract questions from initial message as fallback
       if (session.initialMsg) {
         const content = session.initialMsg.trim();
-        if (content.endsWith('?') ||
-            /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(content)) {
+        if (
+          content.endsWith("?") ||
+          /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(
+            content
+          )
+        ) {
           questionCounts[content] = (questionCounts[content] || 0) + 1;
         }
       }
@@ -580,20 +588,23 @@ export function sessionMetrics(
   // Calculate new metrics
 
   // 1. Average Daily Costs (euros)
-  const avgDailyCosts = numDaysWithSessions > 0 ? totalTokensEur / numDaysWithSessions : 0;
+  const avgDailyCosts =
+    numDaysWithSessions > 0 ? totalTokensEur / numDaysWithSessions : 0;
 
   // 2. Peak Usage Time
   let peakUsageTime = "N/A";
   if (Object.keys(hourlySessionCounts).length > 0) {
-    const peakHour = Object.entries(hourlySessionCounts)
-      .sort(([, a], [, b]) => b - a)[0][0];
-    const peakHourNum = parseInt(peakHour.split(':')[0]);
+    const peakHour = Object.entries(hourlySessionCounts).sort(
+      ([, a], [, b]) => b - a
+    )[0][0];
+    const peakHourNum = parseInt(peakHour.split(":")[0]);
     const endHour = (peakHourNum + 1) % 24;
-    peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, '0')}:00`;
+    peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, "0")}:00`;
   }
 
   // 3. Resolved Chats Percentage
-  const resolvedChatsPercentage = totalSessions > 0 ? (resolvedChatsCount / totalSessions) * 100 : 0;
+  const resolvedChatsPercentage =
+    totalSessions > 0 ? (resolvedChatsCount / totalSessions) * 100 : 0;
 
   // 4. Top 5 Asked Questions
   const topQuestions: TopQuestion[] = Object.entries(questionCounts)

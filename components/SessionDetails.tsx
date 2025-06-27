@@ -90,7 +90,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           <span className="font-medium">{session.messagesSent || 0}</span>
         </div>
 
-
         {session.avgResponseTime !== null &&
           session.avgResponseTime !== undefined && (
             <div className="flex justify-between border-b pb-2">
@@ -132,7 +131,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         )}
 
-
         {session.initialMsg && (
           <div className="border-b pb-2">
             <span className="text-gray-600 block mb-1">Initial Message:</span>
@@ -150,7 +148,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
             </div>
           </div>
         )}
-
 
         {session.fullTranscriptUrl && (
           <div className="flex justify-between pt-2">

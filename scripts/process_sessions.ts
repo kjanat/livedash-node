@@ -37,7 +37,9 @@ async function fetchTranscriptContent(
     });
 
     if (!response.ok) {
-      console.warn(`Failed to fetch transcript from ${url}: ${response.statusText}`);
+      console.warn(
+        `Failed to fetch transcript from ${url}: ${response.statusText}`
+      );
       return null;
     }
     return await response.text();
@@ -140,10 +142,19 @@ async function processTranscriptWithOpenAI(
 /**
  * Validates the OpenAI response against our expected schema
  */
-function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData {
+function validateOpenAIResponse(
+  data: any
+): asserts data is OpenAIProcessedData {
   const requiredFields = [
-    "language", "messages_sent", "sentiment", "escalated", 
-    "forwarded_hr", "category", "questions", "summary", "session_id"
+    "language",
+    "messages_sent",
+    "sentiment",
+    "escalated",
+    "forwarded_hr",
+    "category",
+    "questions",
+    "summary",
+    "session_id",
   ];
 
   for (const field of requiredFields) {
@@ -153,7 +164,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   }
 
   if (typeof data.language !== "string" || !/^[a-z]{2}$/.test(data.language)) {
-    throw new Error("Invalid language format. Expected ISO 639-1 code (e.g., 'en')");
+    throw new Error(
+      "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
+    );
   }
 
   if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
@@ -161,7 +174,9 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
-    throw new Error("Invalid sentiment. Expected 'positive', 'neutral', or 'negative'");
+    throw new Error(
+      "Invalid sentiment. Expected 'positive', 'neutral', or 'negative'"
+    );
   }
 
   if (typeof data.escalated !== "boolean") {
@@ -173,22 +188,39 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
   }
 
   const validCategories = [
-    "Schedule & Hours", "Leave & Vacation", "Sick Leave & Recovery",
-    "Salary & Compensation", "Contract & Hours", "Onboarding", "Offboarding",
-    "Workwear & Staff Pass", "Team & Contacts", "Personal Questions",
-    "Access & Login", "Social questions", "Unrecognized / Other"
+    "Schedule & Hours",
+    "Leave & Vacation",
+    "Sick Leave & Recovery",
+    "Salary & Compensation",
+    "Contract & Hours",
+    "Onboarding",
+    "Offboarding",
+    "Workwear & Staff Pass",
+    "Team & Contacts",
+    "Personal Questions",
+    "Access & Login",
+    "Social questions",
+    "Unrecognized / Other",
   ];
 
   if (!validCategories.includes(data.category)) {
-    throw new Error(`Invalid category. Expected one of: ${validCategories.join(", ")}`);
+    throw new Error(
+      `Invalid category. Expected one of: ${validCategories.join(", ")}`
+    );
   }
 
   if (!Array.isArray(data.questions)) {
     throw new Error("Invalid questions. Expected array of strings");
   }
 
-  if (typeof data.summary !== "string" || data.summary.length < 10 || data.summary.length > 300) {
-    throw new Error("Invalid summary. Expected string between 10-300 characters");
+  if (
+    typeof data.summary !== "string" ||
+    data.summary.length < 10 ||
+    data.summary.length > 300
+  ) {
+    throw new Error(
+      "Invalid summary. Expected string between 10-300 characters"
+    );
   }
 
   if (typeof data.session_id !== "string") {
@@ -218,18 +250,24 @@ async function processUnprocessedSessions() {
     return;
   }
 
-  console.log(`Found ${importsToProcess.length} SessionImport records to process.`);
+  console.log(
+    `Found ${importsToProcess.length} SessionImport records to process.`
+  );
   let successCount = 0;
   let errorCount = 0;
 
   for (const importRecord of importsToProcess) {
     if (!importRecord.fullTranscriptUrl) {
-      console.warn(`SessionImport ${importRecord.id} has no transcript URL, skipping.`);
+      console.warn(
+        `SessionImport ${importRecord.id} has no transcript URL, skipping.`
+      );
       continue;
     }
 
-    console.log(`Processing transcript for SessionImport ${importRecord.id}...`);
-    
+    console.log(
+      `Processing transcript for SessionImport ${importRecord.id}...`
+    );
+
     try {
       // Mark as processing (status field doesn't exist in new schema)
       console.log(`Processing SessionImport ${importRecord.id}...`);
@@ -265,7 +303,10 @@ async function processUnprocessedSessions() {
           country: importRecord.countryCode,
           language: processedData.language,
           messagesSent: processedData.messages_sent,
-          sentiment: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
+          sentiment: processedData.sentiment.toUpperCase() as
+            | "POSITIVE"
+            | "NEUTRAL"
+            | "NEGATIVE",
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
           fullTranscriptUrl: importRecord.fullTranscriptUrl,
@@ -284,7 +325,10 @@ async function processUnprocessedSessions() {
           country: importRecord.countryCode,
           language: processedData.language,
           messagesSent: processedData.messages_sent,
-          sentiment: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
+          sentiment: processedData.sentiment.toUpperCase() as
+            | "POSITIVE"
+            | "NEUTRAL"
+            | "NEGATIVE",
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
           fullTranscriptUrl: importRecord.fullTranscriptUrl,
@@ -296,16 +340,25 @@ async function processUnprocessedSessions() {
       });
 
       // Mark SessionImport as processed (processedAt field doesn't exist in new schema)
-      console.log(`Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`);
+      console.log(
+        `Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`
+      );
 
-      console.log(`Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`);
+      console.log(
+        `Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`
+      );
       successCount++;
     } catch (error) {
-      console.error(`Error processing SessionImport ${importRecord.id}:`, error);
-      
+      console.error(
+        `Error processing SessionImport ${importRecord.id}:`,
+        error
+      );
+
       // Log error (status and errorMsg fields don't exist in new schema)
-      console.error(`Failed to process SessionImport ${importRecord.id}: ${error instanceof Error ? error.message : String(error)}`);
-      
+      console.error(
+        `Failed to process SessionImport ${importRecord.id}: ${error instanceof Error ? error.message : String(error)}`
+      );
+
       errorCount++;
     }
   }

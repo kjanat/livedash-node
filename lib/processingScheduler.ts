@@ -1,6 +1,11 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
 import cron from "node-cron";
-import { PrismaClient, SentimentCategory, SessionCategory, ProcessingStage } from "@prisma/client";
+import {
+  PrismaClient,
+  SentimentCategory,
+  SessionCategory,
+  ProcessingStage,
+} from "@prisma/client";
 import fetch from "node-fetch";
 import { getSchedulerConfig } from "./schedulerConfig";
 import { ProcessingStatusManager } from "./processingStatusManager";
@@ -44,10 +49,10 @@ async function getCurrentModelPricing(modelName: string): Promise<{
           effectiveFrom: { lte: new Date() },
           OR: [
             { effectiveUntil: null },
-            { effectiveUntil: { gte: new Date() } }
-          ]
+            { effectiveUntil: { gte: new Date() } },
+          ],
         },
-        orderBy: { effectiveFrom: 'desc' },
+        orderBy: { effectiveFrom: "desc" },
         take: 1,
       },
     },
@@ -69,7 +74,20 @@ interface ProcessedData {
   sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE";
   escalated: boolean;
   forwarded_hr: boolean;
-  category: "SCHEDULE_HOURS" | "LEAVE_VACATION" | "SICK_LEAVE_RECOVERY" | "SALARY_COMPENSATION" | "CONTRACT_HOURS" | "ONBOARDING" | "OFFBOARDING" | "WORKWEAR_STAFF_PASS" | "TEAM_CONTACTS" | "PERSONAL_QUESTIONS" | "ACCESS_LOGIN" | "SOCIAL_QUESTIONS" | "UNRECOGNIZED_OTHER";
+  category:
+    | "SCHEDULE_HOURS"
+    | "LEAVE_VACATION"
+    | "SICK_LEAVE_RECOVERY"
+    | "SALARY_COMPENSATION"
+    | "CONTRACT_HOURS"
+    | "ONBOARDING"
+    | "OFFBOARDING"
+    | "WORKWEAR_STAFF_PASS"
+    | "TEAM_CONTACTS"
+    | "PERSONAL_QUESTIONS"
+    | "ACCESS_LOGIN"
+    | "SOCIAL_QUESTIONS"
+    | "UNRECOGNIZED_OTHER";
   questions: string[];
   summary: string;
   session_id: string;
@@ -87,7 +105,7 @@ interface ProcessingResult {
 async function recordAIProcessingRequest(
   sessionId: string,
   openaiResponse: any,
-  processingType: string = 'session_analysis'
+  processingType: string = "session_analysis"
 ): Promise<void> {
   const usage = openaiResponse.usage;
   const model = openaiResponse.model;
@@ -97,14 +115,15 @@ async function recordAIProcessingRequest(
 
   // Fallback pricing if not found in database
   const fallbackPricing = {
-    promptTokenCost: 0.00001,      // $10.00 per 1M tokens (gpt-4-turbo rate)
-    completionTokenCost: 0.00003,  // $30.00 per 1M tokens
+    promptTokenCost: 0.00001, // $10.00 per 1M tokens (gpt-4-turbo rate)
+    completionTokenCost: 0.00003, // $30.00 per 1M tokens
   };
 
   const finalPricing = pricing || fallbackPricing;
 
   const promptCost = usage.prompt_tokens * finalPricing.promptTokenCost;
-  const completionCost = usage.completion_tokens * finalPricing.completionTokenCost;
+  const completionCost =
+    usage.completion_tokens * finalPricing.completionTokenCost;
   const totalCostUsd = promptCost + completionCost;
   const totalCostEur = totalCostUsd * USD_TO_EUR_RATE;
 
@@ -123,10 +142,14 @@ async function recordAIProcessingRequest(
       // Detailed breakdown
       cachedTokens: usage.prompt_tokens_details?.cached_tokens || null,
       audioTokensPrompt: usage.prompt_tokens_details?.audio_tokens || null,
-      reasoningTokens: usage.completion_tokens_details?.reasoning_tokens || null,
-      audioTokensCompletion: usage.completion_tokens_details?.audio_tokens || null,
-      acceptedPredictionTokens: usage.completion_tokens_details?.accepted_prediction_tokens || null,
-      rejectedPredictionTokens: usage.completion_tokens_details?.rejected_prediction_tokens || null,
+      reasoningTokens:
+        usage.completion_tokens_details?.reasoning_tokens || null,
+      audioTokensCompletion:
+        usage.completion_tokens_details?.audio_tokens || null,
+      acceptedPredictionTokens:
+        usage.completion_tokens_details?.accepted_prediction_tokens || null,
+      rejectedPredictionTokens:
+        usage.completion_tokens_details?.rejected_prediction_tokens || null,
 
       promptTokenCost: finalPricing.promptTokenCost,
       completionTokenCost: finalPricing.completionTokenCost,
@@ -135,7 +158,7 @@ async function recordAIProcessingRequest(
       processingType,
       success: true,
       completedAt: new Date(),
-    }
+    },
   });
 }
 
@@ -150,7 +173,7 @@ async function recordFailedAIProcessingRequest(
   await prisma.aIProcessingRequest.create({
     data: {
       sessionId,
-      model: 'unknown',
+      model: "unknown",
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,
@@ -161,17 +184,20 @@ async function recordFailedAIProcessingRequest(
       success: false,
       errorMessage,
       completedAt: new Date(),
-    }
+    },
   });
 }
 
 /**
  * Process questions into separate Question and SessionQuestion tables
  */
-async function processQuestions(sessionId: string, questions: string[]): Promise<void> {
+async function processQuestions(
+  sessionId: string,
+  questions: string[]
+): Promise<void> {
   // Clear existing questions for this session
   await prisma.sessionQuestion.deleteMany({
-    where: { sessionId }
+    where: { sessionId },
   });
 
   // Process each question
@@ -183,7 +209,7 @@ async function processQuestions(sessionId: string, questions: string[]): Promise
     const question = await prisma.question.upsert({
       where: { content: questionText.trim() },
       create: { content: questionText.trim() },
-      update: {}
+      update: {},
     });
 
     // Link to session
@@ -191,8 +217,8 @@ async function processQuestions(sessionId: string, questions: string[]): Promise
       data: {
         sessionId,
         questionId: question.id,
-        order: index
-      }
+        order: index,
+      },
     });
   }
 }
@@ -204,8 +230,8 @@ async function calculateMessagesSent(sessionId: string): Promise<number> {
   const userMessageCount = await prisma.message.count({
     where: {
       sessionId,
-      role: { in: ['user', 'User'] } // Handle both cases
-    }
+      role: { in: ["user", "User"] }, // Handle both cases
+    },
   });
   return userMessageCount;
 }
@@ -213,10 +239,13 @@ async function calculateMessagesSent(sessionId: string): Promise<number> {
 /**
  * Calculate endTime from latest Message timestamp
  */
-async function calculateEndTime(sessionId: string, fallbackEndTime: Date): Promise<Date> {
+async function calculateEndTime(
+  sessionId: string,
+  fallbackEndTime: Date
+): Promise<Date> {
   const latestMessage = await prisma.message.findFirst({
     where: { sessionId },
-    orderBy: { timestamp: 'desc' }
+    orderBy: { timestamp: "desc" },
   });
 
   return latestMessage?.timestamp || fallbackEndTime;
@@ -225,7 +254,11 @@ async function calculateEndTime(sessionId: string, fallbackEndTime: Date): Promi
 /**
  * Processes a session transcript using OpenAI API
  */
-async function processTranscriptWithOpenAI(sessionId: string, transcript: string, companyId: string): Promise<ProcessedData> {
+async function processTranscriptWithOpenAI(
+  sessionId: string,
+  transcript: string,
+  companyId: string
+): Promise<ProcessedData> {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY environment variable is not set");
   }
@@ -293,7 +326,11 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
     const openaiResponse: any = await response.json();
 
     // Record the AI processing request for cost tracking
-    await recordAIProcessingRequest(sessionId, openaiResponse, 'session_analysis');
+    await recordAIProcessingRequest(
+      sessionId,
+      openaiResponse,
+      "session_analysis"
+    );
 
     const processedData = JSON.parse(openaiResponse.choices[0].message.content);
 
@@ -305,7 +342,7 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
     // Record failed request
     await recordFailedAIProcessingRequest(
       sessionId,
-      'session_analysis',
+      "session_analysis",
       error instanceof Error ? error.message : String(error)
     );
 
@@ -319,8 +356,14 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
  */
 function validateOpenAIResponse(data: any): void {
   const requiredFields = [
-    "language", "sentiment", "escalated", "forwarded_hr",
-    "category", "questions", "summary", "session_id"
+    "language",
+    "sentiment",
+    "escalated",
+    "forwarded_hr",
+    "category",
+    "questions",
+    "summary",
+    "session_id",
   ];
 
   for (const field of requiredFields) {
@@ -331,11 +374,15 @@ function validateOpenAIResponse(data: any): void {
 
   // Validate field types and values
   if (typeof data.language !== "string" || !/^[a-z]{2}$/.test(data.language)) {
-    throw new Error("Invalid language format. Expected ISO 639-1 code (e.g., 'en')");
+    throw new Error(
+      "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
+    );
   }
 
   if (!["POSITIVE", "NEUTRAL", "NEGATIVE"].includes(data.sentiment)) {
-    throw new Error("Invalid sentiment. Expected 'POSITIVE', 'NEUTRAL', or 'NEGATIVE'");
+    throw new Error(
+      "Invalid sentiment. Expected 'POSITIVE', 'NEUTRAL', or 'NEGATIVE'"
+    );
   }
 
   if (typeof data.escalated !== "boolean") {
@@ -347,22 +394,39 @@ function validateOpenAIResponse(data: any): void {
   }
 
   const validCategories = [
-    "SCHEDULE_HOURS", "LEAVE_VACATION", "SICK_LEAVE_RECOVERY", "SALARY_COMPENSATION",
-    "CONTRACT_HOURS", "ONBOARDING", "OFFBOARDING", "WORKWEAR_STAFF_PASS",
-    "TEAM_CONTACTS", "PERSONAL_QUESTIONS", "ACCESS_LOGIN", "SOCIAL_QUESTIONS",
-    "UNRECOGNIZED_OTHER"
+    "SCHEDULE_HOURS",
+    "LEAVE_VACATION",
+    "SICK_LEAVE_RECOVERY",
+    "SALARY_COMPENSATION",
+    "CONTRACT_HOURS",
+    "ONBOARDING",
+    "OFFBOARDING",
+    "WORKWEAR_STAFF_PASS",
+    "TEAM_CONTACTS",
+    "PERSONAL_QUESTIONS",
+    "ACCESS_LOGIN",
+    "SOCIAL_QUESTIONS",
+    "UNRECOGNIZED_OTHER",
   ];
 
   if (!validCategories.includes(data.category)) {
-    throw new Error(`Invalid category. Expected one of: ${validCategories.join(", ")}`);
+    throw new Error(
+      `Invalid category. Expected one of: ${validCategories.join(", ")}`
+    );
   }
 
   if (!Array.isArray(data.questions)) {
     throw new Error("Invalid questions. Expected array of strings");
   }
 
-  if (typeof data.summary !== "string" || data.summary.length < 10 || data.summary.length > 300) {
-    throw new Error("Invalid summary. Expected string between 10-300 characters");
+  if (
+    typeof data.summary !== "string" ||
+    data.summary.length < 10 ||
+    data.summary.length > 300
+  ) {
+    throw new Error(
+      "Invalid summary. Expected string between 10-300 characters"
+    );
   }
 
   if (typeof data.session_id !== "string") {
@@ -384,31 +448,42 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
 
   try {
     // Mark AI analysis as started
-    await ProcessingStatusManager.startStage(session.id, ProcessingStage.AI_ANALYSIS);
+    await ProcessingStatusManager.startStage(
+      session.id,
+      ProcessingStage.AI_ANALYSIS
+    );
 
     // Convert messages back to transcript format for OpenAI processing
     const transcript = session.messages
-      .map((msg: any) =>
-        `[${new Date(msg.timestamp)
-          .toLocaleString("en-GB", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          })
-          .replace(",", "")}] ${msg.role}: ${msg.content}`
+      .map(
+        (msg: any) =>
+          `[${new Date(msg.timestamp)
+            .toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+            .replace(",", "")}] ${msg.role}: ${msg.content}`
       )
       .join("\n");
 
-    const processedData = await processTranscriptWithOpenAI(session.id, transcript, session.companyId);
+    const processedData = await processTranscriptWithOpenAI(
+      session.id,
+      transcript,
+      session.companyId
+    );
 
     // Calculate messagesSent from actual Message records
     const messagesSent = await calculateMessagesSent(session.id);
 
     // Calculate endTime from latest Message timestamp
-    const calculatedEndTime = await calculateEndTime(session.id, session.endTime);
+    const calculatedEndTime = await calculateEndTime(
+      session.id,
+      session.endTime
+    );
 
     // Update the session with processed data
     await prisma.session.update({
@@ -426,23 +501,34 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
     });
 
     // Mark AI analysis as completed
-    await ProcessingStatusManager.completeStage(session.id, ProcessingStage.AI_ANALYSIS, {
-      language: processedData.language,
-      sentiment: processedData.sentiment,
-      category: processedData.category,
-      questionsCount: processedData.questions.length
-    });
+    await ProcessingStatusManager.completeStage(
+      session.id,
+      ProcessingStage.AI_ANALYSIS,
+      {
+        language: processedData.language,
+        sentiment: processedData.sentiment,
+        category: processedData.category,
+        questionsCount: processedData.questions.length,
+      }
+    );
 
     // Start question extraction stage
-    await ProcessingStatusManager.startStage(session.id, ProcessingStage.QUESTION_EXTRACTION);
+    await ProcessingStatusManager.startStage(
+      session.id,
+      ProcessingStage.QUESTION_EXTRACTION
+    );
 
     // Process questions into separate tables
     await processQuestions(session.id, processedData.questions);
 
     // Mark question extraction as completed
-    await ProcessingStatusManager.completeStage(session.id, ProcessingStage.QUESTION_EXTRACTION, {
-      questionsProcessed: processedData.questions.length
-    });
+    await ProcessingStatusManager.completeStage(
+      session.id,
+      ProcessingStage.QUESTION_EXTRACTION,
+      {
+        questionsProcessed: processedData.questions.length,
+      }
+    );
 
     return {
       sessionId: session.id,
@@ -467,7 +553,10 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
 /**
  * Process sessions in parallel with concurrency limit
  */
-async function processSessionsInParallel(sessions: any[], maxConcurrency: number = 5): Promise<ProcessingResult[]> {
+async function processSessionsInParallel(
+  sessions: any[],
+  maxConcurrency: number = 5
+): Promise<ProcessingResult[]> {
   const results: Promise<ProcessingResult>[] = [];
   const executing: Promise<ProcessingResult>[] = [];
 
@@ -486,7 +575,7 @@ async function processSessionsInParallel(sessions: any[], maxConcurrency: number
 
     if (executing.length >= maxConcurrency) {
       await Promise.race(executing);
-      const completedIndex = executing.findIndex(p => p === promise);
+      const completedIndex = executing.findIndex((p) => p === promise);
       if (completedIndex !== -1) {
         executing.splice(completedIndex, 1);
       }
@@ -499,27 +588,37 @@ async function processSessionsInParallel(sessions: any[], maxConcurrency: number
 /**
  * Process unprocessed sessions using the new processing status system
  */
-export async function processUnprocessedSessions(batchSize: number | null = null, maxConcurrency: number = 5): Promise<void> {
-  process.stdout.write("[ProcessingScheduler] Starting to process sessions needing AI analysis...\n");
-
-  // Get sessions that need AI processing using the new status system
-  const sessionsNeedingAI = await ProcessingStatusManager.getSessionsNeedingProcessing(
-    ProcessingStage.AI_ANALYSIS,
-    batchSize || 50
+export async function processUnprocessedSessions(
+  batchSize: number | null = null,
+  maxConcurrency: number = 5
+): Promise<void> {
+  process.stdout.write(
+    "[ProcessingScheduler] Starting to process sessions needing AI analysis...\n"
   );
 
+  // Get sessions that need AI processing using the new status system
+  const sessionsNeedingAI =
+    await ProcessingStatusManager.getSessionsNeedingProcessing(
+      ProcessingStage.AI_ANALYSIS,
+      batchSize || 50
+    );
+
   if (sessionsNeedingAI.length === 0) {
-    process.stdout.write("[ProcessingScheduler] No sessions found requiring AI processing.\n");
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions found requiring AI processing.\n"
+    );
     return;
   }
 
   // Get session IDs that need processing
-  const sessionIds = sessionsNeedingAI.map(statusRecord => statusRecord.sessionId);
+  const sessionIds = sessionsNeedingAI.map(
+    (statusRecord) => statusRecord.sessionId
+  );
 
   // Fetch full session data with messages
   const sessionsToProcess = await prisma.session.findMany({
     where: {
-      id: { in: sessionIds }
+      id: { in: sessionIds },
     },
     include: {
       messages: {
@@ -534,7 +633,9 @@ export async function processUnprocessedSessions(batchSize: number | null = null
   );
 
   if (sessionsWithMessages.length === 0) {
-    process.stdout.write("[ProcessingScheduler] No sessions with messages found requiring processing.\n");
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions with messages found requiring processing.\n"
+    );
     return;
   }
 
@@ -543,16 +644,25 @@ export async function processUnprocessedSessions(batchSize: number | null = null
   );
 
   const startTime = Date.now();
-  const results = await processSessionsInParallel(sessionsWithMessages, maxConcurrency);
+  const results = await processSessionsInParallel(
+    sessionsWithMessages,
+    maxConcurrency
+  );
   const endTime = Date.now();
 
   const successCount = results.filter((r) => r.success).length;
   const errorCount = results.filter((r) => !r.success).length;
 
   process.stdout.write("[ProcessingScheduler] Session processing complete.\n");
-  process.stdout.write(`[ProcessingScheduler] Successfully processed: ${successCount} sessions.\n`);
-  process.stdout.write(`[ProcessingScheduler] Failed to process: ${errorCount} sessions.\n`);
-  process.stdout.write(`[ProcessingScheduler] Total processing time: ${((endTime - startTime) / 1000).toFixed(2)}s\n`);
+  process.stdout.write(
+    `[ProcessingScheduler] Successfully processed: ${successCount} sessions.\n`
+  );
+  process.stdout.write(
+    `[ProcessingScheduler] Failed to process: ${errorCount} sessions.\n`
+  );
+  process.stdout.write(
+    `[ProcessingScheduler] Total processing time: ${((endTime - startTime) / 1000).toFixed(2)}s\n`
+  );
 }
 
 /**
@@ -576,11 +686,11 @@ export async function getAIProcessingCosts(): Promise<{
   });
 
   const successfulRequests = await prisma.aIProcessingRequest.count({
-    where: { success: true }
+    where: { success: true },
   });
 
   const failedRequests = await prisma.aIProcessingRequest.count({
-    where: { success: false }
+    where: { success: false },
   });
 
   return {
@@ -599,22 +709,32 @@ export function startProcessingScheduler(): void {
   const config = getSchedulerConfig();
 
   if (!config.enabled) {
-    console.log('[Processing Scheduler] Disabled via configuration');
+    console.log("[Processing Scheduler] Disabled via configuration");
     return;
   }
 
-  console.log(`[Processing Scheduler] Starting with interval: ${config.sessionProcessing.interval}`);
-  console.log(`[Processing Scheduler] Batch size: ${config.sessionProcessing.batchSize === 0 ? 'unlimited' : config.sessionProcessing.batchSize}`);
-  console.log(`[Processing Scheduler] Concurrency: ${config.sessionProcessing.concurrency}`);
+  console.log(
+    `[Processing Scheduler] Starting with interval: ${config.sessionProcessing.interval}`
+  );
+  console.log(
+    `[Processing Scheduler] Batch size: ${config.sessionProcessing.batchSize === 0 ? "unlimited" : config.sessionProcessing.batchSize}`
+  );
+  console.log(
+    `[Processing Scheduler] Concurrency: ${config.sessionProcessing.concurrency}`
+  );
 
   cron.schedule(config.sessionProcessing.interval, async () => {
     try {
       await processUnprocessedSessions(
-        config.sessionProcessing.batchSize === 0 ? null : config.sessionProcessing.batchSize,
+        config.sessionProcessing.batchSize === 0
+          ? null
+          : config.sessionProcessing.batchSize,
         config.sessionProcessing.concurrency
       );
     } catch (error) {
-      process.stderr.write(`[ProcessingScheduler] Error in scheduler: ${error}\n`);
+      process.stderr.write(
+        `[ProcessingScheduler] Error in scheduler: ${error}\n`
+      );
     }
   });
 }

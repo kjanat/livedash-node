@@ -53,9 +53,9 @@ export async function GET(request: NextRequest) {
       .map((s) => s.language)
       .filter(Boolean) as string[]; // Filter out any nulls and assert as string[]
 
-    return NextResponse.json({ 
-      categories: distinctCategories, 
-      languages: distinctLanguages 
+    return NextResponse.json({
+      categories: distinctCategories,
+      languages: distinctLanguages,
     });
   } catch (error) {
     const errorMessage =

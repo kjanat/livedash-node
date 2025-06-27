@@ -22,7 +22,9 @@ async function fetchTranscriptContent(
     });
 
     if (!response.ok) {
-      console.warn(`Failed to fetch transcript from ${url}: ${response.statusText}`);
+      console.warn(
+        `Failed to fetch transcript from ${url}: ${response.statusText}`
+      );
       return null;
     }
 
@@ -42,7 +44,7 @@ function parseTranscriptToMessages(transcriptContent: string): Array<{
   content: string;
   order: number;
 }> {
-  const lines = transcriptContent.split('\n').filter(line => line.trim());
+  const lines = transcriptContent.split("\n").filter((line) => line.trim());
   const messages: Array<{
     timestamp: Date | null;
     role: string;
@@ -55,10 +57,10 @@ function parseTranscriptToMessages(transcriptContent: string): Array<{
   for (const line of lines) {
     // Try to parse lines in format: [timestamp] role: content
     const match = line.match(/^\[([^\]]+)\]\s*([^:]+):\s*(.+)$/);
-    
+
     if (match) {
       const [, timestampStr, role, content] = match;
-      
+
       // Try to parse the timestamp
       let timestamp: Date | null = null;
       try {
@@ -79,12 +81,12 @@ function parseTranscriptToMessages(transcriptContent: string): Array<{
     } else {
       // If line doesn't match expected format, treat as content continuation
       if (messages.length > 0) {
-        messages[messages.length - 1].content += '\n' + line;
+        messages[messages.length - 1].content += "\n" + line;
       } else {
         // First line doesn't match format, create a generic message
         messages.push({
           timestamp: null,
-          role: 'unknown',
+          role: "unknown",
           content: line,
           order: order++,
         });
@@ -120,7 +122,9 @@ async function fetchTranscriptsForSessions() {
     return;
   }
 
-  console.log(`Found ${sessionsNeedingTranscripts.length} sessions that need transcript fetching.`);
+  console.log(
+    `Found ${sessionsNeedingTranscripts.length} sessions that need transcript fetching.`
+  );
   let successCount = 0;
   let errorCount = 0;
 
@@ -131,7 +135,7 @@ async function fetchTranscriptsForSessions() {
     }
 
     console.log(`Fetching transcript for session ${session.id}...`);
-    
+
     try {
       // Fetch transcript content
       const transcriptContent = await fetchTranscriptContent(
@@ -153,7 +157,7 @@ async function fetchTranscriptsForSessions() {
 
       // Create messages in database
       await prisma.message.createMany({
-        data: messages.map(msg => ({
+        data: messages.map((msg) => ({
           sessionId: session.id,
           timestamp: msg.timestamp,
           role: msg.role,
@@ -162,10 +166,15 @@ async function fetchTranscriptsForSessions() {
         })),
       });
 
-      console.log(`Successfully fetched transcript for session ${session.id} (${messages.length} messages)`);
+      console.log(
+        `Successfully fetched transcript for session ${session.id} (${messages.length} messages)`
+      );
       successCount++;
     } catch (error) {
-      console.error(`Error fetching transcript for session ${session.id}:`, error);
+      console.error(
+        `Error fetching transcript for session ${session.id}:`,
+        error
+      );
       errorCount++;
     }
   }

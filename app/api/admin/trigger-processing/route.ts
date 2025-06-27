@@ -45,18 +45,21 @@ export async function POST(request: NextRequest) {
     const { batchSize, maxConcurrency } = body;
 
     // Validate parameters
-    const validatedBatchSize = batchSize && batchSize > 0 ? parseInt(batchSize) : null;
-    const validatedMaxConcurrency = maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
+    const validatedBatchSize =
+      batchSize && batchSize > 0 ? parseInt(batchSize) : null;
+    const validatedMaxConcurrency =
+      maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
 
     // Check how many sessions need AI processing using the new status system
-    const sessionsNeedingAI = await ProcessingStatusManager.getSessionsNeedingProcessing(
-      ProcessingStage.AI_ANALYSIS,
-      1000 // Get count only
-    );
+    const sessionsNeedingAI =
+      await ProcessingStatusManager.getSessionsNeedingProcessing(
+        ProcessingStage.AI_ANALYSIS,
+        1000 // Get count only
+      );
 
     // Filter to sessions for this company
     const companySessionsNeedingAI = sessionsNeedingAI.filter(
-      statusRecord => statusRecord.session.companyId === user.companyId
+      (statusRecord) => statusRecord.session.companyId === user.companyId
     );
 
     const unprocessedCount = companySessionsNeedingAI.length;
@@ -77,10 +80,15 @@ export async function POST(request: NextRequest) {
     // The processing will continue in the background
     processUnprocessedSessions(validatedBatchSize, validatedMaxConcurrency)
       .then(() => {
-        console.log(`[Manual Trigger] Processing completed for company ${user.companyId}`);
+        console.log(
+          `[Manual Trigger] Processing completed for company ${user.companyId}`
+        );
       })
       .catch((error) => {
-        console.error(`[Manual Trigger] Processing failed for company ${user.companyId}:`, error);
+        console.error(
+          `[Manual Trigger] Processing failed for company ${user.companyId}:`,
+          error
+        );
       });
 
     return NextResponse.json({
@@ -91,7 +99,6 @@ export async function POST(request: NextRequest) {
       maxConcurrency: validatedMaxConcurrency,
       startedAt: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("[Manual Trigger] Error:", error);
     return NextResponse.json(

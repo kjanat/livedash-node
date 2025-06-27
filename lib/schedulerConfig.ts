@@ -1,7 +1,10 @@
 // Legacy scheduler configuration - now uses centralized env management
 // This file is kept for backward compatibility but delegates to lib/env.ts
 
-import { getSchedulerConfig as getEnvSchedulerConfig, logEnvConfig } from "./env";
+import {
+  getSchedulerConfig as getEnvSchedulerConfig,
+  logEnvConfig,
+} from "./env";
 
 export interface SchedulerConfig {
   enabled: boolean;

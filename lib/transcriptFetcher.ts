@@ -23,7 +23,7 @@ export async function fetchTranscriptContent(
     if (!url || !url.trim()) {
       return {
         success: false,
-        error: 'No transcript URL provided',
+        error: "No transcript URL provided",
       };
     }
 
@@ -34,7 +34,7 @@ export async function fetchTranscriptContent(
         : undefined;
 
     const headers: Record<string, string> = {
-      'User-Agent': 'LiveDash-Transcript-Fetcher/1.0',
+      "User-Agent": "LiveDash-Transcript-Fetcher/1.0",
     };
 
     if (authHeader) {
@@ -46,7 +46,7 @@ export async function fetchTranscriptContent(
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     const response = await fetch(url, {
-      method: 'GET',
+      method: "GET",
       headers,
       signal: controller.signal,
     });
@@ -65,7 +65,7 @@ export async function fetchTranscriptContent(
     if (!content || content.trim().length === 0) {
       return {
         success: false,
-        error: 'Empty transcript content',
+        error: "Empty transcript content",
       };
     }
 
@@ -73,29 +73,28 @@ export async function fetchTranscriptContent(
       success: true,
       content: content.trim(),
     };
-
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Handle common network errors
-    if (errorMessage.includes('ENOTFOUND')) {
+    if (errorMessage.includes("ENOTFOUND")) {
       return {
         success: false,
-        error: 'Domain not found',
+        error: "Domain not found",
       };
     }
 
-    if (errorMessage.includes('ECONNREFUSED')) {
+    if (errorMessage.includes("ECONNREFUSED")) {
       return {
         success: false,
-        error: 'Connection refused',
+        error: "Connection refused",
       };
     }
 
-    if (errorMessage.includes('timeout')) {
+    if (errorMessage.includes("timeout")) {
       return {
         success: false,
-        error: 'Request timeout',
+        error: "Request timeout",
       };
     }
 
@@ -112,13 +111,13 @@ export async function fetchTranscriptContent(
  * @returns boolean indicating if URL appears valid
  */
 export function isValidTranscriptUrl(url: string): boolean {
-  if (!url || typeof url !== 'string') {
+  if (!url || typeof url !== "string") {
     return false;
   }
 
   try {
     const parsedUrl = new URL(url);
-    return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:';
+    return parsedUrl.protocol === "http:" || parsedUrl.protocol === "https:";
   } catch {
     return false;
   }

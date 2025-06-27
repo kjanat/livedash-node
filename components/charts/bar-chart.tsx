@@ -61,10 +61,13 @@ export default function ModernBarChart({
       )}
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
+          <BarChart
+            data={data}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--border))"
               strokeOpacity={0.3}
             />
             <XAxis
@@ -84,14 +87,14 @@ export default function ModernBarChart({
               axisLine={false}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Bar 
-              dataKey={dataKey} 
+            <Bar
+              dataKey={dataKey}
               radius={[4, 4, 0, 0]}
               className="transition-all duration-200"
             >
               {data.map((entry, index) => (
-                <Cell 
-                  key={`cell-${index}`} 
+                <Cell
+                  key={`cell-${index}`}
                   fill={colors[index % colors.length]}
                   className="hover:opacity-80"
                 />

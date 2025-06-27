@@ -48,7 +48,10 @@ function DashboardContent() {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [dateRange, setDateRange] = useState<{ minDate: string; maxDate: string } | null>(null);
+  const [dateRange, setDateRange] = useState<{
+    minDate: string;
+    maxDate: string;
+  } | null>(null);
   const [selectedStartDate, setSelectedStartDate] = useState<string>("");
   const [selectedEndDate, setSelectedEndDate] = useState<string>("");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
@@ -56,7 +59,11 @@ function DashboardContent() {
   const isAuditor = session?.user?.role === "AUDITOR";
 
   // Function to fetch metrics with optional date range
-  const fetchMetrics = async (startDate?: string, endDate?: string, isInitial = false) => {
+  const fetchMetrics = async (
+    startDate?: string,
+    endDate?: string,
+    isInitial = false
+  ) => {
     setLoading(true);
     try {
       let url = "/api/dashboard/metrics";
@@ -85,11 +92,14 @@ function DashboardContent() {
   };
 
   // Handle date range changes
-  const handleDateRangeChange = useCallback((startDate: string, endDate: string) => {
-    setSelectedStartDate(startDate);
-    setSelectedEndDate(endDate);
-    fetchMetrics(startDate, endDate);
-  }, []);
+  const handleDateRangeChange = useCallback(
+    (startDate: string, endDate: string) => {
+      setSelectedStartDate(startDate);
+      setSelectedEndDate(endDate);
+      fetchMetrics(startDate, endDate);
+    },
+    []
+  );
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -216,33 +226,48 @@ function DashboardContent() {
     };
 
     return [
-      { name: "Positive", value: sentimentData.positive, color: "hsl(var(--chart-1))" },
-      { name: "Neutral", value: sentimentData.neutral, color: "hsl(var(--chart-2))" },
-      { name: "Negative", value: sentimentData.negative, color: "hsl(var(--chart-3))" },
+      {
+        name: "Positive",
+        value: sentimentData.positive,
+        color: "hsl(var(--chart-1))",
+      },
+      {
+        name: "Neutral",
+        value: sentimentData.neutral,
+        color: "hsl(var(--chart-2))",
+      },
+      {
+        name: "Negative",
+        value: sentimentData.negative,
+        color: "hsl(var(--chart-3))",
+      },
     ];
   };
 
   const getSessionsOverTimeData = () => {
     if (!metrics?.days) return [];
-    
+
     return Object.entries(metrics.days).map(([date, value]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
       value: value as number,
     }));
   };
 
   const getCategoriesData = () => {
     if (!metrics?.categories) return [];
-    
+
     return Object.entries(metrics.categories).map(([name, value]) => ({
-      name: name.length > 15 ? name.substring(0, 15) + '...' : name,
+      name: name.length > 15 ? name.substring(0, 15) + "..." : name,
       value: value as number,
     }));
   };
 
   const getLanguagesData = () => {
     if (!metrics?.languages) return [];
-    
+
     return Object.entries(metrics.languages).map(([name, value]) => ({
       name,
       value: value as number,
@@ -287,7 +312,9 @@ function DashboardContent() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
+                <h1 className="text-3xl font-bold tracking-tight">
+                  {company.name}
+                </h1>
                 <Badge variant="secondary" className="text-xs">
                   Analytics Dashboard
                 </Badge>
@@ -299,7 +326,7 @@ function DashboardContent() {
                 </span>
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleRefresh}
@@ -307,10 +334,12 @@ function DashboardContent() {
                 size="sm"
                 className="gap-2"
               >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw
+                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                />
                 {refreshing ? "Refreshing..." : "Refresh"}
               </Button>
-              
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -318,7 +347,9 @@ function DashboardContent() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                  <DropdownMenuItem
+                    onClick={() => signOut({ callbackUrl: "/login" })}
+                  >
                     <LogOut className="h-4 w-4 mr-2" />
                     Sign out
                   </DropdownMenuItem>
@@ -352,7 +383,7 @@ function DashboardContent() {
           }}
           variant="primary"
         />
-        
+
         <MetricCard
           title="Unique Users"
           value={metrics.uniqueUsers?.toLocaleString()}
@@ -363,7 +394,7 @@ function DashboardContent() {
           }}
           variant="success"
         />
-        
+
         <MetricCard
           title="Avg. Session Time"
           value={`${Math.round(metrics.avgSessionLength || 0)}s`}
@@ -373,7 +404,7 @@ function DashboardContent() {
             isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
           }}
         />
-        
+
         <MetricCard
           title="Avg. Response Time"
           value={`${metrics.avgResponseTime?.toFixed(1) || 0}s`}
@@ -384,32 +415,37 @@ function DashboardContent() {
           }}
           variant="warning"
         />
-        
+
         <MetricCard
           title="Daily Costs"
-          value={`€${metrics.avgDailyCosts?.toFixed(4) || '0.0000'}`}
+          value={`€${metrics.avgDailyCosts?.toFixed(4) || "0.0000"}`}
           icon={<Euro className="h-5 w-5" />}
           description="Average per day"
         />
-        
+
         <MetricCard
           title="Peak Usage"
-          value={metrics.peakUsageTime || 'N/A'}
+          value={metrics.peakUsageTime || "N/A"}
           icon={<TrendingUp className="h-5 w-5" />}
           description="Busiest hour"
         />
-        
+
         <MetricCard
           title="Resolution Rate"
-          value={`${metrics.resolvedChatsPercentage?.toFixed(1) || '0.0'}%`}
+          value={`${metrics.resolvedChatsPercentage?.toFixed(1) || "0.0"}%`}
           icon={<CheckCircle className="h-5 w-5" />}
           trend={{
             value: metrics.resolvedChatsPercentage ?? 0,
             isPositive: (metrics.resolvedChatsPercentage ?? 0) >= 80,
           }}
-          variant={metrics.resolvedChatsPercentage && metrics.resolvedChatsPercentage >= 80 ? "success" : "warning"}
+          variant={
+            metrics.resolvedChatsPercentage &&
+            metrics.resolvedChatsPercentage >= 80
+              ? "success"
+              : "warning"
+          }
         />
-        
+
         <MetricCard
           title="Active Languages"
           value={Object.keys(metrics.languages || {}).length}
@@ -426,7 +462,7 @@ function DashboardContent() {
           className="lg:col-span-2"
           height={350}
         />
-        
+
         <ModernDonutChart
           data={getSentimentData()}
           title="Conversation Sentiment"
@@ -444,7 +480,7 @@ function DashboardContent() {
           title="Sessions by Category"
           height={350}
         />
-        
+
         <ModernDonutChart
           data={getLanguagesData()}
           title="Languages Used"
@@ -508,8 +544,8 @@ function DashboardContent() {
                 {metrics.totalTokens?.toLocaleString() || 0}
               </Badge>
               <Badge variant="outline" className="gap-1">
-                <span className="font-semibold">Total Cost:</span>
-                €{metrics.totalTokensEur?.toFixed(4) || 0}
+                <span className="font-semibold">Total Cost:</span>€
+                {metrics.totalTokensEur?.toFixed(4) || 0}
               </Badge>
             </div>
           </div>

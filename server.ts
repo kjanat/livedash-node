@@ -19,11 +19,11 @@ app.prepare().then(() => {
   // Validate and log environment configuration
   const envValidation = validateEnv();
   if (!envValidation.valid) {
-    console.error('[Environment] Validation errors:', envValidation.errors);
+    console.error("[Environment] Validation errors:", envValidation.errors);
   }
-  
+
   logEnvConfig();
-  
+
   // Get scheduler configuration
   const config = getSchedulerConfig();
 

@@ -26,10 +26,7 @@ export async function GET(
     });
 
     if (!prismaSession) {
-      return NextResponse.json(
-        { error: "Session not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
     // Map Prisma session object to ChatSession type

@@ -5,18 +5,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 **Core Development:**
+
 - `pnpm dev` - Start development server (runs custom server.ts with schedulers)
 - `pnpm dev:next-only` - Start Next.js only with Turbopack (no schedulers)
 - `pnpm build` - Build production application
 - `pnpm start` - Run production server
 
 **Code Quality:**
+
 - `pnpm lint` - Run ESLint
 - `pnpm lint:fix` - Fix ESLint issues automatically
 - `pnpm format` - Format code with Prettier
 - `pnpm format:check` - Check formatting without fixing
 
 **Database:**
+
 - `pnpm prisma:generate` - Generate Prisma client
 - `pnpm prisma:migrate` - Run database migrations
 - `pnpm prisma:push` - Push schema changes to database
@@ -25,11 +28,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm prisma:studio` - Open Prisma Studio database viewer
 
 **Testing:**
+
 - `pnpm test` - Run tests once
 - `pnpm test:watch` - Run tests in watch mode
 - `pnpm test:coverage` - Run tests with coverage report
 
 **Markdown:**
+
 - `pnpm lint:md` - Lint Markdown files
 - `pnpm lint:md:fix` - Fix Markdown linting issues
 
@@ -38,6 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **LiveDash-Node** is a real-time analytics dashboard for monitoring user sessions with AI-powered analysis and processing pipeline.
 
 ### Tech Stack
+
 - **Frontend:** Next.js 15 + React 19 + TailwindCSS 4
 - **Backend:** Next.js API Routes + Custom Node.js server
 - **Database:** PostgreSQL with Prisma ORM
@@ -50,6 +56,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **1. Multi-Stage Processing Pipeline**
 The system processes user sessions through distinct stages tracked in `SessionProcessingStatus`:
+
 - `CSV_IMPORT` - Import raw CSV data into `SessionImport`
 - `TRANSCRIPT_FETCH` - Fetch transcript content from URLs
 - `SESSION_CREATION` - Create normalized `Session` and `Message` records
@@ -57,6 +64,7 @@ The system processes user sessions through distinct stages tracked in `SessionPr
 - `QUESTION_EXTRACTION` - Extract questions from conversations
 
 **2. Database Architecture**
+
 - **Multi-tenant design** with `Company` as root entity
 - **Dual storage pattern**: Raw CSV data in `SessionImport`, processed data in `Session`
 - **1-to-1 relationship** between `SessionImport` and `Session` via `importId`
@@ -65,11 +73,13 @@ The system processes user sessions through distinct stages tracked in `SessionPr
 - **Flexible AI model management** through `AIModel`, `AIModelPricing`, and `CompanyAIModel`
 
 **3. Custom Server Architecture**
+
 - `server.ts` - Custom Next.js server with configurable scheduler initialization
 - Three main schedulers: CSV import, import processing, and session processing
 - Environment-based configuration via `lib/env.ts`
 
 **4. Key Processing Libraries**
+
 - `lib/scheduler.ts` - CSV import scheduling
 - `lib/importProcessor.ts` - Raw data to Session conversion
 - `lib/processingScheduler.ts` - AI analysis pipeline
@@ -80,18 +90,21 @@ The system processes user sessions through distinct stages tracked in `SessionPr
 
 **Environment Configuration:**
 Environment variables are managed through `lib/env.ts` with .env.local file support:
+
 - Database: PostgreSQL via `DATABASE_URL` and `DATABASE_URL_DIRECT`
 - Authentication: `NEXTAUTH_SECRET`, `NEXTAUTH_URL`
 - AI Processing: `OPENAI_API_KEY`
 - Schedulers: `SCHEDULER_ENABLED`, various interval configurations
 
 **Key Files to Understand:**
+
 - `prisma/schema.prisma` - Complete database schema with enums and relationships
 - `server.ts` - Custom server entry point
 - `lib/env.ts` - Environment variable management and validation
 - `app/` - Next.js App Router structure
 
 **Testing:**
+
 - Uses Vitest for unit testing
 - Playwright for E2E testing
 - Test files in `tests/` directory
@@ -99,16 +112,19 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 ### Important Notes
 
 **Scheduler System:**
+
 - Schedulers are optional and controlled by `SCHEDULER_ENABLED` environment variable
 - Use `pnpm dev:next-only` to run without schedulers for pure frontend development
 - Three separate schedulers handle different pipeline stages
 
 **Database Migrations:**
+
 - Always run `pnpm prisma:generate` after schema changes
 - Use `pnpm prisma:migrate` for production-ready migrations
 - Use `pnpm prisma:push` for development schema changes
 
 **AI Processing:**
+
 - All AI requests are tracked for cost analysis
 - Support for multiple AI models per company
 - Time-based pricing management for accurate cost calculation

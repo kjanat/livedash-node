@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   const tempPassword = crypto.randomBytes(12).toString("base64").slice(0, 12); // secure random initial password
-  
+
   await prisma.user.create({
     data: {
       email,

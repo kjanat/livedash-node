@@ -80,11 +80,11 @@ export default function MetricCard({
 
   const getTrendIcon = () => {
     if (!trend) return null;
-    
+
     if (trend.value === 0) {
       return <Minus className="h-3 w-3" />;
     }
-    
+
     return trend.isPositive !== false ? (
       <TrendingUp className="h-3 w-3" />
     ) : (
@@ -94,11 +94,13 @@ export default function MetricCard({
 
   const getTrendColor = () => {
     if (!trend || trend.value === 0) return "text-muted-foreground";
-    return trend.isPositive !== false ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
+    return trend.isPositive !== false
+      ? "text-green-600 dark:text-green-400"
+      : "text-red-600 dark:text-red-400";
   };
 
   return (
-    <Card 
+    <Card
       className={cn(
         "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
         getVariantClasses(),
@@ -107,7 +109,7 @@ export default function MetricCard({
     >
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
-      
+
       <CardHeader className="pb-3 relative">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -115,9 +117,7 @@ export default function MetricCard({
               {title}
             </p>
             {description && (
-              <p className="text-xs text-muted-foreground/80">
-                {description}
-              </p>
+              <p className="text-xs text-muted-foreground/80">{description}</p>
             )}
           </div>
 
@@ -137,13 +137,11 @@ export default function MetricCard({
       <CardContent className="relative">
         <div className="flex items-end justify-between">
           <div className="space-y-1">
-            <p className="text-2xl font-bold tracking-tight">
-              {value ?? "—"}
-            </p>
-            
+            <p className="text-2xl font-bold tracking-tight">{value ?? "—"}</p>
+
             {trend && (
-              <Badge 
-                variant="secondary" 
+              <Badge
+                variant="secondary"
                 className={cn(
                   "text-xs font-medium px-2 py-0.5 gap-1",
                   getTrendColor(),

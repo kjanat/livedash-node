@@ -1,4 +1,8 @@
-import { PrismaClient, ProcessingStage, ProcessingStatus } from '@prisma/client';
+import {
+  PrismaClient,
+  ProcessingStage,
+  ProcessingStatus,
+} from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -6,7 +10,6 @@ const prisma = new PrismaClient();
  * Centralized processing status management
  */
 export class ProcessingStatusManager {
-
   /**
    * Initialize processing status for a session with all stages set to PENDING
    */
@@ -21,7 +24,7 @@ export class ProcessingStatusManager {
 
     // Create all processing status records for this session
     await prisma.sessionProcessingStatus.createMany({
-      data: stages.map(stage => ({
+      data: stages.map((stage) => ({
         sessionId,
         stage,
         status: ProcessingStatus.PENDING,
@@ -40,7 +43,7 @@ export class ProcessingStatusManager {
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
       update: {
         status: ProcessingStatus.IN_PROGRESS,
@@ -68,7 +71,7 @@ export class ProcessingStatusManager {
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
       update: {
         status: ProcessingStatus.COMPLETED,
@@ -98,7 +101,7 @@ export class ProcessingStatusManager {
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
       update: {
         status: ProcessingStatus.FAILED,
@@ -130,7 +133,7 @@ export class ProcessingStatusManager {
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
       update: {
         status: ProcessingStatus.SKIPPED,
@@ -154,7 +157,7 @@ export class ProcessingStatusManager {
   static async getSessionStatus(sessionId: string) {
     return await prisma.sessionProcessingStatus.findMany({
       where: { sessionId },
-      orderBy: { stage: 'asc' },
+      orderBy: { stage: "asc" },
     });
   }
 
@@ -179,7 +182,7 @@ export class ProcessingStatusManager {
         },
       },
       take: limit,
-      orderBy: { session: { createdAt: 'asc' } },
+      orderBy: { session: { createdAt: "asc" } },
     });
   }
 
@@ -189,7 +192,7 @@ export class ProcessingStatusManager {
   static async getPipelineStatus() {
     // Get counts by stage and status
     const statusCounts = await prisma.sessionProcessingStatus.groupBy({
-      by: ['stage', 'status'],
+      by: ["stage", "status"],
       _count: { id: true },
     });
 
@@ -233,17 +236,20 @@ export class ProcessingStatusManager {
           },
         },
       },
-      orderBy: { completedAt: 'desc' },
+      orderBy: { completedAt: "desc" },
     });
   }
 
   /**
    * Reset a failed stage for retry
    */
-  static async resetStageForRetry(sessionId: string, stage: ProcessingStage): Promise<void> {
+  static async resetStageForRetry(
+    sessionId: string,
+    stage: ProcessingStage
+  ): Promise<void> {
     await prisma.sessionProcessingStatus.update({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
       data: {
         status: ProcessingStatus.PENDING,
@@ -257,10 +263,13 @@ export class ProcessingStatusManager {
   /**
    * Check if a session has completed a specific stage
    */
-  static async hasCompletedStage(sessionId: string, stage: ProcessingStage): Promise<boolean> {
+  static async hasCompletedStage(
+    sessionId: string,
+    stage: ProcessingStage
+  ): Promise<boolean> {
     const status = await prisma.sessionProcessingStatus.findUnique({
       where: {
-        sessionId_stage: { sessionId, stage }
+        sessionId_stage: { sessionId, stage },
       },
     });
 
@@ -270,7 +279,10 @@ export class ProcessingStatusManager {
   /**
    * Check if a session is ready for a specific stage (previous stages completed)
    */
-  static async isReadyForStage(sessionId: string, stage: ProcessingStage): Promise<boolean> {
+  static async isReadyForStage(
+    sessionId: string,
+    stage: ProcessingStage
+  ): Promise<boolean> {
     const stageOrder = [
       ProcessingStage.CSV_IMPORT,
       ProcessingStage.TRANSCRIPT_FETCH,

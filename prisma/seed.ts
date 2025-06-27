@@ -73,28 +73,28 @@ async function main() {
     const pricingData = [
       {
         modelName: "gpt-4o",
-        promptTokenCost: 0.0000025,    // $2.50 per 1M tokens
-        completionTokenCost: 0.00001,  // $10.00 per 1M tokens
+        promptTokenCost: 0.0000025, // $2.50 per 1M tokens
+        completionTokenCost: 0.00001, // $10.00 per 1M tokens
       },
       {
         modelName: "gpt-4o-2024-08-06",
-        promptTokenCost: 0.0000025,    // $2.50 per 1M tokens
-        completionTokenCost: 0.00001,  // $10.00 per 1M tokens
+        promptTokenCost: 0.0000025, // $2.50 per 1M tokens
+        completionTokenCost: 0.00001, // $10.00 per 1M tokens
       },
       {
         modelName: "gpt-4-turbo",
-        promptTokenCost: 0.00001,      // $10.00 per 1M tokens
-        completionTokenCost: 0.00003,  // $30.00 per 1M tokens
+        promptTokenCost: 0.00001, // $10.00 per 1M tokens
+        completionTokenCost: 0.00003, // $30.00 per 1M tokens
       },
       {
         modelName: "gpt-4o-mini",
-        promptTokenCost: 0.00000015,   // $0.15 per 1M tokens
+        promptTokenCost: 0.00000015, // $0.15 per 1M tokens
         completionTokenCost: 0.0000006, // $0.60 per 1M tokens
       },
     ];
 
     for (const pricing of pricingData) {
-      const model = createdModels.find(m => m.name === pricing.modelName);
+      const model = createdModels.find((m) => m.name === pricing.modelName);
       if (model) {
         await prisma.aIModelPricing.create({
           data: {
@@ -110,7 +110,7 @@ async function main() {
     }
 
     // Assign default AI model to company (gpt-4o)
-    const defaultModel = createdModels.find(m => m.name === "gpt-4o");
+    const defaultModel = createdModels.find((m) => m.name === "gpt-4o");
     if (defaultModel) {
       await prisma.companyAIModel.create({
         data: {
@@ -127,10 +127,11 @@ async function main() {
     console.log(`Company: ${company.name}`);
     console.log(`Admin user: ${adminUser.email}`);
     console.log(`Password: 8QbL26tB7fWS`);
-    console.log(`AI Models: ${createdModels.length} models created with current pricing`);
+    console.log(
+      `AI Models: ${createdModels.length} models created with current pricing`
+    );
     console.log(`Default model: ${defaultModel?.name}`);
     console.log("\n🚀 Ready to start importing CSV data!");
-
   } catch (error) {
     console.error("❌ Error seeding database:", error);
     process.exit(1);

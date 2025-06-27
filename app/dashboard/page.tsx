@@ -46,7 +46,8 @@ const DashboardPage: FC = () => {
   const navigationCards = [
     {
       title: "Analytics Overview",
-      description: "View comprehensive metrics, charts, and insights from your chat sessions",
+      description:
+        "View comprehensive metrics, charts, and insights from your chat sessions",
       icon: <BarChart3 className="h-6 w-6" />,
       href: "/dashboard/overview",
       variant: "primary" as const,
@@ -54,7 +55,8 @@ const DashboardPage: FC = () => {
     },
     {
       title: "Session Browser",
-      description: "Browse, search, and analyze individual conversation sessions",
+      description:
+        "Browse, search, and analyze individual conversation sessions",
       icon: <MessageSquare className="h-6 w-6" />,
       href: "/dashboard/sessions",
       variant: "success" as const,
@@ -64,16 +66,22 @@ const DashboardPage: FC = () => {
       ? [
           {
             title: "Company Settings",
-            description: "Configure company settings, integrations, and API connections",
+            description:
+              "Configure company settings, integrations, and API connections",
             icon: <Settings className="h-6 w-6" />,
             href: "/dashboard/company",
             variant: "warning" as const,
-            features: ["API configuration", "Integration settings", "Data management"],
+            features: [
+              "API configuration",
+              "Integration settings",
+              "Data management",
+            ],
             adminOnly: true,
           },
           {
             title: "User Management",
-            description: "Invite team members and manage user accounts and permissions",
+            description:
+              "Invite team members and manage user accounts and permissions",
             icon: <Users className="h-6 w-6" />,
             href: "/dashboard/users",
             variant: "default" as const,
@@ -129,7 +137,7 @@ const DashboardPage: FC = () => {
                 Choose a section below to explore your analytics dashboard
               </p>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4" />
@@ -152,7 +160,7 @@ const DashboardPage: FC = () => {
           >
             {/* Subtle gradient overlay */}
             <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
-            
+
             <CardHeader className="relative">
               <div className="flex items-start justify-between">
                 <div className="space-y-3">
@@ -186,7 +194,10 @@ const DashboardPage: FC = () => {
               {/* Features List */}
               <div className="space-y-2">
                 {card.features.map((feature, featureIndex) => (
-                  <div key={featureIndex} className="flex items-center gap-2 text-sm">
+                  <div
+                    key={featureIndex}
+                    className="flex items-center gap-2 text-sm"
+                  >
                     <div className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
                     <span className="text-muted-foreground">{feature}</span>
                   </div>
@@ -232,7 +243,7 @@ const DashboardPage: FC = () => {
               </div>
               <p className="text-sm text-muted-foreground">Data updates</p>
             </div>
-            
+
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <Shield className="h-5 w-5 text-green-600" />
@@ -240,7 +251,7 @@ const DashboardPage: FC = () => {
               </div>
               <p className="text-sm text-muted-foreground">Data protection</p>
             </div>
-            
+
             <div className="text-center space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <BarChart3 className="h-5 w-5 text-blue-600" />

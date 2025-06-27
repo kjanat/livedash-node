@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -9,9 +9,242 @@ datasource db {
   directUrl = env("DATABASE_URL_DIRECT")
 }
 
-/**
- * ENUMS – fewer magic strings
- */
+/// *
+///  * COMPANY  (multi-tenant root)
+model Company {
+  id              String           @id @default(uuid())
+  name            String
+  csvUrl          String
+  csvUsername     String?
+  csvPassword     String?
+  sentimentAlert  Float?
+  dashboardOpts   Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  companyAiModels CompanyAIModel[]
+  sessions        Session[]
+  imports         SessionImport[]
+  users           User[]           @relation("CompanyUsers")
+}
+
+/// *
+///  * USER  (auth accounts)
+model User {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  password         String
+  role             UserRole  @default(USER)
+  companyId        String
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
+}
+
+/// *
+///  * 1.  Normalised session ---------------------------
+model Session {
+  id                   String                    @id @default(uuid())
+  companyId            String
+  importId             String?                   @unique
+  /// *
+  ///    * session-level data (processed from SessionImport)
+  startTime            DateTime
+  endTime              DateTime
+  ipAddress            String?
+  country              String?
+  fullTranscriptUrl    String?
+  avgResponseTime      Float?
+  initialMsg           String?
+  language             String?
+  messagesSent         Int?
+  sentiment            SentimentCategory?
+  escalated            Boolean?
+  forwardedHr          Boolean?
+  category             SessionCategory?
+  summary              String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  aiProcessingRequests AIProcessingRequest[]
+  messages             Message[]
+  company              Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  import               SessionImport?            @relation("ImportToSession", fields: [importId], references: [id])
+  processingStatus     SessionProcessingStatus[]
+  sessionQuestions     SessionQuestion[]
+
+  @@index([companyId, startTime])
+}
+
+/// *
+///  * 2.  Raw CSV row (pure data storage) ----------
+model SessionImport {
+  id                     String   @id @default(uuid())
+  companyId              String
+  externalSessionId      String   @unique
+  startTimeRaw           String
+  endTimeRaw             String
+  ipAddress              String?
+  countryCode            String?
+  language               String?
+  messagesSent           Int?
+  sentimentRaw           String?
+  escalatedRaw           String?
+  forwardedHrRaw         String?
+  fullTranscriptUrl      String?
+  avgResponseTimeSeconds Float?
+  tokens                 Int?
+  tokensEur              Float?
+  category               String?
+  initialMessage         String?
+  rawTranscriptContent   String?
+  createdAt              DateTime @default(now())
+  session                Session? @relation("ImportToSession")
+  company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, externalSessionId])
+}
+
+/// *
+///  * MESSAGE  (individual lines)
+model Message {
+  id        String    @id @default(uuid())
+  sessionId String
+  timestamp DateTime?
+  role      String
+  content   String
+  order     Int
+  createdAt DateTime  @default(now())
+  session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, order])
+  @@index([sessionId, order])
+}
+
+/// *
+///  * UNIFIED PROCESSING STATUS TRACKING
+model SessionProcessingStatus {
+  id           String           @id @default(uuid())
+  sessionId    String
+  stage        ProcessingStage
+  status       ProcessingStatus @default(PENDING)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?
+  retryCount   Int              @default(0)
+  metadata     Json?
+  session      Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, stage])
+  @@index([stage, status])
+  @@index([sessionId])
+}
+
+/// *
+///  * QUESTION MANAGEMENT (separate from Session for better analytics)
+model Question {
+  id               String            @id @default(uuid())
+  content          String            @unique
+  createdAt        DateTime          @default(now())
+  sessionQuestions SessionQuestion[]
+}
+
+model SessionQuestion {
+  id         String   @id @default(uuid())
+  sessionId  String
+  questionId String
+  order      Int
+  createdAt  DateTime @default(now())
+  question   Question @relation(fields: [questionId], references: [id])
+  session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, questionId])
+  @@unique([sessionId, order])
+  @@index([sessionId])
+}
+
+/// *
+///  * AI PROCESSING COST TRACKING
+model AIProcessingRequest {
+  id                       String    @id @default(uuid())
+  sessionId                String
+  openaiRequestId          String?
+  model                    String
+  serviceTier              String?
+  systemFingerprint        String?
+  promptTokens             Int
+  completionTokens         Int
+  totalTokens              Int
+  cachedTokens             Int?
+  audioTokensPrompt        Int?
+  reasoningTokens          Int?
+  audioTokensCompletion    Int?
+  acceptedPredictionTokens Int?
+  rejectedPredictionTokens Int?
+  promptTokenCost          Float
+  completionTokenCost      Float
+  totalCostEur             Float
+  processingType           String
+  success                  Boolean
+  errorMessage             String?
+  requestedAt              DateTime  @default(now())
+  completedAt              DateTime?
+  session                  Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([requestedAt])
+  @@index([model])
+}
+
+/// *
+///  * AI Model definitions (without pricing)
+model AIModel {
+  id            String           @id @default(uuid())
+  name          String           @unique
+  provider      String
+  maxTokens     Int?
+  isActive      Boolean          @default(true)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  pricing       AIModelPricing[]
+  companyModels CompanyAIModel[]
+
+  @@index([provider, isActive])
+}
+
+/// *
+///  * Time-based pricing for AI models
+model AIModelPricing {
+  id                  String    @id @default(uuid())
+  aiModelId           String
+  promptTokenCost     Float
+  completionTokenCost Float
+  effectiveFrom       DateTime
+  effectiveUntil      DateTime?
+  createdAt           DateTime  @default(now())
+  aiModel             AIModel   @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+
+  @@index([aiModelId, effectiveFrom])
+  @@index([effectiveFrom, effectiveUntil])
+}
+
+/// *
+///  * Company-specific AI model assignments
+model CompanyAIModel {
+  id        String   @id @default(uuid())
+  companyId String
+  aiModelId String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  aiModel   AIModel  @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, aiModelId])
+  @@index([companyId, isDefault])
+}
+
+/// *
+///  * ENUMS – fewer magic strings
 enum UserRole {
   ADMIN
   USER
@@ -41,11 +274,11 @@ enum SessionCategory {
 }
 
 enum ProcessingStage {
-  CSV_IMPORT           // SessionImport created
-  TRANSCRIPT_FETCH     // Transcript content fetched
-  SESSION_CREATION     // Session + Messages created  
-  AI_ANALYSIS         // AI processing completed
-  QUESTION_EXTRACTION // Questions extracted
+  CSV_IMPORT
+  TRANSCRIPT_FETCH
+  SESSION_CREATION
+  AI_ANALYSIS
+  QUESTION_EXTRACTION
 }
 
 enum ProcessingStatus {
@@ -54,323 +287,4 @@ enum ProcessingStatus {
   COMPLETED
   FAILED
   SKIPPED
-}
-
-/**
- * COMPANY  (multi-tenant root)
- */
-model Company {
-  id             String  @id @default(uuid())
-  name           String
-  csvUrl         String
-  csvUsername    String?
-  csvPassword    String?
-  sentimentAlert Float?
-  dashboardOpts  Json? // JSON column instead of opaque string
-
-  users           User[]            @relation("CompanyUsers")
-  sessions        Session[]
-  imports         SessionImport[]
-  companyAiModels CompanyAIModel[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-/**
- * USER  (auth accounts)
- */
-model User {
-  id       String   @id @default(uuid())
-  email    String   @unique
-  password String
-  role     UserRole @default(USER)
-
-  company   Company @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-
-  resetToken       String?
-  resetTokenExpiry DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-/**
- * SESSION ↔ SESSIONIMPORT   (1-to-1)
- */
-
-/**
- * 1.  Normalised session ---------------------------
- */
-model Session {
-  id        String  @id @default(uuid())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-
-  /**
-   * 1-to-1 link back to the import row
-   */
-  import   SessionImport? @relation("ImportToSession", fields: [importId], references: [id])
-  importId String?        @unique
-
-  /**
-   * session-level data (processed from SessionImport)
-   */
-  startTime DateTime
-  endTime   DateTime
-  
-  // Direct copies from SessionImport (minimal processing)
-  ipAddress              String?
-  country                String?  // from countryCode
-  fullTranscriptUrl      String?
-  avgResponseTime        Float?   // from avgResponseTimeSeconds
-  initialMsg             String?  // from initialMessage
-  
-  // AI-processed fields (calculated from Messages or AI analysis)
-  language               String?  // AI-detected from Messages
-  messagesSent           Int?     // Calculated from Message count
-  sentiment              SentimentCategory?  // AI-analyzed (changed from Float to enum)
-  escalated              Boolean? // AI-detected
-  forwardedHr            Boolean? // AI-detected
-  category               SessionCategory?    // AI-categorized (changed to enum)
-  
-  // AI-generated fields
-  summary                String?  // AI-generated summary
-
-  /**
-   * Relationships
-   */
-  messages               Message[]               // Individual conversation messages
-  sessionQuestions       SessionQuestion[]       // Questions asked in this session
-  aiProcessingRequests   AIProcessingRequest[]   // AI processing cost tracking
-  processingStatus       SessionProcessingStatus[] // Processing pipeline status
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([companyId, startTime])
-}
-
-/**
- * 2.  Raw CSV row (pure data storage) ----------
- */
-model SessionImport {
-  id        String  @id @default(uuid())
-  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  companyId String
-
-  /**
-   * 1-to-1 back-relation; NO fields/references here
-   */
-  session Session? @relation("ImportToSession")
-
-  // ─── 16 CSV columns 1-to-1 ────────────────────────
-  externalSessionId      String  @unique // value from CSV column 1
-  startTimeRaw           String
-  endTimeRaw             String
-  ipAddress              String?
-  countryCode            String?
-  language               String?
-  messagesSent           Int?
-  sentimentRaw           String?
-  escalatedRaw           String?
-  forwardedHrRaw         String?
-  fullTranscriptUrl      String?
-  avgResponseTimeSeconds Float?
-  tokens                 Int?
-  tokensEur              Float?
-  category               String?
-  initialMessage         String?
-
-  // ─── Raw transcript content ─────────────────────────
-  rawTranscriptContent   String? // Fetched content from fullTranscriptUrl
-
-  // ─── bookkeeping ─────────────────────────────────
-  createdAt   DateTime @default(now())
-
-  @@unique([companyId, externalSessionId]) // idempotent re-imports
-}
-
-/**
- * MESSAGE  (individual lines)
- */
-model Message {
-  id String @id @default(uuid())
-
-  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionId String
-
-  timestamp DateTime?
-  role      String // "user" | "assistant" | "system" – free-form keeps migration easy
-  content   String
-  order     Int
-
-  createdAt DateTime @default(now())
-
-  @@unique([sessionId, order]) // guards against duplicate order values
-  @@index([sessionId, order])
-}
-
-/**
- * UNIFIED PROCESSING STATUS TRACKING
- */
-model SessionProcessingStatus {
-  id        String @id @default(uuid())
-  sessionId String
-  stage     ProcessingStage
-  status    ProcessingStatus @default(PENDING)
-  
-  startedAt    DateTime?
-  completedAt  DateTime?
-  errorMessage String?
-  retryCount   Int @default(0)
-  
-  // Stage-specific metadata (e.g., AI costs, token usage, fetch details)
-  metadata     Json?
-  
-  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
-  @@unique([sessionId, stage])
-  @@index([stage, status])
-  @@index([sessionId])
-}
-
-/**
- * QUESTION MANAGEMENT (separate from Session for better analytics)
- */
-model Question {
-  id          String @id @default(uuid())
-  content     String @unique // The actual question text
-  createdAt   DateTime @default(now())
-  
-  // Relationships
-  sessionQuestions SessionQuestion[]
-}
-
-model SessionQuestion {
-  id          String @id @default(uuid())
-  sessionId   String
-  questionId  String
-  order       Int    // Order within the session
-  createdAt   DateTime @default(now())
-  
-  // Relationships
-  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  question    Question @relation(fields: [questionId], references: [id])
-  
-  @@unique([sessionId, questionId]) // Prevent duplicate questions per session
-  @@unique([sessionId, order])      // Ensure unique ordering
-  @@index([sessionId])
-}
-
-/**
- * AI PROCESSING COST TRACKING
- */
-model AIProcessingRequest {
-  id                    String @id @default(uuid())
-  sessionId             String
-  
-  // OpenAI Request Details
-  openaiRequestId       String?  // "chatcmpl-Bn8IH9UM8t7luZVWnwZG7CVJ0kjPo"
-  model                 String   // "gpt-4o-2024-08-06"
-  serviceTier           String?  // "default"
-  systemFingerprint     String?  // "fp_07871e2ad8"
-  
-  // Token Usage (from usage object)
-  promptTokens          Int      // 11
-  completionTokens      Int      // 9
-  totalTokens           Int      // 20
-  
-  // Detailed Token Breakdown
-  cachedTokens          Int?     // prompt_tokens_details.cached_tokens
-  audioTokensPrompt     Int?     // prompt_tokens_details.audio_tokens
-  reasoningTokens       Int?     // completion_tokens_details.reasoning_tokens
-  audioTokensCompletion Int?     // completion_tokens_details.audio_tokens
-  acceptedPredictionTokens Int?  // completion_tokens_details.accepted_prediction_tokens
-  rejectedPredictionTokens Int?  // completion_tokens_details.rejected_prediction_tokens
-  
-  // Cost Calculation
-  promptTokenCost       Float    // Cost per prompt token (varies by model)
-  completionTokenCost   Float    // Cost per completion token (varies by model)
-  totalCostEur          Float    // Calculated total cost in EUR
-  
-  // Processing Context
-  processingType        String   // "session_analysis", "reprocessing", etc.
-  success               Boolean  // Whether the request succeeded
-  errorMessage          String?  // If failed, what went wrong
-  
-  // Timestamps
-  requestedAt           DateTime @default(now())
-  completedAt           DateTime?
-  
-  // Relationships
-  session               Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  
-  @@index([sessionId])
-  @@index([requestedAt])
-  @@index([model])
-}
-
-/**
- * AI MODEL MANAGEMENT SYSTEM
- */
-
-/**
- * AI Model definitions (without pricing)
- */
-model AIModel {
-  id          String  @id @default(uuid())
-  name        String  @unique // "gpt-4o", "gpt-4-turbo", etc.
-  provider    String  // "openai", "anthropic", etc.
-  maxTokens   Int?    // Maximum tokens for this model
-  isActive    Boolean @default(true)
-  
-  // Relationships
-  pricing         AIModelPricing[]
-  companyModels   CompanyAIModel[]
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  @@index([provider, isActive])
-}
-
-/**
- * Time-based pricing for AI models
- */
-model AIModelPricing {
-  id                  String    @id @default(uuid())
-  aiModelId           String
-  promptTokenCost     Float     // Cost per prompt token in USD
-  completionTokenCost Float     // Cost per completion token in USD
-  effectiveFrom       DateTime  // When this pricing becomes effective
-  effectiveUntil      DateTime? // When this pricing expires (null = current)
-  
-  // Relationships
-  aiModel AIModel @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@index([aiModelId, effectiveFrom])
-  @@index([effectiveFrom, effectiveUntil])
-}
-
-/**
- * Company-specific AI model assignments
- */
-model CompanyAIModel {
-  id        String  @id @default(uuid())
-  companyId String
-  aiModelId String
-  isDefault Boolean @default(false) // Is this the default model for the company?
-  
-  // Relationships
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  aiModel AIModel @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([companyId, aiModelId]) // Prevent duplicate assignments
-  @@index([companyId, isDefault])
 }

@@ -60,7 +60,10 @@ export default function ModernLineChart({
       )}
       <CardContent>
         <ResponsiveContainer width="100%" height={height}>
-          <ChartComponent data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <ChartComponent
+            data={data}
+            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+          >
             <defs>
               {gradient && (
                 <linearGradient id="colorGradient" x1="0" y1="0" x2="0" y2="1">
@@ -69,9 +72,9 @@ export default function ModernLineChart({
                 </linearGradient>
               )}
             </defs>
-            <CartesianGrid 
-              strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--border))"
               strokeOpacity={0.3}
             />
             <XAxis
@@ -88,7 +91,7 @@ export default function ModernLineChart({
               axisLine={false}
             />
             <Tooltip content={<CustomTooltip />} />
-            
+
             {gradient ? (
               <Area
                 type="monotone"

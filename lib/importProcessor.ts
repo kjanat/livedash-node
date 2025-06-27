@@ -1,7 +1,15 @@
 // SessionImport to Session processor
-import { PrismaClient, SentimentCategory, SessionCategory, ProcessingStage } from "@prisma/client";
+import {
+  PrismaClient,
+  SentimentCategory,
+  SessionCategory,
+  ProcessingStage,
+} from "@prisma/client";
 import { getSchedulerConfig } from "./env";
-import { fetchTranscriptContent, isValidTranscriptUrl } from "./transcriptFetcher";
+import {
+  fetchTranscriptContent,
+  isValidTranscriptUrl,
+} from "./transcriptFetcher";
 import { ProcessingStatusManager } from "./processingStatusManager";
 import cron from "node-cron";
 
@@ -11,25 +19,29 @@ const prisma = new PrismaClient();
  * Parse European date format (DD.MM.YYYY HH:mm:ss) to JavaScript Date
  */
 function parseEuropeanDate(dateStr: string): Date {
-  if (!dateStr || typeof dateStr !== 'string') {
+  if (!dateStr || typeof dateStr !== "string") {
     throw new Error(`Invalid date string: ${dateStr}`);
   }
 
   // Handle format: "DD.MM.YYYY HH:mm:ss"
-  const [datePart, timePart] = dateStr.trim().split(' ');
+  const [datePart, timePart] = dateStr.trim().split(" ");
 
   if (!datePart || !timePart) {
-    throw new Error(`Invalid date format: ${dateStr}. Expected format: DD.MM.YYYY HH:mm:ss`);
+    throw new Error(
+      `Invalid date format: ${dateStr}. Expected format: DD.MM.YYYY HH:mm:ss`
+    );
   }
 
-  const [day, month, year] = datePart.split('.');
+  const [day, month, year] = datePart.split(".");
 
   if (!day || !month || !year) {
-    throw new Error(`Invalid date part: ${datePart}. Expected format: DD.MM.YYYY`);
+    throw new Error(
+      `Invalid date part: ${datePart}. Expected format: DD.MM.YYYY`
+    );
   }
 
   // Convert to ISO format: YYYY-MM-DD HH:mm:ss
-  const isoDateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timePart}`;
+  const isoDateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")} ${timePart}`;
   const date = new Date(isoDateStr);
 
   if (isNaN(date.getTime())) {
@@ -42,13 +54,15 @@ function parseEuropeanDate(dateStr: string): Date {
 /**
  * Helper function to parse sentiment from raw string (fallback only)
  */
-function parseFallbackSentiment(sentimentRaw: string | null): SentimentCategory | null {
+function parseFallbackSentiment(
+  sentimentRaw: string | null
+): SentimentCategory | null {
   if (!sentimentRaw) return null;
 
   const sentimentStr = sentimentRaw.toLowerCase();
-  if (sentimentStr.includes('positive')) {
+  if (sentimentStr.includes("positive")) {
     return SentimentCategory.POSITIVE;
-  } else if (sentimentStr.includes('negative')) {
+  } else if (sentimentStr.includes("negative")) {
     return SentimentCategory.NEGATIVE;
   } else {
     return SentimentCategory.NEUTRAL;
@@ -60,20 +74,25 @@ function parseFallbackSentiment(sentimentRaw: string | null): SentimentCategory 
  */
 function parseFallbackBoolean(rawValue: string | null): boolean | null {
   if (!rawValue) return null;
-  return ['true', '1', 'yes', 'escalated', 'forwarded'].includes(rawValue.toLowerCase());
+  return ["true", "1", "yes", "escalated", "forwarded"].includes(
+    rawValue.toLowerCase()
+  );
 }
 
 /**
  * Parse transcript content into Message records
  */
-async function parseTranscriptIntoMessages(sessionId: string, transcriptContent: string): Promise<void> {
+async function parseTranscriptIntoMessages(
+  sessionId: string,
+  transcriptContent: string
+): Promise<void> {
   // Clear existing messages for this session
   await prisma.message.deleteMany({
-    where: { sessionId }
+    where: { sessionId },
   });
 
   // Split transcript into lines and parse each message
-  const lines = transcriptContent.split('\n').filter(line => line.trim());
+  const lines = transcriptContent.split("\n").filter((line) => line.trim());
   let order = 0;
 
   for (const line of lines) {
@@ -84,7 +103,7 @@ async function parseTranscriptIntoMessages(sessionId: string, transcriptContent:
     // Format 1: "User: message" or "Assistant: message"
     // Format 2: "[timestamp] User: message" or "[timestamp] Assistant: message"
 
-    let role = 'unknown';
+    let role = "unknown";
     let content = trimmedLine;
     let timestamp: Date | null = null;
 
@@ -107,7 +126,7 @@ async function parseTranscriptIntoMessages(sessionId: string, transcriptContent:
       content = roleMatch[2].trim();
     } else {
       // If no role prefix found, try to infer from context or use 'unknown'
-      role = 'unknown';
+      role = "unknown";
     }
 
     // Skip empty content
@@ -127,14 +146,18 @@ async function parseTranscriptIntoMessages(sessionId: string, transcriptContent:
     order++;
   }
 
-  console.log(`[Import Processor] ✓ Parsed ${order} messages for session ${sessionId}`);
+  console.log(
+    `[Import Processor] ✓ Parsed ${order} messages for session ${sessionId}`
+  );
 }
 
 /**
  * Process a single SessionImport record into a Session record
  * Uses new unified processing status tracking
  */
-async function processSingleImport(importRecord: any): Promise<{ success: boolean; error?: string }> {
+async function processSingleImport(
+  importRecord: any
+): Promise<{ success: boolean; error?: string }> {
   let sessionId: string | null = null;
 
   try {
@@ -142,7 +165,9 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
     const startTime = parseEuropeanDate(importRecord.startTimeRaw);
     const endTime = parseEuropeanDate(importRecord.endTimeRaw);
 
-    console.log(`[Import Processor] Processing ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`);
+    console.log(
+      `[Import Processor] Processing ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`
+    );
 
     // Create or update Session record with MINIMAL processing
     const session = await prisma.session.upsert({
@@ -179,15 +204,27 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
     await ProcessingStatusManager.initializeSession(sessionId);
 
     // Mark CSV_IMPORT as completed
-    await ProcessingStatusManager.completeStage(sessionId, ProcessingStage.CSV_IMPORT);
+    await ProcessingStatusManager.completeStage(
+      sessionId,
+      ProcessingStage.CSV_IMPORT
+    );
 
     // Handle transcript fetching
     let transcriptContent = importRecord.rawTranscriptContent;
 
-    if (!transcriptContent && importRecord.fullTranscriptUrl && isValidTranscriptUrl(importRecord.fullTranscriptUrl)) {
-      await ProcessingStatusManager.startStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH);
+    if (
+      !transcriptContent &&
+      importRecord.fullTranscriptUrl &&
+      isValidTranscriptUrl(importRecord.fullTranscriptUrl)
+    ) {
+      await ProcessingStatusManager.startStage(
+        sessionId,
+        ProcessingStage.TRANSCRIPT_FETCH
+      );
 
-      console.log(`[Import Processor] Fetching transcript for ${importRecord.externalSessionId}...`);
+      console.log(
+        `[Import Processor] Fetching transcript for ${importRecord.externalSessionId}...`
+      );
 
       // Get company credentials for transcript fetching
       const company = await prisma.company.findUnique({
@@ -203,7 +240,9 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
 
       if (transcriptResult.success) {
         transcriptContent = transcriptResult.content;
-        console.log(`[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`);
+        console.log(
+          `[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`
+        );
 
         // Update the import record with the fetched content
         await prisma.sessionImport.update({
@@ -211,36 +250,61 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
           data: { rawTranscriptContent: transcriptContent },
         });
 
-        await ProcessingStatusManager.completeStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, {
-          contentLength: transcriptContent?.length || 0,
-          url: importRecord.fullTranscriptUrl
-        });
+        await ProcessingStatusManager.completeStage(
+          sessionId,
+          ProcessingStage.TRANSCRIPT_FETCH,
+          {
+            contentLength: transcriptContent?.length || 0,
+            url: importRecord.fullTranscriptUrl,
+          }
+        );
       } else {
-        console.log(`[Import Processor] ⚠️ Failed to fetch transcript for ${importRecord.externalSessionId}: ${transcriptResult.error}`);
-        await ProcessingStatusManager.failStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, transcriptResult.error || 'Unknown error');
+        console.log(
+          `[Import Processor] ⚠️ Failed to fetch transcript for ${importRecord.externalSessionId}: ${transcriptResult.error}`
+        );
+        await ProcessingStatusManager.failStage(
+          sessionId,
+          ProcessingStage.TRANSCRIPT_FETCH,
+          transcriptResult.error || "Unknown error"
+        );
       }
     } else if (!importRecord.fullTranscriptUrl) {
       // No transcript URL available - skip this stage
-      await ProcessingStatusManager.skipStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, 'No transcript URL provided');
+      await ProcessingStatusManager.skipStage(
+        sessionId,
+        ProcessingStage.TRANSCRIPT_FETCH,
+        "No transcript URL provided"
+      );
     } else {
       // Transcript already fetched
-      await ProcessingStatusManager.completeStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, {
-        contentLength: transcriptContent?.length || 0,
-        source: 'already_fetched'
-      });
+      await ProcessingStatusManager.completeStage(
+        sessionId,
+        ProcessingStage.TRANSCRIPT_FETCH,
+        {
+          contentLength: transcriptContent?.length || 0,
+          source: "already_fetched",
+        }
+      );
     }
 
     // Handle session creation (parse messages)
-    await ProcessingStatusManager.startStage(sessionId, ProcessingStage.SESSION_CREATION);
+    await ProcessingStatusManager.startStage(
+      sessionId,
+      ProcessingStage.SESSION_CREATION
+    );
 
     if (transcriptContent) {
       await parseTranscriptIntoMessages(sessionId, transcriptContent);
     }
 
-    await ProcessingStatusManager.completeStage(sessionId, ProcessingStage.SESSION_CREATION, {
-      hasTranscript: !!transcriptContent,
-      transcriptLength: transcriptContent?.length || 0
-    });
+    await ProcessingStatusManager.completeStage(
+      sessionId,
+      ProcessingStage.SESSION_CREATION,
+      {
+        hasTranscript: !!transcriptContent,
+        transcriptLength: transcriptContent?.length || 0,
+      }
+    );
 
     return { success: true };
   } catch (error) {
@@ -249,13 +313,31 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
     // Mark the current stage as failed if we have a sessionId
     if (sessionId) {
       // Determine which stage failed based on the error
-      if (errorMessage.includes('transcript') || errorMessage.includes('fetch')) {
-        await ProcessingStatusManager.failStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, errorMessage);
-      } else if (errorMessage.includes('message') || errorMessage.includes('parse')) {
-        await ProcessingStatusManager.failStage(sessionId, ProcessingStage.SESSION_CREATION, errorMessage);
+      if (
+        errorMessage.includes("transcript") ||
+        errorMessage.includes("fetch")
+      ) {
+        await ProcessingStatusManager.failStage(
+          sessionId,
+          ProcessingStage.TRANSCRIPT_FETCH,
+          errorMessage
+        );
+      } else if (
+        errorMessage.includes("message") ||
+        errorMessage.includes("parse")
+      ) {
+        await ProcessingStatusManager.failStage(
+          sessionId,
+          ProcessingStage.SESSION_CREATION,
+          errorMessage
+        );
       } else {
         // General failure - mark CSV_IMPORT as failed
-        await ProcessingStatusManager.failStage(sessionId, ProcessingStage.CSV_IMPORT, errorMessage);
+        await ProcessingStatusManager.failStage(
+          sessionId,
+          ProcessingStage.CSV_IMPORT,
+          errorMessage
+        );
       }
     }
 
@@ -270,8 +352,10 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
  * Process unprocessed SessionImport records into Session records
  * Uses new processing status system to find imports that need processing
  */
-export async function processQueuedImports(batchSize: number = 50): Promise<void> {
-  console.log('[Import Processor] Starting to process unprocessed imports...');
+export async function processQueuedImports(
+  batchSize: number = 50
+): Promise<void> {
+  console.log("[Import Processor] Starting to process unprocessed imports...");
 
   let totalSuccessCount = 0;
   let totalErrorCount = 0;
@@ -285,20 +369,24 @@ export async function processQueuedImports(batchSize: number = 50): Promise<void
       },
       take: batchSize,
       orderBy: {
-        createdAt: 'asc', // Process oldest first
+        createdAt: "asc", // Process oldest first
       },
     });
 
     if (unprocessedImports.length === 0) {
       if (batchNumber === 1) {
-        console.log('[Import Processor] No unprocessed imports found');
+        console.log("[Import Processor] No unprocessed imports found");
       } else {
-        console.log(`[Import Processor] All batches completed. Total: ${totalSuccessCount} successful, ${totalErrorCount} failed`);
+        console.log(
+          `[Import Processor] All batches completed. Total: ${totalSuccessCount} successful, ${totalErrorCount} failed`
+        );
       }
       return;
     }
 
-    console.log(`[Import Processor] Processing batch ${batchNumber}: ${unprocessedImports.length} imports...`);
+    console.log(
+      `[Import Processor] Processing batch ${batchNumber}: ${unprocessedImports.length} imports...`
+    );
 
     let batchSuccessCount = 0;
     let batchErrorCount = 0;
@@ -310,20 +398,28 @@ export async function processQueuedImports(batchSize: number = 50): Promise<void
       if (result.success) {
         batchSuccessCount++;
         totalSuccessCount++;
-        console.log(`[Import Processor] ✓ Processed import ${importRecord.externalSessionId}`);
+        console.log(
+          `[Import Processor] ✓ Processed import ${importRecord.externalSessionId}`
+        );
       } else {
         batchErrorCount++;
         totalErrorCount++;
-        console.log(`[Import Processor] ✗ Failed to process import ${importRecord.externalSessionId}: ${result.error}`);
+        console.log(
+          `[Import Processor] ✗ Failed to process import ${importRecord.externalSessionId}: ${result.error}`
+        );
       }
     }
 
-    console.log(`[Import Processor] Batch ${batchNumber} completed: ${batchSuccessCount} successful, ${batchErrorCount} failed`);
+    console.log(
+      `[Import Processor] Batch ${batchNumber} completed: ${batchSuccessCount} successful, ${batchErrorCount} failed`
+    );
     batchNumber++;
 
     // If this batch was smaller than the batch size, we're done
     if (unprocessedImports.length < batchSize) {
-      console.log(`[Import Processor] All batches completed. Total: ${totalSuccessCount} successful, ${totalErrorCount} failed`);
+      console.log(
+        `[Import Processor] All batches completed. Total: ${totalSuccessCount} successful, ${totalErrorCount} failed`
+      );
       return;
     }
   }
@@ -336,15 +432,20 @@ export function startImportProcessingScheduler(): void {
   const config = getSchedulerConfig();
 
   if (!config.enabled) {
-    console.log('[Import Processing Scheduler] Disabled via configuration');
+    console.log("[Import Processing Scheduler] Disabled via configuration");
     return;
   }
 
   // Use a more frequent interval for import processing (every 5 minutes by default)
-  const interval = process.env.IMPORT_PROCESSING_INTERVAL || '*/5 * * * *';
-  const batchSize = parseInt(process.env.IMPORT_PROCESSING_BATCH_SIZE || '50', 10);
+  const interval = process.env.IMPORT_PROCESSING_INTERVAL || "*/5 * * * *";
+  const batchSize = parseInt(
+    process.env.IMPORT_PROCESSING_BATCH_SIZE || "50",
+    10
+  );
 
-  console.log(`[Import Processing Scheduler] Starting with interval: ${interval}`);
+  console.log(
+    `[Import Processing Scheduler] Starting with interval: ${interval}`
+  );
   console.log(`[Import Processing Scheduler] Batch size: ${batchSize}`);
 
   cron.schedule(interval, async () => {

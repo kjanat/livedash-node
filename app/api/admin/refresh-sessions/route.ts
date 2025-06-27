@@ -37,12 +37,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const company = await prisma.company.findUnique({ where: { id: companyId } });
+    const company = await prisma.company.findUnique({
+      where: { id: companyId },
+    });
     if (!company) {
-      return NextResponse.json(
-        { error: "Company not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
     const rawSessionData = await fetchAndParseCsv(
@@ -114,12 +113,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Immediately process the queued imports to create Session records
-    console.log('[Refresh API] Processing queued imports...');
+    console.log("[Refresh API] Processing queued imports...");
     await processQueuedImports(100); // Process up to 100 imports immediately
 
     // Count how many sessions were created
     const sessionCount = await prisma.session.count({
-      where: { companyId: company.id }
+      where: { companyId: company.id },
     });
 
     return NextResponse.json({
@@ -127,7 +126,7 @@ export async function POST(request: NextRequest) {
       imported: importedCount,
       total: rawSessionData.length,
       sessions: sessionCount,
-      message: `Successfully imported ${importedCount} records and processed them into sessions. Total sessions: ${sessionCount}`
+      message: `Successfully imported ${importedCount} records and processed them into sessions. Total sessions: ${sessionCount}`,
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred";

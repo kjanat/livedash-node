@@ -1,5 +1,5 @@
 // Vitest test setup
-import { vi } from 'vitest';
+import { vi } from "vitest";
 
 // Mock console methods to reduce noise in tests
 global.console = {
@@ -10,8 +10,8 @@ global.console = {
 };
 
 // Set test environment variables
-process.env.NEXTAUTH_SECRET = 'test-secret';
-process.env.NEXTAUTH_URL = 'http://localhost:3000';
+process.env.NEXTAUTH_SECRET = "test-secret";
+process.env.NEXTAUTH_URL = "http://localhost:3000";
 
 // Use test database for all database operations during tests
 if (process.env.DATABASE_URL_TEST) {
@@ -19,6 +19,6 @@ if (process.env.DATABASE_URL_TEST) {
 }
 
 // Mock node-fetch for transcript fetcher tests
-vi.mock('node-fetch', () => ({
+vi.mock("node-fetch", () => ({
   default: vi.fn(),
 }));

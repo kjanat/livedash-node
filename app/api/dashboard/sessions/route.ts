@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   const companyId = authSession.user.companyId;
   const { searchParams } = new URL(request.url);
-  
+
   const searchTerm = searchParams.get("searchTerm");
   const category = searchParams.get("category");
   const language = searchParams.get("language");
@@ -87,9 +87,7 @@ export async function GET(request: NextRequest) {
       | Prisma.SessionOrderByWithRelationInput[];
 
     const primarySortField =
-      sortKey && validSortKeys[sortKey]
-        ? validSortKeys[sortKey]
-        : "startTime"; // Default to startTime field if sortKey is invalid/missing
+      sortKey && validSortKeys[sortKey] ? validSortKeys[sortKey] : "startTime"; // Default to startTime field if sortKey is invalid/missing
 
     const primarySortOrder =
       sortOrder === "asc" || sortOrder === "desc" ? sortOrder : "desc"; // Default to desc order
