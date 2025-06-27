@@ -108,7 +108,7 @@ export default function SessionViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-sky-100 p-4 md:p-6">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 to-sky-100 p-4 md:p-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-6">
           <Link

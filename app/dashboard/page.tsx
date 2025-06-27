@@ -87,13 +87,13 @@ const DashboardPage: FC = () => {
   const getCardClasses = (variant: string) => {
     switch (variant) {
       case "primary":
-        return "border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15";
+        return "border-primary/20 bg-linear-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15";
       case "success":
-        return "border-green-200 bg-gradient-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 dark:border-green-800 dark:from-green-950 dark:to-green-900";
+        return "border-green-200 bg-linear-to-br from-green-50 to-green-100 hover:from-green-100 hover:to-green-150 dark:border-green-800 dark:from-green-950 dark:to-green-900";
       case "warning":
-        return "border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-150 dark:border-amber-800 dark:from-amber-950 dark:to-amber-900";
+        return "border-amber-200 bg-linear-to-br from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-150 dark:border-amber-800 dark:from-amber-950 dark:to-amber-900";
       default:
-        return "border-border bg-gradient-to-br from-card to-muted/20 hover:from-muted/30 hover:to-muted/40";
+        return "border-border bg-linear-to-br from-card to-muted/20 hover:from-muted/30 hover:to-muted/40";
     }
   };
 
@@ -113,7 +113,7 @@ const DashboardPage: FC = () => {
   return (
     <div className="space-y-8">
       {/* Welcome Header */}
-      <Card className="border-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+      <Card className="border-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-2">
@@ -151,7 +151,7 @@ const DashboardPage: FC = () => {
             onClick={() => router.push(card.href)}
           >
             {/* Subtle gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
+            <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
             
             <CardHeader className="relative">
               <div className="flex items-start justify-between">

@@ -282,7 +282,7 @@ function DashboardContent() {
   return (
     <div className="space-y-8">
       {/* Modern Header */}
-      <Card className="border-0 bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5">
+      <Card className="border-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5">
         <CardHeader>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-2">

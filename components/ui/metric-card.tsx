@@ -51,15 +51,15 @@ export default function MetricCard({
   const getVariantClasses = () => {
     switch (variant) {
       case "primary":
-        return "border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10";
+        return "border-primary/20 bg-linear-to-br from-primary/5 to-primary/10";
       case "success":
-        return "border-green-200 bg-gradient-to-br from-green-50 to-green-100 dark:border-green-800 dark:from-green-950 dark:to-green-900";
+        return "border-green-200 bg-linear-to-br from-green-50 to-green-100 dark:border-green-800 dark:from-green-950 dark:to-green-900";
       case "warning":
-        return "border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100 dark:border-amber-800 dark:from-amber-950 dark:to-amber-900";
+        return "border-amber-200 bg-linear-to-br from-amber-50 to-amber-100 dark:border-amber-800 dark:from-amber-950 dark:to-amber-900";
       case "danger":
-        return "border-red-200 bg-gradient-to-br from-red-50 to-red-100 dark:border-red-800 dark:from-red-950 dark:to-red-900";
+        return "border-red-200 bg-linear-to-br from-red-50 to-red-100 dark:border-red-800 dark:from-red-950 dark:to-red-900";
       default:
-        return "border-border bg-gradient-to-br from-card to-muted/20";
+        return "border-border bg-linear-to-br from-card to-muted/20";
     }
   };
 
@@ -106,7 +106,7 @@ export default function MetricCard({
       )}
     >
       {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
       
       <CardHeader className="pb-3 relative">
         <div className="flex items-start justify-between">

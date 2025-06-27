@@ -22,7 +22,7 @@ export default function WelcomeBanner({ companyName }: WelcomeBannerProps) {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-xl shadow-lg mb-8">
+    <div className="bg-linear-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-xl shadow-lg mb-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">

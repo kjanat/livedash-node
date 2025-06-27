@@ -167,7 +167,7 @@ const NavItem: React.FC<NavItemProps> = ({
       }
     }}
   >
-    <span className={`flex-shrink-0 ${isExpanded ? "mr-3" : "mx-auto"}`}>
+    <span className={`shrink-0 ${isExpanded ? "mr-3" : "mx-auto"}`}>
       {icon}
     </span>
     {isExpanded ? (
@@ -334,7 +334,7 @@ export default function Sidebar({
               isExpanded ? "" : "justify-center"
             }`}
           >
-            <span className={`flex-shrink-0 ${isExpanded ? "mr-3" : ""}`}>
+            <span className={`shrink-0 ${isExpanded ? "mr-3" : ""}`}>
               <LogoutIcon />
             </span>
             {isExpanded ? (
