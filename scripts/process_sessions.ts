@@ -19,10 +19,36 @@ interface OpenAIProcessedData {
 }
 
 /**
+ * Fetches transcript content from a URL
+ */
+async function fetchTranscriptContent(
+  url: string,
+  username?: string,
+  password?: string
+): Promise<string | null> {
+  try {
+    const authHeader =
+      username && password
+        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+        : undefined;
+
+    const response = await fetch(url, {
+      headers: authHeader ? { Authorization: authHeader } : {},
+    });
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch transcript from ${url}: ${response.statusText}`);
+      return null;
+    }
+    return await response.text();
+  } catch (error) {
+    console.warn(`Error fetching transcript from ${url}:`, error);
+    return null;
+  }
+}
+
+/**
  * Processes a session transcript using OpenAI API
- * @param sessionId The session ID
- * @param transcript The transcript content to process
- * @returns Processed data from OpenAI
  */
 async function processTranscriptWithOpenAI(
   sessionId: string,
@@ -32,7 +58,6 @@ async function processTranscriptWithOpenAI(
     throw new Error("OPENAI_API_KEY environment variable is not set");
   }
 
-  // Create a system message with instructions
   const systemMessage = `
     You are an AI assistant tasked with analyzing chat transcripts.
     Extract the following information from the transcript:
@@ -91,7 +116,7 @@ async function processTranscriptWithOpenAI(
             content: transcript,
           },
         ],
-        temperature: 0.3, // Lower temperature for more consistent results
+        temperature: 0.3,
         response_format: { type: "json_object" },
       }),
     });
@@ -104,9 +129,7 @@ async function processTranscriptWithOpenAI(
     const data = (await response.json()) as any;
     const processedData = JSON.parse(data.choices[0].message.content);
 
-    // Validate the response against our expected schema
     validateOpenAIResponse(processedData);
-
     return processedData;
   } catch (error) {
     console.error(`Error processing transcript with OpenAI:`, error);
@@ -116,22 +139,11 @@ async function processTranscriptWithOpenAI(
 
 /**
  * Validates the OpenAI response against our expected schema
- * @param data The data to validate
  */
-function validateOpenAIResponse(
-  data: any
-): asserts data is OpenAIProcessedData {
-  // Check required fields
+function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData {
   const requiredFields = [
-    "language",
-    "messages_sent",
-    "sentiment",
-    "escalated",
-    "forwarded_hr",
-    "category",
-    "questions",
-    "summary",
-    "session_id",
+    "language", "messages_sent", "sentiment", "escalated", 
+    "forwarded_hr", "category", "questions", "summary", "session_id"
   ];
 
   for (const field of requiredFields) {
@@ -140,11 +152,8 @@ function validateOpenAIResponse(
     }
   }
 
-  // Validate field types
   if (typeof data.language !== "string" || !/^[a-z]{2}$/.test(data.language)) {
-    throw new Error(
-      "Invalid language format. Expected ISO 639-1 code (e.g., 'en')"
-    );
+    throw new Error("Invalid language format. Expected ISO 639-1 code (e.g., 'en')");
   }
 
   if (typeof data.messages_sent !== "number" || data.messages_sent < 0) {
@@ -152,9 +161,7 @@ function validateOpenAIResponse(
   }
 
   if (!["positive", "neutral", "negative"].includes(data.sentiment)) {
-    throw new Error(
-      "Invalid sentiment. Expected 'positive', 'neutral', or 'negative'"
-    );
+    throw new Error("Invalid sentiment. Expected 'positive', 'neutral', or 'negative'");
   }
 
   if (typeof data.escalated !== "boolean") {
@@ -166,39 +173,22 @@ function validateOpenAIResponse(
   }
 
   const validCategories = [
-    "Schedule & Hours",
-    "Leave & Vacation",
-    "Sick Leave & Recovery",
-    "Salary & Compensation",
-    "Contract & Hours",
-    "Onboarding",
-    "Offboarding",
-    "Workwear & Staff Pass",
-    "Team & Contacts",
-    "Personal Questions",
-    "Access & Login",
-    "Social questions",
-    "Unrecognized / Other",
+    "Schedule & Hours", "Leave & Vacation", "Sick Leave & Recovery",
+    "Salary & Compensation", "Contract & Hours", "Onboarding", "Offboarding",
+    "Workwear & Staff Pass", "Team & Contacts", "Personal Questions",
+    "Access & Login", "Social questions", "Unrecognized / Other"
   ];
 
   if (!validCategories.includes(data.category)) {
-    throw new Error(
-      `Invalid category. Expected one of: ${validCategories.join(", ")}`
-    );
+    throw new Error(`Invalid category. Expected one of: ${validCategories.join(", ")}`);
   }
 
   if (!Array.isArray(data.questions)) {
     throw new Error("Invalid questions. Expected array of strings");
   }
 
-  if (
-    typeof data.summary !== "string" ||
-    data.summary.length < 10 ||
-    data.summary.length > 300
-  ) {
-    throw new Error(
-      "Invalid summary. Expected string between 10-300 characters"
-    );
+  if (typeof data.summary !== "string" || data.summary.length < 10 || data.summary.length > 300) {
+    throw new Error("Invalid summary. Expected string between 10-300 characters");
   }
 
   if (typeof data.session_id !== "string") {
@@ -207,86 +197,146 @@ function validateOpenAIResponse(
 }
 
 /**
- * Main function to process unprocessed sessions
+ * Main function to process SessionImport records that need processing
  */
 async function processUnprocessedSessions() {
-  console.log("Starting to process unprocessed sessions...");
+  console.log("Starting to process unprocessed SessionImport records...");
 
-  // Find sessions that have transcript content but haven't been processed
-  const sessionsToProcess = await prisma.session.findMany({
+  // Find SessionImport records that are QUEUED and have transcript URLs
+  const importsToProcess = await prisma.sessionImport.findMany({
     where: {
-      AND: [
-        { transcriptContent: { not: null } },
-        { transcriptContent: { not: "" } },
-        { processed: { not: true } }, // Either false or null
-      ],
+      status: "QUEUED",
+      fullTranscriptUrl: { not: null },
     },
-    select: {
-      id: true,
-      transcriptContent: true,
+    include: {
+      company: true,
     },
   });
 
-  if (sessionsToProcess.length === 0) {
-    console.log("No sessions found requiring processing.");
+  if (importsToProcess.length === 0) {
+    console.log("No SessionImport records found requiring processing.");
     return;
   }
 
-  console.log(`Found ${sessionsToProcess.length} sessions to process.`);
+  console.log(`Found ${importsToProcess.length} SessionImport records to process.`);
   let successCount = 0;
   let errorCount = 0;
 
-  for (const session of sessionsToProcess) {
-    if (!session.transcriptContent) {
-      // Should not happen due to query, but good for type safety
-      console.warn(
-        `Session ${session.id} has no transcript content, skipping.`
-      );
+  for (const importRecord of importsToProcess) {
+    if (!importRecord.fullTranscriptUrl) {
+      console.warn(`SessionImport ${importRecord.id} has no transcript URL, skipping.`);
       continue;
     }
 
-    console.log(`Processing transcript for session ${session.id}...`);
+    console.log(`Processing transcript for SessionImport ${importRecord.id}...`);
+    
     try {
-      const processedData = await processTranscriptWithOpenAI(
-        session.id,
-        session.transcriptContent
+      // Mark as processing
+      await prisma.sessionImport.update({
+        where: { id: importRecord.id },
+        data: { status: "PROCESSING" },
+      });
+
+      // Fetch transcript content
+      const transcriptContent = await fetchTranscriptContent(
+        importRecord.fullTranscriptUrl,
+        importRecord.company.csvUsername || undefined,
+        importRecord.company.csvPassword || undefined
       );
 
-      // Map sentiment string to float value for compatibility with existing data
-      const sentimentMap: Record<string, number> = {
-        positive: 0.8,
-        neutral: 0.0,
-        negative: -0.8,
-      };
+      if (!transcriptContent) {
+        throw new Error("Failed to fetch transcript content");
+      }
 
-      // Update the session with processed data
-      await prisma.session.update({
-        where: { id: session.id },
-        data: {
+      // Process with OpenAI
+      const processedData = await processTranscriptWithOpenAI(
+        importRecord.externalSessionId,
+        transcriptContent
+      );
+
+      // Parse dates from raw strings
+      const startTime = new Date(importRecord.startTimeRaw);
+      const endTime = new Date(importRecord.endTimeRaw);
+
+      // Create or update Session record
+      const session = await prisma.session.upsert({
+        where: { importId: importRecord.id },
+        update: {
+          startTime: isNaN(startTime.getTime()) ? new Date() : startTime,
+          endTime: isNaN(endTime.getTime()) ? new Date() : endTime,
+          ipAddress: importRecord.ipAddress,
+          country: importRecord.countryCode,
           language: processedData.language,
           messagesSent: processedData.messages_sent,
-          sentiment: sentimentMap[processedData.sentiment] || 0,
-          sentimentCategory: processedData.sentiment,
+          sentiment: { positive: 0.8, neutral: 0.0, negative: -0.8 }[processedData.sentiment] || 0,
+          sentimentCategory: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
+          fullTranscriptUrl: importRecord.fullTranscriptUrl,
+          avgResponseTime: importRecord.avgResponseTimeSeconds,
+          tokens: importRecord.tokens,
+          tokensEur: importRecord.tokensEur,
           category: processedData.category,
+          initialMsg: importRecord.initialMessage,
+          processed: true,
           questions: JSON.stringify(processedData.questions),
           summary: processedData.summary,
+        },
+        create: {
+          companyId: importRecord.companyId,
+          importId: importRecord.id,
+          startTime: isNaN(startTime.getTime()) ? new Date() : startTime,
+          endTime: isNaN(endTime.getTime()) ? new Date() : endTime,
+          ipAddress: importRecord.ipAddress,
+          country: importRecord.countryCode,
+          language: processedData.language,
+          messagesSent: processedData.messages_sent,
+          sentiment: { positive: 0.8, neutral: 0.0, negative: -0.8 }[processedData.sentiment] || 0,
+          sentimentCategory: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
+          escalated: processedData.escalated,
+          forwardedHr: processedData.forwarded_hr,
+          fullTranscriptUrl: importRecord.fullTranscriptUrl,
+          avgResponseTime: importRecord.avgResponseTimeSeconds,
+          tokens: importRecord.tokens,
+          tokensEur: importRecord.tokensEur,
+          category: processedData.category,
+          initialMsg: importRecord.initialMessage,
           processed: true,
+          questions: JSON.stringify(processedData.questions),
+          summary: processedData.summary,
         },
       });
 
-      console.log(`Successfully processed session ${session.id}.`);
+      // Mark SessionImport as DONE
+      await prisma.sessionImport.update({
+        where: { id: importRecord.id },
+        data: { 
+          status: "DONE",
+          processedAt: new Date(),
+        },
+      });
+
+      console.log(`Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`);
       successCount++;
     } catch (error) {
-      console.error(`Error processing session ${session.id}:`, error);
+      console.error(`Error processing SessionImport ${importRecord.id}:`, error);
+      
+      // Mark as ERROR
+      await prisma.sessionImport.update({
+        where: { id: importRecord.id },
+        data: { 
+          status: "ERROR",
+          errorMsg: error instanceof Error ? error.message : String(error),
+        },
+      });
+      
       errorCount++;
     }
   }
 
-  console.log("Session processing complete.");
-  console.log(`Successfully processed: ${successCount} sessions.`);
-  console.log(`Failed to process: ${errorCount} sessions.`);
+  console.log("SessionImport processing complete.");
+  console.log(`Successfully processed: ${successCount} records.`);
+  console.log(`Failed to process: ${errorCount} records.`);
 }
 
 // Run the main function

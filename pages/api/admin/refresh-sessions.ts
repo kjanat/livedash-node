@@ -3,49 +3,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { fetchAndParseCsv } from "../../../lib/csvFetcher";
 import { prisma } from "../../../lib/prisma";
 
-interface SessionCreateData {
-  id: string;
-  startTime: Date;
-  companyId: string;
-  sessionId?: string;
-  [key: string]: unknown;
-}
-
-/**
- * Fetches transcript content from a URL
- * @param url The URL to fetch the transcript from
- * @param username Optional username for authentication
- * @param password Optional password for authentication
- * @returns The transcript content or null if fetching fails
- */
-async function fetchTranscriptContent(
-  url: string,
-  username?: string,
-  password?: string
-): Promise<string | null> {
-  try {
-    const authHeader =
-      username && password
-        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
-        : undefined;
-
-    const response = await fetch(url, {
-      headers: authHeader ? { Authorization: authHeader } : {},
-    });
-
-    if (!response.ok) {
-      process.stderr.write(
-        `Error fetching transcript: ${response.statusText}\n`
-      );
-      return null;
-    }
-    return await response.text();
-  } catch (error) {
-    process.stderr.write(`Failed to fetch transcript: ${error}\n`);
-    return null;
-  }
-}
-
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -88,85 +45,80 @@ export default async function handler(
   if (!company) return res.status(404).json({ error: "Company not found" });
 
   try {
-    const sessions = await fetchAndParseCsv(
+    const rawSessionData = await fetchAndParseCsv(
       company.csvUrl,
       company.csvUsername as string | undefined,
       company.csvPassword as string | undefined
     );
 
-    // Only add sessions that don't already exist in the database
-    for (const session of sessions) {
-      const sessionData: SessionCreateData = {
-        ...session,
-        companyId: company.id,
-        id:
-          session.id ||
-          session.sessionId ||
-          `sess_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        // Ensure startTime is not undefined
-        startTime: session.startTime || new Date(),
-      };
+    let importedCount = 0;
 
-      // Validate dates to prevent "Invalid Date" errors
-      const startTime =
-        sessionData.startTime instanceof Date &&
-        !isNaN(sessionData.startTime.getTime())
-          ? sessionData.startTime
-          : new Date();
-
-      const endTime =
-        session.endTime instanceof Date && !isNaN(session.endTime.getTime())
-          ? session.endTime
-          : new Date();
-
-      // Note: transcriptContent field was removed from schema
-      // Transcript content can be fetched on-demand from fullTranscriptUrl
-
-      // Check if the session already exists
-      const existingSession = await prisma.session.findUnique({
-        where: { id: sessionData.id },
-      });
-
-      if (existingSession) {
-        // Skip this session as it already exists
-        continue;
+    // Create SessionImport records for new data
+    for (const rawSession of rawSessionData) {
+      try {
+        // Use upsert to handle duplicates gracefully
+        await prisma.sessionImport.upsert({
+          where: {
+            companyId_externalSessionId: {
+              companyId: company.id,
+              externalSessionId: rawSession.externalSessionId,
+            },
+          },
+          update: {
+            // Update existing record with latest data
+            startTimeRaw: rawSession.startTimeRaw,
+            endTimeRaw: rawSession.endTimeRaw,
+            ipAddress: rawSession.ipAddress,
+            countryCode: rawSession.countryCode,
+            language: rawSession.language,
+            messagesSent: rawSession.messagesSent,
+            sentimentRaw: rawSession.sentimentRaw,
+            escalatedRaw: rawSession.escalatedRaw,
+            forwardedHrRaw: rawSession.forwardedHrRaw,
+            fullTranscriptUrl: rawSession.fullTranscriptUrl,
+            avgResponseTimeSeconds: rawSession.avgResponseTimeSeconds,
+            tokens: rawSession.tokens,
+            tokensEur: rawSession.tokensEur,
+            category: rawSession.category,
+            initialMessage: rawSession.initialMessage,
+            status: "QUEUED", // Reset status for reprocessing if needed
+          },
+          create: {
+            companyId: company.id,
+            externalSessionId: rawSession.externalSessionId,
+            startTimeRaw: rawSession.startTimeRaw,
+            endTimeRaw: rawSession.endTimeRaw,
+            ipAddress: rawSession.ipAddress,
+            countryCode: rawSession.countryCode,
+            language: rawSession.language,
+            messagesSent: rawSession.messagesSent,
+            sentimentRaw: rawSession.sentimentRaw,
+            escalatedRaw: rawSession.escalatedRaw,
+            forwardedHrRaw: rawSession.forwardedHrRaw,
+            fullTranscriptUrl: rawSession.fullTranscriptUrl,
+            avgResponseTimeSeconds: rawSession.avgResponseTimeSeconds,
+            tokens: rawSession.tokens,
+            tokensEur: rawSession.tokensEur,
+            category: rawSession.category,
+            initialMessage: rawSession.initialMessage,
+            status: "QUEUED",
+          },
+        });
+        importedCount++;
+      } catch (error) {
+        // Log individual session import errors but continue processing
+        process.stderr.write(
+          `Failed to import session ${rawSession.externalSessionId}: ${error}\n`
+        );
       }
-
-      // Only include fields that are properly typed for Prisma
-      await prisma.session.create({
-        data: {
-          id: sessionData.id,
-          companyId: sessionData.companyId,
-          startTime: startTime,
-          endTime: endTime,
-          ipAddress: session.ipAddress || null,
-          country: session.country || null,
-          language: session.language || null,
-          messagesSent:
-            typeof session.messagesSent === "number" ? session.messagesSent : 0,
-          sentiment:
-            typeof session.sentiment === "number" ? session.sentiment : null,
-          escalated:
-            typeof session.escalated === "boolean" ? session.escalated : null,
-          forwardedHr:
-            typeof session.forwardedHr === "boolean"
-              ? session.forwardedHr
-              : null,
-          fullTranscriptUrl: session.fullTranscriptUrl || null,
-          avgResponseTime:
-            typeof session.avgResponseTime === "number"
-              ? session.avgResponseTime
-              : null,
-          tokens: typeof session.tokens === "number" ? session.tokens : null,
-          tokensEur:
-            typeof session.tokensEur === "number" ? session.tokensEur : null,
-          category: session.category || null,
-          initialMsg: session.initialMsg || null,
-        },
-      });
     }
 
-    res.json({ ok: true, imported: sessions.length });
+    res.json({ 
+      ok: true, 
+      imported: importedCount,
+      total: rawSessionData.length,
+      message: `Successfully imported ${importedCount} session records to SessionImport table`
+    });
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred";
     res.status(500).json({ error });

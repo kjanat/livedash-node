@@ -278,7 +278,7 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
         language: processedData.language,
         messagesSent: processedData.messages_sent,
         sentiment: sentimentMap[processedData.sentiment] || 0,
-        sentimentCategory: processedData.sentiment,
+        sentimentCategory: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
         escalated: processedData.escalated,
         forwardedHr: processedData.forwarded_hr,
         category: processedData.category,

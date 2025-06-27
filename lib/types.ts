@@ -38,7 +38,7 @@ export interface User {
 export interface Message {
   id: string;
   sessionId: string;
-  timestamp: Date;
+  timestamp: Date | null;
   role: string; // "User", "Assistant", "System", etc.
   content: string;
   order: number; // Order within the conversation (0, 1, 2, ...)

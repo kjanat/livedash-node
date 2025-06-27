@@ -67,7 +67,7 @@ export default async function handler(
         prismaSession.messages?.map((msg) => ({
           id: msg.id,
           sessionId: msg.sessionId,
-          timestamp: new Date(msg.timestamp),
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
           role: msg.role,
           content: msg.content,
           order: msg.order,

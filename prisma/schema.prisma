@@ -80,11 +80,31 @@ model Session {
   importId String?        @unique
 
   /**
-   * session-level data …
+   * session-level data (processed from SessionImport)
    */
   startTime DateTime
   endTime   DateTime
-  // … whatever other scalar fields you have here …
+  
+  // Processed fields from SessionImport data
+  ipAddress              String?
+  country                String?  // processed from countryCode
+  language               String?  // processed from language
+  messagesSent           Int?
+  sentiment              Float?   // processed from sentimentRaw
+  sentimentCategory      SentimentCategory?
+  escalated              Boolean?
+  forwardedHr            Boolean?
+  fullTranscriptUrl      String?
+  avgResponseTime        Float?   // processed from avgResponseTimeSeconds
+  tokens                 Int?
+  tokensEur              Float?
+  category               String?
+  initialMsg             String?  // processed from initialMessage
+  
+  // Processing metadata
+  processed              Boolean  @default(false)
+  questions              String?  // JSON array of extracted questions
+  summary                String?  // AI-generated summary
 
   /**
    * ---------- the missing opposite side ----------
@@ -154,7 +174,7 @@ model Message {
   session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   sessionId String
 
-  timestamp DateTime
+  timestamp DateTime?
   role      String // "user" | "assistant" | "system" – free-form keeps migration easy
   content   String
   order     Int

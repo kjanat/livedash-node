@@ -46,7 +46,7 @@ export default async function handler(
       email,
       password: hashed,
       companyId: newCompany.id,
-      role: "admin",
+      role: "ADMIN",
     },
   });
   res.status(201).json({

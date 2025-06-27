@@ -150,7 +150,7 @@ export default async function handler(
       tokensEur: ps.tokensEur ?? undefined,
       initialMsg: ps.initialMsg ?? undefined,
       fullTranscriptUrl: ps.fullTranscriptUrl ?? null,
-      transcriptContent: ps.transcriptContent ?? null,
+      transcriptContent: null, // Transcript content is now fetched from fullTranscriptUrl when needed
     }));
 
     return res.status(200).json({ sessions, totalSessions });

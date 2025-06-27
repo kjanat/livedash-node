@@ -49,7 +49,7 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
                   {message.role}
                 </span>
                 <span className="text-xs opacity-75 ml-2">
-                  {new Date(message.timestamp).toLocaleTimeString()}
+                  {message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : 'No timestamp'}
                 </span>
               </div>
               <div className="text-sm whitespace-pre-wrap">
@@ -63,11 +63,14 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
       <div className="mt-4 pt-3 border-t text-sm text-gray-500">
         <div className="flex justify-between">
           <span>
-            First message: {new Date(messages[0].timestamp).toLocaleString()}
+            First message: {messages[0].timestamp ? new Date(messages[0].timestamp).toLocaleString() : 'No timestamp'}
           </span>
           <span>
             Last message:{" "}
-            {new Date(messages[messages.length - 1].timestamp).toLocaleString()}
+            {(() => {
+              const lastMessage = messages[messages.length - 1];
+              return lastMessage.timestamp ? new Date(lastMessage.timestamp).toLocaleString() : 'No timestamp';
+            })()}
           </span>
         </div>
       </div>

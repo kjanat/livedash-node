@@ -20,7 +20,7 @@ async function main() {
       data: {
         email: "admin@demo.com",
         password: hashedPassword,
-        role: "admin",
+        role: "ADMIN",
         companyId: company.id,
       },
     });

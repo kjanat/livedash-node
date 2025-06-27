@@ -41,7 +41,7 @@ export default async function handler(
   }
 
   // Check if user has admin role
-  if (user.role !== "admin") {
+  if (user.role !== "ADMIN") {
     return res.status(403).json({ error: "Admin access required" });
   }
 

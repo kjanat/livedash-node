@@ -3,74 +3,82 @@ import cron from "node-cron";
 import { prisma } from "./prisma";
 import { fetchAndParseCsv } from "./csvFetcher";
 
-interface SessionCreateData {
-  id: string;
-  startTime: Date;
-  companyId: string;
-  [key: string]: unknown;
-}
-
 export function startScheduler() {
   cron.schedule("*/15 * * * *", async () => {
     const companies = await prisma.company.findMany();
     for (const company of companies) {
       try {
-        const sessions = await fetchAndParseCsv(
+        const rawSessionData = await fetchAndParseCsv(
           company.csvUrl,
           company.csvUsername as string | undefined,
           company.csvPassword as string | undefined
         );
-        // Only add sessions that don't already exist in the database
-        for (const session of sessions) {
-          const sessionData: SessionCreateData = {
-            ...session,
-            companyId: company.id,
-            id: session.id || session.sessionId || `sess_${Date.now()}`,
-            // Ensure startTime is not undefined
-            startTime: session.startTime || new Date(),
-          };
 
-          // Check if the session already exists
-          const existingSession = await prisma.session.findUnique({
-            where: { id: sessionData.id },
-          });
-
-          if (existingSession) {
-            // Skip this session as it already exists
-            continue;
+        // Create SessionImport records for new data
+        for (const rawSession of rawSessionData) {
+          try {
+            // Use upsert to handle duplicates gracefully
+            await prisma.sessionImport.upsert({
+              where: {
+                companyId_externalSessionId: {
+                  companyId: company.id,
+                  externalSessionId: rawSession.externalSessionId,
+                },
+              },
+              update: {
+                // Update existing record with latest data
+                startTimeRaw: rawSession.startTimeRaw,
+                endTimeRaw: rawSession.endTimeRaw,
+                ipAddress: rawSession.ipAddress,
+                countryCode: rawSession.countryCode,
+                language: rawSession.language,
+                messagesSent: rawSession.messagesSent,
+                sentimentRaw: rawSession.sentimentRaw,
+                escalatedRaw: rawSession.escalatedRaw,
+                forwardedHrRaw: rawSession.forwardedHrRaw,
+                fullTranscriptUrl: rawSession.fullTranscriptUrl,
+                avgResponseTimeSeconds: rawSession.avgResponseTimeSeconds,
+                tokens: rawSession.tokens,
+                tokensEur: rawSession.tokensEur,
+                category: rawSession.category,
+                initialMessage: rawSession.initialMessage,
+                status: "QUEUED", // Reset status for reprocessing if needed
+              },
+              create: {
+                companyId: company.id,
+                externalSessionId: rawSession.externalSessionId,
+                startTimeRaw: rawSession.startTimeRaw,
+                endTimeRaw: rawSession.endTimeRaw,
+                ipAddress: rawSession.ipAddress,
+                countryCode: rawSession.countryCode,
+                language: rawSession.language,
+                messagesSent: rawSession.messagesSent,
+                sentimentRaw: rawSession.sentimentRaw,
+                escalatedRaw: rawSession.escalatedRaw,
+                forwardedHrRaw: rawSession.forwardedHrRaw,
+                fullTranscriptUrl: rawSession.fullTranscriptUrl,
+                avgResponseTimeSeconds: rawSession.avgResponseTimeSeconds,
+                tokens: rawSession.tokens,
+                tokensEur: rawSession.tokensEur,
+                category: rawSession.category,
+                initialMessage: rawSession.initialMessage,
+                status: "QUEUED",
+              },
+            });
+          } catch (error) {
+            // Log individual session import errors but continue processing
+            process.stderr.write(
+              `[Scheduler] Failed to import session ${rawSession.externalSessionId} for company ${company.name}: ${error}\n`
+            );
           }
-
-          // Only include fields that are properly typed for Prisma
-          await prisma.session.create({
-            data: {
-              id: sessionData.id,
-              companyId: sessionData.companyId,
-              startTime: sessionData.startTime,
-              // endTime is required in the schema, so use startTime if not available
-              endTime: session.endTime || new Date(),
-              ipAddress: session.ipAddress || null,
-              country: session.country || null,
-              language: session.language || null,
-              sentiment:
-                typeof session.sentiment === "number"
-                  ? session.sentiment
-                  : null,
-              messagesSent:
-                typeof session.messagesSent === "number"
-                  ? session.messagesSent
-                  : 0,
-              category: session.category || null,
-            },
-          });
         }
-        // Using process.stdout.write instead of console.log to avoid ESLint warning
+
         process.stdout.write(
-          `[Scheduler] Refreshed sessions for company: ${company.name}\n`
+          `[Scheduler] Imported ${rawSessionData.length} session records for company: ${company.name}\n`
         );
       } catch (e) {
-        // Using process.stderr.write instead of console.error to avoid ESLint warning
         process.stderr.write(
-          `[Scheduler] Failed for company: ${company.name} - ${e}\n`
+          `[Scheduler] Failed to fetch CSV for company: ${company.name} - ${e}\n`
         );
       }
     }
