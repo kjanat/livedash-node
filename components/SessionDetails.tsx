@@ -137,7 +137,7 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           <div className="border-b pb-2">
             <span className="text-gray-600 block mb-1">Initial Message:</span>
             <div className="bg-gray-50 p-2 rounded text-sm italic">
-              "{session.initialMsg}"
+              &quot;{session.initialMsg}&quot;
             </div>
           </div>
         )}
