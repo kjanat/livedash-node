@@ -8,7 +8,7 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const session = await getServerSession(req, res, authOptions);
-  if (!session?.user || session.user.role !== "admin")
+  if (!session?.user || session.user.role !== "ADMIN")
     return res.status(403).json({ error: "Forbidden" });
 
   const user = await prisma.user.findUnique({

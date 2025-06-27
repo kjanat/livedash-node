@@ -1,6 +1,7 @@
 // API route to refresh (fetch+parse+update) session data for a company
 import { NextApiRequest, NextApiResponse } from "next";
 import { fetchAndParseCsv } from "../../../lib/csvFetcher";
+import { processQueuedImports } from "../../../lib/importProcessor";
 import { prisma } from "../../../lib/prisma";
 
 export default async function handler(
@@ -113,11 +114,21 @@ export default async function handler(
       }
     }
 
+    // Immediately process the queued imports to create Session records
+    console.log('[Refresh API] Processing queued imports...');
+    await processQueuedImports(100); // Process up to 100 imports immediately
+
+    // Count how many sessions were created
+    const sessionCount = await prisma.session.count({
+      where: { companyId: company.id }
+    });
+
     res.json({ 
       ok: true, 
       imported: importedCount,
       total: rawSessionData.length,
-      message: `Successfully imported ${importedCount} session records to SessionImport table`
+      sessions: sessionCount,
+      message: `Successfully imported ${importedCount} records and processed them into sessions. Total sessions: ${sessionCount}`
     });
   } catch (e) {
     const error = e instanceof Error ? e.message : "An unknown error occurred";

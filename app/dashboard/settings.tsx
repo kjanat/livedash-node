@@ -37,7 +37,7 @@ export default function DashboardSettings({
     else setMessage("Failed.");
   }
 
-  if (session.user.role !== "admin") return null;
+  if (session.user.role !== "ADMIN") return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">

@@ -40,7 +40,7 @@ export default async function handler(
     return res.status(401).json({ error: "No user found" });
   }
 
-  // Check if user has admin role
+  // Check if user has ADMIN role
   if (user.role !== "ADMIN") {
     return res.status(403).json({ error: "Admin access required" });
   }

@@ -62,7 +62,7 @@ const DashboardPage: FC = () => {
             </button>
           </div>
 
-          {session?.user?.role === "admin" && (
+          {session?.user?.role === "ADMIN" && (
             <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <h2 className="text-lg font-semibold text-purple-700">
                 Company Settings
@@ -79,7 +79,7 @@ const DashboardPage: FC = () => {
             </div>
           )}
 
-          {session?.user?.role === "admin" && (
+          {session?.user?.role === "ADMIN" && (
             <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
               <h2 className="text-lg font-semibold text-amber-700">
                 User Management

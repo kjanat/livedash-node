@@ -69,7 +69,7 @@ export default function UserManagementPage() {
   }
 
   // Check for admin access
-  if (session?.user?.role !== "admin") {
+  if (session?.user?.role !== "ADMIN") {
     return (
       <div className="text-center py-10 bg-white rounded-xl shadow p-6">
         <h2 className="font-bold text-xl text-red-600 mb-2">Access Denied</h2>
@@ -124,8 +124,8 @@ export default function UserManagementPage() {
                 onChange={(e) => setRole(e.target.value)}
               >
                 <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="auditor">Auditor</option>
+                <option value="ADMIN">Admin</option>
+                <option value="AUDITOR">Auditor</option>
               </select>
             </div>
 
@@ -183,9 +183,9 @@ export default function UserManagementPage() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span
                           className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.role === "admin"
+                            user.role === "ADMIN"
                               ? "bg-purple-100 text-purple-800"
-                              : user.role === "auditor"
+                              : user.role === "AUDITOR"
                                 ? "bg-blue-100 text-blue-800"
                                 : "bg-green-100 text-green-800"
                           }`}

@@ -34,7 +34,7 @@ export default function UserManagement({ session }: UserManagementProps) {
     else setMsg("Failed.");
   }
 
-  if (session.user.role !== "admin") return null;
+  if (session.user.role !== "ADMIN") return null;
 
   return (
     <div className="bg-white p-6 rounded-xl shadow mb-6">
@@ -52,8 +52,8 @@ export default function UserManagement({ session }: UserManagementProps) {
           onChange={(e) => setRole(e.target.value)}
         >
           <option value="user">User</option>
-          <option value="admin">Admin</option>
-          <option value="auditor">Auditor</option>
+          <option value="ADMIN">Admin</option>
+          <option value="AUDITOR">Auditor</option>
         </select>
         <button
           className="bg-blue-600 text-white rounded px-4 py-2 sm:py-0 w-full sm:w-auto"

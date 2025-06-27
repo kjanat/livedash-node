@@ -155,6 +155,9 @@ model SessionImport {
   category               String?
   initialMessage         String?
 
+  // ─── Raw transcript content ─────────────────────────
+  rawTranscriptContent   String? // Fetched content from fullTranscriptUrl
+
   // ─── bookkeeping ─────────────────────────────────
   status      ImportStatus @default(QUEUED)
   errorMsg    String?

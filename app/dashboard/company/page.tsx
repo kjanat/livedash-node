@@ -77,8 +77,8 @@ export default function CompanySettingsPage() {
     return <div className="text-center py-10">Loading settings...</div>;
   }
 
-  // Check for admin access
-  if (session?.user?.role !== "admin") {
+  // Check for ADMIN access
+  if (session?.user?.role !== "ADMIN") {
     return (
       <div className="text-center py-10 bg-white rounded-xl shadow p-6">
         <h2 className="font-bold text-xl text-red-600 mb-2">Access Denied</h2>

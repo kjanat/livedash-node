@@ -3,8 +3,9 @@ import { createServer } from "http";
 import { parse } from "url";
 import next from "next";
 import { startCsvImportScheduler } from "./lib/scheduler.js";
+import { startImportProcessingScheduler } from "./lib/importProcessor.js";
 import { startProcessingScheduler } from "./lib/processingScheduler.js";
-import { getSchedulerConfig, logSchedulerConfig } from "./lib/schedulerConfig.js";
+import { getSchedulerConfig, logEnvConfig, validateEnv } from "./lib/env.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -15,14 +16,22 @@ const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
 app.prepare().then(() => {
-  // Get and log scheduler configuration
+  // Validate and log environment configuration
+  const envValidation = validateEnv();
+  if (!envValidation.valid) {
+    console.error('[Environment] Validation errors:', envValidation.errors);
+  }
+  
+  logEnvConfig();
+  
+  // Get scheduler configuration
   const config = getSchedulerConfig();
-  logSchedulerConfig(config);
 
   // Initialize schedulers based on configuration
   if (config.enabled) {
     console.log("Initializing schedulers...");
     startCsvImportScheduler();
+    startImportProcessingScheduler();
     startProcessingScheduler();
     console.log("All schedulers initialized successfully");
   }

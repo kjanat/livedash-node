@@ -31,7 +31,7 @@ function DashboardContent() {
   const [selectedStartDate, setSelectedStartDate] = useState<string>("");
   const [selectedEndDate, setSelectedEndDate] = useState<string>("");
 
-  const isAuditor = session?.user?.role === "auditor";
+  const isAuditor = session?.user?.role === "AUDITOR";
 
   // Function to fetch metrics with optional date range
   const fetchMetrics = useCallback(async (startDate?: string, endDate?: string) => {

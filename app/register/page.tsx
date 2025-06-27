@@ -7,7 +7,7 @@ export default function RegisterPage() {
   const [company, setCompany] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [csvUrl, setCsvUrl] = useState<string>("");
-  const [role, setRole] = useState<string>("admin"); // Default to admin for company registration
+  const [role, setRole] = useState<string>("ADMIN"); // Default to ADMIN for company registration
   const [error, setError] = useState<string>("");
   const router = useRouter();
 
@@ -66,7 +66,7 @@ export default function RegisterPage() {
         >
           <option value="admin">Admin</option>
           <option value="user">User</option>
-          <option value="auditor">Auditor</option>
+          <option value="AUDITOR">Auditor</option>
         </select>
         <button className="bg-blue-600 text-white rounded py-2" type="submit">
           Register & Continue
