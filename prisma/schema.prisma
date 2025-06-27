@@ -1,74 +1,166 @@
-// Database schema, one company = one org, linked to users and CSV config
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "sqlite" // still OK for local/dev; use Postgres in prod
   url      = "file:./dev.db"
 }
 
+/**
+ * ENUMS – fewer magic strings
+ */
+enum UserRole {
+  ADMIN
+  USER
+  AUDITOR
+}
+
+enum SentimentCategory {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+}
+
+/**
+ * COMPANY  (multi-tenant root)
+ */
 model Company {
-  id                String   @id @default(uuid())
-  name              String
-  csvUrl            String   // where to fetch CSV
-  csvUsername       String?  // for basic auth
-  csvPassword       String?
-  sentimentAlert    Float?   // e.g. alert threshold for negative chats
-  dashboardOpts     String?  // JSON blob for per-company dashboard preferences
-  users             User[]
-  sessions          Session[]
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-}
+  id             String  @id @default(uuid())
+  name           String
+  csvUrl         String
+  csvUsername    String?
+  csvPassword    String?
+  sentimentAlert Float?
+  dashboardOpts  Json? // JSON column instead of opaque string
 
-model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   // hashed, use bcrypt
-  company   Company  @relation(fields: [companyId], references: [id])
-  companyId String
-  role      String   // 'admin' | 'user' | 'auditor'
-  resetToken String?
-  resetTokenExpiry DateTime?
-}
+  users    User[]          @relation("CompanyUsers")
+  sessions Session[]
+  imports  SessionImport[]
 
-model Session {
-  id                  String   @id
-  company             Company  @relation(fields: [companyId], references: [id])
-  companyId           String
-  startTime           DateTime
-  endTime             DateTime
-  ipAddress           String?
-  country             String?
-  language            String?
-  messagesSent        Int?
-  sentiment           Float?   // Original sentiment score (float)
-  sentimentCategory   String?  // "positive", "neutral", "negative" from OpenAPI
-  escalated           Boolean?
-  forwardedHr         Boolean?
-  fullTranscriptUrl   String?
-  avgResponseTime     Float?
-  tokens              Int?
-  tokensEur           Float?
-  category            String?
-  initialMsg          String?
-  processed           Boolean  @default(false) // Flag for post-processing status
-  questions           String?  // JSON array of questions asked by user
-  summary             String?  // Brief summary of the conversation
-  messages            Message[] // Relation to parsed messages
-  createdAt           DateTime @default(now())
-}
-
-model Message {
-  id        String   @id @default(uuid())
-  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionId String
-  timestamp DateTime // When the message was sent
-  role      String   // "User", "Assistant", "System", etc.
-  content   String   // The message content
-  order     Int      // Order within the conversation (0, 1, 2, ...)
   createdAt DateTime @default(now())
-  
-  @@index([sessionId, order]) // Index for efficient ordering queries
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * USER  (auth accounts)
+ */
+model User {
+  id       String   @id @default(uuid())
+  email    String   @unique
+  password String
+  role     UserRole @default(USER)
+
+  company   Company @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  resetToken       String?
+  resetTokenExpiry DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/**
+ * SESSION ↔ SESSIONIMPORT   (1-to-1)
+ */
+
+/**
+ * 1.  Normalised session ---------------------------
+ */
+model Session {
+  id        String  @id @default(uuid())
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  /**
+   * 1-to-1 link back to the import row
+   */
+  import   SessionImport? @relation("ImportToSession", fields: [importId], references: [id])
+  importId String?        @unique
+
+  /**
+   * session-level data …
+   */
+  startTime DateTime
+  endTime   DateTime
+  // … whatever other scalar fields you have here …
+
+  /**
+   * ---------- the missing opposite side ----------
+   */
+  messages Message[] // <-- satisfies Message.session
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([companyId, startTime])
+}
+
+/**
+ * 2.  Raw CSV row waiting to be processed ----------
+ */
+enum ImportStatus {
+  QUEUED
+  PROCESSING
+  DONE
+  ERROR
+}
+
+model SessionImport {
+  id        String  @id @default(uuid())
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String
+
+  /**
+   * 1-to-1 back-relation; NO fields/references here
+   */
+  session Session? @relation("ImportToSession")
+
+  // ─── 16 CSV columns 1-to-1 ────────────────────────
+  externalSessionId      String  @unique // value from CSV column 1
+  startTimeRaw           String
+  endTimeRaw             String
+  ipAddress              String?
+  countryCode            String?
+  language               String?
+  messagesSent           Int?
+  sentimentRaw           String?
+  escalatedRaw           String?
+  forwardedHrRaw         String?
+  fullTranscriptUrl      String?
+  avgResponseTimeSeconds Float?
+  tokens                 Int?
+  tokensEur              Float?
+  category               String?
+  initialMessage         String?
+
+  // ─── bookkeeping ─────────────────────────────────
+  status      ImportStatus @default(QUEUED)
+  errorMsg    String?
+  processedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  @@unique([companyId, externalSessionId]) // idempotent re-imports
+  @@index([status])
+}
+
+/**
+ * MESSAGE  (individual lines)
+ */
+model Message {
+  id String @id @default(uuid())
+
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId String
+
+  timestamp DateTime
+  role      String // "user" | "assistant" | "system" – free-form keeps migration easy
+  content   String
+  order     Int
+
+  createdAt DateTime @default(now())
+
+  @@unique([sessionId, order]) // guards against duplicate order values
+  @@index([sessionId, order])
 }

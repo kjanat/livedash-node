@@ -15,6 +15,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.mjs",
     "prisma:push": "prisma db push",
+    "prisma:push:force": "prisma db push --force-reset",
     "prisma:studio": "prisma studio",
     "start": "node server.mjs",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\"",
