@@ -1,5 +1,5 @@
 // Unit tests for transcript fetcher
-import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fetch from 'node-fetch';
 import { 
   fetchTranscriptContent, 
@@ -8,18 +8,18 @@ import {
 } from '../../lib/transcriptFetcher';
 
 // Mock node-fetch
-const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
+const mockFetch = fetch as any;
 
 describe('Transcript Fetcher', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('fetchTranscriptContent', () => {
     it('should successfully fetch transcript content', async () => {
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue('Session transcript content'),
+        text: vi.fn().mockResolvedValue('Session transcript content'),
       };
       mockFetch.mockResolvedValue(mockResponse as any);
 
@@ -40,7 +40,7 @@ describe('Transcript Fetcher', () => {
     it('should handle authentication with username and password', async () => {
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue('Authenticated transcript'),
+        text: vi.fn().mockResolvedValue('Authenticated transcript'),
       };
       mockFetch.mockResolvedValue(mockResponse as any);
 
@@ -82,7 +82,7 @@ describe('Transcript Fetcher', () => {
     it('should handle empty transcript content', async () => {
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue('   '),
+        text: vi.fn().mockResolvedValue('   '),
       };
       mockFetch.mockResolvedValue(mockResponse as any);
 
@@ -135,7 +135,7 @@ describe('Transcript Fetcher', () => {
     it('should trim whitespace from content', async () => {
       const mockResponse = {
         ok: true,
-        text: jest.fn().mockResolvedValue('  \n  Session content  \n  '),
+        text: vi.fn().mockResolvedValue('  \n  Session content  \n  '),
       };
       mockFetch.mockResolvedValue(mockResponse as any);
 
