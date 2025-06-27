@@ -7,24 +7,61 @@ import { getSchedulerConfig } from "./schedulerConfig";
 const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
-
-// Model pricing in USD (update as needed)
-const MODEL_PRICING = {
-  'gpt-4o-2024-08-06': {
-    promptTokenCost: 0.0000025,    // $2.50 per 1M tokens
-    completionTokenCost: 0.00001,  // $10.00 per 1M tokens
-  },
-  'gpt-4-turbo': {
-    promptTokenCost: 0.00001,      // $10.00 per 1M tokens
-    completionTokenCost: 0.00003,  // $30.00 per 1M tokens
-  },
-  'gpt-4o': {
-    promptTokenCost: 0.000005,     // $5.00 per 1M tokens
-    completionTokenCost: 0.000015, // $15.00 per 1M tokens
-  }
-} as const;
+const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
 const USD_TO_EUR_RATE = 0.85; // Update periodically or fetch from API
+
+/**
+ * Get company's default AI model
+ */
+async function getCompanyAIModel(companyId: string): Promise<string> {
+  const companyModel = await prisma.companyAIModel.findFirst({
+    where: {
+      companyId,
+      isDefault: true,
+    },
+    include: {
+      aiModel: true,
+    },
+  });
+
+  return companyModel?.aiModel.name || DEFAULT_MODEL;
+}
+
+/**
+ * Get current pricing for an AI model
+ */
+async function getCurrentModelPricing(modelName: string): Promise<{
+  promptTokenCost: number;
+  completionTokenCost: number;
+} | null> {
+  const model = await prisma.aIModel.findUnique({
+    where: { name: modelName },
+    include: {
+      pricing: {
+        where: {
+          effectiveFrom: { lte: new Date() },
+          OR: [
+            { effectiveUntil: null },
+            { effectiveUntil: { gte: new Date() } }
+          ]
+        },
+        orderBy: { effectiveFrom: 'desc' },
+        take: 1,
+      },
+    },
+  });
+
+  if (!model || model.pricing.length === 0) {
+    return null;
+  }
+
+  const pricing = model.pricing[0];
+  return {
+    promptTokenCost: pricing.promptTokenCost,
+    completionTokenCost: pricing.completionTokenCost,
+  };
+}
 
 interface ProcessedData {
   language: string;
@@ -53,10 +90,20 @@ async function recordAIProcessingRequest(
 ): Promise<void> {
   const usage = openaiResponse.usage;
   const model = openaiResponse.model;
-  const pricing = MODEL_PRICING[model as keyof typeof MODEL_PRICING] || MODEL_PRICING['gpt-4-turbo']; // fallback
   
-  const promptCost = usage.prompt_tokens * pricing.promptTokenCost;
-  const completionCost = usage.completion_tokens * pricing.completionTokenCost;
+  // Get current pricing from database
+  const pricing = await getCurrentModelPricing(model);
+  
+  // Fallback pricing if not found in database
+  const fallbackPricing = {
+    promptTokenCost: 0.00001,      // $10.00 per 1M tokens (gpt-4-turbo rate)
+    completionTokenCost: 0.00003,  // $30.00 per 1M tokens
+  };
+  
+  const finalPricing = pricing || fallbackPricing;
+  
+  const promptCost = usage.prompt_tokens * finalPricing.promptTokenCost;
+  const completionCost = usage.completion_tokens * finalPricing.completionTokenCost;
   const totalCostUsd = promptCost + completionCost;
   const totalCostEur = totalCostUsd * USD_TO_EUR_RATE;
   
@@ -80,8 +127,8 @@ async function recordAIProcessingRequest(
       acceptedPredictionTokens: usage.completion_tokens_details?.accepted_prediction_tokens || null,
       rejectedPredictionTokens: usage.completion_tokens_details?.rejected_prediction_tokens || null,
       
-      promptTokenCost: pricing.promptTokenCost,
-      completionTokenCost: pricing.completionTokenCost,
+      promptTokenCost: finalPricing.promptTokenCost,
+      completionTokenCost: finalPricing.completionTokenCost,
       totalCostEur,
       
       processingType,
@@ -177,10 +224,13 @@ async function calculateEndTime(sessionId: string, fallbackEndTime: Date): Promi
 /**
  * Processes a session transcript using OpenAI API
  */
-async function processTranscriptWithOpenAI(sessionId: string, transcript: string): Promise<ProcessedData> {
+async function processTranscriptWithOpenAI(sessionId: string, transcript: string, companyId: string): Promise<ProcessedData> {
   if (!OPENAI_API_KEY) {
     throw new Error("OPENAI_API_KEY environment variable is not set");
   }
+
+  // Get company's AI model
+  const aiModel = await getCompanyAIModel(companyId);
 
   // Updated system message with exact enum values
   const systemMessage = `
@@ -218,7 +268,7 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
         Authorization: `Bearer ${OPENAI_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "gpt-4o", // Use latest model
+        model: aiModel, // Use company's configured AI model
         messages: [
           {
             role: "system",
@@ -348,7 +398,7 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
       )
       .join("\n");
 
-    const processedData = await processTranscriptWithOpenAI(session.id, transcript);
+    const processedData = await processTranscriptWithOpenAI(session.id, transcript, session.companyId);
 
     // Calculate messagesSent from actual Message records
     const messagesSent = await calculateMessagesSent(session.id);

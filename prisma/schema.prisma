@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_DIRECT")
 }
 
 /**
@@ -38,6 +40,22 @@ enum SessionCategory {
   UNRECOGNIZED_OTHER
 }
 
+enum ProcessingStage {
+  CSV_IMPORT           // SessionImport created
+  TRANSCRIPT_FETCH     // Transcript content fetched
+  SESSION_CREATION     // Session + Messages created  
+  AI_ANALYSIS         // AI processing completed
+  QUESTION_EXTRACTION // Questions extracted
+}
+
+enum ProcessingStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  SKIPPED
+}
+
 /**
  * COMPANY  (multi-tenant root)
  */
@@ -50,9 +68,10 @@ model Company {
   sentimentAlert Float?
   dashboardOpts  Json? // JSON column instead of opaque string
 
-  users    User[]          @relation("CompanyUsers")
-  sessions Session[]
-  imports  SessionImport[]
+  users           User[]            @relation("CompanyUsers")
+  sessions        Session[]
+  imports         SessionImport[]
+  companyAiModels CompanyAIModel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -118,9 +137,6 @@ model Session {
   
   // AI-generated fields
   summary                String?  // AI-generated summary
-  
-  // Processing metadata
-  processed              Boolean  @default(false)
 
   /**
    * Relationships
@@ -128,6 +144,7 @@ model Session {
   messages               Message[]               // Individual conversation messages
   sessionQuestions       SessionQuestion[]       // Questions asked in this session
   aiProcessingRequests   AIProcessingRequest[]   // AI processing cost tracking
+  processingStatus       SessionProcessingStatus[] // Processing pipeline status
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -136,15 +153,8 @@ model Session {
 }
 
 /**
- * 2.  Raw CSV row waiting to be processed ----------
+ * 2.  Raw CSV row (pure data storage) ----------
  */
-enum ImportStatus {
-  QUEUED
-  PROCESSING
-  DONE
-  ERROR
-}
-
 model SessionImport {
   id        String  @id @default(uuid())
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -177,13 +187,9 @@ model SessionImport {
   rawTranscriptContent   String? // Fetched content from fullTranscriptUrl
 
   // ─── bookkeeping ─────────────────────────────────
-  status      ImportStatus @default(QUEUED)
-  errorMsg    String?
-  processedAt DateTime?
-  createdAt   DateTime     @default(now())
+  createdAt   DateTime @default(now())
 
   @@unique([companyId, externalSessionId]) // idempotent re-imports
-  @@index([status])
 }
 
 /**
@@ -204,6 +210,30 @@ model Message {
 
   @@unique([sessionId, order]) // guards against duplicate order values
   @@index([sessionId, order])
+}
+
+/**
+ * UNIFIED PROCESSING STATUS TRACKING
+ */
+model SessionProcessingStatus {
+  id        String @id @default(uuid())
+  sessionId String
+  stage     ProcessingStage
+  status    ProcessingStatus @default(PENDING)
+  
+  startedAt    DateTime?
+  completedAt  DateTime?
+  errorMessage String?
+  retryCount   Int @default(0)
+  
+  // Stage-specific metadata (e.g., AI costs, token usage, fetch details)
+  metadata     Json?
+  
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@unique([sessionId, stage])
+  @@index([stage, status])
+  @@index([sessionId])
 }
 
 /**
@@ -280,4 +310,67 @@ model AIProcessingRequest {
   @@index([sessionId])
   @@index([requestedAt])
   @@index([model])
+}
+
+/**
+ * AI MODEL MANAGEMENT SYSTEM
+ */
+
+/**
+ * AI Model definitions (without pricing)
+ */
+model AIModel {
+  id          String  @id @default(uuid())
+  name        String  @unique // "gpt-4o", "gpt-4-turbo", etc.
+  provider    String  // "openai", "anthropic", etc.
+  maxTokens   Int?    // Maximum tokens for this model
+  isActive    Boolean @default(true)
+  
+  // Relationships
+  pricing         AIModelPricing[]
+  companyModels   CompanyAIModel[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([provider, isActive])
+}
+
+/**
+ * Time-based pricing for AI models
+ */
+model AIModelPricing {
+  id                  String    @id @default(uuid())
+  aiModelId           String
+  promptTokenCost     Float     // Cost per prompt token in USD
+  completionTokenCost Float     // Cost per completion token in USD
+  effectiveFrom       DateTime  // When this pricing becomes effective
+  effectiveUntil      DateTime? // When this pricing expires (null = current)
+  
+  // Relationships
+  aiModel AIModel @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([aiModelId, effectiveFrom])
+  @@index([effectiveFrom, effectiveUntil])
+}
+
+/**
+ * Company-specific AI model assignments
+ */
+model CompanyAIModel {
+  id        String  @id @default(uuid())
+  companyId String
+  aiModelId String
+  isDefault Boolean @default(false) // Is this the default model for the company?
+  
+  // Relationships
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  aiModel AIModel @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([companyId, aiModelId]) // Prevent duplicate assignments
+  @@index([companyId, isDefault])
 }
