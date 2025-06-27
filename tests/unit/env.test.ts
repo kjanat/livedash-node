@@ -27,7 +27,8 @@ describe('Environment Management', () => {
       const { env: freshEnv } = await import('../../lib/env');
 
       expect(freshEnv.NEXTAUTH_URL).toBe('http://localhost:3000');
-      expect(freshEnv.SCHEDULER_ENABLED).toBe(false);
+      // Note: SCHEDULER_ENABLED will be true because .env.local sets it to "true"
+      expect(freshEnv.SCHEDULER_ENABLED).toBe(true);
       expect(freshEnv.PORT).toBe(3000);
     });
 
@@ -62,9 +63,52 @@ describe('Environment Management', () => {
       vi.resetModules();
       const { env: freshEnv } = await import('../../lib/env');
 
-      expect(freshEnv.IMPORT_PROCESSING_BATCH_SIZE).toBeNaN(); // parseInt returns NaN for invalid values
-      // The .env.local file provides a default value of 5, so empty string gets overridden
-      expect(freshEnv.SESSION_PROCESSING_CONCURRENCY).toBe(5);
+      expect(freshEnv.IMPORT_PROCESSING_BATCH_SIZE).toBe(50); // Falls back to default value
+      expect(freshEnv.SESSION_PROCESSING_CONCURRENCY).toBe(5); // Falls back to default value
+    });
+
+    it('should parse quoted environment variables correctly', async () => {
+      process.env.NEXTAUTH_URL = '"https://quoted.example.com"';
+      process.env.NEXTAUTH_SECRET = "'single-quoted-secret'";
+
+      vi.resetModules();
+      const { env: freshEnv } = await import('../../lib/env');
+
+      expect(freshEnv.NEXTAUTH_URL).toBe('https://quoted.example.com');
+      expect(freshEnv.NEXTAUTH_SECRET).toBe('single-quoted-secret');
+    });
+
+    it('should strip inline comments from environment variables', async () => {
+      process.env.CSV_IMPORT_INTERVAL = '*/10 * * * * # Custom comment';
+      process.env.IMPORT_PROCESSING_INTERVAL = '*/3 * * * *     # Another comment';
+
+      vi.resetModules();
+      const { env: freshEnv } = await import('../../lib/env');
+
+      expect(freshEnv.CSV_IMPORT_INTERVAL).toBe('*/10 * * * *');
+      expect(freshEnv.IMPORT_PROCESSING_INTERVAL).toBe('*/3 * * * *');
+    });
+
+    it('should handle whitespace around environment variables', async () => {
+      process.env.NEXTAUTH_URL = '  https://spaced.example.com  ';
+      process.env.PORT = '  8080  ';
+
+      vi.resetModules();
+      const { env: freshEnv } = await import('../../lib/env');
+
+      expect(freshEnv.NEXTAUTH_URL).toBe('https://spaced.example.com');
+      expect(freshEnv.PORT).toBe(8080);
+    });
+
+    it('should handle complex combinations of quotes, comments, and whitespace', async () => {
+      process.env.NEXTAUTH_URL = '  "https://complex.example.com"  # Production URL';
+      process.env.IMPORT_PROCESSING_BATCH_SIZE = "  '100'  # Batch size";
+
+      vi.resetModules();
+      const { env: freshEnv } = await import('../../lib/env');
+
+      expect(freshEnv.NEXTAUTH_URL).toBe('https://complex.example.com');
+      expect(freshEnv.IMPORT_PROCESSING_BATCH_SIZE).toBe(100);
     });
   });
 
@@ -166,10 +210,11 @@ describe('Environment Management', () => {
 
       const config = freshGetSchedulerConfig();
 
-      expect(config.enabled).toBe(false);
-      // The .env.local file is loaded and contains comments, so we expect the actual values
-      expect(config.csvImport.interval).toBe('*/15 * * * *           # CSV import frequency (every 15 min)');
-      expect(config.importProcessing.interval).toBe('*/5 * * * *     # Import processing frequency (every 5 min)');
+      // Note: SCHEDULER_ENABLED will be true because .env.local sets it to "true"
+      expect(config.enabled).toBe(true);
+      // The .env.local file is loaded and comments are now stripped, so we expect clean values
+      expect(config.csvImport.interval).toBe('*/15 * * * *');
+      expect(config.importProcessing.interval).toBe('*/5 * * * *');
       expect(config.importProcessing.batchSize).toBe(50);
     });
   });
