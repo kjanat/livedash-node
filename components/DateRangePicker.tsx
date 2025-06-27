@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 
 interface DateRangePickerProps {
   minDate: string;
@@ -10,7 +10,7 @@ interface DateRangePickerProps {
   initialEndDate?: string;
 }
 
-export default function DateRangePicker({
+function DateRangePicker({
   minDate,
   maxDate,
   onDateRangeChange,
@@ -19,10 +19,26 @@ export default function DateRangePicker({
 }: DateRangePickerProps) {
   const [startDate, setStartDate] = useState(initialStartDate || minDate);
   const [endDate, setEndDate] = useState(initialEndDate || maxDate);
+  const isInitializedRef = useRef(false);
 
   useEffect(() => {
-    // Only notify parent component when dates change, not when the callback changes
-    onDateRangeChange(startDate, endDate);
+    // Update local state when props change (e.g., when date range is loaded from API)
+    if (initialStartDate && initialStartDate !== startDate) {
+      setStartDate(initialStartDate);
+    }
+    if (initialEndDate && initialEndDate !== endDate) {
+      setEndDate(initialEndDate);
+    }
+  }, [initialStartDate, initialEndDate]);
+
+  useEffect(() => {
+    // Only notify parent component after initial render and when dates actually change
+    // This prevents the infinite loop by not including onDateRangeChange in dependencies
+    if (isInitializedRef.current) {
+      onDateRangeChange(startDate, endDate);
+    } else {
+      isInitializedRef.current = true;
+    }
   }, [startDate, endDate]);
 
   const handleStartDateChange = (newStartDate: string) => {
@@ -151,3 +167,6 @@ export default function DateRangePicker({
     </div>
   );
 }
+
+// Export memoized component as default
+export default memo(DateRangePicker);

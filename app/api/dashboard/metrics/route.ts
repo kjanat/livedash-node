@@ -91,13 +91,24 @@ export async function GET(request: NextRequest) {
 
   const metrics = sessionMetrics(chatSessions, companyConfigForMetrics);
 
-  // Calculate date range from sessions
+  // Calculate date range from ALL sessions (not filtered) to get the full available range
   let dateRange: { minDate: string; maxDate: string } | null = null;
-  if (prismaSessions.length > 0) {
-    const dates = prismaSessions.map(s => new Date(s.startTime)).sort((a, b) => a.getTime() - b.getTime());
+  const allSessions = await prisma.session.findMany({
+    where: {
+      companyId: user.companyId,
+    },
+    select: {
+      startTime: true,
+    },
+    orderBy: {
+      startTime: 'asc',
+    },
+  });
+
+  if (allSessions.length > 0) {
     dateRange = {
-      minDate: dates[0].toISOString().split('T')[0], // First session date
-      maxDate: dates[dates.length - 1].toISOString().split('T')[0] // Last session date
+      minDate: allSessions[0].startTime.toISOString().split('T')[0], // First session date
+      maxDate: allSessions[allSessions.length - 1].startTime.toISOString().split('T')[0] // Last session date
     };
   }
 

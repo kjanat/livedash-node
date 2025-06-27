@@ -84,12 +84,15 @@ function DashboardContent() {
     }
   };
 
-  // Handle date range changes
+  // Handle date range changes with proper memoization
   const handleDateRangeChange = useCallback((startDate: string, endDate: string) => {
-    setSelectedStartDate(startDate);
-    setSelectedEndDate(endDate);
-    fetchMetrics(startDate, endDate);
-  }, []);
+    // Only update if dates actually changed to prevent unnecessary API calls
+    if (startDate !== selectedStartDate || endDate !== selectedEndDate) {
+      setSelectedStartDate(startDate);
+      setSelectedEndDate(endDate);
+      fetchMetrics(startDate, endDate);
+    }
+  }, [selectedStartDate, selectedEndDate]);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -329,8 +332,8 @@ function DashboardContent() {
         </CardHeader>
       </Card>
 
-      {/* Date Range Picker - Temporarily disabled to debug infinite loop */}
-      {/* {dateRange && (
+      {/* Date Range Picker */}
+      {dateRange && (
         <DateRangePicker
           minDate={dateRange.minDate}
           maxDate={dateRange.maxDate}
@@ -338,7 +341,7 @@ function DashboardContent() {
           initialStartDate={selectedStartDate}
           initialEndDate={selectedEndDate}
         />
-      )} */}
+      )}
 
       {/* Modern Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
