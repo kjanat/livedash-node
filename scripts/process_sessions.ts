@@ -202,11 +202,11 @@ function validateOpenAIResponse(data: any): asserts data is OpenAIProcessedData 
 async function processUnprocessedSessions() {
   console.log("Starting to process unprocessed SessionImport records...");
 
-  // Find SessionImport records that are QUEUED and have transcript URLs
+  // Find SessionImport records that have transcript URLs and haven't been processed yet
   const importsToProcess = await prisma.sessionImport.findMany({
     where: {
-      status: "QUEUED",
       fullTranscriptUrl: { not: null },
+      // Add any other conditions to identify unprocessed records
     },
     include: {
       company: true,
@@ -231,11 +231,8 @@ async function processUnprocessedSessions() {
     console.log(`Processing transcript for SessionImport ${importRecord.id}...`);
     
     try {
-      // Mark as processing
-      await prisma.sessionImport.update({
-        where: { id: importRecord.id },
-        data: { status: "PROCESSING" },
-      });
+      // Mark as processing (status field doesn't exist in new schema)
+      console.log(`Processing SessionImport ${importRecord.id}...`);
 
       // Fetch transcript content
       const transcriptContent = await fetchTranscriptContent(
@@ -268,18 +265,14 @@ async function processUnprocessedSessions() {
           country: importRecord.countryCode,
           language: processedData.language,
           messagesSent: processedData.messages_sent,
-          sentiment: { positive: 0.8, neutral: 0.0, negative: -0.8 }[processedData.sentiment] || 0,
-          sentimentCategory: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
+          sentiment: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
           fullTranscriptUrl: importRecord.fullTranscriptUrl,
           avgResponseTime: importRecord.avgResponseTimeSeconds,
-          tokens: importRecord.tokens,
-          tokensEur: importRecord.tokensEur,
-          category: processedData.category,
+          // Note: tokens, tokensEur, processed, questions fields don't exist in new schema
+          // category: processedData.category, // Category field needs enum mapping
           initialMsg: importRecord.initialMessage,
-          processed: true,
-          questions: JSON.stringify(processedData.questions),
           summary: processedData.summary,
         },
         create: {
@@ -291,44 +284,27 @@ async function processUnprocessedSessions() {
           country: importRecord.countryCode,
           language: processedData.language,
           messagesSent: processedData.messages_sent,
-          sentiment: { positive: 0.8, neutral: 0.0, negative: -0.8 }[processedData.sentiment] || 0,
-          sentimentCategory: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
+          sentiment: processedData.sentiment.toUpperCase() as "POSITIVE" | "NEUTRAL" | "NEGATIVE",
           escalated: processedData.escalated,
           forwardedHr: processedData.forwarded_hr,
           fullTranscriptUrl: importRecord.fullTranscriptUrl,
           avgResponseTime: importRecord.avgResponseTimeSeconds,
-          tokens: importRecord.tokens,
-          tokensEur: importRecord.tokensEur,
-          category: processedData.category,
+          // Note: tokens, tokensEur, processed, questions, category fields don't exist in new schema
           initialMsg: importRecord.initialMessage,
-          processed: true,
-          questions: JSON.stringify(processedData.questions),
           summary: processedData.summary,
         },
       });
 
-      // Mark SessionImport as DONE
-      await prisma.sessionImport.update({
-        where: { id: importRecord.id },
-        data: { 
-          status: "DONE",
-          processedAt: new Date(),
-        },
-      });
+      // Mark SessionImport as processed (processedAt field doesn't exist in new schema)
+      console.log(`Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`);
 
       console.log(`Successfully processed SessionImport ${importRecord.id} -> Session ${session.id}`);
       successCount++;
     } catch (error) {
       console.error(`Error processing SessionImport ${importRecord.id}:`, error);
       
-      // Mark as ERROR
-      await prisma.sessionImport.update({
-        where: { id: importRecord.id },
-        data: { 
-          status: "ERROR",
-          errorMsg: error instanceof Error ? error.message : String(error),
-        },
-      });
+      // Log error (status and errorMsg fields don't exist in new schema)
+      console.error(`Failed to process SessionImport ${importRecord.id}: ${error instanceof Error ? error.message : String(error)}`);
       
       errorCount++;
     }

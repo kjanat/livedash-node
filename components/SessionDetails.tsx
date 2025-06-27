@@ -70,39 +70,17 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
 
         {session.sentiment !== null && session.sentiment !== undefined && (
           <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Sentiment Score:</span>
-            <span
-              className={`font-medium ${
-                session.sentiment > 0.3
-                  ? "text-green-500"
-                  : session.sentiment < -0.3
-                    ? "text-red-500"
-                    : "text-orange-500"
-              }`}
-            >
-              {session.sentiment > 0.3
-                ? "Positive"
-                : session.sentiment < -0.3
-                  ? "Negative"
-                  : "Neutral"}{" "}
-              ({session.sentiment.toFixed(2)})
-            </span>
-          </div>
-        )}
-
-        {session.sentimentCategory && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">AI Sentiment:</span>
+            <span className="text-gray-600">Sentiment:</span>
             <span
               className={`font-medium capitalize ${
-                session.sentimentCategory === "positive"
+                session.sentiment === "POSITIVE"
                   ? "text-green-500"
-                  : session.sentimentCategory === "negative"
+                  : session.sentiment === "NEGATIVE"
                     ? "text-red-500"
                     : "text-orange-500"
               }`}
             >
-              {session.sentimentCategory}
+              {session.sentiment.toLowerCase()}
             </span>
           </div>
         )}
@@ -112,19 +90,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           <span className="font-medium">{session.messagesSent || 0}</span>
         </div>
 
-        {typeof session.tokens === "number" && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Tokens:</span>
-            <span className="font-medium">{session.tokens}</span>
-          </div>
-        )}
-
-        {typeof session.tokensEur === "number" && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Cost:</span>
-            <span className="font-medium">€{session.tokensEur.toFixed(4)}</span>
-          </div>
-        )}
 
         {session.avgResponseTime !== null &&
           session.avgResponseTime !== undefined && (
@@ -167,16 +132,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         )}
 
-        {session.processed !== null && session.processed !== undefined && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">AI Processed:</span>
-            <span
-              className={`font-medium ${session.processed ? "text-green-500" : "text-gray-500"}`}
-            >
-              {session.processed ? "Yes" : "No"}
-            </span>
-          </div>
-        )}
 
         {session.initialMsg && (
           <div className="border-b pb-2">
@@ -196,30 +151,6 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
           </div>
         )}
 
-        {session.questions && (
-          <div className="border-b pb-2">
-            <span className="text-gray-600 block mb-1">Questions Asked:</span>
-            <div className="bg-yellow-50 p-2 rounded text-sm">
-              {(() => {
-                try {
-                  const questions = JSON.parse(session.questions);
-                  if (Array.isArray(questions) && questions.length > 0) {
-                    return (
-                      <ul className="list-disc list-inside space-y-1">
-                        {questions.map((question: string, index: number) => (
-                          <li key={index}>{question}</li>
-                        ))}
-                      </ul>
-                    );
-                  }
-                  return "No questions identified";
-                } catch {
-                  return session.questions;
-                }
-              })()}
-            </div>
-          </div>
-        )}
 
         {session.fullTranscriptUrl && (
           <div className="flex justify-between pt-2">
