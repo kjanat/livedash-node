@@ -44,7 +44,7 @@ export async function fetchAndParseCsv(
   const res = await fetch(url, {
     headers: authHeader ? { Authorization: authHeader } : {},
   });
-  
+
   if (!res.ok) {
     throw new Error(`Failed to fetch CSV: ${res.status} ${res.statusText}`);
   }

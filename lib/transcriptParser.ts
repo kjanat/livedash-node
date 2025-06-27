@@ -62,7 +62,7 @@ export function parseTranscriptToMessages(
 
     for (const line of lines) {
       const trimmedLine = line.trim();
-      
+
       // Skip empty lines
       if (!trimmedLine) {
         continue;
@@ -70,10 +70,10 @@ export function parseTranscriptToMessages(
 
       // Check if line starts with a timestamp and role [DD.MM.YYYY HH:MM:SS] Role: content
       const timestampRoleMatch = trimmedLine.match(/^\[(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})\]\s+(User|Assistant|System|user|assistant|system):\s*(.*)$/i);
-      
+
       // Check if line starts with just a role (User:, Assistant:, System:, etc.)
       const roleMatch = trimmedLine.match(/^(User|Assistant|System|user|assistant|system):\s*(.*)$/i);
-      
+
       if (timestampRoleMatch) {
         // Save previous message if exists
         if (currentMessage) {
@@ -90,7 +90,7 @@ export function parseTranscriptToMessages(
         const timestamp = timestampRoleMatch[1];
         const role = timestampRoleMatch[2].charAt(0).toUpperCase() + timestampRoleMatch[2].slice(1).toLowerCase();
         const content = timestampRoleMatch[3] || '';
-        
+
         currentMessage = {
           role,
           content,
@@ -111,7 +111,7 @@ export function parseTranscriptToMessages(
         // Start new message without timestamp
         const role = roleMatch[1].charAt(0).toUpperCase() + roleMatch[1].slice(1).toLowerCase();
         const content = roleMatch[2] || '';
-        
+
         currentMessage = {
           role,
           content
@@ -143,7 +143,7 @@ export function parseTranscriptToMessages(
 
     // Calculate timestamps - use parsed timestamps if available, otherwise distribute across session duration
     const hasTimestamps = messages.some(msg => (msg as any).timestamp);
-    
+
     if (hasTimestamps) {
       // Use parsed timestamps from the transcript
       messages.forEach((message, index) => {

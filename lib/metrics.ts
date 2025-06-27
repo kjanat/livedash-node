@@ -345,8 +345,8 @@ export function sessionMetrics(
   let sentimentPositiveCount = 0;
   let sentimentNeutralCount = 0;
   let sentimentNegativeCount = 0;
-  let totalTokens = 0;
-  let totalTokensEur = 0;
+  const totalTokens = 0;
+  const totalTokensEur = 0;
   const wordCounts: { [key: string]: number } = {};
   let alerts = 0;
 

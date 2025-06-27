@@ -6,14 +6,14 @@ import { getSchedulerConfig } from "./schedulerConfig";
 
 export function startCsvImportScheduler() {
   const config = getSchedulerConfig();
-  
+
   if (!config.enabled) {
     console.log('[CSV Import Scheduler] Disabled via configuration');
     return;
   }
 
   console.log(`[CSV Import Scheduler] Starting with interval: ${config.csvImport.interval}`);
-  
+
   cron.schedule(config.csvImport.interval, async () => {
     const companies = await prisma.company.findMany();
     for (const company of companies) {

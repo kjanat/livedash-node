@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
  * Centralized processing status management
  */
 export class ProcessingStatusManager {
-  
+
   /**
    * Initialize processing status for a session with all stages set to PENDING
    */
@@ -34,8 +34,8 @@ export class ProcessingStatusManager {
    * Start a processing stage
    */
   static async startStage(
-    sessionId: string, 
-    stage: ProcessingStage, 
+    sessionId: string,
+    stage: ProcessingStage,
     metadata?: any
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
@@ -62,8 +62,8 @@ export class ProcessingStatusManager {
    * Complete a processing stage successfully
    */
   static async completeStage(
-    sessionId: string, 
-    stage: ProcessingStage, 
+    sessionId: string,
+    stage: ProcessingStage,
     metadata?: any
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
@@ -91,8 +91,8 @@ export class ProcessingStatusManager {
    * Mark a processing stage as failed
    */
   static async failStage(
-    sessionId: string, 
-    stage: ProcessingStage, 
+    sessionId: string,
+    stage: ProcessingStage,
     errorMessage: string,
     metadata?: any
   ): Promise<void> {
@@ -124,8 +124,8 @@ export class ProcessingStatusManager {
    * Skip a processing stage (e.g., no transcript URL available)
    */
   static async skipStage(
-    sessionId: string, 
-    stage: ProcessingStage, 
+    sessionId: string,
+    stage: ProcessingStage,
     reason: string
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
@@ -198,7 +198,7 @@ export class ProcessingStatusManager {
 
     // Organize the data
     const pipeline: Record<string, Record<string, number>> = {};
-    
+
     for (const { stage, status, _count } of statusCounts) {
       if (!pipeline[stage]) {
         pipeline[stage] = {};
@@ -219,7 +219,7 @@ export class ProcessingStatusManager {
     const where: any = {
       status: ProcessingStatus.FAILED,
     };
-    
+
     if (stage) {
       where.stage = stage;
     }
@@ -284,7 +284,7 @@ export class ProcessingStatusManager {
 
     // Check if all previous stages are completed
     const previousStages = stageOrder.slice(0, currentStageIndex);
-    
+
     for (const prevStage of previousStages) {
       const isCompleted = await this.hasCompletedStage(sessionId, prevStage);
       if (!isCompleted) return false;

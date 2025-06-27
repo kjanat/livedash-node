@@ -123,8 +123,8 @@ export default async function handler(
       where: { companyId: company.id }
     });
 
-    res.json({ 
-      ok: true, 
+    res.json({
+      ok: true,
       imported: importedCount,
       total: rawSessionData.length,
       sessions: sessionCount,

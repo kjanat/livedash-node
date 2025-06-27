@@ -17,13 +17,13 @@ function parseEuropeanDate(dateStr: string): Date {
 
   // Handle format: "DD.MM.YYYY HH:mm:ss"
   const [datePart, timePart] = dateStr.trim().split(' ');
-  
+
   if (!datePart || !timePart) {
     throw new Error(`Invalid date format: ${dateStr}. Expected format: DD.MM.YYYY HH:mm:ss`);
   }
 
   const [day, month, year] = datePart.split('.');
-  
+
   if (!day || !month || !year) {
     throw new Error(`Invalid date part: ${datePart}. Expected format: DD.MM.YYYY`);
   }
@@ -31,11 +31,11 @@ function parseEuropeanDate(dateStr: string): Date {
   // Convert to ISO format: YYYY-MM-DD HH:mm:ss
   const isoDateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${timePart}`;
   const date = new Date(isoDateStr);
-  
+
   if (isNaN(date.getTime())) {
     throw new Error(`Failed to parse date: ${dateStr} -> ${isoDateStr}`);
   }
-  
+
   return date;
 }
 
@@ -44,7 +44,7 @@ function parseEuropeanDate(dateStr: string): Date {
  */
 function parseFallbackSentiment(sentimentRaw: string | null): SentimentCategory | null {
   if (!sentimentRaw) return null;
-  
+
   const sentimentStr = sentimentRaw.toLowerCase();
   if (sentimentStr.includes('positive')) {
     return SentimentCategory.POSITIVE;
@@ -83,7 +83,7 @@ async function parseTranscriptIntoMessages(sessionId: string, transcriptContent:
     // Try to parse different formats:
     // Format 1: "User: message" or "Assistant: message"
     // Format 2: "[timestamp] User: message" or "[timestamp] Assistant: message"
-    
+
     let role = 'unknown';
     let content = trimmedLine;
     let timestamp: Date | null = null;
@@ -136,7 +136,7 @@ async function parseTranscriptIntoMessages(sessionId: string, transcriptContent:
  */
 async function processSingleImport(importRecord: any): Promise<{ success: boolean; error?: string }> {
   let sessionId: string | null = null;
-  
+
   try {
     // Parse dates using European format parser
     const startTime = parseEuropeanDate(importRecord.startTimeRaw);
@@ -183,12 +183,12 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
 
     // Handle transcript fetching
     let transcriptContent = importRecord.rawTranscriptContent;
-    
+
     if (!transcriptContent && importRecord.fullTranscriptUrl && isValidTranscriptUrl(importRecord.fullTranscriptUrl)) {
       await ProcessingStatusManager.startStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH);
-      
+
       console.log(`[Import Processor] Fetching transcript for ${importRecord.externalSessionId}...`);
-      
+
       // Get company credentials for transcript fetching
       const company = await prisma.company.findUnique({
         where: { id: importRecord.companyId },
@@ -204,7 +204,7 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
       if (transcriptResult.success) {
         transcriptContent = transcriptResult.content;
         console.log(`[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`);
-        
+
         // Update the import record with the fetched content
         await prisma.sessionImport.update({
           where: { id: importRecord.id },
@@ -232,7 +232,7 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
 
     // Handle session creation (parse messages)
     await ProcessingStatusManager.startStage(sessionId, ProcessingStage.SESSION_CREATION);
-    
+
     if (transcriptContent) {
       await parseTranscriptIntoMessages(sessionId, transcriptContent);
     }
@@ -245,7 +245,7 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Mark the current stage as failed if we have a sessionId
     if (sessionId) {
       // Determine which stage failed based on the error
@@ -306,7 +306,7 @@ export async function processQueuedImports(batchSize: number = 50): Promise<void
     // Process each import in this batch
     for (const importRecord of unprocessedImports) {
       const result = await processSingleImport(importRecord);
-      
+
       if (result.success) {
         batchSuccessCount++;
         totalSuccessCount++;
@@ -334,7 +334,7 @@ export async function processQueuedImports(batchSize: number = 50): Promise<void
  */
 export function startImportProcessingScheduler(): void {
   const config = getSchedulerConfig();
-  
+
   if (!config.enabled) {
     console.log('[Import Processing Scheduler] Disabled via configuration');
     return;

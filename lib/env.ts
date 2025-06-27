@@ -8,22 +8,22 @@ import { dirname, join } from "path";
  */
 function parseEnvValue(value: string | undefined): string {
   if (!value) return '';
-  
+
   // Trim whitespace
   let cleaned = value.trim();
-  
+
   // Remove inline comments (everything after #)
   const commentIndex = cleaned.indexOf('#');
   if (commentIndex !== -1) {
     cleaned = cleaned.substring(0, commentIndex).trim();
   }
-  
+
   // Remove surrounding quotes (both single and double)
   if ((cleaned.startsWith('"') && cleaned.endsWith('"')) ||
       (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
     cleaned = cleaned.slice(1, -1);
   }
-  
+
   return cleaned;
 }
 
@@ -33,7 +33,7 @@ function parseEnvValue(value: string | undefined): string {
 function parseIntWithDefault(value: string | undefined, defaultValue: number): number {
   const cleaned = parseEnvValue(value);
   if (!cleaned) return defaultValue;
-  
+
   const parsed = parseInt(cleaned, 10);
   return isNaN(parsed) ? defaultValue : parsed;
 }
@@ -137,7 +137,7 @@ export function logEnvConfig(): void {
   console.log(`  NEXTAUTH_URL: ${env.NEXTAUTH_URL}`);
   console.log(`  SCHEDULER_ENABLED: ${env.SCHEDULER_ENABLED}`);
   console.log(`  PORT: ${env.PORT}`);
-  
+
   if (env.SCHEDULER_ENABLED) {
     console.log('  Scheduler intervals:');
     console.log(`    CSV Import: ${env.CSV_IMPORT_INTERVAL}`);

@@ -76,7 +76,7 @@ export async function fetchTranscriptContent(
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    
+
     // Handle common network errors
     if (errorMessage.includes('ENOTFOUND')) {
       return {
@@ -84,14 +84,14 @@ export async function fetchTranscriptContent(
         error: 'Domain not found',
       };
     }
-    
+
     if (errorMessage.includes('ECONNREFUSED')) {
       return {
         success: false,
         error: 'Connection refused',
       };
     }
-    
+
     if (errorMessage.includes('timeout')) {
       return {
         success: false,

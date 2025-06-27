@@ -91,23 +91,23 @@ async function recordAIProcessingRequest(
 ): Promise<void> {
   const usage = openaiResponse.usage;
   const model = openaiResponse.model;
-  
+
   // Get current pricing from database
   const pricing = await getCurrentModelPricing(model);
-  
+
   // Fallback pricing if not found in database
   const fallbackPricing = {
     promptTokenCost: 0.00001,      // $10.00 per 1M tokens (gpt-4-turbo rate)
     completionTokenCost: 0.00003,  // $30.00 per 1M tokens
   };
-  
+
   const finalPricing = pricing || fallbackPricing;
-  
+
   const promptCost = usage.prompt_tokens * finalPricing.promptTokenCost;
   const completionCost = usage.completion_tokens * finalPricing.completionTokenCost;
   const totalCostUsd = promptCost + completionCost;
   const totalCostEur = totalCostUsd * USD_TO_EUR_RATE;
-  
+
   await prisma.aIProcessingRequest.create({
     data: {
       sessionId,
@@ -115,11 +115,11 @@ async function recordAIProcessingRequest(
       model: openaiResponse.model,
       serviceTier: openaiResponse.service_tier,
       systemFingerprint: openaiResponse.system_fingerprint,
-      
+
       promptTokens: usage.prompt_tokens,
       completionTokens: usage.completion_tokens,
       totalTokens: usage.total_tokens,
-      
+
       // Detailed breakdown
       cachedTokens: usage.prompt_tokens_details?.cached_tokens || null,
       audioTokensPrompt: usage.prompt_tokens_details?.audio_tokens || null,
@@ -127,11 +127,11 @@ async function recordAIProcessingRequest(
       audioTokensCompletion: usage.completion_tokens_details?.audio_tokens || null,
       acceptedPredictionTokens: usage.completion_tokens_details?.accepted_prediction_tokens || null,
       rejectedPredictionTokens: usage.completion_tokens_details?.rejected_prediction_tokens || null,
-      
+
       promptTokenCost: finalPricing.promptTokenCost,
       completionTokenCost: finalPricing.completionTokenCost,
       totalCostEur,
-      
+
       processingType,
       success: true,
       completedAt: new Date(),
@@ -178,14 +178,14 @@ async function processQuestions(sessionId: string, questions: string[]): Promise
   for (let index = 0; index < questions.length; index++) {
     const questionText = questions[index];
     if (!questionText.trim()) continue; // Skip empty questions
-    
+
     // Find or create question
     const question = await prisma.question.upsert({
       where: { content: questionText.trim() },
       create: { content: questionText.trim() },
       update: {}
     });
-    
+
     // Link to session
     await prisma.sessionQuestion.create({
       data: {
@@ -202,7 +202,7 @@ async function processQuestions(sessionId: string, questions: string[]): Promise
  */
 async function calculateMessagesSent(sessionId: string): Promise<number> {
   const userMessageCount = await prisma.message.count({
-    where: { 
+    where: {
       sessionId,
       role: { in: ['user', 'User'] } // Handle both cases
     }
@@ -218,7 +218,7 @@ async function calculateEndTime(sessionId: string, fallbackEndTime: Date): Promi
     where: { sessionId },
     orderBy: { timestamp: 'desc' }
   });
-  
+
   return latestMessage?.timestamp || fallbackEndTime;
 }
 
@@ -291,10 +291,10 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
     }
 
     const openaiResponse: any = await response.json();
-    
+
     // Record the AI processing request for cost tracking
     await recordAIProcessingRequest(sessionId, openaiResponse, 'session_analysis');
-    
+
     const processedData = JSON.parse(openaiResponse.choices[0].message.content);
 
     // Validate the response against our expected schema
@@ -304,11 +304,11 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
   } catch (error) {
     // Record failed request
     await recordFailedAIProcessingRequest(
-      sessionId, 
-      'session_analysis', 
+      sessionId,
+      'session_analysis',
       error instanceof Error ? error.message : String(error)
     );
-    
+
     process.stderr.write(`Error processing transcript with OpenAI: ${error}\n`);
     throw error;
   }
@@ -319,7 +319,7 @@ async function processTranscriptWithOpenAI(sessionId: string, transcript: string
  */
 function validateOpenAIResponse(data: any): void {
   const requiredFields = [
-    "language", "sentiment", "escalated", "forwarded_hr", 
+    "language", "sentiment", "escalated", "forwarded_hr",
     "category", "questions", "summary", "session_id"
   ];
 
@@ -406,7 +406,7 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
 
     // Calculate messagesSent from actual Message records
     const messagesSent = await calculateMessagesSent(session.id);
-    
+
     // Calculate endTime from latest Message timestamp
     const calculatedEndTime = await calculateEndTime(session.id, session.endTime);
 
@@ -451,8 +451,8 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
   } catch (error) {
     // Mark AI analysis as failed
     await ProcessingStatusManager.failStage(
-      session.id, 
-      ProcessingStage.AI_ANALYSIS, 
+      session.id,
+      ProcessingStage.AI_ANALYSIS,
       error instanceof Error ? error.message : String(error)
     );
 
@@ -597,7 +597,7 @@ export async function getAIProcessingCosts(): Promise<{
  */
 export function startProcessingScheduler(): void {
   const config = getSchedulerConfig();
-  
+
   if (!config.enabled) {
     console.log('[Processing Scheduler] Disabled via configuration');
     return;

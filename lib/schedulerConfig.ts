@@ -21,7 +21,7 @@ export interface SchedulerConfig {
  */
 export function getSchedulerConfig(): SchedulerConfig {
   const config = getEnvSchedulerConfig();
-  
+
   return {
     enabled: config.enabled,
     csvImport: {
