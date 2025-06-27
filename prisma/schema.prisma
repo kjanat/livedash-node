@@ -22,6 +22,22 @@ enum SentimentCategory {
   NEGATIVE
 }
 
+enum SessionCategory {
+  SCHEDULE_HOURS
+  LEAVE_VACATION
+  SICK_LEAVE_RECOVERY
+  SALARY_COMPENSATION
+  CONTRACT_HOURS
+  ONBOARDING
+  OFFBOARDING
+  WORKWEAR_STAFF_PASS
+  TEAM_CONTACTS
+  PERSONAL_QUESTIONS
+  ACCESS_LOGIN
+  SOCIAL_QUESTIONS
+  UNRECOGNIZED_OTHER
+}
+
 /**
  * COMPANY  (multi-tenant root)
  */
@@ -85,31 +101,33 @@ model Session {
   startTime DateTime
   endTime   DateTime
   
-  // Processed fields from SessionImport data
+  // Direct copies from SessionImport (minimal processing)
   ipAddress              String?
-  country                String?  // processed from countryCode
-  language               String?  // processed from language
-  messagesSent           Int?
-  sentiment              Float?   // processed from sentimentRaw
-  sentimentCategory      SentimentCategory?
-  escalated              Boolean?
-  forwardedHr            Boolean?
+  country                String?  // from countryCode
   fullTranscriptUrl      String?
-  avgResponseTime        Float?   // processed from avgResponseTimeSeconds
-  tokens                 Int?
-  tokensEur              Float?
-  category               String?
-  initialMsg             String?  // processed from initialMessage
+  avgResponseTime        Float?   // from avgResponseTimeSeconds
+  initialMsg             String?  // from initialMessage
+  
+  // AI-processed fields (calculated from Messages or AI analysis)
+  language               String?  // AI-detected from Messages
+  messagesSent           Int?     // Calculated from Message count
+  sentiment              SentimentCategory?  // AI-analyzed (changed from Float to enum)
+  escalated              Boolean? // AI-detected
+  forwardedHr            Boolean? // AI-detected
+  category               SessionCategory?    // AI-categorized (changed to enum)
+  
+  // AI-generated fields
+  summary                String?  // AI-generated summary
   
   // Processing metadata
   processed              Boolean  @default(false)
-  questions              String?  // JSON array of extracted questions
-  summary                String?  // AI-generated summary
 
   /**
-   * ---------- the missing opposite side ----------
+   * Relationships
    */
-  messages Message[] // <-- satisfies Message.session
+  messages               Message[]               // Individual conversation messages
+  sessionQuestions       SessionQuestion[]       // Questions asked in this session
+  aiProcessingRequests   AIProcessingRequest[]   // AI processing cost tracking
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -186,4 +204,80 @@ model Message {
 
   @@unique([sessionId, order]) // guards against duplicate order values
   @@index([sessionId, order])
+}
+
+/**
+ * QUESTION MANAGEMENT (separate from Session for better analytics)
+ */
+model Question {
+  id          String @id @default(uuid())
+  content     String @unique // The actual question text
+  createdAt   DateTime @default(now())
+  
+  // Relationships
+  sessionQuestions SessionQuestion[]
+}
+
+model SessionQuestion {
+  id          String @id @default(uuid())
+  sessionId   String
+  questionId  String
+  order       Int    // Order within the session
+  createdAt   DateTime @default(now())
+  
+  // Relationships
+  session     Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [questionId], references: [id])
+  
+  @@unique([sessionId, questionId]) // Prevent duplicate questions per session
+  @@unique([sessionId, order])      // Ensure unique ordering
+  @@index([sessionId])
+}
+
+/**
+ * AI PROCESSING COST TRACKING
+ */
+model AIProcessingRequest {
+  id                    String @id @default(uuid())
+  sessionId             String
+  
+  // OpenAI Request Details
+  openaiRequestId       String?  // "chatcmpl-Bn8IH9UM8t7luZVWnwZG7CVJ0kjPo"
+  model                 String   // "gpt-4o-2024-08-06"
+  serviceTier           String?  // "default"
+  systemFingerprint     String?  // "fp_07871e2ad8"
+  
+  // Token Usage (from usage object)
+  promptTokens          Int      // 11
+  completionTokens      Int      // 9
+  totalTokens           Int      // 20
+  
+  // Detailed Token Breakdown
+  cachedTokens          Int?     // prompt_tokens_details.cached_tokens
+  audioTokensPrompt     Int?     // prompt_tokens_details.audio_tokens
+  reasoningTokens       Int?     // completion_tokens_details.reasoning_tokens
+  audioTokensCompletion Int?     // completion_tokens_details.audio_tokens
+  acceptedPredictionTokens Int?  // completion_tokens_details.accepted_prediction_tokens
+  rejectedPredictionTokens Int?  // completion_tokens_details.rejected_prediction_tokens
+  
+  // Cost Calculation
+  promptTokenCost       Float    // Cost per prompt token (varies by model)
+  completionTokenCost   Float    // Cost per completion token (varies by model)
+  totalCostEur          Float    // Calculated total cost in EUR
+  
+  // Processing Context
+  processingType        String   // "session_analysis", "reprocessing", etc.
+  success               Boolean  // Whether the request succeeded
+  errorMessage          String?  // If failed, what went wrong
+  
+  // Timestamps
+  requestedAt           DateTime @default(now())
+  completedAt           DateTime?
+  
+  // Relationships
+  session               Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([requestedAt])
+  @@index([model])
 }

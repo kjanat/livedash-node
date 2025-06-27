@@ -261,3 +261,6 @@ Thumbs.db
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# OpenAI API request samples
+sample-openai-request.json

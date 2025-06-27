@@ -1,5 +1,5 @@
 // SessionImport to Session processor
-import { PrismaClient, ImportStatus, SentimentCategory } from "@prisma/client";
+import { PrismaClient, ImportStatus, SentimentCategory, SessionCategory } from "@prisma/client";
 import { getSchedulerConfig } from "./env";
 import { fetchTranscriptContent, isValidTranscriptUrl } from "./transcriptFetcher";
 import cron from "node-cron";
@@ -39,7 +39,32 @@ function parseEuropeanDate(dateStr: string): Date {
 }
 
 /**
+ * Helper function to parse sentiment from raw string (fallback only)
+ */
+function parseFallbackSentiment(sentimentRaw: string | null): SentimentCategory | null {
+  if (!sentimentRaw) return null;
+  
+  const sentimentStr = sentimentRaw.toLowerCase();
+  if (sentimentStr.includes('positive')) {
+    return SentimentCategory.POSITIVE;
+  } else if (sentimentStr.includes('negative')) {
+    return SentimentCategory.NEGATIVE;
+  } else {
+    return SentimentCategory.NEUTRAL;
+  }
+}
+
+/**
+ * Helper function to parse boolean from raw string (fallback only)
+ */
+function parseFallbackBoolean(rawValue: string | null): boolean | null {
+  if (!rawValue) return null;
+  return ['true', '1', 'yes', 'escalated', 'forwarded'].includes(rawValue.toLowerCase());
+}
+
+/**
  * Process a single SessionImport record into a Session record
+ * NEW STRATEGY: Only copy minimal fields, let AI processing handle the rest
  */
 async function processSingleImport(importRecord: any): Promise<{ success: boolean; error?: string }> {
   try {
@@ -48,34 +73,6 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
     const endTime = parseEuropeanDate(importRecord.endTimeRaw);
 
     console.log(`[Import Processor] Parsed dates for ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`);
-
-    // Process sentiment
-    let sentiment: number | null = null;
-    let sentimentCategory: SentimentCategory | null = null;
-    
-    if (importRecord.sentimentRaw) {
-      const sentimentStr = importRecord.sentimentRaw.toLowerCase();
-      if (sentimentStr.includes('positive')) {
-        sentiment = 0.8;
-        sentimentCategory = SentimentCategory.POSITIVE;
-      } else if (sentimentStr.includes('negative')) {
-        sentiment = -0.8;
-        sentimentCategory = SentimentCategory.NEGATIVE;
-      } else {
-        sentiment = 0.0;
-        sentimentCategory = SentimentCategory.NEUTRAL;
-      }
-    }
-
-    // Process boolean fields
-    const escalated = importRecord.escalatedRaw ? 
-      ['true', '1', 'yes', 'escalated'].includes(importRecord.escalatedRaw.toLowerCase()) : null;
-    
-    const forwardedHr = importRecord.forwardedHrRaw ? 
-      ['true', '1', 'yes', 'forwarded'].includes(importRecord.forwardedHrRaw.toLowerCase()) : null;
-
-    // Keep country code as-is, will be processed by OpenAI later
-    const country = importRecord.countryCode;
 
     // Fetch transcript content if URL is provided and not already fetched
     let transcriptContent = importRecord.rawTranscriptContent;
@@ -108,7 +105,8 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
       }
     }
 
-    // Create or update Session record
+    // Create or update Session record with MINIMAL processing
+    // Only copy fields that don't need AI analysis
     const session = await prisma.session.upsert({
       where: {
         importId: importRecord.id,
@@ -116,20 +114,22 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
       update: {
         startTime,
         endTime,
+        // Direct copies (minimal processing)
         ipAddress: importRecord.ipAddress,
-        country,
-        language: importRecord.language,
-        messagesSent: importRecord.messagesSent,
-        sentiment,
-        sentimentCategory,
-        escalated,
-        forwardedHr,
+        country: importRecord.countryCode, // Keep as country code
         fullTranscriptUrl: importRecord.fullTranscriptUrl,
         avgResponseTime: importRecord.avgResponseTimeSeconds,
-        tokens: importRecord.tokens,
-        tokensEur: importRecord.tokensEur,
-        category: importRecord.category,
         initialMsg: importRecord.initialMessage,
+        
+        // AI-processed fields: Leave empty, will be filled by AI processing
+        // language: null,        // AI will detect
+        // messagesSent: null,    // AI will count from Messages
+        // sentiment: null,       // AI will analyze
+        // escalated: null,       // AI will detect
+        // forwardedHr: null,     // AI will detect
+        // category: null,        // AI will categorize
+        // summary: null,         // AI will generate
+        
         processed: false, // Will be processed later by AI
       },
       create: {
@@ -137,20 +137,15 @@ async function processSingleImport(importRecord: any): Promise<{ success: boolea
         importId: importRecord.id,
         startTime,
         endTime,
+        // Direct copies (minimal processing)
         ipAddress: importRecord.ipAddress,
-        country,
-        language: importRecord.language,
-        messagesSent: importRecord.messagesSent,
-        sentiment,
-        sentimentCategory,
-        escalated,
-        forwardedHr,
+        country: importRecord.countryCode, // Keep as country code
         fullTranscriptUrl: importRecord.fullTranscriptUrl,
         avgResponseTime: importRecord.avgResponseTimeSeconds,
-        tokens: importRecord.tokens,
-        tokensEur: importRecord.tokensEur,
-        category: importRecord.category,
         initialMsg: importRecord.initialMessage,
+        
+        // AI-processed fields: Leave empty, will be filled by AI processing
+        // All these will be null initially and filled by AI
         processed: false, // Will be processed later by AI
       },
     });
