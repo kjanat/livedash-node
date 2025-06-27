@@ -219,9 +219,9 @@ function DashboardContent() {
     };
 
     return [
-      { name: "Positive", value: sentimentData.positive, color: "hsl(var(--chart-1))" },
-      { name: "Neutral", value: sentimentData.neutral, color: "hsl(var(--chart-2))" },
-      { name: "Negative", value: sentimentData.negative, color: "hsl(var(--chart-3))" },
+      { name: "Positive", value: sentimentData.positive, color: "rgb(34, 197, 94)" },
+      { name: "Neutral", value: sentimentData.neutral, color: "rgb(168, 162, 158)" },
+      { name: "Negative", value: sentimentData.negative, color: "rgb(239, 68, 68)" },
     ];
   };
 
@@ -284,64 +284,129 @@ function DashboardContent() {
 
   return (
     <div className="space-y-8">
-      {/* Modern Header */}
-      <Card className="border-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">{company.name}</h1>
-                <Badge variant="secondary" className="text-xs">
-                  Analytics Dashboard
-                </Badge>
+      {/* Apple-Style Unified Header */}
+      <Card className="border-0 bg-white shadow-sm">
+        <CardHeader className="pb-6">
+          <div className="flex flex-col space-y-6">
+            {/* Top row: Company info and actions */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="space-y-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">{company.name}</h1>
+                  <Badge variant="secondary" className="text-xs font-medium bg-gray-100 text-gray-700 border-0">
+                    Analytics Dashboard
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Last updated{" "}
+                  <span className="font-medium text-gray-700">
+                    {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
+                  </span>
+                </p>
               </div>
-              <p className="text-muted-foreground">
-                Last updated{" "}
-                <span className="font-medium">
-                  {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
-                </span>
-              </p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleRefresh}
-                disabled={refreshing || isAuditor}
-                size="sm"
-                className="gap-2"
-              >
-                <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </Button>
               
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <div className="flex items-center gap-3">
+                <Button
+                  onClick={handleRefresh}
+                  disabled={refreshing || isAuditor}
+                  size="sm"
+                  className="gap-2 bg-blue-600 hover:bg-blue-700 border-0 shadow-sm"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? "Refreshing..." : "Refresh"}
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="border-gray-200 hover:bg-gray-50">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="border-gray-200 shadow-lg">
+                    <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
+
+            {/* Date Range Controls */}
+            {dateRange && (
+              <div className="border-t border-gray-100 pt-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">Date Range:</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-gray-600">From:</label>
+                      <input
+                        type="date"
+                        value={selectedStartDate}
+                        min={dateRange.minDate}
+                        max={dateRange.maxDate}
+                        onChange={(e) => handleDateRangeChange(e.target.value, selectedEndDate)}
+                        className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-gray-600">To:</label>
+                      <input
+                        type="date"
+                        value={selectedEndDate}
+                        min={dateRange.minDate}
+                        max={dateRange.maxDate}
+                        onChange={(e) => handleDateRangeChange(selectedStartDate, e.target.value)}
+                        className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const endDate = new Date().toISOString().split('T')[0];
+                          const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          handleDateRangeChange(startDate, endDate);
+                        }}
+                        className="text-xs border-gray-200 hover:bg-gray-50"
+                      >
+                        Last 7 days
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const endDate = new Date().toISOString().split('T')[0];
+                          const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+                          handleDateRangeChange(startDate, endDate);
+                        }}
+                        className="text-xs border-gray-200 hover:bg-gray-50"
+                      >
+                        Last 30 days
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDateRangeChange(dateRange.minDate, dateRange.maxDate)}
+                        className="text-xs border-gray-200 hover:bg-gray-50"
+                      >
+                        All time
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  Available data: {new Date(dateRange.minDate).toLocaleDateString()} - {new Date(dateRange.maxDate).toLocaleDateString()}
+                </p>
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>
-
-      {/* Date Range Picker */}
-      {dateRange && (
-        <DateRangePicker
-          minDate={dateRange.minDate}
-          maxDate={dateRange.maxDate}
-          onDateRangeChange={handleDateRangeChange}
-          initialStartDate={selectedStartDate}
-          initialEndDate={selectedEndDate}
-        />
-      )}
 
       {/* Modern Metrics Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -375,6 +440,7 @@ function DashboardContent() {
             value: metrics.avgSessionTimeTrend ?? 0,
             isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
           }}
+          variant="primary"
         />
         
         <MetricCard
@@ -393,6 +459,7 @@ function DashboardContent() {
           value={`€${metrics.avgDailyCosts?.toFixed(4) || '0.0000'}`}
           icon={<Euro className="h-5 w-5" />}
           description="Average per day"
+          variant="warning"
         />
         
         <MetricCard
@@ -400,6 +467,7 @@ function DashboardContent() {
           value={metrics.peakUsageTime || 'N/A'}
           icon={<TrendingUp className="h-5 w-5" />}
           description="Busiest hour"
+          variant="primary"
         />
         
         <MetricCard
@@ -418,6 +486,7 @@ function DashboardContent() {
           value={Object.keys(metrics.languages || {}).length}
           icon={<Globe className="h-5 w-5" />}
           description="Languages detected"
+          variant="success"
         />
       </div>
 

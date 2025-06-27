@@ -43,11 +43,11 @@ export default function ModernBarChart({
   title,
   dataKey = "value",
   colors = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
+    "rgb(37, 99, 235)",    // Blue (primary)
+    "rgb(107, 114, 128)",  // Gray
+    "rgb(236, 72, 153)",   // Pink
+    "rgb(34, 197, 94)",    // Lime green
+    "rgb(168, 85, 247)",   // Purple
   ],
   height = 300,
   className,
@@ -64,12 +64,12 @@ export default function ModernBarChart({
           <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
-              strokeOpacity={0.3}
+              stroke="rgb(229, 231, 235)" 
+              strokeOpacity={0.5}
             />
             <XAxis
               dataKey="name"
-              stroke="hsl(var(--muted-foreground))"
+              stroke="rgb(100, 116, 139)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
@@ -78,7 +78,7 @@ export default function ModernBarChart({
               height={80}
             />
             <YAxis
-              stroke="hsl(var(--muted-foreground))"
+              stroke="rgb(100, 116, 139)"
               fontSize={12}
               tickLine={false}
               axisLine={false}

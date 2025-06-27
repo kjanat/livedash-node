@@ -44,7 +44,7 @@ export default function ModernLineChart({
   data,
   title,
   dataKey = "value",
-  color = "hsl(var(--primary))",
+  color = "rgb(37, 99, 235)",
   gradient = true,
   height = 300,
   className,
@@ -71,18 +71,18 @@ export default function ModernLineChart({
             </defs>
             <CartesianGrid 
               strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
-              strokeOpacity={0.3}
+              stroke="rgb(229, 231, 235)" 
+              strokeOpacity={0.5}
             />
             <XAxis
               dataKey="date"
-              stroke="hsl(var(--muted-foreground))"
+              stroke="rgb(100, 116, 139)"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="hsl(var(--muted-foreground))"
+              stroke="rgb(100, 116, 139)"
               fontSize={12}
               tickLine={false}
               axisLine={false}

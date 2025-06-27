@@ -67,11 +67,11 @@ export default function ModernDonutChart({
   title,
   centerText,
   colors = [
-    "hsl(var(--chart-1))",
-    "hsl(var(--chart-2))",
-    "hsl(var(--chart-3))",
-    "hsl(var(--chart-4))",
-    "hsl(var(--chart-5))",
+    "rgb(37, 99, 235)",    // Blue (primary)
+    "rgb(107, 114, 128)",  // Gray
+    "rgb(236, 72, 153)",   // Pink
+    "rgb(34, 197, 94)",    // Lime green
+    "rgb(168, 85, 247)",   // Purple
   ],
   height = 300,
   className,
@@ -105,7 +105,7 @@ export default function ModernDonutChart({
                     key={`cell-${index}`}
                     fill={entry.color || colors[index % colors.length]}
                     className="hover:opacity-80 cursor-pointer"
-                    stroke="hsl(var(--background))"
+                    stroke="white"
                     strokeWidth={2}
                   />
                 ))}

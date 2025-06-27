@@ -128,9 +128,9 @@ export function SentimentChart({ sentimentData }: SentimentChartProps) {
               sentimentData.negative,
             ],
             backgroundColor: [
-              "rgba(34, 197, 94, 0.8)", // green
-              "rgba(249, 115, 22, 0.8)", // orange
-              "rgba(239, 68, 68, 0.8)", // red
+              "rgba(37, 99, 235, 0.8)", // blue (primary)
+              "rgba(107, 114, 128, 0.8)", // gray
+              "rgba(236, 72, 153, 0.8)", // pink
             ],
             borderWidth: 1,
           },
@@ -196,12 +196,12 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
           {
             data,
             backgroundColor: [
-              "rgba(59, 130, 246, 0.8)",
-              "rgba(16, 185, 129, 0.8)",
-              "rgba(249, 115, 22, 0.8)",
-              "rgba(236, 72, 153, 0.8)",
-              "rgba(139, 92, 246, 0.8)",
-              "rgba(107, 114, 128, 0.8)",
+              "rgba(37, 99, 235, 0.8)",  // blue (primary)
+              "rgba(107, 114, 128, 0.8)", // gray
+              "rgba(236, 72, 153, 0.8)",  // pink
+              "rgba(34, 197, 94, 0.8)",   // lime green
+              "rgba(168, 85, 247, 0.8)",  // purple
+              "rgba(251, 191, 36, 0.8)",  // yellow
             ],
             borderWidth: 1,
           },

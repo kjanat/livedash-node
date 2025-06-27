@@ -51,31 +51,20 @@ export default function MetricCard({
   const getVariantClasses = () => {
     switch (variant) {
       case "primary":
-        return "border-primary/20 bg-linear-to-br from-primary/5 to-primary/10";
+        return "border border-blue-100 bg-white shadow-sm hover:shadow-md";
       case "success":
-        return "border-green-200 bg-linear-to-br from-green-50 to-green-100 dark:border-green-800 dark:from-green-950 dark:to-green-900";
+        return "border border-green-100 bg-white shadow-sm hover:shadow-md";
       case "warning":
-        return "border-amber-200 bg-linear-to-br from-amber-50 to-amber-100 dark:border-amber-800 dark:from-amber-950 dark:to-amber-900";
+        return "border border-pink-100 bg-white shadow-sm hover:shadow-md";
       case "danger":
-        return "border-red-200 bg-linear-to-br from-red-50 to-red-100 dark:border-red-800 dark:from-red-950 dark:to-red-900";
+        return "border border-red-100 bg-white shadow-sm hover:shadow-md";
       default:
-        return "border-border bg-linear-to-br from-card to-muted/20";
+        return "border border-gray-100 bg-white shadow-sm hover:shadow-md";
     }
   };
 
   const getIconClasses = () => {
-    switch (variant) {
-      case "primary":
-        return "bg-primary/10 text-primary border-primary/20";
-      case "success":
-        return "bg-green-100 text-green-600 border-green-200 dark:bg-green-900 dark:text-green-400 dark:border-green-800";
-      case "warning":
-        return "bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-900 dark:text-amber-400 dark:border-amber-800";
-      case "danger":
-        return "bg-red-100 text-red-600 border-red-200 dark:bg-red-900 dark:text-red-400 dark:border-red-800";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
+    return "bg-gray-50 text-gray-900 border-gray-100";
   };
 
   const getTrendIcon = () => {
@@ -105,13 +94,11 @@ export default function MetricCard({
         className
       )}
     >
-      {/* Subtle gradient overlay */}
-      <div className="absolute inset-0 bg-linear-to-br from-white/50 to-transparent dark:from-white/5 pointer-events-none" />
       
       <CardHeader className="pb-3 relative">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-muted-foreground leading-none">
+            <p className="text-sm font-medium text-gray-900 leading-none">
               {title}
             </p>
             {description && (
@@ -137,7 +124,7 @@ export default function MetricCard({
       <CardContent className="relative">
         <div className="flex items-end justify-between">
           <div className="space-y-1">
-            <p className="text-2xl font-bold tracking-tight">
+            <p className="text-2xl font-bold tracking-tight text-gray-900">
               {value ?? "—"}
             </p>
             

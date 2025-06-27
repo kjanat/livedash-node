@@ -20,10 +20,10 @@ interface ResponseTimeDistributionProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="rounded-lg border bg-background p-3 shadow-md">
-        <p className="text-sm font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">
-          <span className="font-medium text-foreground">
+      <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-md">
+        <p className="text-sm font-medium text-gray-900">{label}</p>
+        <p className="text-sm text-gray-600">
+          <span className="font-medium text-gray-900">
             {payload[0].value}
           </span>{" "}
           responses
@@ -66,11 +66,11 @@ export default function ResponseTimeDistribution({
       label = `${i}-${i + 1} sec`;
     }
 
-    // Determine color based on response time
+    // Determine color based on response time using cohesive palette
     let color;
-    if (i <= 2) color = "hsl(var(--chart-1))"; // Green for fast
-    else if (i <= 5) color = "hsl(var(--chart-4))"; // Yellow for medium
-    else color = "hsl(var(--chart-3))"; // Red for slow
+    if (i <= 2) color = "rgb(37, 99, 235)"; // Blue for fast (primary color)
+    else if (i <= 5) color = "rgb(107, 114, 128)"; // Gray for medium
+    else color = "rgb(236, 72, 153)"; // Pink for slow
 
     return {
       name: label,
@@ -85,18 +85,18 @@ export default function ResponseTimeDistribution({
         <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
           <CartesianGrid 
             strokeDasharray="3 3" 
-            stroke="hsl(var(--border))" 
-            strokeOpacity={0.3}
+            stroke="rgb(229, 231, 235)" 
+            strokeOpacity={0.5}
           />
           <XAxis
             dataKey="name"
-            stroke="hsl(var(--muted-foreground))"
+            stroke="rgb(100, 116, 139)"
             fontSize={12}
             tickLine={false}
             axisLine={false}
           />
           <YAxis
-            stroke="hsl(var(--muted-foreground))"
+            stroke="rgb(100, 116, 139)"
             fontSize={12}
             tickLine={false}
             axisLine={false}
@@ -104,7 +104,7 @@ export default function ResponseTimeDistribution({
               value: 'Number of Responses', 
               angle: -90, 
               position: 'insideLeft',
-              style: { textAnchor: 'middle' }
+              style: { textAnchor: 'middle', fill: 'rgb(100, 116, 139)' }
             }}
           />
           <Tooltip content={<CustomTooltip />} />
@@ -122,14 +122,14 @@ export default function ResponseTimeDistribution({
           {/* Average line */}
           <ReferenceLine 
             x={Math.floor(average)} 
-            stroke="hsl(var(--primary))" 
+            stroke="rgb(0, 123, 255)" 
             strokeWidth={2}
             strokeDasharray="5 5"
             label={{ 
               value: `Avg: ${average.toFixed(1)}s`, 
               position: "top" as const,
               style: { 
-                fill: "hsl(var(--primary))",
+                fill: "rgb(0, 123, 255)",
                 fontSize: "12px",
                 fontWeight: "500"
               }
@@ -140,14 +140,14 @@ export default function ResponseTimeDistribution({
           {targetResponseTime && (
             <ReferenceLine 
               x={Math.floor(targetResponseTime)} 
-              stroke="hsl(var(--chart-2))" 
+              stroke="rgb(255, 20, 147)" 
               strokeWidth={2}
               strokeDasharray="3 3"
               label={{ 
                 value: `Target: ${targetResponseTime}s`, 
                 position: "top" as const,
                 style: { 
-                  fill: "hsl(var(--chart-2))",
+                  fill: "rgb(255, 20, 147)",
                   fontSize: "12px",
                   fontWeight: "500"
                 }

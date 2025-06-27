@@ -91,8 +91,11 @@ export async function GET(request: NextRequest) {
 
   const metrics = sessionMetrics(chatSessions, companyConfigForMetrics);
 
-  // Calculate date range from ALL sessions (not filtered) to get the full available range
+  // Calculate date range from the FILTERED sessions to match what's actually displayed
   let dateRange: { minDate: string; maxDate: string } | null = null;
+  let availableDataRange: { minDate: string; maxDate: string } | null = null;
+  
+  // Get the full available range for reference
   const allSessions = await prisma.session.findMany({
     where: {
       companyId: user.companyId,
@@ -106,10 +109,24 @@ export async function GET(request: NextRequest) {
   });
 
   if (allSessions.length > 0) {
-    dateRange = {
+    availableDataRange = {
       minDate: allSessions[0].startTime.toISOString().split('T')[0], // First session date
       maxDate: allSessions[allSessions.length - 1].startTime.toISOString().split('T')[0] // Last session date
     };
+  }
+
+  // Calculate date range from the filtered sessions (what's actually being displayed)
+  if (prismaSessions.length > 0) {
+    const sortedFilteredSessions = prismaSessions.sort((a, b) => 
+      new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+    );
+    dateRange = {
+      minDate: sortedFilteredSessions[0].startTime.toISOString().split('T')[0],
+      maxDate: sortedFilteredSessions[sortedFilteredSessions.length - 1].startTime.toISOString().split('T')[0]
+    };
+  } else if (availableDataRange) {
+    // If no filtered sessions but we have available data, use the available range
+    dateRange = availableDataRange;
   }
 
   return NextResponse.json({
