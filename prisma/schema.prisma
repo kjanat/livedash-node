@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite" // still OK for local/dev; use Postgres in prod
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 /**

@@ -13,6 +13,11 @@ global.console = {
 process.env.NEXTAUTH_SECRET = 'test-secret';
 process.env.NEXTAUTH_URL = 'http://localhost:3000';
 
+// Use test database for all database operations during tests
+if (process.env.DATABASE_URL_TEST) {
+  process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
+}
+
 // Mock node-fetch for transcript fetcher tests
 vi.mock('node-fetch', () => ({
   default: vi.fn(),
