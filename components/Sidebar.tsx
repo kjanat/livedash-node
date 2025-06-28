@@ -209,6 +209,7 @@ export default function Sidebar({
       )}
 
       <div
+        id="main-sidebar"
         className={`fixed md:relative h-screen bg-card border-r border-border shadow-lg transition-all duration-300
         ${
           isExpanded ? (isMobile ? "w-full sm:w-80" : "w-56") : "w-16"
@@ -224,7 +225,9 @@ export default function Sidebar({
                   onToggle();
                 }}
                 className="p-1.5 rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary transition-colors group"
-                title="Expand sidebar"
+                aria-label="Expand sidebar"
+                aria-expanded={isExpanded}
+                aria-controls="main-sidebar"
               >
                 <MinimalToggleIcon isExpanded={isExpanded} />
               </button>
@@ -263,13 +266,17 @@ export default function Sidebar({
                 onToggle();
               }}
               className="p-1.5 rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary transition-colors group"
-              title="Collapse sidebar"
+              aria-label="Collapse sidebar"
+              aria-expanded={isExpanded}
+              aria-controls="main-sidebar"
             >
               <MinimalToggleIcon isExpanded={isExpanded} />
             </button>
           </div>
         )}
         <nav
+          role="navigation"
+          aria-label="Main navigation"
           className={`flex-1 py-4 px-2 overflow-y-auto overflow-x-visible ${isExpanded ? "pt-12" : "pt-4"}`}
         >
           <NavItem

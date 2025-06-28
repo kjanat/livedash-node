@@ -142,45 +142,55 @@ export default function SessionsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page heading for screen readers */}
+      <h1 className="sr-only">Sessions Management</h1>
+      
       {/* Header */}
       <Card>
         <CardHeader>
           <div className="flex items-center gap-3">
             <MessageSquare className="h-6 w-6" />
-            <CardTitle>Chat Sessions</CardTitle>
+            <CardTitle as="h2">Chat Sessions</CardTitle>
           </div>
         </CardHeader>
       </Card>
 
       {/* Search Input */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search sessions (ID, category, initial message...)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      <section aria-labelledby="search-heading">
+        <h2 id="search-heading" className="sr-only">Search Sessions</h2>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Input
+                placeholder="Search sessions (ID, category, initial message...)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                aria-label="Search sessions by ID, category, or message content"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </section>
 
       {/* Filter and Sort Controls */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              <CardTitle className="text-lg">Filters & Sorting</CardTitle>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setFiltersExpanded(!filtersExpanded)}
-              className="gap-2"
-            >
+      <section aria-labelledby="filters-heading">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Filter className="h-5 w-5" aria-hidden="true" />
+                <CardTitle as="h2" id="filters-heading" className="text-lg">Filters & Sorting</CardTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setFiltersExpanded(!filtersExpanded)}
+                className="gap-2"
+                aria-expanded={filtersExpanded}
+                aria-controls="filter-content"
+              >
               {filtersExpanded ? (
                 <>
                   <ChevronUp className="h-4 w-4" />
@@ -196,107 +206,147 @@ export default function SessionsPage() {
           </div>
         </CardHeader>
         {filtersExpanded && (
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            {/* Category Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="category-filter">Category</Label>
-              <select
-                id="category-filter"
-                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option value="">All Categories</option>
-                {filterOptions.categories.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <CardContent id="filter-content">
+            <fieldset>
+              <legend className="sr-only">Session Filters and Sorting Options</legend>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                {/* Category Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="category-filter">Category</Label>
+                  <select
+                    id="category-filter"
+                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    aria-describedby="category-help"
+                  >
+                    <option value="">All Categories</option>
+                    {filterOptions.categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                  <div id="category-help" className="sr-only">
+                    Filter sessions by category type
+                  </div>
+                </div>
 
-            {/* Language Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="language-filter">Language</Label>
-              <select
-                id="language-filter"
-                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-              >
-                <option value="">All Languages</option>
-                {filterOptions.languages.map((lang) => (
-                  <option key={lang} value={lang}>
-                    {lang.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
+                {/* Language Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="language-filter">Language</Label>
+                  <select
+                    id="language-filter"
+                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    aria-describedby="language-help"
+                  >
+                    <option value="">All Languages</option>
+                    {filterOptions.languages.map((lang) => (
+                      <option key={lang} value={lang}>
+                        {lang.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                  <div id="language-help" className="sr-only">
+                    Filter sessions by language
+                  </div>
+                </div>
 
-            {/* Start Date Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="start-date-filter">Start Date</Label>
-              <Input
-                type="date"
-                id="start-date-filter"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
+                {/* Start Date Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="start-date-filter">Start Date</Label>
+                  <Input
+                    type="date"
+                    id="start-date-filter"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    aria-describedby="start-date-help"
+                  />
+                  <div id="start-date-help" className="sr-only">
+                    Filter sessions from this date onwards
+                  </div>
+                </div>
 
-            {/* End Date Filter */}
-            <div className="space-y-2">
-              <Label htmlFor="end-date-filter">End Date</Label>
-              <Input
-                type="date"
-                id="end-date-filter"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
+                {/* End Date Filter */}
+                <div className="space-y-2">
+                  <Label htmlFor="end-date-filter">End Date</Label>
+                  <Input
+                    type="date"
+                    id="end-date-filter"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    aria-describedby="end-date-help"
+                  />
+                  <div id="end-date-help" className="sr-only">
+                    Filter sessions up to this date
+                  </div>
+                </div>
 
-            {/* Sort Key */}
-            <div className="space-y-2">
-              <Label htmlFor="sort-key">Sort By</Label>
-              <select
-                id="sort-key"
-                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={sortKey}
-                onChange={(e) => setSortKey(e.target.value)}
-              >
-                <option value="startTime">Start Time</option>
-                <option value="category">Category</option>
-                <option value="language">Language</option>
-                <option value="sentiment">Sentiment</option>
-                <option value="messagesSent">Messages Sent</option>
-                <option value="avgResponseTime">Avg. Response Time</option>
-              </select>
-            </div>
+                {/* Sort Key */}
+                <div className="space-y-2">
+                  <Label htmlFor="sort-key">Sort By</Label>
+                  <select
+                    id="sort-key"
+                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={sortKey}
+                    onChange={(e) => setSortKey(e.target.value)}
+                    aria-describedby="sort-key-help"
+                  >
+                    <option value="startTime">Start Time</option>
+                    <option value="category">Category</option>
+                    <option value="language">Language</option>
+                    <option value="sentiment">Sentiment</option>
+                    <option value="messagesSent">Messages Sent</option>
+                    <option value="avgResponseTime">Avg. Response Time</option>
+                  </select>
+                  <div id="sort-key-help" className="sr-only">
+                    Choose field to sort sessions by
+                  </div>
+                </div>
 
-            {/* Sort Order */}
-            <div className="space-y-2">
-              <Label htmlFor="sort-order">Order</Label>
-              <select
-                id="sort-order"
-                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-              >
-                <option value="desc">Descending</option>
-                <option value="asc">Ascending</option>
-              </select>
-            </div>
-            </div>
+                {/* Sort Order */}
+                <div className="space-y-2">
+                  <Label htmlFor="sort-order">Order</Label>
+                  <select
+                    id="sort-order"
+                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={sortOrder}
+                    onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+                    aria-describedby="sort-order-help"
+                  >
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                  </select>
+                  <div id="sort-order-help" className="sr-only">
+                    Choose ascending or descending order
+                  </div>
+                </div>
+              </div>
+            </fieldset>
           </CardContent>
         )}
-      </Card>
+        </Card>
+      </section>
+
+      {/* Results section */}
+      <section aria-labelledby="results-heading">
+        <h2 id="results-heading" className="sr-only">Session Results</h2>
+        
+        {/* Live region for screen reader announcements */}
+      <div role="status" aria-live="polite" className="sr-only">
+        {loading && "Loading sessions..."}
+        {error && `Error loading sessions: ${error}`}
+        {!loading && !error && sessions.length > 0 && `Found ${sessions.length} sessions`}
+        {!loading && !error && sessions.length === 0 && "No sessions found"}
+      </div>
 
       {/* Loading State */}
       {loading && (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground" aria-hidden="true">
               Loading sessions...
             </div>
           </CardContent>
@@ -307,7 +357,7 @@ export default function SessionsPage() {
       {error && (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center py-8 text-destructive">
+            <div className="text-center py-8 text-destructive" role="alert" aria-hidden="true">
               Error: {error}
             </div>
           </CardContent>
@@ -423,6 +473,7 @@ export default function SessionsPage() {
           </CardContent>
         </Card>
       )}
+      </section>
     </div>
   );
 }

@@ -65,7 +65,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         onNavigate={collapseSidebar}
       />
 
-      <div
+      <main
+        id="main-content"
         className={`flex-1 overflow-auto transition-all duration-300 py-4 pr-4
           ${
             isSidebarExpanded
@@ -76,7 +77,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       >
         {/* <div className="w-full mx-auto">{children}</div> */}
         <div className="max-w-7xl mx-auto">{children}</div>
-      </div>
+      </main>
     </div>
   );
 }
