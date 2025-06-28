@@ -5,9 +5,28 @@ import { Providers } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
 
 export const metadata = {
-  title: "LiveDash-Node",
+  title: "LiveDash - AI-Powered Customer Conversation Analytics",
   description:
-    "Multi-tenant dashboard system for tracking chat session metrics",
+    "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
+  keywords: [
+    "customer analytics",
+    "AI sentiment analysis",
+    "conversation intelligence",
+    "customer support analytics",
+    "chat analytics",
+    "customer insights"
+  ],
+  openGraph: {
+    title: "LiveDash - AI-Powered Customer Conversation Analytics",
+    description: "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
+    type: "website",
+    siteName: "LiveDash",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LiveDash - AI-Powered Customer Conversation Analytics",
+    description: "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },

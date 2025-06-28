@@ -99,7 +99,7 @@ describe("Format Enums Utility", () => {
     it("should be an alias for formatEnumValue", () => {
       const testValues = [
         "SALARY_COMPENSATION",
-        "SCHEDULE_HOURS", 
+        "SCHEDULE_HOURS",
         "UNKNOWN_ENUM",
         null,
         undefined,
@@ -129,7 +129,7 @@ describe("Format Enums Utility", () => {
     it("should handle very long enum values", () => {
       const longEnum = "A".repeat(100) + "_" + "B".repeat(100);
       const result = formatEnumValue(longEnum);
-      
+
       expect(result).toBeTruthy();
       expect(result?.length).toBeGreaterThan(200);
       expect(result?.includes(" ")).toBeTruthy();
@@ -150,16 +150,16 @@ describe("Format Enums Utility", () => {
     it("should be performant with many calls", () => {
       const testEnum = "SALARY_COMPENSATION";
       const iterations = 1000;
-      
+
       const startTime = performance.now();
-      
+
       for (let i = 0; i < iterations; i++) {
         formatEnumValue(testEnum);
       }
-      
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       // Should complete 1000 calls in reasonable time (less than 100ms)
       expect(duration).toBeLessThan(100);
     });
@@ -208,7 +208,7 @@ describe("Format Enums Utility", () => {
     it("should provide readable text for badges and labels", () => {
       const badgeValues = [
         "ADMIN",
-        "USER", 
+        "USER",
         "AUDITOR",
         "UNRECOGNIZED_OTHER",
       ];
@@ -249,7 +249,7 @@ describe("Format Enums Utility", () => {
       // Future enum values should still be formatted reasonably
       const futureEnums = [
         "REMOTE_WORK_POLICY",
-        "SUSTAINABILITY_INITIATIVES", 
+        "SUSTAINABILITY_INITIATIVES",
         "DIVERSITY_INCLUSION",
         "MENTAL_HEALTH_SUPPORT",
       ];

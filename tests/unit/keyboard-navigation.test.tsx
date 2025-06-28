@@ -52,7 +52,7 @@ describe("Keyboard Navigation Tests", () => {
 
       roleSelect.focus();
       expect(roleSelect).toBeInTheDocument();
-      
+
       submitButton.focus();
       expect(document.activeElement).toBe(submitButton);
     });
@@ -84,7 +84,7 @@ describe("Keyboard Navigation Tests", () => {
 
       // Submit with Enter key
       fireEvent.keyDown(submitButton, { key: "Enter" });
-      
+
       // Form should be submitted (fetch called for initial load + submission)
       expect(global.fetch).toHaveBeenCalledTimes(2);
     });
@@ -117,7 +117,7 @@ describe("Keyboard Navigation Tests", () => {
       // Activate with Space key
       submitButton.focus();
       fireEvent.keyDown(submitButton, { key: " " });
-      
+
       // Should trigger form submission (fetch called for initial load + submission)
       expect(global.fetch).toHaveBeenCalledTimes(3);
     });
@@ -153,7 +153,7 @@ describe("Keyboard Navigation Tests", () => {
 
       // Press Escape
       fireEvent.keyDown(emailInput, { key: "Escape" });
-      
+
       // Field should not be cleared by Escape (browser default behavior)
       // But it should not cause any errors
       expect(emailInput.value).toBe("test@example.com");
@@ -173,7 +173,7 @@ describe("Keyboard Navigation Tests", () => {
       // Arrow keys should work (implementation depends on Select component)
       fireEvent.keyDown(roleSelect, { key: "ArrowDown" });
       fireEvent.keyDown(roleSelect, { key: "ArrowUp" });
-      
+
       // Should not throw errors
       expect(roleSelect).toBeInTheDocument();
     });
@@ -292,7 +292,7 @@ describe("Keyboard Navigation Tests", () => {
       );
 
       const chart = screen.getByRole("img", { name: /test chart/i });
-      
+
       // Chart should be focusable
       chart.focus();
       expect(chart).toHaveFocus();
@@ -311,7 +311,7 @@ describe("Keyboard Navigation Tests", () => {
       );
 
       const chart = screen.getByRole("img", { name: /test chart/i });
-      
+
       chart.focus();
 
       // Test keyboard interactions
@@ -395,7 +395,7 @@ describe("Keyboard Navigation Tests", () => {
       // Should handle focus on disabled elements gracefully
       submitButton.focus();
       fireEvent.keyDown(submitButton, { key: "Enter" });
-      
+
       // Should not cause errors
     });
 
@@ -515,7 +515,7 @@ describe("Keyboard Navigation Tests", () => {
       await screen.findByText("User Management");
 
       const emailInput = screen.getByLabelText("Email");
-      
+
       // Focus should still work in high contrast mode
       emailInput.focus();
       expect(emailInput).toHaveFocus();

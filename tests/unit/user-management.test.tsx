@@ -263,7 +263,7 @@ describe("UserManagementPage", () => {
 
       await waitFor(() => {
         const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
-        
+
         fireEvent.change(emailInput, { target: { value: "invalid-email" } });
         fireEvent.blur(emailInput);
 

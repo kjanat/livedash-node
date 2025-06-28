@@ -32,10 +32,10 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("User Management page should render correctly in light theme", async ({ page }) => {
     await page.goto("/dashboard/users");
-    
+
     // Wait for content to load
     await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
-    
+
     // Ensure light theme is active
     await page.evaluate(() => {
       document.documentElement.classList.remove("dark");
@@ -54,10 +54,10 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("User Management page should render correctly in dark theme", async ({ page }) => {
     await page.goto("/dashboard/users");
-    
+
     // Wait for content to load
     await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
-    
+
     // Enable dark theme
     await page.evaluate(() => {
       document.documentElement.classList.remove("light");
@@ -76,13 +76,13 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("Theme toggle should work correctly", async ({ page }) => {
     await page.goto("/dashboard/users");
-    
+
     // Wait for content to load
     await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
 
     // Find theme toggle button (assuming it exists in the layout)
     const themeToggle = page.locator('[data-testid="theme-toggle"]').first();
-    
+
     if (await themeToggle.count() > 0) {
       // Start with light theme
       await page.evaluate(() => {
@@ -157,7 +157,7 @@ test.describe("Theme Switching Visual Tests", () => {
       animations: "disabled",
     });
 
-    // Dark theme table  
+    // Dark theme table
     await page.evaluate(() => {
       document.documentElement.classList.remove("light");
       document.documentElement.classList.add("dark");
@@ -248,7 +248,7 @@ test.describe("Theme Switching Visual Tests", () => {
 
     const emailInput = page.locator('input[type="email"]').first();
     const submitButton = page.locator('button[type="submit"]').first();
-    
+
     await emailInput.waitFor({ timeout: 5000 });
     await submitButton.waitFor({ timeout: 5000 });
 
@@ -373,22 +373,22 @@ test.describe("Theme Switching Visual Tests", () => {
 
     // Find theme toggle if it exists
     const themeToggle = page.locator('[data-testid="theme-toggle"]').first();
-    
+
     if (await themeToggle.count() > 0) {
       // Record video during theme switch
       await page.video()?.path();
-      
+
       // Toggle theme
       await themeToggle.click();
-      
+
       // Wait for transition to complete
       await page.waitForTimeout(500);
-      
+
       // Verify dark theme is applied
       const isDarkMode = await page.evaluate(() => {
         return document.documentElement.classList.contains("dark");
       });
-      
+
       expect(isDarkMode).toBe(true);
     }
   });

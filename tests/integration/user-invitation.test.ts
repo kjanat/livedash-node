@@ -25,7 +25,7 @@ const mockExistingUsers = [
   },
   {
     id: "user-2",
-    email: "admin@example.com", 
+    email: "admin@example.com",
     role: "ADMIN",
     companyId: "test-company-id",
   },
@@ -332,7 +332,7 @@ describe("User Invitation Integration Tests", () => {
   describe("Email Validation Edge Cases", () => {
     it("should handle very long email addresses", async () => {
       const longEmail = "a".repeat(250) + "@example.com";
-      
+
       const { req, res } = createMocks({
         method: "POST",
         body: {
@@ -354,7 +354,7 @@ describe("User Invitation Integration Tests", () => {
 
     it("should handle special characters in email", async () => {
       const specialEmail = "test+tag@example-domain.co.uk";
-      
+
       const { req, res } = createMocks({
         method: "POST",
         body: {
@@ -424,7 +424,7 @@ describe("User Invitation Integration Tests", () => {
     it("should handle multiple rapid invitations", async () => {
       const emails = [
         "user1@example.com",
-        "user2@example.com", 
+        "user2@example.com",
         "user3@example.com",
         "user4@example.com",
         "user5@example.com",

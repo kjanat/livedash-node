@@ -56,7 +56,7 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Basic accessibility check - most critical violations would be caught here
       const results = await axe(container);
       expect(results.violations.length).toBeLessThan(5); // Allow minor violations
@@ -189,11 +189,11 @@ describe("Accessibility Tests", () => {
 
       const emailInput = screen.getByLabelText("Email");
       const submitButton = screen.getByRole("button", { name: /invite user/i });
-      
+
       // Elements should be focusable
       emailInput.focus();
       expect(emailInput).toHaveFocus();
-      
+
       submitButton.focus();
       expect(submitButton).toHaveFocus();
     });

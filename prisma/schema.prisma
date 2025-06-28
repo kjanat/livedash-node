@@ -10,12 +10,29 @@ datasource db {
 }
 
 /// *
+///  * PLATFORM USER (super-admin for Notso AI)
+///  * Platform-level users who can manage companies and platform-wide settings
+///  * Separate from Company users for platform management isolation
+model PlatformUser {
+  id        String             @id @default(uuid())
+  email     String             @unique @db.VarChar(255) /// Platform user email address
+  password  String             @db.VarChar(255) /// Hashed password for platform authentication
+  role      PlatformUserRole   @default(ADMIN) /// Platform permission level
+  name      String             @db.VarChar(255) /// Display name for platform user
+  createdAt DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime           @updatedAt @db.Timestamptz(6)
+
+  @@index([email])
+}
+
+/// *
 ///  * COMPANY (multi-tenant root)
 ///  * Root entity for multi-tenant architecture
 ///  * Each company has isolated data with own users, sessions, and AI model configurations
 model Company {
   id              String           @id @default(uuid())
   name            String           @db.VarChar(255) /// Company name for display and filtering
+  status          CompanyStatus    @default(ACTIVE) /// Company status for suspension/activation
   csvUrl          String           @db.Text /// URL endpoint for CSV data import
   csvUsername     String?          @db.VarChar(255) /// Optional HTTP auth username for CSV endpoint
   csvPassword     String?          @db.VarChar(255) /// Optional HTTP auth password for CSV endpoint
@@ -28,6 +45,7 @@ model Company {
   users           User[]           @relation("CompanyUsers") /// Users belonging to this company
 
   @@index([name])
+  @@index([status])
 }
 
 /// *
@@ -269,11 +287,26 @@ model CompanyAIModel {
 ///  * ENUMS – typed constants for better data integrity
 /// 
 
+/// Platform-level user roles for Notso AI team
+enum PlatformUserRole {
+  SUPER_ADMIN /// Full platform access, can create/suspend companies
+  ADMIN       /// Platform administration, company management
+  SUPPORT     /// Customer support access, read-only company access
+}
+
 /// User permission levels within a company
 enum UserRole {
   ADMIN    /// Full access to company data and settings
   USER     /// Standard access to view and interact with data
   AUDITOR  /// Read-only access for compliance and auditing
+}
+
+/// Company operational status
+enum CompanyStatus {
+  ACTIVE      /// Company is operational and can access all features
+  SUSPENDED   /// Company access is temporarily disabled
+  TRIAL       /// Company is in trial period with potential limitations
+  ARCHIVED    /// Company is archived and data is read-only
 }
 
 /// AI-determined sentiment categories for sessions
