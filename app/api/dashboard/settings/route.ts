@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../../lib/prisma";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../../../lib/auth";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -26,9 +26,7 @@ export async function POST(request: NextRequest) {
       csvUrl,
       csvUsername,
       ...(csvPassword ? { csvPassword } : {}),
-      sentimentAlert: sentimentThreshold
-        ? parseFloat(sentimentThreshold)
-        : null,
+      // Remove sentimentAlert field - not in current schema
     },
   });
 

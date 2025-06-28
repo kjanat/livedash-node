@@ -1,8 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { platformAuthOptions } from "../../auth/[...nextauth]/route";
+import { platformAuthOptions } from "../../../../../lib/platform-auth";
 import { prisma } from "../../../../../lib/prisma";
 import { CompanyStatus } from "@prisma/client";
+
+interface PlatformSession {
+  user: {
+    id?: string;
+    name?: string;
+    email?: string;
+    isPlatformUser?: boolean;
+    platformRole?: string;
+  };
+}
 
 // GET /api/platform/companies/[id] - Get company details
 export async function GET(
@@ -10,7 +20,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(platformAuthOptions);
+    const session = await getServerSession(platformAuthOptions) as PlatformSession | null;
 
     if (!session?.user?.isPlatformUser) {
       return NextResponse.json({ error: "Platform access required" }, { status: 401 });
@@ -24,28 +34,19 @@ export async function GET(
         users: {
           select: {
             id: true,
+            name: true,
             email: true,
             role: true,
             createdAt: true,
             updatedAt: true,
+            invitedBy: true,
+            invitedAt: true,
           },
-        },
-        sessions: {
-          select: {
-            id: true,
-            startTime: true,
-            endTime: true,
-            sentiment: true,
-            category: true,
-          },
-          take: 10,
-          orderBy: { createdAt: "desc" },
         },
         _count: {
           select: {
             sessions: true,
             imports: true,
-            users: true,
           },
         },
       },
@@ -55,7 +56,7 @@ export async function GET(
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ company });
+    return NextResponse.json(company);
   } catch (error) {
     console.error("Platform company details error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -76,10 +77,12 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { name, csvUrl, csvUsername, csvPassword, status } = body;
+    const { name, email, maxUsers, csvUrl, csvUsername, csvPassword, status } = body;
 
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
+    if (email !== undefined) updateData.email = email;
+    if (maxUsers !== undefined) updateData.maxUsers = maxUsers;
     if (csvUrl !== undefined) updateData.csvUrl = csvUrl;
     if (csvUsername !== undefined) updateData.csvUsername = csvUsername;
     if (csvPassword !== undefined) updateData.csvPassword = csvPassword;

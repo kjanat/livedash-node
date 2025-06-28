@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../../lib/prisma";
 import { sessionMetrics } from "../../../../lib/metrics";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../../../lib/auth";
 import { ChatSession } from "../../../../lib/types";
 
 interface SessionUser {
@@ -83,10 +83,7 @@ export async function GET(request: NextRequest) {
 
   // Pass company config to metrics
   const companyConfigForMetrics = {
-    sentimentAlert:
-      user.company.sentimentAlert === null
-        ? undefined
-        : user.company.sentimentAlert,
+    // Add company-specific configuration here in the future
   };
 
   const metrics = sessionMetrics(chatSessions, companyConfigForMetrics);

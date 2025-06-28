@@ -6,6 +6,17 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Building2,
   Users,
@@ -15,6 +26,7 @@ import {
   Settings,
   BarChart3
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Company {
   id: string;
@@ -39,8 +51,18 @@ interface DashboardData {
 export default function PlatformDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAddCompany, setShowAddCompany] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [newCompanyData, setNewCompanyData] = useState({
+    name: "",
+    adminEmail: "",
+    adminName: "",
+    adminPassword: "",
+    maxUsers: 10,
+  });
 
   useEffect(() => {
     if (status === "loading") return;
@@ -64,6 +86,54 @@ export default function PlatformDashboard() {
       console.error("Failed to fetch dashboard data:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCreateCompany = async () => {
+    if (!newCompanyData.name || !newCompanyData.adminEmail || !newCompanyData.adminName) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      const response = await fetch("/api/platform/companies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newCompanyData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setShowAddCompany(false);
+        setNewCompanyData({
+          name: "",
+          adminEmail: "",
+          adminName: "",
+          adminPassword: "",
+          maxUsers: 10,
+        });
+        fetchDashboardData(); // Refresh the list
+        toast({
+          title: "Success",
+          description: `Company "${newCompanyData.name}" created successfully`,
+        });
+      } else {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to create company");
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create company",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
     }
   };
 
@@ -111,10 +181,81 @@ export default function PlatformDashboard() {
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-              <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Company
-              </Button>
+              <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
+                <DialogTrigger asChild>
+                  <Button size="sm">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Company
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[425px]">
+                  <DialogHeader>
+                    <DialogTitle>Add New Company</DialogTitle>
+                    <DialogDescription>
+                      Create a new company and invite the first administrator.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="companyName">Company Name *</Label>
+                      <Input
+                        id="companyName"
+                        value={newCompanyData.name}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                        placeholder="Acme Corporation"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminName">Admin Name *</Label>
+                      <Input
+                        id="adminName"
+                        value={newCompanyData.adminName}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminName: e.target.value }))}
+                        placeholder="John Doe"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminEmail">Admin Email *</Label>
+                      <Input
+                        id="adminEmail"
+                        type="email"
+                        value={newCompanyData.adminEmail}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminEmail: e.target.value }))}
+                        placeholder="admin@acme.com"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="adminPassword">Admin Password</Label>
+                      <Input
+                        id="adminPassword"
+                        type="password"
+                        value={newCompanyData.adminPassword}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminPassword: e.target.value }))}
+                        placeholder="Leave empty to auto-generate"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="maxUsers">Max Users</Label>
+                      <Input
+                        id="maxUsers"
+                        type="number"
+                        value={newCompanyData.maxUsers}
+                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, maxUsers: parseInt(e.target.value) || 10 }))}
+                        min="1"
+                        max="1000"
+                      />
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setShowAddCompany(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateCompany} disabled={isCreating}>
+                      {isCreating ? "Creating..." : "Create Company"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </div>
@@ -200,7 +341,11 @@ export default function PlatformDashboard() {
                       <BarChart3 className="w-4 h-4 mr-2" />
                       Analytics
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => router.push(`/platform/companies/${company.id}`)}
+                    >
                       <Settings className="w-4 h-4 mr-2" />
                       Manage
                     </Button>

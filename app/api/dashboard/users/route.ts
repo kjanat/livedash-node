@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { getServerSession } from "next-auth";
 import { prisma } from "../../../../lib/prisma";
 import bcrypt from "bcryptjs";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { authOptions } from "../../../../lib/auth";
 
 interface UserBasicInfo {
   id: string;

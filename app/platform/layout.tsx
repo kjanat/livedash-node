@@ -1,6 +1,7 @@
 "use client";
 
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "@/components/ui/toaster";
 
 export default function PlatformLayout({
   children,
@@ -10,6 +11,7 @@ export default function PlatformLayout({
   return (
     <SessionProvider>
       {children}
+      <Toaster />
     </SessionProvider>
   );
 }
