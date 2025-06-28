@@ -366,6 +366,9 @@ export async function processQueuedImports(
     const unprocessedImports = await prisma.sessionImport.findMany({
       where: {
         session: null, // No session created yet
+        company: {
+          status: "ACTIVE" // Only process imports from active companies
+        }
       },
       take: batchSize,
       orderBy: {

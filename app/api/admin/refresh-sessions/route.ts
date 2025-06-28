@@ -44,6 +44,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
+    // Check if company is active and can process data
+    if (company.status !== "ACTIVE") {
+      return NextResponse.json(
+        { 
+          error: `Data processing is disabled for ${company.status.toLowerCase()} companies`,
+          companyStatus: company.status 
+        }, 
+        { status: 403 }
+      );
+    }
+
     const rawSessionData = await fetchAndParseCsv(
       company.csvUrl,
       company.csvUsername as string | undefined,

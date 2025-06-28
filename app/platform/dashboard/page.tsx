@@ -23,9 +23,12 @@ import {
   Activity,
   Plus,
   Settings,
-  BarChart3
+  BarChart3,
+  Search
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
+import { Copy, Check } from "lucide-react";
 
 interface Company {
   id: string;
@@ -86,8 +89,14 @@ export default function PlatformDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [newCompanyData, setNewCompanyData] = useState({
     name: "",
+    csvUrl: "",
+    csvUsername: "",
+    csvPassword: "",
     adminEmail: "",
     adminName: "",
     adminPassword: "",
@@ -105,6 +114,29 @@ export default function PlatformDashboard() {
     fetchDashboardData();
   }, [session, status, router]);
 
+  const copyToClipboard = async (text: string, type: 'email' | 'password') => {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (type === 'email') {
+        setCopiedEmail(true);
+        setTimeout(() => setCopiedEmail(false), 2000);
+      } else {
+        setCopiedPassword(true);
+        setTimeout(() => setCopiedPassword(false), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+    }
+  };
+
+  const getFilteredCompanies = () => {
+    if (!dashboardData?.companies) return [];
+    
+    return dashboardData.companies.filter(company =>
+      company.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
   const fetchDashboardData = async () => {
     try {
       const response = await fetch("/api/platform/companies");
@@ -120,7 +152,7 @@ export default function PlatformDashboard() {
   };
 
   const handleCreateCompany = async () => {
-    if (!newCompanyData.name || !newCompanyData.adminEmail || !newCompanyData.adminName) {
+    if (!newCompanyData.name || !newCompanyData.csvUrl || !newCompanyData.adminEmail || !newCompanyData.adminName) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -140,18 +172,68 @@ export default function PlatformDashboard() {
       if (response.ok) {
         const result = await response.json();
         setShowAddCompany(false);
+        
+        const companyName = newCompanyData.name;
         setNewCompanyData({
           name: "",
+          csvUrl: "",
+          csvUsername: "",
+          csvPassword: "",
           adminEmail: "",
           adminName: "",
           adminPassword: "",
           maxUsers: 10,
         });
+        
         fetchDashboardData(); // Refresh the list
-        toast({
-          title: "Success",
-          description: `Company "${newCompanyData.name}" created successfully`,
-        });
+        
+        // Show success message with copyable credentials
+        if (result.generatedPassword) {
+          toast({
+            title: "Company Created Successfully!",
+            description: (
+              <div className="space-y-3">
+                <p className="font-medium">Company "{companyName}" has been created.</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between bg-muted p-2 rounded">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Admin Email:</p>
+                      <p className="font-mono text-sm">{result.adminUser.email}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyToClipboard(result.adminUser.email, 'email')}
+                      className="h-8 w-8 p-0"
+                    >
+                      {copiedEmail ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-between bg-muted p-2 rounded">
+                    <div className="flex-1">
+                      <p className="text-xs text-muted-foreground">Admin Password:</p>
+                      <p className="font-mono text-sm">{result.generatedPassword}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => copyToClipboard(result.generatedPassword, 'password')}
+                      className="h-8 w-8 p-0"
+                    >
+                      {copiedPassword ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ),
+            duration: 15000, // Longer duration for credentials
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: `Company "${companyName}" created successfully`,
+          });
+        }
       } else {
         const error = await response.json();
         throw new Error(error.error || "Failed to create company");
@@ -189,6 +271,7 @@ export default function PlatformDashboard() {
     return null;
   }
 
+  const filteredCompanies = getFilteredCompanies();
   const totalCompanies = dashboardData?.pagination?.total || 0;
   const totalUsers = dashboardData?.companies?.reduce((sum, company) => sum + company._count.users, 0) || 0;
   const totalSessions = dashboardData?.companies?.reduce((sum, company) => sum + company._count.sessions, 0) || 0;
@@ -206,86 +289,23 @@ export default function PlatformDashboard() {
                 Welcome back, {session.user.name || session.user.email}
               </p>
             </div>
-            <div className="flex gap-4">
+            <div className="flex gap-4 items-center">
+              <ThemeToggle />
+              
+              {/* Search Filter */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search companies..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-64"
+                />
+              </div>
               <Button variant="outline" size="sm">
                 <Settings className="w-4 h-4 mr-2" />
                 Settings
               </Button>
-              <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Company
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Add New Company</DialogTitle>
-                    <DialogDescription>
-                      Create a new company and invite the first administrator.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="companyName">Company Name *</Label>
-                      <Input
-                        id="companyName"
-                        value={newCompanyData.name}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Acme Corporation"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="adminName">Admin Name *</Label>
-                      <Input
-                        id="adminName"
-                        value={newCompanyData.adminName}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminName: e.target.value }))}
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="adminEmail">Admin Email *</Label>
-                      <Input
-                        id="adminEmail"
-                        type="email"
-                        value={newCompanyData.adminEmail}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminEmail: e.target.value }))}
-                        placeholder="admin@acme.com"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="adminPassword">Admin Password</Label>
-                      <Input
-                        id="adminPassword"
-                        type="password"
-                        value={newCompanyData.adminPassword}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminPassword: e.target.value }))}
-                        placeholder="Leave empty to auto-generate"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="maxUsers">Max Users</Label>
-                      <Input
-                        id="maxUsers"
-                        type="number"
-                        value={newCompanyData.maxUsers}
-                        onChange={(e) => setNewCompanyData(prev => ({ ...prev, maxUsers: parseInt(e.target.value) || 10 }))}
-                        min="1"
-                        max="1000"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowAddCompany(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleCreateCompany} disabled={isCreating}>
-                      {isCreating ? "Creating..." : "Create Company"}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
             </div>
           </div>
         </div>
@@ -340,14 +360,131 @@ export default function PlatformDashboard() {
         {/* Companies List */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5" />
-              Companies
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-5 h-5" />
+                Companies
+                {searchTerm && (
+                  <Badge variant="secondary" className="ml-2">
+                    {filteredCompanies.length} of {totalCompanies} shown
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {searchTerm && (
+                  <Badge variant="outline" className="text-xs">
+                    Search: "{searchTerm}"
+                  </Badge>
+                )}
+                <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Company
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Add New Company</DialogTitle>
+                      <DialogDescription>
+                        Create a new company and invite the first administrator.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName">Company Name *</Label>
+                        <Input
+                          id="companyName"
+                          value={newCompanyData.name}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                          placeholder="Acme Corporation"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="csvUrl">CSV Data URL *</Label>
+                        <Input
+                          id="csvUrl"
+                          value={newCompanyData.csvUrl}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvUrl: e.target.value }))}
+                          placeholder="https://api.company.com/sessions.csv"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="csvUsername">CSV Auth Username</Label>
+                        <Input
+                          id="csvUsername"
+                          value={newCompanyData.csvUsername}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvUsername: e.target.value }))}
+                          placeholder="Optional HTTP auth username"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="csvPassword">CSV Auth Password</Label>
+                        <Input
+                          id="csvPassword"
+                          type="password"
+                          value={newCompanyData.csvPassword}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvPassword: e.target.value }))}
+                          placeholder="Optional HTTP auth password"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="adminName">Admin Name *</Label>
+                        <Input
+                          id="adminName"
+                          value={newCompanyData.adminName}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminName: e.target.value }))}
+                          placeholder="John Doe"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="adminEmail">Admin Email *</Label>
+                        <Input
+                          id="adminEmail"
+                          type="email"
+                          value={newCompanyData.adminEmail}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminEmail: e.target.value }))}
+                          placeholder="admin@acme.com"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="adminPassword">Admin Password</Label>
+                        <Input
+                          id="adminPassword"
+                          type="password"
+                          value={newCompanyData.adminPassword}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminPassword: e.target.value }))}
+                          placeholder="Leave empty to auto-generate"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="maxUsers">Max Users</Label>
+                        <Input
+                          id="maxUsers"
+                          type="number"
+                          value={newCompanyData.maxUsers}
+                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, maxUsers: parseInt(e.target.value) || 10 }))}
+                          min="1"
+                          max="1000"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button variant="outline" onClick={() => setShowAddCompany(false)}>
+                        Cancel
+                      </Button>
+                      <Button onClick={handleCreateCompany} disabled={isCreating}>
+                        {isCreating ? "Creating..." : "Create Company"}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {dashboardData?.companies?.map((company) => (
+              {filteredCompanies.map((company) => (
                 <div
                   key={company.id}
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -383,9 +520,18 @@ export default function PlatformDashboard() {
                 </div>
               ))}
 
-              {!dashboardData?.companies?.length && (
+              {!filteredCompanies.length && (
                 <div className="text-center py-8 text-muted-foreground">
-                  No companies found. Create your first company to get started.
+                  {searchTerm ? (
+                    <div className="space-y-2">
+                      <p>No companies match "{searchTerm}".</p>
+                      <Button variant="link" onClick={() => setSearchTerm("")} className="text-sm">
+                        Clear search to see all companies
+                      </Button>
+                    </div>
+                  ) : (
+                    "No companies found. Create your first company to get started."
+                  )}
                 </div>
               )}
             </div>

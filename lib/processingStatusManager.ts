@@ -172,6 +172,11 @@ export class ProcessingStatusManager {
       where: {
         stage,
         status: ProcessingStatus.PENDING,
+        session: {
+          company: {
+            status: "ACTIVE" // Only process sessions from active companies
+          }
+        }
       },
       include: {
         session: {

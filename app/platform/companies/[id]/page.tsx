@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -73,8 +73,55 @@ export default function CompanyManagement() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<Partial<Company>>({});
+  const [originalData, setOriginalData] = useState<Partial<Company>>({});
   const [showInviteUser, setShowInviteUser] = useState(false);
   const [inviteData, setInviteData] = useState({ name: "", email: "", role: "USER" });
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
+  // Function to check if data has been modified
+  const hasUnsavedChanges = useCallback(() => {
+    // Normalize data for comparison (handle null/undefined/empty string equivalence)
+    const normalizeValue = (value: any) => {
+      if (value === null || value === undefined || value === "") {
+        return "";
+      }
+      return value;
+    };
+    
+    const normalizedEditData = {
+      name: normalizeValue(editData.name),
+      email: normalizeValue(editData.email),
+      status: normalizeValue(editData.status),
+      maxUsers: editData.maxUsers || 0,
+    };
+    
+    const normalizedOriginalData = {
+      name: normalizeValue(originalData.name),
+      email: normalizeValue(originalData.email),
+      status: normalizeValue(originalData.status),
+      maxUsers: originalData.maxUsers || 0,
+    };
+    
+    return JSON.stringify(normalizedEditData) !== JSON.stringify(normalizedOriginalData);
+  }, [editData, originalData]);
+
+  // Handle navigation protection - must be at top level
+  const handleNavigation = useCallback((url: string) => {
+    // Allow navigation within the same company (different tabs, etc.)
+    if (url.includes(`/platform/companies/${params.id}`)) {
+      router.push(url);
+      return;
+    }
+
+    // If there are unsaved changes, show confirmation dialog
+    if (hasUnsavedChanges()) {
+      setPendingNavigation(url);
+      setShowUnsavedChangesDialog(true);
+    } else {
+      router.push(url);
+    }
+  }, [router, params.id, hasUnsavedChanges]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -93,12 +140,14 @@ export default function CompanyManagement() {
       if (response.ok) {
         const data = await response.json();
         setCompany(data);
-        setEditData({
+        const companyData = {
           name: data.name,
           email: data.email,
           status: data.status,
           maxUsers: data.maxUsers,
-        });
+        };
+        setEditData(companyData);
+        setOriginalData(companyData);
       } else {
         toast({
           title: "Error",
@@ -130,6 +179,13 @@ export default function CompanyManagement() {
       if (response.ok) {
         const updatedCompany = await response.json();
         setCompany(updatedCompany);
+        const companyData = {
+          name: updatedCompany.name,
+          email: updatedCompany.email,
+          status: updatedCompany.status,
+          maxUsers: updatedCompany.maxUsers,
+        };
+        setOriginalData(companyData);
         toast({
           title: "Success",
           description: "Company updated successfully",
@@ -177,6 +233,50 @@ export default function CompanyManagement() {
     }
   };
 
+  const confirmNavigation = () => {
+    if (pendingNavigation) {
+      router.push(pendingNavigation);
+      setPendingNavigation(null);
+    }
+    setShowUnsavedChangesDialog(false);
+  };
+
+  const cancelNavigation = () => {
+    setPendingNavigation(null);
+    setShowUnsavedChangesDialog(false);
+  };
+
+  // Protect against browser back/forward and other navigation
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+
+    const handlePopState = (e: PopStateEvent) => {
+      if (hasUnsavedChanges()) {
+        const confirmLeave = window.confirm(
+          'You have unsaved changes. Are you sure you want to leave this page?'
+        );
+        if (!confirmLeave) {
+          // Push the current state back to prevent navigation
+          window.history.pushState(null, '', window.location.href);
+          e.preventDefault();
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [hasUnsavedChanges]);
+
   const handleInviteUser = async () => {
     try {
       const response = await fetch(`/api/platform/companies/${params.id}/users`, {
@@ -205,6 +305,16 @@ export default function CompanyManagement() {
     }
   };
 
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "ACTIVE": return "default";
+      case "TRIAL": return "secondary";
+      case "SUSPENDED": return "destructive";
+      case "ARCHIVED": return "outline";
+      default: return "default";
+    }
+  };
+
   if (status === "loading" || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -217,16 +327,6 @@ export default function CompanyManagement() {
     return null;
   }
 
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "ACTIVE": return "default";
-      case "TRIAL": return "secondary";
-      case "SUSPENDED": return "destructive";
-      case "ARCHIVED": return "outline";
-      default: return "default";
-    }
-  };
-
   const canEdit = session.user.platformRole === "SUPER_ADMIN";
 
   return (
@@ -238,7 +338,7 @@ export default function CompanyManagement() {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => router.push("/platform/dashboard")}
+                onClick={() => handleNavigation("/platform/dashboard")}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Dashboard
@@ -259,24 +359,14 @@ export default function CompanyManagement() {
             </div>
             <div className="flex gap-2">
               {canEdit && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowInviteUser(true)}
-                  >
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Invite User
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                  >
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
-                </>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowInviteUser(true)}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Invite User
+                </Button>
               )}
             </div>
           </div>
@@ -396,6 +486,25 @@ export default function CompanyManagement() {
                     </Select>
                   </div>
                 </div>
+                {canEdit && hasUnsavedChanges() && (
+                  <div className="flex gap-2 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setEditData(originalData);
+                      }}
+                    >
+                      Cancel Changes
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={isSaving}
+                    >
+                      <Save className="w-4 h-4 mr-2" />
+                      {isSaving ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -587,6 +696,26 @@ export default function CompanyManagement() {
           </Card>
         </div>
       )}
+
+      {/* Unsaved Changes Dialog */}
+      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes that will be lost if you leave this page. Are you sure you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelNavigation}>
+              Stay on Page
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmNavigation}>
+              Leave Without Saving
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

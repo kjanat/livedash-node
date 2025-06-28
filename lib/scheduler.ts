@@ -17,7 +17,9 @@ export function startCsvImportScheduler() {
   );
 
   cron.schedule(config.csvImport.interval, async () => {
-    const companies = await prisma.company.findMany();
+    const companies = await prisma.company.findMany({
+      where: { status: "ACTIVE" } // Only process active companies
+    });
     for (const company of companies) {
       try {
         const rawSessionData = await fetchAndParseCsv(

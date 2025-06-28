@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
             select: {
               sessions: true,
               imports: true,
+              users: true,
             },
           },
         },
@@ -75,23 +76,72 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, csvUrl, csvUsername, csvPassword, status = "TRIAL" } = body;
+    const { 
+      name, 
+      csvUrl, 
+      csvUsername, 
+      csvPassword, 
+      adminEmail,
+      adminName,
+      adminPassword,
+      maxUsers = 10,
+      status = "TRIAL" 
+    } = body;
 
     if (!name || !csvUrl) {
       return NextResponse.json({ error: "Name and CSV URL required" }, { status: 400 });
     }
 
-    const company = await prisma.company.create({
-      data: {
-        name,
-        csvUrl,
-        csvUsername: csvUsername || null,
-        csvPassword: csvPassword || null,
-        status,
-      },
+    if (!adminEmail || !adminName) {
+      return NextResponse.json({ error: "Admin email and name required" }, { status: 400 });
+    }
+
+    // Generate password if not provided
+    const finalAdminPassword = adminPassword || `Temp${Math.random().toString(36).slice(2, 8)}!`;
+
+    // Hash the admin password
+    const bcrypt = await import("bcryptjs");
+    const hashedPassword = await bcrypt.hash(finalAdminPassword, 12);
+
+    // Create company and admin user in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the company
+      const company = await tx.company.create({
+        data: {
+          name,
+          csvUrl,
+          csvUsername: csvUsername || null,
+          csvPassword: csvPassword || null,
+          maxUsers,
+          status,
+        },
+      });
+
+      // Create the admin user
+      const adminUser = await tx.user.create({
+        data: {
+          email: adminEmail,
+          password: hashedPassword,
+          name: adminName,
+          role: "ADMIN",
+          companyId: company.id,
+          invitedBy: session.user.email || "platform",
+          invitedAt: new Date(),
+        },
+      });
+
+      return { company, adminUser, generatedPassword: adminPassword ? null : finalAdminPassword };
     });
 
-    return NextResponse.json({ company }, { status: 201 });
+    return NextResponse.json({ 
+      company: result.company,
+      adminUser: {
+        email: result.adminUser.email,
+        name: result.adminUser.name,
+        role: result.adminUser.role,
+      },
+      generatedPassword: result.generatedPassword,
+    }, { status: 201 });
   } catch (error) {
     console.error("Platform company creation error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

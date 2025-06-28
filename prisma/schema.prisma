@@ -49,6 +49,8 @@ model Company {
   dashboardOpts   Json?
   createdAt       DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  /// Maximum number of users allowed for this company
+  maxUsers        Int              @default(10)
   companyAiModels CompanyAIModel[]
   sessions        Session[]
   imports         SessionImport[]
@@ -78,6 +80,12 @@ model User {
   resetTokenExpiry DateTime? @db.Timestamptz(6)
   createdAt        DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
+  /// Display name for the user
+  name             String?   @db.VarChar(255)
+  /// When this user was invited
+  invitedAt        DateTime? @db.Timestamptz(6)
+  /// Email of the user who invited this user (for audit trail)
+  invitedBy        String?   @db.VarChar(255)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
 
   @@index([companyId])

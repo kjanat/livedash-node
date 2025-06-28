@@ -66,7 +66,7 @@ export async function POST(
       data: {
         name,
         email,
-        hashedPassword,
+        password: hashedPassword,
         role,
         companyId,
         invitedBy: session.user.email,
