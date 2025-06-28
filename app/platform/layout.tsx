@@ -9,7 +9,7 @@ export default function PlatformLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SessionProvider>
+    <SessionProvider basePath="/api/platform/auth">
       {children}
       <Toaster />
     </SessionProvider>

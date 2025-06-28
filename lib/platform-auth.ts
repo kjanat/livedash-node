@@ -79,7 +79,7 @@ export const platformAuthOptions: NextAuthOptions = {
       options: {
         httpOnly: true,
         sameSite: "lax",
-        path: "/platform",
+        path: "/",
         secure: process.env.NODE_ENV === "production",
       },
     },

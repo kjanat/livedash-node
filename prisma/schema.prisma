@@ -10,56 +10,72 @@ datasource db {
 }
 
 /// *
-///  * PLATFORM USER (super-admin for Notso AI)
-///  * Platform-level users who can manage companies and platform-wide settings
-///  * Separate from Company users for platform management isolation
+/// * PLATFORM USER (super-admin for Notso AI)
+/// * Platform-level users who can manage companies and platform-wide settings
+/// * Separate from Company users for platform management isolation
 model PlatformUser {
-  id        String             @id @default(uuid())
-  email     String             @unique @db.VarChar(255) /// Platform user email address
-  password  String             @db.VarChar(255) /// Hashed password for platform authentication
-  role      PlatformUserRole   @default(ADMIN) /// Platform permission level
-  name      String             @db.VarChar(255) /// Display name for platform user
-  createdAt DateTime           @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime           @updatedAt @db.Timestamptz(6)
+  id        String           @id @default(uuid())
+  /// Platform user email address
+  email     String           @unique @db.VarChar(255)
+  /// Hashed password for platform authentication
+  password  String           @db.VarChar(255)
+  /// Platform permission level
+  role      PlatformUserRole @default(ADMIN)
+  /// Display name for platform user
+  name      String           @db.VarChar(255)
+  createdAt DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @db.Timestamptz(6)
 
   @@index([email])
 }
 
 /// *
-///  * COMPANY (multi-tenant root)
-///  * Root entity for multi-tenant architecture
-///  * Each company has isolated data with own users, sessions, and AI model configurations
+/// * COMPANY (multi-tenant root)
+/// * Root entity for multi-tenant architecture
+/// * Each company has isolated data with own users, sessions, and AI model configurations
 model Company {
   id              String           @id @default(uuid())
-  name            String           @db.VarChar(255) /// Company name for display and filtering
-  status          CompanyStatus    @default(ACTIVE) /// Company status for suspension/activation
-  csvUrl          String           @db.Text /// URL endpoint for CSV data import
-  csvUsername     String?          @db.VarChar(255) /// Optional HTTP auth username for CSV endpoint
-  csvPassword     String?          @db.VarChar(255) /// Optional HTTP auth password for CSV endpoint
-  dashboardOpts   Json?            @db.JsonB /// Company-specific dashboard configuration (theme, layout, etc.)
+  /// Company name for display and filtering
+  name            String           @db.VarChar(255)
+  /// Company status for suspension/activation
+  status          CompanyStatus    @default(ACTIVE)
+  /// URL endpoint for CSV data import
+  csvUrl          String
+  /// Optional HTTP auth username for CSV endpoint
+  csvUsername     String?          @db.VarChar(255)
+  /// Optional HTTP auth password for CSV endpoint
+  csvPassword     String?          @db.VarChar(255)
+  /// Company-specific dashboard configuration (theme, layout, etc.)
+  dashboardOpts   Json?
   createdAt       DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
-  companyAiModels CompanyAIModel[] /// AI models assigned to this company
-  sessions        Session[]        /// All processed sessions for this company
-  imports         SessionImport[]  /// Raw CSV import data for this company
-  users           User[]           @relation("CompanyUsers") /// Users belonging to this company
+  companyAiModels CompanyAIModel[]
+  sessions        Session[]
+  imports         SessionImport[]
+  users           User[]           @relation("CompanyUsers")
 
   @@index([name])
   @@index([status])
 }
 
 /// *
-///  * USER (authentication accounts)
-///  * Application users with role-based access control
-///  * Each user belongs to exactly one company for data isolation
+/// * USER (authentication accounts)
+/// * Application users with role-based access control
+/// * Each user belongs to exactly one company for data isolation
 model User {
   id               String    @id @default(uuid())
-  email            String    @unique @db.VarChar(255) /// User email address, must be unique across all companies
-  password         String    @db.VarChar(255) /// Hashed password for authentication
-  role             UserRole  @default(USER) /// User permission level within their company
-  companyId        String    /// Foreign key to Company - enforces data isolation
-  resetToken       String?   @db.VarChar(255) /// Temporary token for password reset functionality
-  resetTokenExpiry DateTime? @db.Timestamptz(6) /// Expiration time for reset token
+  /// User email address, must be unique across all companies
+  email            String    @unique @db.VarChar(255)
+  /// Hashed password for authentication
+  password         String    @db.VarChar(255)
+  /// User permission level within their company
+  role             UserRole  @default(USER)
+  /// Foreign key to Company - enforces data isolation
+  companyId        String
+  /// Temporary token for password reset functionality
+  resetToken       String?   @db.VarChar(255)
+  /// Expiration time for reset token
+  resetTokenExpiry DateTime? @db.Timestamptz(6)
   createdAt        DateTime  @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
@@ -69,47 +85,62 @@ model User {
 }
 
 /// *
-///  * SESSION (processed conversation data)
-///  * Normalized session data derived from raw CSV imports
-///  * Contains AI-enhanced data like sentiment analysis and categorization
-///  * 1:1 relationship with SessionImport via importId
+/// * SESSION (processed conversation data)
+/// * Normalized session data derived from raw CSV imports
+/// * Contains AI-enhanced data like sentiment analysis and categorization
+/// * 1:1 relationship with SessionImport via importId
 model Session {
   id                   String                    @id @default(uuid())
-  companyId            String                    /// Foreign key to Company for data isolation
-  importId             String?                   @unique /// Optional 1:1 link to source SessionImport record
+  /// Foreign key to Company for data isolation
+  companyId            String
+  /// Optional 1:1 link to source SessionImport record
+  importId             String?                   @unique
   /// Session timing and basic data
-  startTime            DateTime                  @db.Timestamptz(6) /// When the conversation started
-  endTime              DateTime                  @db.Timestamptz(6) /// When the conversation ended
-  ipAddress            String?                   @db.Inet /// Client IP address (IPv4/IPv6)
-  country              String?                   @db.VarChar(3) /// ISO 3166-1 alpha-3 country code
-  fullTranscriptUrl    String?                   @db.Text /// URL to external transcript source
-  avgResponseTime      Float?                    @db.Real /// Average response time in seconds
-  initialMsg           String?                   @db.Text /// First message in the conversation
-  language             String?                   @db.VarChar(10) /// ISO 639 language code
-  messagesSent         Int?                      /// Total number of messages in session
+  /// When the conversation started
+  startTime            DateTime                  @db.Timestamptz(6)
+  /// When the conversation ended
+  endTime              DateTime                  @db.Timestamptz(6)
+  /// Client IP address (IPv4/IPv6)
+  ipAddress            String?                   @db.Inet
+  /// ISO 3166-1 alpha-3 country code
+  country              String?                   @db.VarChar(3)
+  /// URL to external transcript source
+  fullTranscriptUrl    String?
+  /// Average response time in seconds
+  avgResponseTime      Float?                    @db.Real
+  /// First message in the conversation
+  initialMsg           String?
+  /// ISO 639 language code
+  language             String?                   @db.VarChar(10)
+  /// Total number of messages in session
+  messagesSent         Int?
   /// AI-enhanced analysis fields
-  sentiment            SentimentCategory?        /// AI-determined overall sentiment
-  escalated            Boolean?                  /// Whether session was escalated to human
-  forwardedHr          Boolean?                  /// Whether session was forwarded to HR
-  category             SessionCategory?          /// AI-determined conversation category
-  summary              String?                   @db.Text /// AI-generated session summary
+  /// AI-determined overall sentiment
+  sentiment            SentimentCategory?
+  /// Whether session was escalated to human
+  escalated            Boolean?
+  /// Whether session was forwarded to HR
+  forwardedHr          Boolean?
+  /// AI-determined conversation category
+  category             SessionCategory?
+  /// AI-generated session summary
+  summary              String?
   createdAt            DateTime                  @default(now()) @db.Timestamptz(6)
   updatedAt            DateTime                  @updatedAt @db.Timestamptz(6)
-  /// Related data
-  aiProcessingRequests AIProcessingRequest[]     /// All AI API calls made for this session
-  messages             Message[]                 /// Individual messages in conversation order
+  aiProcessingRequests AIProcessingRequest[]
+  messages             Message[]
   company              Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   import               SessionImport?            @relation("ImportToSession", fields: [importId], references: [id])
-  processingStatus     SessionProcessingStatus[] /// Pipeline stage tracking
-  sessionQuestions     SessionQuestion[]         /// Questions extracted from conversation
+  processingStatus     SessionProcessingStatus[]
+  sessionQuestions     SessionQuestion[]
 
-  @@index([companyId, startTime]) /// Primary query pattern: company sessions by time
-  @@index([companyId, sentiment]) /// Filter sessions by sentiment within company
-  @@index([companyId, category])  /// Filter sessions by category within company
+  @@index([companyId, startTime])
+  @@index([companyId, sentiment])
+  @@index([companyId, category])
 }
 
 /// *
-///  * 2.  Raw CSV row (pure data storage) ----------
+/// * 2.  Raw CSV row (pure data storage) ----------
 model SessionImport {
   id                     String   @id @default(uuid())
   companyId              String
@@ -123,13 +154,13 @@ model SessionImport {
   sentimentRaw           String?  @db.VarChar(50)
   escalatedRaw           String?  @db.VarChar(50)
   forwardedHrRaw         String?  @db.VarChar(50)
-  fullTranscriptUrl      String?  @db.Text
+  fullTranscriptUrl      String?
   avgResponseTimeSeconds Float?   @db.Real
   tokens                 Int?
   tokensEur              Float?   @db.Real
   category               String?  @db.VarChar(255)
-  initialMessage         String?  @db.Text
-  rawTranscriptContent   String?  @db.Text
+  initialMessage         String?
+  rawTranscriptContent   String?
   createdAt              DateTime @default(now()) @db.Timestamptz(6)
   session                Session? @relation("ImportToSession")
   company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -140,13 +171,13 @@ model SessionImport {
 }
 
 /// *
-///  * MESSAGE  (individual lines)
+/// * MESSAGE  (individual lines)
 model Message {
   id        String    @id @default(uuid())
   sessionId String
   timestamp DateTime? @db.Timestamptz(6)
   role      String    @db.VarChar(50)
-  content   String    @db.Text
+  content   String
   order     Int
   createdAt DateTime  @default(now()) @db.Timestamptz(6)
   session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -157,7 +188,7 @@ model Message {
 }
 
 /// *
-///  * UNIFIED PROCESSING STATUS TRACKING
+/// * UNIFIED PROCESSING STATUS TRACKING
 model SessionProcessingStatus {
   id           String           @id @default(uuid())
   sessionId    String
@@ -165,9 +196,9 @@ model SessionProcessingStatus {
   status       ProcessingStatus @default(PENDING)
   startedAt    DateTime?        @db.Timestamptz(6)
   completedAt  DateTime?        @db.Timestamptz(6)
-  errorMessage String?          @db.Text
+  errorMessage String?
   retryCount   Int              @default(0)
-  metadata     Json?            @db.JsonB
+  metadata     Json?
   session      Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, stage])
@@ -177,10 +208,10 @@ model SessionProcessingStatus {
 }
 
 /// *
-///  * QUESTION MANAGEMENT (separate from Session for better analytics)
+/// * QUESTION MANAGEMENT (separate from Session for better analytics)
 model Question {
   id               String            @id @default(uuid())
-  content          String            @unique @db.Text
+  content          String            @unique
   createdAt        DateTime          @default(now()) @db.Timestamptz(6)
   sessionQuestions SessionQuestion[]
 }
@@ -201,7 +232,7 @@ model SessionQuestion {
 }
 
 /// *
-///  * AI PROCESSING COST TRACKING
+/// * AI PROCESSING COST TRACKING
 model AIProcessingRequest {
   id                       String    @id @default(uuid())
   sessionId                String
@@ -223,7 +254,7 @@ model AIProcessingRequest {
   totalCostEur             Float     @db.Real
   processingType           String    @db.VarChar(100)
   success                  Boolean
-  errorMessage             String?   @db.Text
+  errorMessage             String?
   requestedAt              DateTime  @default(now()) @db.Timestamptz(6)
   completedAt              DateTime? @db.Timestamptz(6)
   session                  Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -236,7 +267,7 @@ model AIProcessingRequest {
 }
 
 /// *
-///  * AI Model definitions (without pricing)
+/// * AI Model definitions (without pricing)
 model AIModel {
   id            String           @id @default(uuid())
   name          String           @unique @db.VarChar(100)
@@ -253,7 +284,7 @@ model AIModel {
 }
 
 /// *
-///  * Time-based pricing for AI models
+/// * Time-based pricing for AI models
 model AIModelPricing {
   id                  String    @id @default(uuid())
   aiModelId           String
@@ -269,7 +300,7 @@ model AIModelPricing {
 }
 
 /// *
-///  * Company-specific AI model assignments
+/// * Company-specific AI model assignments
 model CompanyAIModel {
   id        String   @id @default(uuid())
   companyId String
@@ -283,70 +314,102 @@ model CompanyAIModel {
   @@index([companyId, isDefault])
 }
 
-/// *
-///  * ENUMS – typed constants for better data integrity
-/// 
-
 /// Platform-level user roles for Notso AI team
 enum PlatformUserRole {
-  SUPER_ADMIN /// Full platform access, can create/suspend companies
-  ADMIN       /// Platform administration, company management
-  SUPPORT     /// Customer support access, read-only company access
+  /// Full platform access, can create/suspend companies
+  SUPER_ADMIN
+  /// Platform administration, company management
+  ADMIN
+  /// Customer support access, read-only company access
+  SUPPORT
 }
 
 /// User permission levels within a company
 enum UserRole {
-  ADMIN    /// Full access to company data and settings
-  USER     /// Standard access to view and interact with data
-  AUDITOR  /// Read-only access for compliance and auditing
+  /// Full access to company data and settings
+  ADMIN
+  /// Standard access to view and interact with data
+  USER
+  /// Read-only access for compliance and auditing
+  AUDITOR
 }
 
 /// Company operational status
 enum CompanyStatus {
-  ACTIVE      /// Company is operational and can access all features
-  SUSPENDED   /// Company access is temporarily disabled
-  TRIAL       /// Company is in trial period with potential limitations
-  ARCHIVED    /// Company is archived and data is read-only
+  /// Company is operational and can access all features
+  ACTIVE
+  /// Company access is temporarily disabled
+  SUSPENDED
+  /// Company is in trial period with potential limitations
+  TRIAL
+  /// Company is archived and data is read-only
+  ARCHIVED
 }
 
 /// AI-determined sentiment categories for sessions
 enum SentimentCategory {
-  POSITIVE /// Customer expressed satisfaction or positive emotions
-  NEUTRAL  /// Neutral tone or mixed emotions
-  NEGATIVE /// Customer expressed frustration or negative emotions
+  /// Customer expressed satisfaction or positive emotions
+  POSITIVE
+  /// Neutral tone or mixed emotions
+  NEUTRAL
+  /// Customer expressed frustration or negative emotions
+  NEGATIVE
 }
 
 /// AI-determined conversation categories based on content analysis
 enum SessionCategory {
-  SCHEDULE_HOURS        /// Questions about work schedules and hours
-  LEAVE_VACATION        /// Vacation requests and leave policies
-  SICK_LEAVE_RECOVERY   /// Sick leave and recovery-related discussions
-  SALARY_COMPENSATION   /// Salary, benefits, and compensation questions
-  CONTRACT_HOURS        /// Contract terms and working hours
-  ONBOARDING           /// New employee onboarding processes
-  OFFBOARDING          /// Employee departure and offboarding
-  WORKWEAR_STAFF_PASS   /// Equipment, uniforms, and access cards
-  TEAM_CONTACTS         /// Team directory and contact information
-  PERSONAL_QUESTIONS    /// Personal HR matters and private concerns
-  ACCESS_LOGIN          /// System access and login issues
-  SOCIAL_QUESTIONS      /// Social events and company culture
-  UNRECOGNIZED_OTHER    /// Conversations that don't fit other categories
+  /// Questions about work schedules and hours
+  SCHEDULE_HOURS
+  /// Vacation requests and leave policies
+  LEAVE_VACATION
+  /// Sick leave and recovery-related discussions
+  SICK_LEAVE_RECOVERY
+  /// Salary, benefits, and compensation questions
+  SALARY_COMPENSATION
+  /// Contract terms and working hours
+  CONTRACT_HOURS
+  /// New employee onboarding processes
+  ONBOARDING
+  /// Employee departure and offboarding
+  OFFBOARDING
+  /// Equipment, uniforms, and access cards
+  WORKWEAR_STAFF_PASS
+  /// Team directory and contact information
+  TEAM_CONTACTS
+  /// Personal HR matters and private concerns
+  PERSONAL_QUESTIONS
+  /// System access and login issues
+  ACCESS_LOGIN
+  /// Social events and company culture
+  SOCIAL_QUESTIONS
+  /// Conversations that don't fit other categories
+  UNRECOGNIZED_OTHER
 }
 
 /// Processing pipeline stages for session data transformation
 enum ProcessingStage {
-  CSV_IMPORT          /// Initial import of raw CSV data into SessionImport
-  TRANSCRIPT_FETCH    /// Fetching transcript content from external URLs
-  SESSION_CREATION    /// Converting SessionImport to normalized Session
-  AI_ANALYSIS         /// AI processing for sentiment, categorization, summaries
-  QUESTION_EXTRACTION /// Extracting questions from conversation content
+  /// Initial import of raw CSV data into SessionImport
+  CSV_IMPORT
+  /// Fetching transcript content from external URLs
+  TRANSCRIPT_FETCH
+  /// Converting SessionImport to normalized Session
+  SESSION_CREATION
+  /// AI processing for sentiment, categorization, summaries
+  AI_ANALYSIS
+  /// Extracting questions from conversation content
+  QUESTION_EXTRACTION
 }
 
 /// Status of each processing stage
 enum ProcessingStatus {
-  PENDING     /// Stage is queued for processing
-  IN_PROGRESS /// Stage is currently being processed
-  COMPLETED   /// Stage completed successfully
-  FAILED      /// Stage failed with errors
-  SKIPPED     /// Stage was intentionally skipped
+  /// Stage is queued for processing
+  PENDING
+  /// Stage is currently being processed
+  IN_PROGRESS
+  /// Stage completed successfully
+  COMPLETED
+  /// Stage failed with errors
+  FAILED
+  /// Stage was intentionally skipped
+  SKIPPED
 }

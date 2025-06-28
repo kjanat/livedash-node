@@ -1,6 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,8 +47,39 @@ interface DashboardData {
   };
 }
 
+// Custom hook for platform session
+function usePlatformSession() {
+  const [session, setSession] = useState<any>(null);
+  const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch("/api/platform/auth/session");
+        const sessionData = await response.json();
+        
+        if (sessionData?.user?.isPlatformUser) {
+          setSession(sessionData);
+          setStatus("authenticated");
+        } else {
+          setSession(null);
+          setStatus("unauthenticated");
+        }
+      } catch (error) {
+        console.error("Platform session fetch error:", error);
+        setSession(null);
+        setStatus("unauthenticated");
+      }
+    };
+
+    fetchSession();
+  }, []);
+
+  return { data: session, status };
+}
+
 export default function PlatformDashboard() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = usePlatformSession();
   const router = useRouter();
   const { toast } = useToast();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -67,7 +97,7 @@ export default function PlatformDashboard() {
   useEffect(() => {
     if (status === "loading") return;
 
-    if (!session?.user?.isPlatformUser) {
+    if (status === "unauthenticated" || !session?.user?.isPlatformUser) {
       router.push("/platform/login");
       return;
     }
@@ -155,7 +185,7 @@ export default function PlatformDashboard() {
     );
   }
 
-  if (!session?.user?.isPlatformUser) {
+  if (status === "unauthenticated" || !session?.user?.isPlatformUser) {
     return null;
   }
 

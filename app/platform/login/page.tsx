@@ -31,14 +31,9 @@ export default function PlatformLoginPage() {
 
       if (result?.error) {
         setError("Invalid credentials");
-      } else {
-        // Verify the session has platform access
-        const session = await getSession();
-        if (session?.user?.isPlatformUser) {
-          router.push("/platform/dashboard");
-        } else {
-          setError("Platform access required");
-        }
+      } else if (result?.ok) {
+        // Login successful, redirect to dashboard
+        router.push("/platform/dashboard");
       }
     } catch (error) {
       setError("An error occurred during login");
@@ -73,6 +68,7 @@ export default function PlatformLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="email"
               />
             </div>
 
@@ -85,6 +81,7 @@ export default function PlatformLoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="current-password"
               />
             </div>
 

@@ -10,10 +10,10 @@
   - [x] Add company creation workflows
   - [x] Add basic platform API endpoints with tests
   - [x] Create stunning SaaS landing page with modern design
-  - [ ] Add company editing/management workflows
-  - [ ] Create company suspension/activation UI features
-  - [ ] Add proper SEO metadata and OpenGraph tags
-  - [ ] Add user management within companies from platform
+  - [x] Add company editing/management workflows
+  - [x] Create company suspension/activation UI features
+  - [x] Add proper SEO metadata and OpenGraph tags
+  - [x] Add user management within companies from platform
   - [ ] Add AI model management UI
   - [ ] Add cost tracking/quotas UI
 
@@ -60,6 +60,37 @@
   - [ ] Optimize queries with proper indexing
 
 ## High Priority
+
+### PR #20 Feedback Actions (Code Review)
+- [ ] **Fix Environment Variable Testing**
+  - [ ] Replace process.env access with proper environment mocking in tests
+  - [ ] Update existing tests to avoid direct environment variable dependencies
+  - [ ] Add environment validation tests for critical config values
+
+- [ ] **Enforce Zero Accessibility Violations**
+  - [ ] Set Playwright accessibility tests to fail on any violations (not just warn)
+  - [ ] Add accessibility regression tests for all major components
+  - [ ] Implement accessibility checklist for new components
+
+- [ ] **Improve Error Handling with Custom Error Classes**
+  - [ ] Create custom error classes for different error types (ValidationError, AuthError, etc.)
+  - [ ] Replace generic Error throws with specific error classes
+  - [ ] Add proper error logging and monitoring integration
+
+- [ ] **Refactor Long className Strings** 
+  - [ ] Extract complex className combinations into utility functions
+  - [ ] Consider using cn() utility from utils for cleaner class composition
+  - [ ] Break down overly complex className props into semantic components
+
+- [ ] **Add Dark Mode Accessibility Tests**
+  - [ ] Create comprehensive test suite for dark mode color contrast
+  - [ ] Verify focus indicators work properly in both light and dark modes
+  - [ ] Test screen reader compatibility with theme switching
+
+- [ ] **Fix Platform Login Authentication Issue**
+  - [ ] NEXTAUTH_SECRET was using placeholder value (FIXED)
+  - [ ] Investigate platform cookie path restrictions in /platform auth
+  - [ ] Test platform login flow end-to-end after fixes
 
 ### Testing & Quality Assurance
 - [ ] Add comprehensive test coverage for API endpoints (currently minimal)
