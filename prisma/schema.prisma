@@ -147,6 +147,9 @@ model Session {
   @@index([companyId, category])
   @@index([companyId, escalated])
   @@index([companyId, forwardedHr])
+  @@index([companyId, language])
+  @@index([companyId, messagesSent])
+  @@index([companyId, avgResponseTime])
 }
 
 /// *
