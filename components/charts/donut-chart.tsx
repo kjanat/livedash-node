@@ -92,7 +92,11 @@ export default function ModernDonutChart({
         </CardHeader>
       )}
       <CardContent>
-        <div className="relative">
+        <div
+          className="relative"
+          role="img"
+          aria-label={`${title || "Chart"} - ${data.length} segments`}
+        >
           <ResponsiveContainer width="100%" height={height}>
             <PieChart>
               <Pie
@@ -103,13 +107,19 @@ export default function ModernDonutChart({
                 outerRadius={100}
                 paddingAngle={2}
                 dataKey="value"
-                className="transition-all duration-200"
+                className="transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                  }
+                }}
               >
                 {dataWithTotal.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
                     fill={entry.color || colors[index % colors.length]}
-                    className="hover:opacity-80 cursor-pointer"
+                    className="hover:opacity-80 cursor-pointer focus:opacity-80"
                     stroke="hsl(var(--background))"
                     strokeWidth={2}
                   />

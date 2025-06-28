@@ -130,7 +130,9 @@ export default function CompanySettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {message && (
-            <Alert variant={message.includes("Failed") ? "destructive" : "default"}>
+            <Alert
+              variant={message.includes("Failed") ? "destructive" : "default"}
+            >
               <AlertDescription>{message}</AlertDescription>
             </Alert>
           )}
@@ -147,7 +149,9 @@ export default function CompanySettingsPage() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Database className="h-5 w-5" />
-                  <CardTitle className="text-lg">Data Source Configuration</CardTitle>
+                  <CardTitle className="text-lg">
+                    Data Source Configuration
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">

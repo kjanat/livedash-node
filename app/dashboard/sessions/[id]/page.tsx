@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import SessionDetails from "../../../../components/SessionDetails";
-import TranscriptViewer from "../../../../components/TranscriptViewer";
 import MessageViewer from "../../../../components/MessageViewer";
 import { ChatSession } from "../../../../lib/types";
 import { formatCategory } from "@/lib/format-enums";
@@ -12,18 +11,16 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { 
-  ArrowLeft, 
-  MessageSquare, 
-  Clock, 
-  Globe, 
+import {
+  ArrowLeft,
+  MessageSquare,
+  Clock,
+  Globe,
   ExternalLink,
   User,
-  Bot,
   AlertCircle,
   FileText,
-  Activity
+  Activity,
 } from "lucide-react";
 
 export default function SessionViewPage() {
@@ -142,7 +139,9 @@ export default function SessionViewPage() {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground text-lg mb-4">Session not found.</p>
+              <p className="text-muted-foreground text-lg mb-4">
+                Session not found.
+              </p>
               <Link href="/dashboard/sessions">
                 <Button variant="outline" className="gap-2">
                   <ArrowLeft className="h-4 w-4" />
@@ -164,8 +163,12 @@ export default function SessionViewPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="space-y-2">
               <Link href="/dashboard/sessions">
-                <Button variant="ghost" className="gap-2 p-0 h-auto">
-                  <ArrowLeft className="h-4 w-4" />
+                <Button
+                  variant="ghost"
+                  className="gap-2 p-0 h-auto focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  aria-label="Return to sessions list"
+                >
+                  <ArrowLeft className="h-4 w-4" aria-hidden="true" />
                   Back to Sessions List
                 </Button>
               </Link>
@@ -195,11 +198,18 @@ export default function SessionViewPage() {
                 </Badge>
               )}
               {session.sentiment && (
-                <Badge 
-                  variant={session.sentiment === 'positive' ? 'default' : session.sentiment === 'negative' ? 'destructive' : 'secondary'}
+                <Badge
+                  variant={
+                    session.sentiment === "positive"
+                      ? "default"
+                      : session.sentiment === "negative"
+                        ? "destructive"
+                        : "secondary"
+                  }
                   className="gap-1"
                 >
-                  {session.sentiment.charAt(0).toUpperCase() + session.sentiment.slice(1)}
+                  {session.sentiment.charAt(0).toUpperCase() +
+                    session.sentiment.slice(1)}
                 </Badge>
               )}
             </div>
@@ -229,9 +239,7 @@ export default function SessionViewPage() {
               <MessageSquare className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-sm text-muted-foreground">Messages</p>
-                <p className="font-semibold">
-                  {session.messages?.length || 0}
-                </p>
+                <p className="font-semibold">{session.messages?.length || 0}</p>
               </div>
             </div>
           </CardContent>
@@ -244,7 +252,7 @@ export default function SessionViewPage() {
               <div>
                 <p className="text-sm text-muted-foreground">User ID</p>
                 <p className="font-semibold truncate">
-                  {session.userId || 'N/A'}
+                  {session.userId || "N/A"}
                 </p>
               </div>
             </div>
@@ -260,9 +268,11 @@ export default function SessionViewPage() {
                 <p className="font-semibold">
                   {session.endTime && session.startTime
                     ? `${Math.round(
-                        (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 60000
+                        (new Date(session.endTime).getTime() -
+                          new Date(session.startTime).getTime()) /
+                          60000
                       )} min`
-                    : 'N/A'}
+                    : "N/A"}
                 </p>
               </div>
             </div>
@@ -302,9 +312,10 @@ export default function SessionViewPage() {
               href={session.fullTranscriptUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline"
+              className="inline-flex items-center gap-2 text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+              aria-label="Open original transcript in new tab"
             >
-              <ExternalLink className="h-4 w-4" />
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
               View Original Transcript
             </a>
           </CardContent>

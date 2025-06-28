@@ -40,7 +40,9 @@ const DashboardPage: FC = () => {
             <div className="animate-spin rounded-full h-12 w-12 border-2 border-muted border-t-primary mx-auto"></div>
             <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border border-primary opacity-20 mx-auto"></div>
           </div>
-          <p className="text-lg text-muted-foreground animate-pulse">Loading dashboard...</p>
+          <p className="text-lg text-muted-foreground animate-pulse">
+            Loading dashboard...
+          </p>
         </div>
       </div>
     );
@@ -134,7 +136,10 @@ const DashboardPage: FC = () => {
                 <h1 className="text-4xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/70">
                   Welcome back, {session?.user?.name || "User"}!
                 </h1>
-                <Badge variant="secondary" className="text-xs px-3 py-1 bg-primary/10 text-primary border-primary/20">
+                <Badge
+                  variant="secondary"
+                  className="text-xs px-3 py-1 bg-primary/10 text-primary border-primary/20"
+                >
                   {session?.user?.role}
                 </Badge>
               </div>
@@ -173,7 +178,9 @@ const DashboardPage: FC = () => {
                         card.variant
                       )}`}
                     >
-                      <span className="transition-transform duration-300 group-hover:scale-110">{card.icon}</span>
+                      <span className="transition-transform duration-300 group-hover:scale-110">
+                        {card.icon}
+                      </span>
                     </div>
                     <div>
                       <CardTitle className="text-xl font-semibold flex items-center gap-2">

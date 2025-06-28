@@ -36,7 +36,7 @@ const Map = ({ countryData, maxCount }: MapProps) => {
   const tileLayerUrl = isDark
     ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
     : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-  
+
   const tileLayerAttribution = isDark
     ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
     : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
@@ -49,10 +49,7 @@ const Map = ({ countryData, maxCount }: MapProps) => {
       scrollWheelZoom={false}
       style={{ height: "100%", width: "100%", borderRadius: "0.5rem" }}
     >
-      <TileLayer
-        attribution={tileLayerAttribution}
-        url={tileLayerUrl}
-      />
+      <TileLayer attribution={tileLayerAttribution} url={tileLayerUrl} />
       {countryData.map((country) => (
         <CircleMarker
           key={country.code}
@@ -71,7 +68,9 @@ const Map = ({ countryData, maxCount }: MapProps) => {
               <div className="font-medium text-foreground">
                 {getLocalizedCountryName(country.code)}
               </div>
-              <div className="text-sm text-muted-foreground">Sessions: {country.count}</div>
+              <div className="text-sm text-muted-foreground">
+                Sessions: {country.count}
+              </div>
             </div>
           </Tooltip>
         </CircleMarker>

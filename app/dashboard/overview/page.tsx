@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,7 +29,6 @@ import {
   CheckCircle,
   RefreshCw,
   LogOut,
-  Calendar,
   MoreVertical,
   Globe,
   MessageCircle,
@@ -38,7 +36,6 @@ import {
 import WordCloud from "../../../components/WordCloud";
 import GeographicMap from "../../../components/GeographicMap";
 import ResponseTimeDistribution from "../../../components/ResponseTimeDistribution";
-import DateRangePicker from "../../../components/DateRangePicker";
 import TopQuestionsChart from "../../../components/TopQuestionsChart";
 
 // Safely wrapped component with useSession
@@ -49,12 +46,6 @@ function DashboardContent() {
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [dateRange, setDateRange] = useState<{
-    minDate: string;
-    maxDate: string;
-  } | null>(null);
-  const [selectedStartDate, setSelectedStartDate] = useState<string>("");
-  const [selectedEndDate, setSelectedEndDate] = useState<string>("");
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
   const isAuditor = session?.user?.role === "AUDITOR";
@@ -78,11 +69,8 @@ function DashboardContent() {
       setMetrics(data.metrics);
       setCompany(data.company);
 
-      // Set date range from API response (only on initial load)
-      if (data.dateRange && isInitial) {
-        setDateRange(data.dateRange);
-        setSelectedStartDate(data.dateRange.minDate);
-        setSelectedEndDate(data.dateRange.maxDate);
+      // Set initial load flag
+      if (isInitial) {
         setIsInitialLoad(false);
       }
     } catch (error) {
@@ -91,16 +79,6 @@ function DashboardContent() {
       setLoading(false);
     }
   };
-
-  // Handle date range changes
-  const handleDateRangeChange = useCallback(
-    (startDate: string, endDate: string) => {
-      setSelectedStartDate(startDate);
-      setSelectedEndDate(endDate);
-      fetchMetrics(startDate, endDate);
-    },
-    []
-  );
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -263,7 +241,10 @@ function DashboardContent() {
     return Object.entries(metrics.categories).map(([name, value]) => {
       const formattedName = formatEnumValue(name) || name;
       return {
-        name: formattedName.length > 15 ? formattedName.substring(0, 15) + "..." : formattedName,
+        name:
+          formattedName.length > 15
+            ? formattedName.substring(0, 15) + "..."
+            : formattedName,
         value: value as number,
       };
     });
@@ -337,24 +318,36 @@ function DashboardContent() {
                 disabled={refreshing || isAuditor}
                 size="sm"
                 className="gap-2"
+                aria-label={
+                  refreshing
+                    ? "Refreshing dashboard data"
+                    : "Refresh dashboard data"
+                }
+                aria-describedby={refreshing ? "refresh-status" : undefined}
               >
                 <RefreshCw
                   className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                  aria-hidden="true"
                 />
                 {refreshing ? "Refreshing..." : "Refresh"}
               </Button>
+              {refreshing && (
+                <div id="refresh-status" className="sr-only" aria-live="polite">
+                  Dashboard data is being refreshed
+                </div>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <MoreVertical className="h-4 w-4" />
+                  <Button variant="outline" size="sm" aria-label="Account menu">
+                    <MoreVertical className="h-4 w-4" aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     onClick={() => signOut({ callbackUrl: "/login" })}
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
+                    <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuContent>

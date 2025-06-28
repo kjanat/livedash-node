@@ -128,7 +128,9 @@ export default function MetricCard({
                 getIconClasses()
               )}
             >
-              <span className="text-lg transition-transform duration-300 group-hover:scale-110">{icon}</span>
+              <span className="text-lg transition-transform duration-300 group-hover:scale-110">
+                {icon}
+              </span>
             </div>
           )}
         </div>

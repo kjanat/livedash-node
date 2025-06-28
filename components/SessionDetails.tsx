@@ -97,7 +97,8 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
                         : "secondary"
                   }
                 >
-                  {session.sentiment.charAt(0).toUpperCase() + session.sentiment.slice(1)}
+                  {session.sentiment.charAt(0).toUpperCase() +
+                    session.sentiment.slice(1)}
                 </Badge>
               </div>
             )}
@@ -107,12 +108,17 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
               <p className="font-medium">{session.messagesSent || 0}</p>
             </div>
 
-            {session.avgResponseTime !== null && session.avgResponseTime !== undefined && (
-              <div>
-                <p className="text-sm text-muted-foreground">Avg Response Time</p>
-                <p className="font-medium">{session.avgResponseTime.toFixed(2)}s</p>
-              </div>
-            )}
+            {session.avgResponseTime !== null &&
+              session.avgResponseTime !== undefined && (
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Avg Response Time
+                  </p>
+                  <p className="font-medium">
+                    {session.avgResponseTime.toFixed(2)}s
+                  </p>
+                </div>
+              )}
 
             {session.escalated !== null && session.escalated !== undefined && (
               <div>
@@ -123,14 +129,19 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
               </div>
             )}
 
-            {session.forwardedHr !== null && session.forwardedHr !== undefined && (
-              <div>
-                <p className="text-sm text-muted-foreground">Forwarded to HR</p>
-                <Badge variant={session.forwardedHr ? "secondary" : "default"}>
-                  {session.forwardedHr ? "Yes" : "No"}
-                </Badge>
-              </div>
-            )}
+            {session.forwardedHr !== null &&
+              session.forwardedHr !== undefined && (
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Forwarded to HR
+                  </p>
+                  <Badge
+                    variant={session.forwardedHr ? "secondary" : "default"}
+                  >
+                    {session.forwardedHr ? "Yes" : "No"}
+                  </Badge>
+                </div>
+              )}
 
             {session.ipAddress && (
               <div>
@@ -156,7 +167,9 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
 
         {!session.summary && session.initialMsg && (
           <div>
-            <p className="text-sm text-muted-foreground mb-2">Initial Message</p>
+            <p className="text-sm text-muted-foreground mb-2">
+              Initial Message
+            </p>
             <div className="bg-muted p-3 rounded-md text-sm italic">
               &quot;{session.initialMsg}&quot;
             </div>
@@ -171,9 +184,10 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
                 href={session.fullTranscriptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-primary hover:underline"
+                className="inline-flex items-center gap-2 text-primary hover:underline focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-sm"
+                aria-label="Open full transcript in new tab"
               >
-                <ExternalLink className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 View Full Transcript
               </a>
             </div>

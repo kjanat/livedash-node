@@ -337,8 +337,14 @@ export default function Sidebar({
         </nav>
         <div className="p-4 border-t mt-auto space-y-2">
           {/* Theme Toggle */}
-          <div className={`flex items-center ${isExpanded ? "justify-between" : "justify-center"}`}>
-            {isExpanded && <span className="text-sm font-medium text-muted-foreground">Theme</span>}
+          <div
+            className={`flex items-center ${isExpanded ? "justify-between" : "justify-center"}`}
+          >
+            {isExpanded && (
+              <span className="text-sm font-medium text-muted-foreground">
+                Theme
+              </span>
+            )}
             <SimpleThemeToggle />
           </div>
 

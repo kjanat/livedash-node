@@ -114,9 +114,9 @@ export default function ResponseTimeDistribution({
           />
           <Tooltip content={<CustomTooltip />} />
 
-          <Bar 
-            dataKey="value" 
-            radius={[4, 4, 0, 0]} 
+          <Bar
+            dataKey="value"
+            radius={[4, 4, 0, 0]}
             fill="hsl(var(--chart-1))"
             maxBarSize={60}
           >

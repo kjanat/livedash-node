@@ -2,6 +2,28 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Users, UserPlus, Shield, Eye, AlertCircle } from "lucide-react";
 
 interface UserItem {
   id: string;
@@ -13,15 +35,21 @@ export default function UserManagementPage() {
   const { data: session, status } = useSession();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [email, setEmail] = useState<string>("");
-  const [role, setRole] = useState<string>("user");
+  const [role, setRole] = useState<string>("USER");
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (status === "authenticated") {
-      fetchUsers();
+      if (session?.user?.role === "ADMIN") {
+        fetchUsers();
+      } else {
+        setLoading(false); // Stop loading for non-admin users
+      }
+    } else if (status === "unauthenticated") {
+      setLoading(false);
     }
-  }, [status]);
+  }, [status, session?.user?.role]);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -65,148 +93,181 @@ export default function UserManagementPage() {
 
   // Loading state
   if (loading) {
-    return <div className="text-center py-10">Loading users...</div>;
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              Loading users...
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Check for admin access
   if (session?.user?.role !== "ADMIN") {
     return (
-      <div className="text-center py-10 bg-white rounded-xl shadow p-6">
-        <h2 className="font-bold text-xl text-red-600 mb-2">Access Denied</h2>
-        <p>You don&apos;t have permission to view user management.</p>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h2 className="font-bold text-xl text-destructive mb-2">
+                Access Denied
+              </h2>
+              <p className="text-muted-foreground">
+                You don&apos;t have permission to view user management.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow">
-        <h1 className="text-2xl font-bold text-gray-800 mb-6">
-          User Management
-        </h1>
+    <div className="space-y-6" data-testid="user-management-page">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-6 w-6" />
+            User Management
+          </CardTitle>
+        </CardHeader>
+      </Card>
 
-        {message && (
-          <div
-            className={`p-4 rounded mb-6 ${message.includes("Failed") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}
-          >
-            {message}
-          </div>
-        )}
+      {/* Message Alert */}
+      {message && (
+        <Alert variant={message.includes("Failed") ? "destructive" : "default"}>
+          <AlertDescription>{message}</AlertDescription>
+        </Alert>
+      )}
 
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Invite New User</h2>
+      {/* Invite New User */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Invite New User
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <form
             className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end"
             onSubmit={(e) => {
               e.preventDefault();
               inviteUser();
             }}
-            autoComplete="off" // Disable autofill for the form
+            autoComplete="off"
+            data-testid="invite-form"
+            role="form"
           >
-            <div className="grid gap-2">
-              <label className="font-medium text-gray-700">Email</label>
-              <input
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
                 type="email"
-                className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
                 placeholder="user@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                autoComplete="off" // Disable autofill for this input
+                autoComplete="off"
               />
             </div>
 
-            <div className="grid gap-2">
-              <label className="font-medium text-gray-700">Role</label>
-              <select
-                className="border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500 bg-white"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-              >
-                <option value="user">User</option>
-                <option value="ADMIN">Admin</option>
-                <option value="AUDITOR">Auditor</option>
-              </select>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <Select value={role} onValueChange={setRole}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="USER">User</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="AUDITOR">Auditor</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            <button
-              type="submit"
-              className="bg-sky-600 hover:bg-sky-700 text-white py-2 px-4 rounded-lg shadow transition-colors"
-            >
+            <Button type="submit" className="gap-2">
+              <UserPlus className="h-4 w-4" />
               Invite User
-            </button>
+            </Button>
           </form>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div>
-          <h2 className="text-lg font-semibold mb-4">Current Users</h2>
+      {/* Current Users */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Current Users ({users?.length || 0})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Email
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Role
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {users.length === 0 ? (
-                  <tr>
-                    <td
+                  <TableRow>
+                    <TableCell
                       colSpan={3}
-                      className="px-6 py-4 text-center text-sm text-gray-500"
+                      className="text-center text-muted-foreground"
                     >
                       No users found
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   users.map((user) => (
-                    <tr key={user.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <TableRow key={user.id}>
+                      <TableCell className="font-medium">
                         {user.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
                             user.role === "ADMIN"
-                              ? "bg-purple-100 text-purple-800"
+                              ? "default"
                               : user.role === "AUDITOR"
-                                ? "bg-blue-100 text-blue-800"
-                                : "bg-green-100 text-green-800"
-                          }`}
+                                ? "secondary"
+                                : "outline"
+                          }
+                          className="gap-1"
+                          data-testid="role-badge"
                         >
+                          {user.role === "ADMIN" && (
+                            <Shield className="h-3 w-3" />
+                          )}
+                          {user.role === "AUDITOR" && (
+                            <Eye className="h-3 w-3" />
+                          )}
                           {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {/* For future: Add actions like edit, delete, etc. */}
-                        <span className="text-gray-400">
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-muted-foreground text-sm">
                           No actions available
                         </span>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))
                 )}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

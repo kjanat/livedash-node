@@ -9,18 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { formatCategory } from "@/lib/format-enums";
-import { 
-  MessageSquare, 
-  Search, 
-  Filter, 
-  Calendar, 
-  ChevronLeft, 
+import {
+  MessageSquare,
+  Search,
+  Filter,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Globe,
   Eye,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 
 // Placeholder for a SessionListItem component to be created later
@@ -145,7 +144,7 @@ export default function SessionsPage() {
     <div className="space-y-6">
       {/* Page heading for screen readers */}
       <h1 className="sr-only">Sessions Management</h1>
-      
+
       {/* Header */}
       <Card>
         <CardHeader>
@@ -158,11 +157,16 @@ export default function SessionsPage() {
 
       {/* Search Input */}
       <section aria-labelledby="search-heading">
-        <h2 id="search-heading" className="sr-only">Search Sessions</h2>
+        <h2 id="search-heading" className="sr-only">
+          Search Sessions
+        </h2>
         <Card>
           <CardContent className="pt-6">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               <Input
                 placeholder="Search sessions (ID, category, initial message...)"
                 value={searchTerm}
@@ -182,7 +186,9 @@ export default function SessionsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Filter className="h-5 w-5" aria-hidden="true" />
-                <CardTitle as="h2" id="filters-heading" className="text-lg">Filters & Sorting</CardTitle>
+                <CardTitle as="h2" id="filters-heading" className="text-lg">
+                  Filters & Sorting
+                </CardTitle>
               </div>
               <Button
                 variant="ghost"
@@ -192,191 +198,209 @@ export default function SessionsPage() {
                 aria-expanded={filtersExpanded}
                 aria-controls="filter-content"
               >
-              {filtersExpanded ? (
-                <>
-                  <ChevronUp className="h-4 w-4" />
-                  Hide
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  Show
-                </>
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        {filtersExpanded && (
-          <CardContent id="filter-content">
-            <fieldset>
-              <legend className="sr-only">Session Filters and Sorting Options</legend>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-                {/* Category Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="category-filter">Category</Label>
-                  <select
-                    id="category-filter"
-                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    aria-describedby="category-help"
-                  >
-                    <option value="">All Categories</option>
-                    {filterOptions.categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {formatCategory(cat)}
+                {filtersExpanded ? (
+                  <>
+                    <ChevronUp className="h-4 w-4" />
+                    Hide
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4" />
+                    Show
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          {filtersExpanded && (
+            <CardContent id="filter-content">
+              <fieldset>
+                <legend className="sr-only">
+                  Session Filters and Sorting Options
+                </legend>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                  {/* Category Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="category-filter">Category</Label>
+                    <select
+                      id="category-filter"
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      aria-describedby="category-help"
+                    >
+                      <option value="">All Categories</option>
+                      {filterOptions.categories.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {formatCategory(cat)}
+                        </option>
+                      ))}
+                    </select>
+                    <div id="category-help" className="sr-only">
+                      Filter sessions by category type
+                    </div>
+                  </div>
+
+                  {/* Language Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="language-filter">Language</Label>
+                    <select
+                      id="language-filter"
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      value={selectedLanguage}
+                      onChange={(e) => setSelectedLanguage(e.target.value)}
+                      aria-describedby="language-help"
+                    >
+                      <option value="">All Languages</option>
+                      {filterOptions.languages.map((lang) => (
+                        <option key={lang} value={lang}>
+                          {lang.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                    <div id="language-help" className="sr-only">
+                      Filter sessions by language
+                    </div>
+                  </div>
+
+                  {/* Start Date Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="start-date-filter">Start Date</Label>
+                    <Input
+                      type="date"
+                      id="start-date-filter"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      aria-describedby="start-date-help"
+                    />
+                    <div id="start-date-help" className="sr-only">
+                      Filter sessions from this date onwards
+                    </div>
+                  </div>
+
+                  {/* End Date Filter */}
+                  <div className="space-y-2">
+                    <Label htmlFor="end-date-filter">End Date</Label>
+                    <Input
+                      type="date"
+                      id="end-date-filter"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      aria-describedby="end-date-help"
+                    />
+                    <div id="end-date-help" className="sr-only">
+                      Filter sessions up to this date
+                    </div>
+                  </div>
+
+                  {/* Sort Key */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sort-key">Sort By</Label>
+                    <select
+                      id="sort-key"
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      value={sortKey}
+                      onChange={(e) => setSortKey(e.target.value)}
+                      aria-describedby="sort-key-help"
+                    >
+                      <option value="startTime">Start Time</option>
+                      <option value="category">Category</option>
+                      <option value="language">Language</option>
+                      <option value="sentiment">Sentiment</option>
+                      <option value="messagesSent">Messages Sent</option>
+                      <option value="avgResponseTime">
+                        Avg. Response Time
                       </option>
-                    ))}
-                  </select>
-                  <div id="category-help" className="sr-only">
-                    Filter sessions by category type
+                    </select>
+                    <div id="sort-key-help" className="sr-only">
+                      Choose field to sort sessions by
+                    </div>
                   </div>
-                </div>
 
-                {/* Language Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="language-filter">Language</Label>
-                  <select
-                    id="language-filter"
-                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={selectedLanguage}
-                    onChange={(e) => setSelectedLanguage(e.target.value)}
-                    aria-describedby="language-help"
-                  >
-                    <option value="">All Languages</option>
-                    {filterOptions.languages.map((lang) => (
-                      <option key={lang} value={lang}>
-                        {lang.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                  <div id="language-help" className="sr-only">
-                    Filter sessions by language
+                  {/* Sort Order */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sort-order">Order</Label>
+                    <select
+                      id="sort-order"
+                      className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      value={sortOrder}
+                      onChange={(e) =>
+                        setSortOrder(e.target.value as "asc" | "desc")
+                      }
+                      aria-describedby="sort-order-help"
+                    >
+                      <option value="desc">Descending</option>
+                      <option value="asc">Ascending</option>
+                    </select>
+                    <div id="sort-order-help" className="sr-only">
+                      Choose ascending or descending order
+                    </div>
                   </div>
                 </div>
-
-                {/* Start Date Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="start-date-filter">Start Date</Label>
-                  <Input
-                    type="date"
-                    id="start-date-filter"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    aria-describedby="start-date-help"
-                  />
-                  <div id="start-date-help" className="sr-only">
-                    Filter sessions from this date onwards
-                  </div>
-                </div>
-
-                {/* End Date Filter */}
-                <div className="space-y-2">
-                  <Label htmlFor="end-date-filter">End Date</Label>
-                  <Input
-                    type="date"
-                    id="end-date-filter"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    aria-describedby="end-date-help"
-                  />
-                  <div id="end-date-help" className="sr-only">
-                    Filter sessions up to this date
-                  </div>
-                </div>
-
-                {/* Sort Key */}
-                <div className="space-y-2">
-                  <Label htmlFor="sort-key">Sort By</Label>
-                  <select
-                    id="sort-key"
-                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={sortKey}
-                    onChange={(e) => setSortKey(e.target.value)}
-                    aria-describedby="sort-key-help"
-                  >
-                    <option value="startTime">Start Time</option>
-                    <option value="category">Category</option>
-                    <option value="language">Language</option>
-                    <option value="sentiment">Sentiment</option>
-                    <option value="messagesSent">Messages Sent</option>
-                    <option value="avgResponseTime">Avg. Response Time</option>
-                  </select>
-                  <div id="sort-key-help" className="sr-only">
-                    Choose field to sort sessions by
-                  </div>
-                </div>
-
-                {/* Sort Order */}
-                <div className="space-y-2">
-                  <Label htmlFor="sort-order">Order</Label>
-                  <select
-                    id="sort-order"
-                    className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                    aria-describedby="sort-order-help"
-                  >
-                    <option value="desc">Descending</option>
-                    <option value="asc">Ascending</option>
-                  </select>
-                  <div id="sort-order-help" className="sr-only">
-                    Choose ascending or descending order
-                  </div>
-                </div>
-              </div>
-            </fieldset>
-          </CardContent>
-        )}
+              </fieldset>
+            </CardContent>
+          )}
         </Card>
       </section>
 
       {/* Results section */}
       <section aria-labelledby="results-heading">
-        <h2 id="results-heading" className="sr-only">Session Results</h2>
-        
+        <h2 id="results-heading" className="sr-only">
+          Session Results
+        </h2>
+
         {/* Live region for screen reader announcements */}
-      <div role="status" aria-live="polite" className="sr-only">
-        {loading && "Loading sessions..."}
-        {error && `Error loading sessions: ${error}`}
-        {!loading && !error && sessions.length > 0 && `Found ${sessions.length} sessions`}
-        {!loading && !error && sessions.length === 0 && "No sessions found"}
-      </div>
+        <div role="status" aria-live="polite" className="sr-only">
+          {loading && "Loading sessions..."}
+          {error && `Error loading sessions: ${error}`}
+          {!loading &&
+            !error &&
+            sessions.length > 0 &&
+            `Found ${sessions.length} sessions`}
+          {!loading && !error && sessions.length === 0 && "No sessions found"}
+        </div>
 
-      {/* Loading State */}
-      {loading && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground" aria-hidden="true">
-              Loading sessions...
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Loading State */}
+        {loading && (
+          <Card>
+            <CardContent className="pt-6">
+              <div
+                className="text-center py-8 text-muted-foreground"
+                aria-hidden="true"
+              >
+                Loading sessions...
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Error State */}
-      {error && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-destructive" role="alert" aria-hidden="true">
-              Error: {error}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Error State */}
+        {error && (
+          <Card>
+            <CardContent className="pt-6">
+              <div
+                className="text-center py-8 text-destructive"
+                role="alert"
+                aria-hidden="true"
+              >
+                Error: {error}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
-      {/* Empty State */}
-      {!loading && !error && sessions.length === 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8 text-muted-foreground">
-              {debouncedSearchTerm
-                ? `No sessions found for "${debouncedSearchTerm}".`
-                : "No sessions found."}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Empty State */}
+        {!loading && !error && sessions.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8 text-muted-foreground">
+                {debouncedSearchTerm
+                  ? `No sessions found for "${debouncedSearchTerm}".`
+                  : "No sessions found."}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Sessions List */}
         {!loading && !error && sessions.length > 0 && (
@@ -388,11 +412,18 @@ export default function SessionsPage() {
                     <article aria-labelledby={`session-${session.id}-title`}>
                       <header className="flex justify-between items-start mb-4">
                         <div className="space-y-2 flex-1">
-                          <h3 id={`session-${session.id}-title`} className="sr-only">
-                            Session {session.sessionId || session.id} from {new Date(session.startTime).toLocaleDateString()}
+                          <h3
+                            id={`session-${session.id}-title`}
+                            className="sr-only"
+                          >
+                            Session {session.sessionId || session.id} from{" "}
+                            {new Date(session.startTime).toLocaleDateString()}
                           </h3>
                           <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="font-mono text-xs">
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-xs"
+                            >
                               ID
                             </Badge>
                             <code className="text-sm text-muted-foreground font-mono truncate max-w-24">
@@ -401,7 +432,10 @@ export default function SessionsPage() {
                           </div>
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
-                              <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
+                              <Clock
+                                className="h-3 w-3 mr-1"
+                                aria-hidden="true"
+                              />
                               {new Date(session.startTime).toLocaleDateString()}
                             </Badge>
                             <span className="text-xs text-muted-foreground">
@@ -410,14 +444,16 @@ export default function SessionsPage() {
                           </div>
                         </div>
                         <Link href={`/dashboard/sessions/${session.id}`}>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
+                          <Button
+                            variant="outline"
+                            size="sm"
                             className="gap-2"
                             aria-label={`View details for session ${session.sessionId || session.id}`}
                           >
                             <Eye className="h-4 w-4" aria-hidden="true" />
-                            <span className="hidden sm:inline">View Details</span>
+                            <span className="hidden sm:inline">
+                              View Details
+                            </span>
                           </Button>
                         </Link>
                       </header>
@@ -454,38 +490,40 @@ export default function SessionsPage() {
           </ul>
         )}
 
-      {/* Pagination */}
-      {totalPages > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-center items-center gap-4">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1}
-                className="gap-2"
-              >
-                <ChevronLeft className="h-4 w-4" />
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                onClick={() =>
-                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                className="gap-2"
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+        {/* Pagination */}
+        {totalPages > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex justify-center items-center gap-4">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  disabled={currentPage === 1}
+                  className="gap-2"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="gap-2"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </section>
     </div>
   );
