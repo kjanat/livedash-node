@@ -339,19 +339,24 @@ export default function SessionsPage() {
                       <Badge variant="outline" className="font-mono text-xs">
                         ID
                       </Badge>
-                      <code className="text-sm text-muted-foreground font-mono">
-                        {(session.sessionId || session.id).slice(0, 8)}...
+                      <code className="text-sm text-muted-foreground font-mono truncate max-w-24">
+                        {session.sessionId || session.id}
                       </code>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {new Date(session.startTime).toLocaleString()}
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {new Date(session.startTime).toLocaleDateString()}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(session.startTime).toLocaleTimeString()}
+                      </span>
                     </div>
                   </div>
                   <Link href={`/dashboard/sessions/${session.id}`}>
                     <Button variant="outline" size="sm" className="gap-2">
                       <Eye className="h-4 w-4" />
-                      View Details
+                      <span className="hidden sm:inline">View Details</span>
                     </Button>
                   </Link>
                 </div>

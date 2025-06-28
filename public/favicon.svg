@@ -1,50 +1,36 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
-    <style>
-        path,
-        circle {
-            stroke-width: 1.5;
-        }
-
-        .bg {
-            fill: #ffffff;
-            stroke: #3b82f6;
-        }
-
-        .icon {
-            fill: #3b82f6;
-            stroke: #3b82f6;
-        }
-
-        .text {
-            fill: #3b82f6;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            font-weight: bold;
-            font-size: 13px;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            .bg {
-                fill: #1e3a8a;
-                stroke: #93c5fd;
-            }
-
-            .icon {
-                fill: #93c5fd;
-                stroke: #93c5fd;
-            }
-
-            .text {
-                fill: #93c5fd;
-            }
-        }
-    </style>
-
-    <!-- Background circle -->
-    <circle cx="16" cy="16" r="14" class="bg" />
-
-    <!-- Dashboard chart-like icon -->
-    <path d="M10,22 L10,16 L13,16 L13,22 Z M15,22 L15,12 L18,12 L18,22 Z M20,22 L20,14 L23,14 L23,22 Z" class="icon" />
-
-    <!-- Text "LD" for LiveDash -->
-    <text x="9.5" y="10" class="text">LD</text>
+    <defs>
+        <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#3730a3;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#10b981;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#059669;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    
+    <!-- Background -->
+    <rect x="2" y="2" width="28" height="28" rx="6" fill="url(#primaryGradient)" />
+    
+    <!-- Dashboard tiles grid -->
+    <!-- Top row -->
+    <rect x="6" y="7" width="6" height="6" rx="2" fill="white" opacity="0.9" />
+    <rect x="14" y="7" width="6" height="6" rx="2" fill="url(#accentGradient)" />
+    <rect x="22" y="7" width="4" height="6" rx="2" fill="white" opacity="0.7" />
+    
+    <!-- Middle row -->
+    <rect x="6" y="15" width="4" height="4" rx="1.5" fill="white" opacity="0.7" />
+    <rect x="12" y="15" width="8" height="4" rx="1.5" fill="white" opacity="0.8" />
+    <rect x="22" y="15" width="4" height="4" rx="1.5" fill="white" opacity="0.9" />
+    
+    <!-- Bottom row -->
+    <rect x="6" y="21" width="6" height="4" rx="1.5" fill="white" opacity="0.8" />
+    <rect x="14" y="21" width="4" height="4" rx="1.5" fill="white" opacity="0.7" />
+    <rect x="20" y="21" width="6" height="4" rx="1.5" fill="white" opacity="0.9" />
+    
+    <!-- Small data dots inside tiles -->
+    <circle cx="9" cy="10" r="1" fill="url(#primaryGradient)" opacity="0.8" />
+    <circle cx="17" cy="10" r="1" fill="white" opacity="0.9" />
+    <circle cx="9" cy="23" r="0.8" fill="url(#accentGradient)" opacity="0.8" />
 </svg>

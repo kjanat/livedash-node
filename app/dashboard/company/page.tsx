@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldX, Settings, Save, Database, Bell } from "lucide-react";
+import { ShieldX, Settings, Save, Database } from "lucide-react";
 
 export default function CompanySettingsPage() {
   const { data: session, status } = useSession();
@@ -18,7 +18,6 @@ export default function CompanySettingsPage() {
   const [csvUrl, setCsvUrl] = useState<string>("");
   const [csvUsername, setCsvUsername] = useState<string>("");
   const [csvPassword, setCsvPassword] = useState<string>("");
-  const [sentimentThreshold, setSentimentThreshold] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +31,6 @@ export default function CompanySettingsPage() {
           setCompany(data.company);
           setCsvUrl(data.company.csvUrl || "");
           setCsvUsername(data.company.csvUsername || "");
-          setSentimentThreshold(data.company.sentimentAlert?.toString() || "");
           if (data.company.csvPassword) {
             setCsvPassword(data.company.csvPassword);
           }
@@ -57,7 +55,6 @@ export default function CompanySettingsPage() {
           csvUrl,
           csvUsername,
           csvPassword,
-          sentimentThreshold,
         }),
       });
 
@@ -146,85 +143,54 @@ export default function CompanySettingsPage() {
             }}
             autoComplete="off"
           >
-            <div className="grid gap-6 md:grid-cols-2">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Database className="h-5 w-5" />
-                    <CardTitle className="text-lg">Data Source Configuration</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="csvUrl">CSV Data Source URL</Label>
-                    <Input
-                      id="csvUrl"
-                      type="text"
-                      value={csvUrl}
-                      onChange={(e) => setCsvUrl(e.target.value)}
-                      placeholder="https://example.com/data.csv"
-                      autoComplete="off"
-                    />
-                  </div>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Database className="h-5 w-5" />
+                  <CardTitle className="text-lg">Data Source Configuration</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="csvUrl">CSV Data Source URL</Label>
+                  <Input
+                    id="csvUrl"
+                    type="text"
+                    value={csvUrl}
+                    onChange={(e) => setCsvUrl(e.target.value)}
+                    placeholder="https://example.com/data.csv"
+                    autoComplete="off"
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="csvUsername">CSV Username</Label>
-                    <Input
-                      id="csvUsername"
-                      type="text"
-                      value={csvUsername}
-                      onChange={(e) => setCsvUsername(e.target.value)}
-                      placeholder="Username for CSV access (if needed)"
-                      autoComplete="off"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="csvUsername">CSV Username</Label>
+                  <Input
+                    id="csvUsername"
+                    type="text"
+                    value={csvUsername}
+                    onChange={(e) => setCsvUsername(e.target.value)}
+                    placeholder="Username for CSV access (if needed)"
+                    autoComplete="off"
+                  />
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="csvPassword">CSV Password</Label>
-                    <Input
-                      id="csvPassword"
-                      type="password"
-                      value={csvPassword}
-                      onChange={(e) => setCsvPassword(e.target.value)}
-                      placeholder="Password will be updated only if provided"
-                      autoComplete="new-password"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Leave blank to keep current password
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-5 w-5" />
-                    <CardTitle className="text-lg">Alert Configuration</CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="sentimentThreshold">
-                      Sentiment Alert Threshold
-                    </Label>
-                    <Input
-                      id="sentimentThreshold"
-                      type="number"
-                      value={sentimentThreshold}
-                      onChange={(e) => setSentimentThreshold(e.target.value)}
-                      placeholder="Threshold value (0-100)"
-                      min="0"
-                      max="100"
-                      autoComplete="off"
-                    />
-                    <p className="text-sm text-muted-foreground">
-                      Percentage of negative sentiment sessions to trigger alert (0-100)
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="csvPassword">CSV Password</Label>
+                  <Input
+                    id="csvPassword"
+                    type="password"
+                    value={csvPassword}
+                    onChange={(e) => setCsvPassword(e.target.value)}
+                    placeholder="Password will be updated only if provided"
+                    autoComplete="new-password"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Leave blank to keep current password
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="flex justify-end">
               <Button type="submit" className="gap-2">

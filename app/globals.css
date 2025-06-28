@@ -163,21 +163,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 selection:bg-primary/30 selection:text-primary-foreground;
   }
   body {
     @apply bg-background text-foreground;
-  }
-  
-  /* Custom text selection colors */
-  ::selection {
-    background-color: hsl(var(--primary) / 0.3);
-    color: hsl(var(--primary-foreground));
-  }
-  
-  ::-moz-selection {
-    background-color: hsl(var(--primary) / 0.3);
-    color: hsl(var(--primary-foreground));
   }
   
   /* Line clamp utility */
