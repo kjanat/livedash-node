@@ -10,70 +10,84 @@ datasource db {
 }
 
 /// *
-///  * COMPANY  (multi-tenant root)
+///  * COMPANY (multi-tenant root)
+///  * Root entity for multi-tenant architecture
+///  * Each company has isolated data with own users, sessions, and AI model configurations
 model Company {
   id              String           @id @default(uuid())
-  name            String
-  csvUrl          String
-  csvUsername     String?
-  csvPassword     String?
-  sentimentAlert  Float?
-  dashboardOpts   Json?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  companyAiModels CompanyAIModel[]
-  sessions        Session[]
-  imports         SessionImport[]
-  users           User[]           @relation("CompanyUsers")
+  name            String           @db.VarChar(255) /// Company name for display and filtering
+  csvUrl          String           @db.Text /// URL endpoint for CSV data import
+  csvUsername     String?          @db.VarChar(255) /// Optional HTTP auth username for CSV endpoint
+  csvPassword     String?          @db.VarChar(255) /// Optional HTTP auth password for CSV endpoint
+  dashboardOpts   Json?            @db.JsonB /// Company-specific dashboard configuration (theme, layout, etc.)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+  companyAiModels CompanyAIModel[] /// AI models assigned to this company
+  sessions        Session[]        /// All processed sessions for this company
+  imports         SessionImport[]  /// Raw CSV import data for this company
+  users           User[]           @relation("CompanyUsers") /// Users belonging to this company
+
+  @@index([name])
 }
 
 /// *
-///  * USER  (auth accounts)
+///  * USER (authentication accounts)
+///  * Application users with role-based access control
+///  * Each user belongs to exactly one company for data isolation
 model User {
   id               String    @id @default(uuid())
-  email            String    @unique
-  password         String
-  role             UserRole  @default(USER)
-  companyId        String
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  email            String    @unique @db.VarChar(255) /// User email address, must be unique across all companies
+  password         String    @db.VarChar(255) /// Hashed password for authentication
+  role             UserRole  @default(USER) /// User permission level within their company
+  companyId        String    /// Foreign key to Company - enforces data isolation
+  resetToken       String?   @db.VarChar(255) /// Temporary token for password reset functionality
+  resetTokenExpiry DateTime? @db.Timestamptz(6) /// Expiration time for reset token
+  createdAt        DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([email])
 }
 
 /// *
-///  * 1.  Normalised session ---------------------------
+///  * SESSION (processed conversation data)
+///  * Normalized session data derived from raw CSV imports
+///  * Contains AI-enhanced data like sentiment analysis and categorization
+///  * 1:1 relationship with SessionImport via importId
 model Session {
   id                   String                    @id @default(uuid())
-  companyId            String
-  importId             String?                   @unique
-  /// *
-  ///    * session-level data (processed from SessionImport)
-  startTime            DateTime
-  endTime              DateTime
-  ipAddress            String?
-  country              String?
-  fullTranscriptUrl    String?
-  avgResponseTime      Float?
-  initialMsg           String?
-  language             String?
-  messagesSent         Int?
-  sentiment            SentimentCategory?
-  escalated            Boolean?
-  forwardedHr          Boolean?
-  category             SessionCategory?
-  summary              String?
-  createdAt            DateTime                  @default(now())
-  updatedAt            DateTime                  @updatedAt
-  aiProcessingRequests AIProcessingRequest[]
-  messages             Message[]
+  companyId            String                    /// Foreign key to Company for data isolation
+  importId             String?                   @unique /// Optional 1:1 link to source SessionImport record
+  /// Session timing and basic data
+  startTime            DateTime                  @db.Timestamptz(6) /// When the conversation started
+  endTime              DateTime                  @db.Timestamptz(6) /// When the conversation ended
+  ipAddress            String?                   @db.Inet /// Client IP address (IPv4/IPv6)
+  country              String?                   @db.VarChar(3) /// ISO 3166-1 alpha-3 country code
+  fullTranscriptUrl    String?                   @db.Text /// URL to external transcript source
+  avgResponseTime      Float?                    @db.Real /// Average response time in seconds
+  initialMsg           String?                   @db.Text /// First message in the conversation
+  language             String?                   @db.VarChar(10) /// ISO 639 language code
+  messagesSent         Int?                      /// Total number of messages in session
+  /// AI-enhanced analysis fields
+  sentiment            SentimentCategory?        /// AI-determined overall sentiment
+  escalated            Boolean?                  /// Whether session was escalated to human
+  forwardedHr          Boolean?                  /// Whether session was forwarded to HR
+  category             SessionCategory?          /// AI-determined conversation category
+  summary              String?                   @db.Text /// AI-generated session summary
+  createdAt            DateTime                  @default(now()) @db.Timestamptz(6)
+  updatedAt            DateTime                  @updatedAt @db.Timestamptz(6)
+  /// Related data
+  aiProcessingRequests AIProcessingRequest[]     /// All AI API calls made for this session
+  messages             Message[]                 /// Individual messages in conversation order
   company              Company                   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   import               SessionImport?            @relation("ImportToSession", fields: [importId], references: [id])
-  processingStatus     SessionProcessingStatus[]
-  sessionQuestions     SessionQuestion[]
+  processingStatus     SessionProcessingStatus[] /// Pipeline stage tracking
+  sessionQuestions     SessionQuestion[]         /// Questions extracted from conversation
 
-  @@index([companyId, startTime])
+  @@index([companyId, startTime]) /// Primary query pattern: company sessions by time
+  @@index([companyId, sentiment]) /// Filter sessions by sentiment within company
+  @@index([companyId, category])  /// Filter sessions by category within company
 }
 
 /// *
@@ -81,28 +95,30 @@ model Session {
 model SessionImport {
   id                     String   @id @default(uuid())
   companyId              String
-  externalSessionId      String   @unique
-  startTimeRaw           String
-  endTimeRaw             String
-  ipAddress              String?
-  countryCode            String?
-  language               String?
+  externalSessionId      String
+  startTimeRaw           String   @db.VarChar(255)
+  endTimeRaw             String   @db.VarChar(255)
+  ipAddress              String?  @db.VarChar(45)
+  countryCode            String?  @db.VarChar(3)
+  language               String?  @db.VarChar(10)
   messagesSent           Int?
-  sentimentRaw           String?
-  escalatedRaw           String?
-  forwardedHrRaw         String?
-  fullTranscriptUrl      String?
-  avgResponseTimeSeconds Float?
+  sentimentRaw           String?  @db.VarChar(50)
+  escalatedRaw           String?  @db.VarChar(50)
+  forwardedHrRaw         String?  @db.VarChar(50)
+  fullTranscriptUrl      String?  @db.Text
+  avgResponseTimeSeconds Float?   @db.Real
   tokens                 Int?
-  tokensEur              Float?
-  category               String?
-  initialMessage         String?
-  rawTranscriptContent   String?
-  createdAt              DateTime @default(now())
+  tokensEur              Float?   @db.Real
+  category               String?  @db.VarChar(255)
+  initialMessage         String?  @db.Text
+  rawTranscriptContent   String?  @db.Text
+  createdAt              DateTime @default(now()) @db.Timestamptz(6)
   session                Session? @relation("ImportToSession")
   company                Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@unique([companyId, externalSessionId])
+  @@index([companyId])
+  @@index([companyId, createdAt])
 }
 
 /// *
@@ -110,15 +126,16 @@ model SessionImport {
 model Message {
   id        String    @id @default(uuid())
   sessionId String
-  timestamp DateTime?
-  role      String
-  content   String
+  timestamp DateTime? @db.Timestamptz(6)
+  role      String    @db.VarChar(50)
+  content   String    @db.Text
   order     Int
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
   session   Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, order])
   @@index([sessionId, order])
+  @@index([sessionId, timestamp])
 }
 
 /// *
@@ -128,24 +145,25 @@ model SessionProcessingStatus {
   sessionId    String
   stage        ProcessingStage
   status       ProcessingStatus @default(PENDING)
-  startedAt    DateTime?
-  completedAt  DateTime?
-  errorMessage String?
+  startedAt    DateTime?        @db.Timestamptz(6)
+  completedAt  DateTime?        @db.Timestamptz(6)
+  errorMessage String?          @db.Text
   retryCount   Int              @default(0)
-  metadata     Json?
+  metadata     Json?            @db.JsonB
   session      Session          @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, stage])
   @@index([stage, status])
   @@index([sessionId])
+  @@index([status, startedAt])
 }
 
 /// *
 ///  * QUESTION MANAGEMENT (separate from Session for better analytics)
 model Question {
   id               String            @id @default(uuid())
-  content          String            @unique
-  createdAt        DateTime          @default(now())
+  content          String            @unique @db.Text
+  createdAt        DateTime          @default(now()) @db.Timestamptz(6)
   sessionQuestions SessionQuestion[]
 }
 
@@ -154,13 +172,14 @@ model SessionQuestion {
   sessionId  String
   questionId String
   order      Int
-  createdAt  DateTime @default(now())
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
   question   Question @relation(fields: [questionId], references: [id])
   session    Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, questionId])
   @@unique([sessionId, order])
   @@index([sessionId])
+  @@index([questionId])
 }
 
 /// *
@@ -168,10 +187,10 @@ model SessionQuestion {
 model AIProcessingRequest {
   id                       String    @id @default(uuid())
   sessionId                String
-  openaiRequestId          String?
-  model                    String
-  serviceTier              String?
-  systemFingerprint        String?
+  openaiRequestId          String?   @db.VarChar(255)
+  model                    String    @db.VarChar(100)
+  serviceTier              String?   @db.VarChar(50)
+  systemFingerprint        String?   @db.VarChar(255)
   promptTokens             Int
   completionTokens         Int
   totalTokens              Int
@@ -181,35 +200,38 @@ model AIProcessingRequest {
   audioTokensCompletion    Int?
   acceptedPredictionTokens Int?
   rejectedPredictionTokens Int?
-  promptTokenCost          Float
-  completionTokenCost      Float
-  totalCostEur             Float
-  processingType           String
+  promptTokenCost          Float     @db.Real
+  completionTokenCost      Float     @db.Real
+  totalCostEur             Float     @db.Real
+  processingType           String    @db.VarChar(100)
   success                  Boolean
-  errorMessage             String?
-  requestedAt              DateTime  @default(now())
-  completedAt              DateTime?
+  errorMessage             String?   @db.Text
+  requestedAt              DateTime  @default(now()) @db.Timestamptz(6)
+  completedAt              DateTime? @db.Timestamptz(6)
   session                  Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+  @@index([sessionId, requestedAt])
   @@index([requestedAt])
   @@index([model])
+  @@index([success, requestedAt])
 }
 
 /// *
 ///  * AI Model definitions (without pricing)
 model AIModel {
   id            String           @id @default(uuid())
-  name          String           @unique
-  provider      String
+  name          String           @unique @db.VarChar(100)
+  provider      String           @db.VarChar(50)
   maxTokens     Int?
   isActive      Boolean          @default(true)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt     DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt     DateTime         @updatedAt @db.Timestamptz(6)
   pricing       AIModelPricing[]
   companyModels CompanyAIModel[]
 
   @@index([provider, isActive])
+  @@index([name])
 }
 
 /// *
@@ -217,11 +239,11 @@ model AIModel {
 model AIModelPricing {
   id                  String    @id @default(uuid())
   aiModelId           String
-  promptTokenCost     Float
-  completionTokenCost Float
-  effectiveFrom       DateTime
-  effectiveUntil      DateTime?
-  createdAt           DateTime  @default(now())
+  promptTokenCost     Float     @db.Real
+  completionTokenCost Float     @db.Real
+  effectiveFrom       DateTime  @db.Timestamptz(6)
+  effectiveUntil      DateTime? @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(6)
   aiModel             AIModel   @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
 
   @@index([aiModelId, effectiveFrom])
@@ -235,7 +257,7 @@ model CompanyAIModel {
   companyId String
   aiModelId String
   isDefault Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
   aiModel   AIModel  @relation(fields: [aiModelId], references: [id], onDelete: Cascade)
   company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -244,47 +266,54 @@ model CompanyAIModel {
 }
 
 /// *
-///  * ENUMS – fewer magic strings
+///  * ENUMS – typed constants for better data integrity
+/// 
+
+/// User permission levels within a company
 enum UserRole {
-  ADMIN
-  USER
-  AUDITOR
+  ADMIN    /// Full access to company data and settings
+  USER     /// Standard access to view and interact with data
+  AUDITOR  /// Read-only access for compliance and auditing
 }
 
+/// AI-determined sentiment categories for sessions
 enum SentimentCategory {
-  POSITIVE
-  NEUTRAL
-  NEGATIVE
+  POSITIVE /// Customer expressed satisfaction or positive emotions
+  NEUTRAL  /// Neutral tone or mixed emotions
+  NEGATIVE /// Customer expressed frustration or negative emotions
 }
 
+/// AI-determined conversation categories based on content analysis
 enum SessionCategory {
-  SCHEDULE_HOURS
-  LEAVE_VACATION
-  SICK_LEAVE_RECOVERY
-  SALARY_COMPENSATION
-  CONTRACT_HOURS
-  ONBOARDING
-  OFFBOARDING
-  WORKWEAR_STAFF_PASS
-  TEAM_CONTACTS
-  PERSONAL_QUESTIONS
-  ACCESS_LOGIN
-  SOCIAL_QUESTIONS
-  UNRECOGNIZED_OTHER
+  SCHEDULE_HOURS        /// Questions about work schedules and hours
+  LEAVE_VACATION        /// Vacation requests and leave policies
+  SICK_LEAVE_RECOVERY   /// Sick leave and recovery-related discussions
+  SALARY_COMPENSATION   /// Salary, benefits, and compensation questions
+  CONTRACT_HOURS        /// Contract terms and working hours
+  ONBOARDING           /// New employee onboarding processes
+  OFFBOARDING          /// Employee departure and offboarding
+  WORKWEAR_STAFF_PASS   /// Equipment, uniforms, and access cards
+  TEAM_CONTACTS         /// Team directory and contact information
+  PERSONAL_QUESTIONS    /// Personal HR matters and private concerns
+  ACCESS_LOGIN          /// System access and login issues
+  SOCIAL_QUESTIONS      /// Social events and company culture
+  UNRECOGNIZED_OTHER    /// Conversations that don't fit other categories
 }
 
+/// Processing pipeline stages for session data transformation
 enum ProcessingStage {
-  CSV_IMPORT
-  TRANSCRIPT_FETCH
-  SESSION_CREATION
-  AI_ANALYSIS
-  QUESTION_EXTRACTION
+  CSV_IMPORT          /// Initial import of raw CSV data into SessionImport
+  TRANSCRIPT_FETCH    /// Fetching transcript content from external URLs
+  SESSION_CREATION    /// Converting SessionImport to normalized Session
+  AI_ANALYSIS         /// AI processing for sentiment, categorization, summaries
+  QUESTION_EXTRACTION /// Extracting questions from conversation content
 }
 
+/// Status of each processing stage
 enum ProcessingStatus {
-  PENDING
-  IN_PROGRESS
-  COMPLETED
-  FAILED
-  SKIPPED
+  PENDING     /// Stage is queued for processing
+  IN_PROGRESS /// Stage is currently being processed
+  COMPLETED   /// Stage completed successfully
+  FAILED      /// Stage failed with errors
+  SKIPPED     /// Stage was intentionally skipped
 }
