@@ -1,0 +1,88 @@
+# TODO - Remaining Improvement Items
+
+## High Priority
+
+### Testing & Quality Assurance
+- [ ] Add comprehensive test coverage for API endpoints (currently minimal)
+- [ ] Implement integration tests for the data processing pipeline
+- [ ] Add unit tests for validation schemas and authentication logic
+- [ ] Create E2E tests for critical user flows (registration, login, dashboard)
+
+### Error Handling & Monitoring
+- [ ] Implement global error boundaries for React components
+- [ ] Add structured logging with correlation IDs for request tracing
+- [ ] Set up error monitoring and alerting (e.g., Sentry integration)
+- [ ] Add proper error pages for 404, 500, and other HTTP status codes
+
+### Performance Optimization
+- [ ] Implement database query optimization and indexing strategy
+- [ ] Add caching layer for frequently accessed data (Redis/in-memory)
+- [ ] Optimize React components with proper memoization
+- [ ] Implement lazy loading for dashboard components and charts
+
+## Medium Priority
+
+### Security Enhancements
+- [ ] Add CSRF protection for state-changing operations
+- [ ] Implement session timeout and refresh token mechanism
+- [ ] Add API rate limiting with Redis-backed storage (replace in-memory)
+- [ ] Implement role-based access control (RBAC) for different user types
+- [ ] Add audit logging for sensitive operations
+
+### Code Quality & Maintenance
+- [ ] Resolve remaining ESLint warnings and type issues
+- [ ] Standardize chart library usage (currently mixing Chart.js and other libraries)
+- [ ] Add proper TypeScript strict mode configuration
+- [ ] Implement consistent API response formats across all endpoints
+
+### Database & Schema
+- [ ] Add database connection pooling configuration
+- [ ] Implement proper database migrations for production deployment
+- [ ] Add data retention policies for session data
+- [ ] Consider database partitioning for large-scale data
+
+### User Experience
+- [ ] Add loading states and skeleton components throughout the application
+- [ ] Implement proper form validation feedback and error messages
+- [ ] Add pagination for large data sets in dashboard tables
+- [ ] Implement real-time notifications for processing status updates
+
+## Low Priority
+
+### Documentation & Development
+- [ ] Add API documentation (OpenAPI/Swagger)
+- [ ] Create deployment guides for different environments
+- [ ] Add contributing guidelines and code review checklist
+- [ ] Implement development environment setup automation
+
+### Feature Enhancements
+- [ ] Add data export functionality (CSV, PDF reports)
+- [ ] Implement dashboard customization and user preferences
+- [ ] Add multi-language support (i18n)
+- [ ] Create admin panel for system configuration
+
+### Infrastructure & DevOps
+- [ ] Add Docker configuration for containerized deployment
+- [ ] Implement CI/CD pipeline with automated testing
+- [ ] Add environment-specific configuration management
+- [ ] Set up monitoring and health check endpoints
+
+### Analytics & Insights
+- [ ] Add more detailed analytics and reporting features
+- [ ] Implement A/B testing framework for UI improvements
+- [ ] Add user behavior tracking and analytics
+- [ ] Create automated report generation and scheduling
+
+## Completed ✅
+- [x] Fix duplicate MetricCard components
+- [x] Add input validation schema with Zod
+- [x] Strengthen password requirements (12+ chars, complexity)
+- [x] Fix schema drift - create missing migrations
+- [x] Add rate limiting to authentication endpoints
+- [x] Update README.md to use pnpm instead of npm
+
+## Notes
+- Focus on high-priority items first, especially testing and error handling
+- Security enhancements should be implemented before production deployment
+- Performance optimizations can be added incrementally based on usage metrics
+- Consider user feedback when prioritizing feature enhancements
