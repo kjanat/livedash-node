@@ -1,4 +1,56 @@
-# TODO - Remaining Improvement Items
+# TODO - LiveDash Architecture Evolution & Improvements
+
+## 🚀 CRITICAL PRIORITY - Architectural Refactoring
+
+### Phase 1: Service Decomposition & Platform Management (Weeks 1-4)
+- [ ] **Create Platform Management Layer**
+  - [ ] Add Organization/PlatformUser models to Prisma schema
+  - [ ] Implement super-admin authentication system (/platform/login)
+  - [ ] Build platform dashboard for Notso AI team (/platform/dashboard)
+  - [ ] Add company creation/management workflows
+  - [ ] Create company suspension/activation features
+
+- [ ] **Extract Data Ingestion Service (Golang)**
+  - [ ] Create new Golang service for CSV processing
+  - [ ] Implement concurrent CSV downloading & parsing
+  - [ ] Add transcript fetching with rate limiting
+  - [ ] Set up Redis message queues (BullMQ/RabbitMQ)
+  - [ ] Migrate lib/scheduler.ts and lib/csvFetcher.ts logic
+
+- [ ] **Implement tRPC Infrastructure**
+  - [ ] Add tRPC to existing Next.js app
+  - [ ] Create type-safe API procedures for frontend
+  - [ ] Implement inter-service communication protocols
+  - [ ] Add proper error handling and validation
+
+### Phase 2: AI Service Separation & Compliance (Weeks 5-8)
+- [ ] **Extract AI Processing Service**
+  - [ ] Separate lib/processingScheduler.ts into standalone service
+  - [ ] Implement async AI processing with queues
+  - [ ] Add per-company AI cost tracking and quotas
+  - [ ] Create AI model management per company
+  - [ ] Add retry logic and failure handling
+
+- [ ] **GDPR & ISO 27001 Compliance Foundation**
+  - [ ] Implement data isolation boundaries between services
+  - [ ] Add audit logging for all data processing
+  - [ ] Create data retention policies per company
+  - [ ] Add consent management for data processing
+  - [ ] Implement data export/deletion workflows (Right to be Forgotten)
+
+### Phase 3: Performance & Monitoring (Weeks 9-12)
+- [ ] **Monitoring & Observability**
+  - [ ] Add distributed tracing across services (Jaeger/Zipkin)
+  - [ ] Implement health checks for all services
+  - [ ] Create cross-service metrics dashboard
+  - [ ] Add alerting for service failures and SLA breaches
+  - [ ] Monitor AI processing costs and quotas
+
+- [ ] **Database Optimization**
+  - [ ] Implement connection pooling per service
+  - [ ] Add read replicas for dashboard queries
+  - [ ] Create database sharding strategy for multi-tenancy
+  - [ ] Optimize queries with proper indexing
 
 ## High Priority
 
@@ -81,8 +133,37 @@
 - [x] Add rate limiting to authentication endpoints
 - [x] Update README.md to use pnpm instead of npm
 
+## 🏛️ Architectural Decisions & Rationale
+
+### Service Technology Choices
+- **Dashboard Service**: Next.js + tRPC (existing, proven stack)
+- **Data Ingestion Service**: Golang (high-performance CSV processing, concurrency)
+- **AI Processing Service**: Node.js/Python (existing AI integrations, async processing)
+- **Message Queue**: Redis + BullMQ (Node.js ecosystem compatibility)
+- **Database**: PostgreSQL (existing, excellent for multi-tenancy)
+
+### Why Golang for Data Ingestion?
+- **Performance**: 10-100x faster CSV processing than Node.js
+- **Concurrency**: Native goroutines for parallel transcript fetching
+- **Memory Efficiency**: Lower memory footprint for large CSV files
+- **Deployment**: Single binary deployment, excellent for containers
+- **Team Growth**: Easy to hire Golang developers for data processing
+
+### Migration Strategy
+1. **Keep existing working system** while building new services
+2. **Feature flagging** to gradually migrate companies to new processing
+3. **Dual-write approach** during transition period
+4. **Zero-downtime migration** with careful rollback plans
+
+### Compliance Benefits
+- **Data Isolation**: Each service has limited database access
+- **Audit Trail**: All inter-service communication logged
+- **Data Retention**: Automated per-company data lifecycle
+- **Security Boundaries**: DMZ for ingestion, private network for processing
+
 ## Notes
-- Focus on high-priority items first, especially testing and error handling
-- Security enhancements should be implemented before production deployment
-- Performance optimizations can be added incrementally based on usage metrics
-- Consider user feedback when prioritizing feature enhancements
+- **CRITICAL**: Architectural refactoring must be priority #1 for scalability
+- **Platform Management**: Notso AI needs self-service customer onboarding
+- **Compliance First**: GDPR/ISO 27001 requirements drive service boundaries
+- **Performance**: Current monolith blocks on CSV/AI processing
+- **Technology Evolution**: Golang for data processing, tRPC for type safety

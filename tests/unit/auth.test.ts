@@ -4,8 +4,14 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 // Mock PrismaClient
+const mockPrisma = {
+  user: {
+    findUnique: vi.fn(),
+  },
+};
+
 vi.mock("../../lib/prisma", () => ({
-  prisma: new PrismaClient(),
+  prisma: mockPrisma,
 }));
 
 // Mock bcryptjs
