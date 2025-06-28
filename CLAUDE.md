@@ -29,9 +29,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Testing:**
 
-- `pnpm test` - Run tests once
-- `pnpm test:watch` - Run tests in watch mode
-- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm test` - Run both Vitest and Playwright tests concurrently
+- `pnpm test:vitest` - Run Vitest tests only
+- `pnpm test:vitest:watch` - Run Vitest in watch mode
+- `pnpm test:vitest:coverage` - Run Vitest with coverage report
+- `pnpm test:coverage` - Run all tests with coverage
 
 **Markdown:**
 
@@ -115,16 +117,28 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 
 - Schedulers are optional and controlled by `SCHEDULER_ENABLED` environment variable
 - Use `pnpm dev:next-only` to run without schedulers for pure frontend development
-- Three separate schedulers handle different pipeline stages
+- Three separate schedulers handle different pipeline stages:
+  - CSV Import Scheduler (`lib/scheduler.ts`)
+  - Import Processing Scheduler (`lib/importProcessor.ts`)
+  - Session Processing Scheduler (`lib/processingScheduler.ts`)
 
 **Database Migrations:**
 
 - Always run `pnpm prisma:generate` after schema changes
 - Use `pnpm prisma:migrate` for production-ready migrations
 - Use `pnpm prisma:push` for development schema changes
+- Database uses PostgreSQL with Prisma's driver adapter for connection pooling
 
 **AI Processing:**
 
 - All AI requests are tracked for cost analysis
 - Support for multiple AI models per company
 - Time-based pricing management for accurate cost calculation
+- Processing stages can be retried on failure with retry count tracking
+
+**Code Quality Standards:**
+
+- Run `pnpm lint` and `pnpm format:check` before committing
+- TypeScript with ES modules (type: "module" in package.json)
+- React 19 with Next.js 15 App Router
+- TailwindCSS 4 for styling

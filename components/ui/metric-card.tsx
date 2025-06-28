@@ -102,7 +102,7 @@ export default function MetricCard({
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5",
+        "relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 group",
         getVariantClasses(),
         className
       )}
@@ -124,11 +124,11 @@ export default function MetricCard({
           {icon && (
             <div
               className={cn(
-                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-colors",
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border transition-all duration-300 group-hover:scale-110",
                 getIconClasses()
               )}
             >
-              <span className="text-lg">{icon}</span>
+              <span className="text-lg transition-transform duration-300 group-hover:scale-110">{icon}</span>
             </div>
           )}
         </div>
@@ -137,7 +137,9 @@ export default function MetricCard({
       <CardContent className="relative">
         <div className="flex items-end justify-between">
           <div className="space-y-1">
-            <p className="text-2xl font-bold tracking-tight">{value ?? "—"}</p>
+            <p className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/80">
+              {value ?? "—"}
+            </p>
 
             {trend && (
               <Badge

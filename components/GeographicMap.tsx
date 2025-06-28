@@ -63,7 +63,7 @@ const DEFAULT_COORDINATES = getCountryCoordinates();
 const Map = dynamic(() => import("./Map"), {
   ssr: false,
   loading: () => (
-    <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+    <div className="h-full w-full bg-muted flex items-center justify-center text-muted-foreground">
       Loading map...
     </div>
   ),
@@ -151,7 +151,7 @@ export default function GeographicMap({
   // Show loading state during SSR or until client-side rendering takes over
   if (!isClient) {
     return (
-      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
+      <div className="h-full w-full bg-muted flex items-center justify-center text-muted-foreground">
         Loading map...
       </div>
     );
@@ -162,7 +162,7 @@ export default function GeographicMap({
       {countryData.length > 0 ? (
         <Map countryData={countryData} maxCount={maxCount} />
       ) : (
-        <div className="h-full w-full bg-gray-100 flex items-center justify-center text-gray-500">
+        <div className="h-full w-full bg-muted flex items-center justify-center text-muted-foreground">
           No geographic data available
         </div>
       )}

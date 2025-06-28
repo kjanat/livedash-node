@@ -114,7 +114,12 @@ export default function ResponseTimeDistribution({
           />
           <Tooltip content={<CustomTooltip />} />
 
-          <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="hsl(var(--chart-1))">
+          <Bar 
+            dataKey="value" 
+            radius={[4, 4, 0, 0]} 
+            fill="hsl(var(--chart-1))"
+            maxBarSize={60}
+          >
             {chartData.map((entry, index) => (
               <Bar key={`cell-${index}`} fill={entry.color} />
             ))}

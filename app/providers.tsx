@@ -2,16 +2,24 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
+import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
   // Including error handling and refetch interval for better user experience
   return (
-    <SessionProvider
-      // Re-fetch session every 30 minutes (reduced from 10)
-      refetchInterval={30 * 60}
-      refetchOnWindowFocus={false}
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
     >
-      {children}
-    </SessionProvider>
+      <SessionProvider
+        // Re-fetch session every 30 minutes (reduced from 10)
+        refetchInterval={30 * 60}
+        refetchOnWindowFocus={false}
+      >
+        {children}
+      </SessionProvider>
+    </ThemeProvider>
   );
 }

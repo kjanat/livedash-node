@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { SimpleThemeToggle } from "@/components/ui/theme-toggle";
 
 // Icons for the sidebar
 const DashboardIcon = () => (
@@ -158,8 +159,8 @@ const NavItem: React.FC<NavItemProps> = ({
     href={href}
     className={`relative flex items-center p-3 my-1 rounded-lg transition-all group ${
       isActive
-        ? "bg-sky-100 text-sky-800 font-medium"
-        : "hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+        ? "bg-primary/10 text-primary font-medium border border-primary/20"
+        : "hover:bg-muted text-muted-foreground hover:text-foreground"
     }`}
     onClick={() => {
       if (onNavigate) {
@@ -175,7 +176,7 @@ const NavItem: React.FC<NavItemProps> = ({
     ) : (
       <div
         className="fixed ml-6 w-auto p-2 min-w-max rounded-md shadow-md text-xs font-medium
-        text-white bg-gray-800 z-50
+        text-popover-foreground bg-popover border border-border z-50
         invisible opacity-0 -translate-x-3 transition-all
         group-hover:visible group-hover:opacity-100 group-hover:translate-x-0"
       >
@@ -202,13 +203,13 @@ export default function Sidebar({
       {/* Backdrop overlay when sidebar is expanded on mobile */}
       {isExpanded && isMobile && (
         <div
-          className="fixed inset-0 bg-gray-900 bg-opacity-50 z-10 transition-opacity duration-300"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10 transition-all duration-300"
           onClick={onToggle}
         />
       )}
 
       <div
-        className={`fixed md:relative h-screen bg-white shadow-md transition-all duration-300
+        className={`fixed md:relative h-screen bg-card border-r border-border shadow-lg transition-all duration-300
         ${
           isExpanded ? (isMobile ? "w-full sm:w-80" : "w-56") : "w-16"
         } flex flex-col overflow-visible z-20`}
@@ -222,7 +223,7 @@ export default function Sidebar({
                   e.preventDefault(); // Prevent any navigation
                   onToggle();
                 }}
-                className="p-1.5 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors group"
+                className="p-1.5 rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary transition-colors group"
                 title="Expand sidebar"
               >
                 <MinimalToggleIcon isExpanded={isExpanded} />
@@ -248,7 +249,7 @@ export default function Sidebar({
               />
             </div>
             {isExpanded && (
-              <span className="text-lg font-bold text-sky-700 mt-1 transition-opacity duration-300">
+              <span className="text-lg font-bold text-primary mt-1 transition-opacity duration-300">
                 LiveDash
               </span>
             )}
@@ -261,7 +262,7 @@ export default function Sidebar({
                 e.preventDefault(); // Prevent any navigation
                 onToggle();
               }}
-              className="p-1.5 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-sky-500 transition-colors group"
+              className="p-1.5 rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary transition-colors group"
               title="Collapse sidebar"
             >
               <MinimalToggleIcon isExpanded={isExpanded} />
@@ -327,10 +328,17 @@ export default function Sidebar({
             onNavigate={onNavigate}
           />
         </nav>
-        <div className="p-4 border-t mt-auto">
+        <div className="p-4 border-t mt-auto space-y-2">
+          {/* Theme Toggle */}
+          <div className={`flex items-center ${isExpanded ? "justify-between" : "justify-center"}`}>
+            {isExpanded && <span className="text-sm font-medium text-muted-foreground">Theme</span>}
+            <SimpleThemeToggle />
+          </div>
+
+          {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className={`relative flex items-center p-3 w-full rounded-lg text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-all group ${
+            className={`relative flex items-center p-3 w-full rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all group ${
               isExpanded ? "" : "justify-center"
             }`}
           >
@@ -342,7 +350,7 @@ export default function Sidebar({
             ) : (
               <div
                 className="fixed ml-6 w-auto p-2 min-w-max rounded-md shadow-md text-xs font-medium
-                text-white bg-gray-800 z-50
+                text-popover-foreground bg-popover border border-border z-50
                 invisible opacity-0 -translate-x-3 transition-all
                 group-hover:visible group-hover:opacity-100 group-hover:translate-x-0"
               >
