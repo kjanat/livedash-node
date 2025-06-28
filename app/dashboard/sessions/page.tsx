@@ -3,6 +3,24 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChatSession } from "../../../lib/types";
 import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { 
+  MessageSquare, 
+  Search, 
+  Filter, 
+  Calendar, 
+  ChevronLeft, 
+  ChevronRight,
+  Clock,
+  Globe,
+  Eye,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 
 // Placeholder for a SessionListItem component to be created later
 // For now, we'll display some basic info directly.
@@ -42,6 +60,9 @@ export default function SessionsPage() {
   const [totalPages, setTotalPages] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const [pageSize, setPageSize] = useState(10); // Or make this configurable
+
+  // UI states
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -120,227 +141,282 @@ export default function SessionsPage() {
   }, [fetchFilterOptions]);
 
   return (
-    <div className="p-4 md:p-6">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-        Chat Sessions
-      </h1>
+    <div className="space-y-6">
+      {/* Header */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <MessageSquare className="h-6 w-6" />
+            <CardTitle>Chat Sessions</CardTitle>
+          </div>
+        </CardHeader>
+      </Card>
 
       {/* Search Input */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search sessions (ID, category, initial message...)"
-          className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </div>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sessions (ID, category, initial message...)"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Filter and Sort Controls */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg shadow">
-        {/* Category Filter */}
-        <div>
-          <label
-            htmlFor="category-filter"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Category
-          </label>
-          <select
-            id="category-filter"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            <option value="">All Categories</option>
-            {filterOptions.categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              <CardTitle className="text-lg">Filters & Sorting</CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setFiltersExpanded(!filtersExpanded)}
+              className="gap-2"
+            >
+              {filtersExpanded ? (
+                <>
+                  <ChevronUp className="h-4 w-4" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="h-4 w-4" />
+                  Show
+                </>
+              )}
+            </Button>
+          </div>
+        </CardHeader>
+        {filtersExpanded && (
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+            {/* Category Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="category-filter">Category</Label>
+              <select
+                id="category-filter"
+                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <option value="">All Categories</option>
+                {filterOptions.categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Language Filter */}
-        <div>
-          <label
-            htmlFor="language-filter"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Language
-          </label>
-          <select
-            id="language-filter"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={selectedLanguage}
-            onChange={(e) => setSelectedLanguage(e.target.value)}
-          >
-            <option value="">All Languages</option>
-            {filterOptions.languages.map((lang) => (
-              <option key={lang} value={lang}>
-                {lang.toUpperCase()}
-              </option>
-            ))}
-          </select>
-        </div>
+            {/* Language Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="language-filter">Language</Label>
+              <select
+                id="language-filter"
+                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value)}
+              >
+                <option value="">All Languages</option>
+                {filterOptions.languages.map((lang) => (
+                  <option key={lang} value={lang}>
+                    {lang.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        {/* Start Date Filter */}
-        <div>
-          <label
-            htmlFor="start-date-filter"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Start Date
-          </label>
-          <input
-            type="date"
-            id="start-date-filter"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-        </div>
+            {/* Start Date Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="start-date-filter">Start Date</Label>
+              <Input
+                type="date"
+                id="start-date-filter"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
 
-        {/* End Date Filter */}
-        <div>
-          <label
-            htmlFor="end-date-filter"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            End Date
-          </label>
-          <input
-            type="date"
-            id="end-date-filter"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-        </div>
+            {/* End Date Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="end-date-filter">End Date</Label>
+              <Input
+                type="date"
+                id="end-date-filter"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
 
-        {/* Sort Key */}
-        <div>
-          <label
-            htmlFor="sort-key"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Sort By
-          </label>
-          <select
-            id="sort-key"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={sortKey}
-            onChange={(e) => setSortKey(e.target.value)}
-          >
-            <option value="startTime">Start Time</option>
-            <option value="category">Category</option>
-            <option value="language">Language</option>
-            <option value="sentiment">Sentiment</option>
-            <option value="messagesSent">Messages Sent</option>
-            <option value="avgResponseTime">Avg. Response Time</option>
-          </select>
-        </div>
+            {/* Sort Key */}
+            <div className="space-y-2">
+              <Label htmlFor="sort-key">Sort By</Label>
+              <select
+                id="sort-key"
+                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+              >
+                <option value="startTime">Start Time</option>
+                <option value="category">Category</option>
+                <option value="language">Language</option>
+                <option value="sentiment">Sentiment</option>
+                <option value="messagesSent">Messages Sent</option>
+                <option value="avgResponseTime">Avg. Response Time</option>
+              </select>
+            </div>
 
-        {/* Sort Order */}
-        <div>
-          <label
-            htmlFor="sort-order"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Order
-          </label>
-          <select
-            id="sort-order"
-            className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-sky-500 focus:border-sky-500"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-          >
-            <option value="desc">Descending</option>
-            <option value="asc">Ascending</option>
-          </select>
-        </div>
-      </div>
+            {/* Sort Order */}
+            <div className="space-y-2">
+              <Label htmlFor="sort-order">Order</Label>
+              <select
+                id="sort-order"
+                className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+              >
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
 
-      {loading && <p className="text-gray-600">Loading sessions...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-
-      {!loading && !error && sessions.length === 0 && (
-        <p className="text-gray-600">
-          {debouncedSearchTerm
-            ? `No sessions found for "${debouncedSearchTerm}".`
-            : "No sessions found."}
-        </p>
+      {/* Loading State */}
+      {loading && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              Loading sessions...
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {!loading && !error && sessions.length > 0 && (
-        <div className="space-y-4">
-          {sessions.map((session) => (
-            <div
-              key={session.id}
-              className="bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow"
-            >
-              <h2 className="text-lg font-semibold text-sky-700 mb-1">
-                Session ID: {session.sessionId || session.id}
-              </h2>
-              <p className="text-sm text-gray-500 mb-1">
-                Start Time{/*  (Local) */}:{" "}
-                {new Date(session.startTime).toLocaleString()}
-              </p>
-              {/* <p className="text-xs text-gray-400 mb-1">
-                Start Time (Raw API): {session.startTime.toString()}
-              </p> */}
-              {session.category && (
-                <p className="text-sm text-gray-700">
-                  Category:{" "}
-                  <span className="font-medium">{session.category}</span>
-                </p>
-              )}
-              {session.language && (
-                <p className="text-sm text-gray-700">
-                  Language:{" "}
-                  <span className="font-medium">
-                    {session.language.toUpperCase()}
-                  </span>
-                </p>
-              )}
-              {session.initialMsg && (
-                <p className="text-sm text-gray-600 mt-1 truncate">
-                  Initial Message: {session.initialMsg}
-                </p>
-              )}
-              <Link
-                href={`/dashboard/sessions/${session.id}`}
-                className="mt-2 text-sm text-sky-600 hover:text-sky-800 hover:underline inline-block"
-              >
-                View Details
-              </Link>
+      {/* Error State */}
+      {error && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-destructive">
+              Error: {error}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty State */}
+      {!loading && !error && sessions.length === 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              {debouncedSearchTerm
+                ? `No sessions found for "${debouncedSearchTerm}".`
+                : "No sessions found."}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sessions List */}
+      {!loading && !error && sessions.length > 0 && (
+        <div className="grid gap-4">
+          {sessions.map((session) => (
+            <Card key={session.id} className="hover:shadow-md transition-shadow">
+              <CardContent className="pt-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="space-y-2 flex-1">
+                    <div className="flex items-center gap-3">
+                      <Badge variant="outline" className="font-mono text-xs">
+                        ID
+                      </Badge>
+                      <code className="text-sm text-muted-foreground font-mono">
+                        {(session.sessionId || session.id).slice(0, 8)}...
+                      </code>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {new Date(session.startTime).toLocaleString()}
+                    </div>
+                  </div>
+                  <Link href={`/dashboard/sessions/${session.id}`}>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {session.category && session.category !== 'UNRECOGNIZED_OTHER' && session.category !== 'ACCESS_LOGIN' && (
+                    <Badge variant="secondary" className="gap-1">
+                      <Filter className="h-3 w-3" />
+                      {session.category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                    </Badge>
+                  )}
+                  {session.language && (
+                    <Badge variant="outline" className="gap-1">
+                      <Globe className="h-3 w-3" />
+                      {session.language.toUpperCase()}
+                    </Badge>
+                  )}
+                </div>
+
+                {session.summary ? (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {session.summary}
+                  </p>
+                ) : session.initialMsg ? (
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {session.initialMsg}
+                  </p>
+                ) : null}
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
 
+      {/* Pagination */}
       {totalPages > 0 && (
-        <div className="mt-6 flex justify-center items-center space-x-2">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            Previous
-          </button>
-          <span className="text-sm text-gray-700">
-            Page {currentPage} of {totalPages}
-          </span>
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages}
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-center items-center gap-4">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="gap-2"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="gap-2"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

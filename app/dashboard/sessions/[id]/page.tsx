@@ -1,13 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation"; // Import useRouter
-import { useSession } from "next-auth/react"; // Import useSession
+import { useParams, useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import SessionDetails from "../../../../components/SessionDetails";
 import TranscriptViewer from "../../../../components/TranscriptViewer";
 import MessageViewer from "../../../../components/MessageViewer";
 import { ChatSession } from "../../../../lib/types";
 import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { 
+  ArrowLeft, 
+  MessageSquare, 
+  Clock, 
+  Globe, 
+  ExternalLink,
+  User,
+  Bot,
+  AlertCircle,
+  FileText,
+  Activity
+} from "lucide-react";
 
 export default function SessionViewPage() {
   const params = useParams();
@@ -57,110 +73,242 @@ export default function SessionViewPage() {
 
   if (status === "loading") {
     return (
-      <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
-        <p className="text-gray-600 text-lg">Loading session...</p>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              Loading session...
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (status === "unauthenticated") {
     return (
-      <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
-        <p className="text-gray-600 text-lg">Redirecting to login...</p>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              Redirecting to login...
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (loading && status === "authenticated") {
     return (
-      <div className="p-4 md:p-6 flex justify-center items-center min-h-screen">
-        <p className="text-gray-600 text-lg">Loading session details...</p>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8 text-muted-foreground">
+              Loading session details...
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 md:p-6 min-h-screen">
-        <p className="text-red-500 text-lg mb-4">Error: {error}</p>
-        <Link
-          href="/dashboard/sessions"
-          className="text-sky-600 hover:underline"
-        >
-          Back to Sessions List
-        </Link>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <p className="text-destructive text-lg mb-4">Error: {error}</p>
+              <Link href="/dashboard/sessions">
+                <Button variant="outline" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Sessions List
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   if (!session) {
     return (
-      <div className="p-4 md:p-6 min-h-screen">
-        <p className="text-gray-600 text-lg mb-4">Session not found.</p>
-        <Link
-          href="/dashboard/sessions"
-          className="text-sky-600 hover:underline"
-        >
-          Back to Sessions List
-        </Link>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground text-lg mb-4">Session not found.</p>
+              <Link href="/dashboard/sessions">
+                <Button variant="outline" className="gap-2">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Sessions List
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 to-sky-100 p-4 md:p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <Link
-            href="/dashboard/sessions"
-            className="text-sky-700 hover:text-sky-900 hover:underline flex items-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5 mr-1"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Back to Sessions List
-          </Link>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">
-          Session: {session.sessionId || session.id}
-        </h1>
-        <div className="grid grid-cols-1 gap-6">
-          <div>
-            <SessionDetails session={session} />
+    <div className="space-y-6 max-w-6xl mx-auto">
+      {/* Header */}
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="space-y-2">
+              <Link href="/dashboard/sessions">
+                <Button variant="ghost" className="gap-2 p-0 h-auto">
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Sessions List
+                </Button>
+              </Link>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-bold">Session Details</h1>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className="font-mono text-xs">
+                    ID
+                  </Badge>
+                  <code className="text-sm text-muted-foreground font-mono">
+                    {(session.sessionId || session.id).slice(0, 8)}...
+                  </code>
+                </div>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {session.category && session.category !== 'UNRECOGNIZED_OTHER' && session.category !== 'ACCESS_LOGIN' && (
+                <Badge variant="secondary" className="gap-1">
+                  <Activity className="h-3 w-3" />
+                  {session.category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                </Badge>
+              )}
+              {session.language && (
+                <Badge variant="outline" className="gap-1">
+                  <Globe className="h-3 w-3" />
+                  {session.language.toUpperCase()}
+                </Badge>
+              )}
+              {session.sentiment && (
+                <Badge 
+                  variant={session.sentiment === 'positive' ? 'default' : session.sentiment === 'negative' ? 'destructive' : 'secondary'}
+                  className="gap-1"
+                >
+                  {session.sentiment.charAt(0).toUpperCase() + session.sentiment.slice(1)}
+                </Badge>
+              )}
+            </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Show parsed messages if available */}
-          {session.messages && session.messages.length > 0 && (
-            <div>
-              <MessageViewer messages={session.messages} />
+      {/* Session Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Clock className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Start Time</p>
+                <p className="font-semibold">
+                  {new Date(session.startTime).toLocaleString()}
+                </p>
+              </div>
             </div>
-          )}
+          </CardContent>
+        </Card>
 
-          {/* Show transcript URL if available */}
-          {session.fullTranscriptUrl && (
-            <div className="bg-white p-4 rounded-lg shadow">
-              <h3 className="font-bold text-lg mb-3">Source Transcript</h3>
-              <a
-                href={session.fullTranscriptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sky-600 hover:underline"
-              >
-                View Original Transcript
-              </a>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <MessageSquare className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Messages</p>
+                <p className="font-semibold">
+                  {session.messages?.length || 0}
+                </p>
+              </div>
             </div>
-          )}
-        </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <User className="h-8 w-8 text-purple-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">User ID</p>
+                <p className="font-semibold truncate">
+                  {session.userId || 'N/A'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <Activity className="h-8 w-8 text-orange-500" />
+              <div>
+                <p className="text-sm text-muted-foreground">Duration</p>
+                <p className="font-semibold">
+                  {session.endTime && session.startTime
+                    ? `${Math.round(
+                        (new Date(session.endTime).getTime() - new Date(session.startTime).getTime()) / 60000
+                      )} min`
+                    : 'N/A'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Session Details */}
+      <SessionDetails session={session} />
+
+      {/* Messages */}
+      {session.messages && session.messages.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5" />
+              Conversation ({session.messages.length} messages)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <MessageViewer messages={session.messages} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Transcript URL */}
+      {session.fullTranscriptUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Source Transcript
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <a
+              href={session.fullTranscriptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-primary hover:underline"
+            >
+              <ExternalLink className="h-4 w-4" />
+              View Original Transcript
+            </a>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

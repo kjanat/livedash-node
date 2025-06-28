@@ -3,6 +3,10 @@
 import { ChatSession } from "../lib/types";
 import LanguageDisplay from "./LanguageDisplay";
 import CountryDisplay from "./CountryDisplay";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ExternalLink } from "lucide-react";
 
 interface SessionDetailsProps {
   session: ChatSession;
@@ -12,157 +16,175 @@ interface SessionDetailsProps {
  * Component to display session details with formatted country and language names
  */
 export default function SessionDetails({ session }: SessionDetailsProps) {
+  // Helper function to format category names
+  const formatCategory = (category: string) => {
+    if (category === 'UNRECOGNIZED_OTHER' || category === 'ACCESS_LOGIN') {
+      return null; // Don't show these internal enum values
+    }
+    return category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow">
-      <h3 className="font-bold text-lg mb-3">Session Details</h3>
-      <div className="space-y-3">
-        <div className="flex justify-between border-b pb-2">
-          <span className="text-gray-600">Session ID:</span>
-          <span className="font-medium font-mono text-sm">{session.id}</span>
-        </div>
-
-        <div className="flex justify-between border-b pb-2">
-          <span className="text-gray-600">Start Time:</span>
-          <span className="font-medium">
-            {new Date(session.startTime).toLocaleString()}
-          </span>
-        </div>
-
-        {session.endTime && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">End Time:</span>
-            <span className="font-medium">
-              {new Date(session.endTime).toLocaleString()}
-            </span>
-          </div>
-        )}
-
-        {session.category && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Category:</span>
-            <span className="font-medium">{session.category}</span>
-          </div>
-        )}
-
-        {session.language && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Language:</span>
-            <span className="font-medium">
-              <LanguageDisplay languageCode={session.language} />
-              <span className="text-gray-400 text-xs ml-1">
-                ({session.language.toUpperCase()})
-              </span>
-            </span>
-          </div>
-        )}
-
-        {session.country && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Country:</span>
-            <span className="font-medium">
-              <CountryDisplay countryCode={session.country} />
-              <span className="text-gray-400 text-xs ml-1">
-                ({session.country})
-              </span>
-            </span>
-          </div>
-        )}
-
-        {session.sentiment !== null && session.sentiment !== undefined && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Sentiment:</span>
-            <span
-              className={`font-medium capitalize ${
-                session.sentiment === "POSITIVE"
-                  ? "text-green-500"
-                  : session.sentiment === "NEGATIVE"
-                    ? "text-red-500"
-                    : "text-orange-500"
-              }`}
-            >
-              {session.sentiment.toLowerCase()}
-            </span>
-          </div>
-        )}
-
-        <div className="flex justify-between border-b pb-2">
-          <span className="text-gray-600">Messages Sent:</span>
-          <span className="font-medium">{session.messagesSent || 0}</span>
-        </div>
-
-        {session.avgResponseTime !== null &&
-          session.avgResponseTime !== undefined && (
-            <div className="flex justify-between border-b pb-2">
-              <span className="text-gray-600">Avg Response Time:</span>
-              <span className="font-medium">
-                {session.avgResponseTime.toFixed(2)}s
-              </span>
+    <Card>
+      <CardHeader>
+        <CardTitle>Session Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">Session ID</p>
+              <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                {session.id.slice(0, 8)}...
+              </code>
             </div>
-          )}
 
-        {session.escalated !== null && session.escalated !== undefined && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Escalated:</span>
-            <span
-              className={`font-medium ${session.escalated ? "text-red-500" : "text-green-500"}`}
-            >
-              {session.escalated ? "Yes" : "No"}
-            </span>
-          </div>
-        )}
-
-        {session.forwardedHr !== null && session.forwardedHr !== undefined && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">Forwarded to HR:</span>
-            <span
-              className={`font-medium ${session.forwardedHr ? "text-amber-500" : "text-green-500"}`}
-            >
-              {session.forwardedHr ? "Yes" : "No"}
-            </span>
-          </div>
-        )}
-
-        {session.ipAddress && (
-          <div className="flex justify-between border-b pb-2">
-            <span className="text-gray-600">IP Address:</span>
-            <span className="font-medium font-mono text-sm">
-              {session.ipAddress}
-            </span>
-          </div>
-        )}
-
-        {session.initialMsg && (
-          <div className="border-b pb-2">
-            <span className="text-gray-600 block mb-1">Initial Message:</span>
-            <div className="bg-gray-50 p-2 rounded text-sm italic">
-              &quot;{session.initialMsg}&quot;
+            <div>
+              <p className="text-sm text-muted-foreground">Start Time</p>
+              <p className="font-medium">
+                {new Date(session.startTime).toLocaleString()}
+              </p>
             </div>
+
+            {session.endTime && (
+              <div>
+                <p className="text-sm text-muted-foreground">End Time</p>
+                <p className="font-medium">
+                  {new Date(session.endTime).toLocaleString()}
+                </p>
+              </div>
+            )}
+
+            {session.category && formatCategory(session.category) && (
+              <div>
+                <p className="text-sm text-muted-foreground">Category</p>
+                <Badge variant="secondary">
+                  {formatCategory(session.category)}
+                </Badge>
+              </div>
+            )}
+
+            {session.language && (
+              <div>
+                <p className="text-sm text-muted-foreground">Language</p>
+                <div className="flex items-center gap-2">
+                  <LanguageDisplay languageCode={session.language} />
+                  <Badge variant="outline" className="text-xs">
+                    {session.language.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+            )}
+
+            {session.country && (
+              <div>
+                <p className="text-sm text-muted-foreground">Country</p>
+                <div className="flex items-center gap-2">
+                  <CountryDisplay countryCode={session.country} />
+                  <Badge variant="outline" className="text-xs">
+                    {session.country}
+                  </Badge>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+
+          <div className="space-y-3">
+            {session.sentiment !== null && session.sentiment !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Sentiment</p>
+                <Badge
+                  variant={
+                    session.sentiment === "positive"
+                      ? "default"
+                      : session.sentiment === "negative"
+                        ? "destructive"
+                        : "secondary"
+                  }
+                >
+                  {session.sentiment.charAt(0).toUpperCase() + session.sentiment.slice(1)}
+                </Badge>
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm text-muted-foreground">Messages Sent</p>
+              <p className="font-medium">{session.messagesSent || 0}</p>
+            </div>
+
+            {session.avgResponseTime !== null && session.avgResponseTime !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Avg Response Time</p>
+                <p className="font-medium">{session.avgResponseTime.toFixed(2)}s</p>
+              </div>
+            )}
+
+            {session.escalated !== null && session.escalated !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Escalated</p>
+                <Badge variant={session.escalated ? "destructive" : "default"}>
+                  {session.escalated ? "Yes" : "No"}
+                </Badge>
+              </div>
+            )}
+
+            {session.forwardedHr !== null && session.forwardedHr !== undefined && (
+              <div>
+                <p className="text-sm text-muted-foreground">Forwarded to HR</p>
+                <Badge variant={session.forwardedHr ? "secondary" : "default"}>
+                  {session.forwardedHr ? "Yes" : "No"}
+                </Badge>
+              </div>
+            )}
+
+            {session.ipAddress && (
+              <div>
+                <p className="text-sm text-muted-foreground">IP Address</p>
+                <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+                  {session.ipAddress}
+                </code>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {(session.summary || session.initialMsg) && <Separator />}
 
         {session.summary && (
-          <div className="border-b pb-2">
-            <span className="text-gray-600 block mb-1">AI Summary:</span>
-            <div className="bg-blue-50 p-2 rounded text-sm">
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">AI Summary</p>
+            <div className="bg-muted p-3 rounded-md text-sm">
               {session.summary}
             </div>
           </div>
         )}
 
-        {session.fullTranscriptUrl && (
-          <div className="flex justify-between pt-2">
-            <span className="text-gray-600">Transcript:</span>
-            <a
-              href={session.fullTranscriptUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-700 underline"
-            >
-              View Full Transcript
-            </a>
+        {!session.summary && session.initialMsg && (
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">Initial Message</p>
+            <div className="bg-muted p-3 rounded-md text-sm italic">
+              &quot;{session.initialMsg}&quot;
+            </div>
           </div>
         )}
-      </div>
-    </div>
+
+        {session.fullTranscriptUrl && (
+          <>
+            <Separator />
+            <div>
+              <a
+                href={session.fullTranscriptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-primary hover:underline"
+              >
+                <ExternalLink className="h-4 w-4" />
+                View Full Transcript
+              </a>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
