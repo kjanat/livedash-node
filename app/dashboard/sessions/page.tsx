@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { formatCategory } from "@/lib/format-enums";
 import { 
   MessageSquare, 
   Search, 
@@ -223,7 +224,7 @@ export default function SessionsPage() {
                     <option value="">All Categories</option>
                     {filterOptions.categories.map((cat) => (
                       <option key={cat} value={cat}>
-                        {cat}
+                        {formatCategory(cat)}
                       </option>
                     ))}
                   </select>
@@ -377,69 +378,81 @@ export default function SessionsPage() {
         </Card>
       )}
 
-      {/* Sessions List */}
-      {!loading && !error && sessions.length > 0 && (
-        <div className="grid gap-4">
-          {sessions.map((session) => (
-            <Card key={session.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="pt-6">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="space-y-2 flex-1">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        ID
-                      </Badge>
-                      <code className="text-sm text-muted-foreground font-mono truncate max-w-24">
-                        {session.sessionId || session.id}
-                      </code>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {new Date(session.startTime).toLocaleDateString()}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(session.startTime).toLocaleTimeString()}
-                      </span>
-                    </div>
-                  </div>
-                  <Link href={`/dashboard/sessions/${session.id}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Eye className="h-4 w-4" />
-                      <span className="hidden sm:inline">View Details</span>
-                    </Button>
-                  </Link>
-                </div>
+        {/* Sessions List */}
+        {!loading && !error && sessions.length > 0 && (
+          <ul role="list" aria-label="Chat sessions" className="grid gap-4">
+            {sessions.map((session) => (
+              <li key={session.id}>
+                <Card className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <article aria-labelledby={`session-${session.id}-title`}>
+                      <header className="flex justify-between items-start mb-4">
+                        <div className="space-y-2 flex-1">
+                          <h3 id={`session-${session.id}-title`} className="sr-only">
+                            Session {session.sessionId || session.id} from {new Date(session.startTime).toLocaleDateString()}
+                          </h3>
+                          <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="font-mono text-xs">
+                              ID
+                            </Badge>
+                            <code className="text-sm text-muted-foreground font-mono truncate max-w-24">
+                              {session.sessionId || session.id}
+                            </code>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">
+                              <Clock className="h-3 w-3 mr-1" aria-hidden="true" />
+                              {new Date(session.startTime).toLocaleDateString()}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(session.startTime).toLocaleTimeString()}
+                            </span>
+                          </div>
+                        </div>
+                        <Link href={`/dashboard/sessions/${session.id}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2"
+                            aria-label={`View details for session ${session.sessionId || session.id}`}
+                          >
+                            <Eye className="h-4 w-4" aria-hidden="true" />
+                            <span className="hidden sm:inline">View Details</span>
+                          </Button>
+                        </Link>
+                      </header>
 
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {session.category && session.category !== 'UNRECOGNIZED_OTHER' && session.category !== 'ACCESS_LOGIN' && (
-                    <Badge variant="secondary" className="gap-1">
-                      <Filter className="h-3 w-3" />
-                      {session.category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
-                    </Badge>
-                  )}
-                  {session.language && (
-                    <Badge variant="outline" className="gap-1">
-                      <Globe className="h-3 w-3" />
-                      {session.language.toUpperCase()}
-                    </Badge>
-                  )}
-                </div>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {session.category && (
+                          <Badge variant="secondary" className="gap-1">
+                            <Filter className="h-3 w-3" aria-hidden="true" />
+                            {formatCategory(session.category)}
+                          </Badge>
+                        )}
+                        {session.language && (
+                          <Badge variant="outline" className="gap-1">
+                            <Globe className="h-3 w-3" aria-hidden="true" />
+                            {session.language.toUpperCase()}
+                          </Badge>
+                        )}
+                      </div>
 
-                {session.summary ? (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {session.summary}
-                  </p>
-                ) : session.initialMsg ? (
-                  <p className="text-sm text-muted-foreground line-clamp-2">
-                    {session.initialMsg}
-                  </p>
-                ) : null}
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
+                      {session.summary ? (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {session.summary}
+                        </p>
+                      ) : session.initialMsg ? (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {session.initialMsg}
+                        </p>
+                      ) : null}
+                    </article>
+                  </CardContent>
+                </Card>
+              </li>
+            ))}
+          </ul>
+        )}
 
       {/* Pagination */}
       {totalPages > 0 && (

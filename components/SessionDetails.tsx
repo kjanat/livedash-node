@@ -3,6 +3,7 @@
 import { ChatSession } from "../lib/types";
 import LanguageDisplay from "./LanguageDisplay";
 import CountryDisplay from "./CountryDisplay";
+import { formatCategory } from "@/lib/format-enums";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -16,13 +17,7 @@ interface SessionDetailsProps {
  * Component to display session details with formatted country and language names
  */
 export default function SessionDetails({ session }: SessionDetailsProps) {
-  // Helper function to format category names
-  const formatCategory = (category: string) => {
-    if (category === 'UNRECOGNIZED_OTHER' || category === 'ACCESS_LOGIN') {
-      return null; // Don't show these internal enum values
-    }
-    return category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
-  };
+  // Using centralized formatCategory utility
 
   return (
     <Card>
@@ -55,7 +50,7 @@ export default function SessionDetails({ session }: SessionDetailsProps) {
               </div>
             )}
 
-            {session.category && formatCategory(session.category) && (
+            {session.category && (
               <div>
                 <p className="text-sm text-muted-foreground">Category</p>
                 <Badge variant="secondary">

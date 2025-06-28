@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
+import { formatEnumValue } from "@/lib/format-enums";
 import MetricCard from "../../../components/ui/metric-card";
 import ModernLineChart from "../../../components/charts/line-chart";
 import ModernBarChart from "../../../components/charts/bar-chart";
@@ -259,10 +260,13 @@ function DashboardContent() {
   const getCategoriesData = () => {
     if (!metrics?.categories) return [];
 
-    return Object.entries(metrics.categories).map(([name, value]) => ({
-      name: name.length > 15 ? name.substring(0, 15) + "..." : name,
-      value: value as number,
-    }));
+    return Object.entries(metrics.categories).map(([name, value]) => {
+      const formattedName = formatEnumValue(name) || name;
+      return {
+        name: formattedName.length > 15 ? formattedName.substring(0, 15) + "..." : formattedName,
+        value: value as number,
+      };
+    });
   };
 
   const getLanguagesData = () => {

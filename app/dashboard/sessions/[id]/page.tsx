@@ -7,6 +7,7 @@ import SessionDetails from "../../../../components/SessionDetails";
 import TranscriptViewer from "../../../../components/TranscriptViewer";
 import MessageViewer from "../../../../components/MessageViewer";
 import { ChatSession } from "../../../../lib/types";
+import { formatCategory } from "@/lib/format-enums";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -181,10 +182,10 @@ export default function SessionViewPage() {
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
-              {session.category && session.category !== 'UNRECOGNIZED_OTHER' && session.category !== 'ACCESS_LOGIN' && (
+              {session.category && (
                 <Badge variant="secondary" className="gap-1">
                   <Activity className="h-3 w-3" />
-                  {session.category.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                  {formatCategory(session.category)}
                 </Badge>
               )}
               {session.language && (
