@@ -394,10 +394,24 @@ export async function processQueuedImports(
     let batchSuccessCount = 0;
     let batchErrorCount = 0;
 
-    // Process each import in this batch
-    for (const importRecord of unprocessedImports) {
+    // Process imports in parallel batches for better performance
+    const batchPromises = unprocessedImports.map(async (importRecord) => {
       const result = await processSingleImport(importRecord);
+      return { importRecord, result };
+    });
 
+    // Process with concurrency limit to avoid overwhelming the database
+    const concurrencyLimit = 5;
+    const results = [];
+    
+    for (let i = 0; i < batchPromises.length; i += concurrencyLimit) {
+      const chunk = batchPromises.slice(i, i + concurrencyLimit);
+      const chunkResults = await Promise.all(chunk);
+      results.push(...chunkResults);
+    }
+
+    // Process results
+    for (const { importRecord, result } of results) {
       if (result.success) {
         batchSuccessCount++;
         totalSuccessCount++;

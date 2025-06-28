@@ -22,7 +22,18 @@ export async function GET(request: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { email: session.user.email },
-    include: { company: true },
+    select: {
+      id: true,
+      companyId: true,
+      company: {
+        select: {
+          id: true,
+          name: true,
+          csvUrl: true,
+          status: true,
+        }
+      },
+    },
   });
 
   if (!user) {
@@ -46,40 +57,86 @@ export async function GET(request: NextRequest) {
     };
   }
 
+  // Fetch sessions without messages first for better performance
   const prismaSessions = await prisma.session.findMany({
     where: whereClause,
-    include: {
-      messages: true, // Include messages for question extraction
+    select: {
+      id: true,
+      companyId: true,
+      startTime: true,
+      endTime: true,
+      createdAt: true,
+      category: true,
+      language: true,
+      country: true,
+      ipAddress: true,
+      sentiment: true,
+      messagesSent: true,
+      avgResponseTime: true,
+      escalated: true,
+      forwardedHr: true,
+      initialMsg: true,
+      fullTranscriptUrl: true,
+      summary: true,
     },
   });
 
+  // Batch fetch questions for all sessions at once if needed for metrics
+  const sessionIds = prismaSessions.map(s => s.id);
+  const sessionQuestions = await prisma.sessionQuestion.findMany({
+    where: { sessionId: { in: sessionIds } },
+    include: { question: true },
+    orderBy: { order: 'asc' },
+  });
+
+  // Group questions by session
+  const questionsBySession = sessionQuestions.reduce((acc, sq) => {
+    if (!acc[sq.sessionId]) acc[sq.sessionId] = [];
+    acc[sq.sessionId].push(sq.question.content);
+    return acc;
+  }, {} as Record<string, string[]>);
+
   // Convert Prisma sessions to ChatSession[] type for sessionMetrics
-  const chatSessions: ChatSession[] = prismaSessions.map((ps) => ({
-    id: ps.id, // Map Prisma's id to ChatSession.id
-    sessionId: ps.id, // Map Prisma's id to ChatSession.sessionId
-    companyId: ps.companyId,
-    startTime: new Date(ps.startTime), // Ensure startTime is a Date object
-    endTime: ps.endTime ? new Date(ps.endTime) : null, // Ensure endTime is a Date object or null
-    transcriptContent: "", // Session model doesn't have transcriptContent field
-    createdAt: new Date(ps.createdAt), // Map Prisma's createdAt
-    updatedAt: new Date(ps.createdAt), // Use createdAt for updatedAt as Session model doesn't have updatedAt
-    category: ps.category || undefined,
-    language: ps.language || undefined,
-    country: ps.country || undefined,
-    ipAddress: ps.ipAddress || undefined,
-    sentiment: ps.sentiment === null ? undefined : ps.sentiment,
-    messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent, // Handle null messagesSent
-    avgResponseTime:
-      ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
-    escalated: ps.escalated || false,
-    forwardedHr: ps.forwardedHr || false,
-    initialMsg: ps.initialMsg || undefined,
-    fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
-    summary: ps.summary || undefined, // Include summary field
-    messages: ps.messages || [], // Include messages for question extraction
-    // userId is missing in Prisma Session model, assuming it's not strictly needed for metrics or can be null
-    userId: undefined, // Or some other default/mapping if available
-  }));
+  const chatSessions: ChatSession[] = prismaSessions.map((ps) => {
+    // Get questions for this session or empty array
+    const questions = questionsBySession[ps.id] || [];
+    
+    // Convert questions to mock messages for backward compatibility
+    const mockMessages = questions.map((q, index) => ({
+      id: `question-${index}`,
+      sessionId: ps.id,
+      timestamp: ps.createdAt,
+      role: "User",
+      content: q,
+      order: index,
+      createdAt: ps.createdAt,
+    }));
+
+    return {
+      id: ps.id,
+      sessionId: ps.id,
+      companyId: ps.companyId,
+      startTime: new Date(ps.startTime),
+      endTime: ps.endTime ? new Date(ps.endTime) : null,
+      transcriptContent: "",
+      createdAt: new Date(ps.createdAt),
+      updatedAt: new Date(ps.createdAt),
+      category: ps.category || undefined,
+      language: ps.language || undefined,
+      country: ps.country || undefined,
+      ipAddress: ps.ipAddress || undefined,
+      sentiment: ps.sentiment === null ? undefined : ps.sentiment,
+      messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent,
+      avgResponseTime: ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
+      escalated: ps.escalated || false,
+      forwardedHr: ps.forwardedHr || false,
+      initialMsg: ps.initialMsg || undefined,
+      fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
+      summary: ps.summary || undefined,
+      messages: mockMessages, // Use questions as messages for metrics
+      userId: undefined,
+    };
+  });
 
   // Pass company config to metrics
   const companyConfigForMetrics = {

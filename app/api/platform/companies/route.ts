@@ -32,10 +32,13 @@ export async function GET(request: NextRequest) {
     const [companies, total] = await Promise.all([
       prisma.company.findMany({
         where,
-        include: {
-          users: {
-            select: { id: true, email: true, role: true, createdAt: true },
-          },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          maxUsers: true,
           _count: {
             select: {
               sessions: true,

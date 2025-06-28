@@ -145,6 +145,8 @@ model Session {
   @@index([companyId, startTime])
   @@index([companyId, sentiment])
   @@index([companyId, category])
+  @@index([companyId, escalated])
+  @@index([companyId, forwardedHr])
 }
 
 /// *
@@ -193,6 +195,7 @@ model Message {
   @@unique([sessionId, order])
   @@index([sessionId, order])
   @@index([sessionId, timestamp])
+  @@index([sessionId, role])
 }
 
 /// *

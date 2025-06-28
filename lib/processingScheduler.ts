@@ -200,25 +200,48 @@ async function processQuestions(
     where: { sessionId },
   });
 
-  // Process each question
-  for (let index = 0; index < questions.length; index++) {
-    const questionText = questions[index];
-    if (!questionText.trim()) continue; // Skip empty questions
+  // Filter and prepare unique questions
+  const uniqueQuestions = [...new Set(questions.filter(q => q.trim()))];
+  if (uniqueQuestions.length === 0) return;
 
-    // Find or create question
-    const question = await prisma.question.upsert({
-      where: { content: questionText.trim() },
-      create: { content: questionText.trim() },
-      update: {},
-    });
+  // Batch create questions (skip duplicates)
+  await prisma.question.createMany({
+    data: uniqueQuestions.map(content => ({ content: content.trim() })),
+    skipDuplicates: true,
+  });
 
-    // Link to session
-    await prisma.sessionQuestion.create({
-      data: {
+  // Fetch all question IDs in one query
+  const existingQuestions = await prisma.question.findMany({
+    where: { content: { in: uniqueQuestions.map(q => q.trim()) } },
+    select: { id: true, content: true },
+  });
+
+  // Create a map for quick lookup
+  const questionMap = new Map(
+    existingQuestions.map(q => [q.content, q.id])
+  );
+
+  // Prepare session questions data
+  const sessionQuestionsData = questions
+    .map((questionText, index) => {
+      const trimmed = questionText.trim();
+      if (!trimmed) return null;
+      
+      const questionId = questionMap.get(trimmed);
+      if (!questionId) return null;
+
+      return {
         sessionId,
-        questionId: question.id,
+        questionId,
         order: index,
-      },
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null);
+
+  // Batch create session questions
+  if (sessionQuestionsData.length > 0) {
+    await prisma.sessionQuestion.createMany({
+      data: sessionQuestionsData,
     });
   }
 }

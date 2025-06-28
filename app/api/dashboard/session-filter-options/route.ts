@@ -14,44 +14,37 @@ export async function GET(request: NextRequest) {
   const companyId = authSession.user.companyId;
 
   try {
-    const categories = await prisma.session.findMany({
-      where: {
-        companyId,
-        category: {
-          not: null, // Ensure category is not null
+    // Use groupBy for better performance with distinct values
+    const [categoryGroups, languageGroups] = await Promise.all([
+      prisma.session.groupBy({
+        by: ['category'],
+        where: {
+          companyId,
+          category: { not: null },
         },
-      },
-      distinct: ["category"],
-      select: {
-        category: true,
-      },
-      orderBy: {
-        category: "asc",
-      },
-    });
-
-    const languages = await prisma.session.findMany({
-      where: {
-        companyId,
-        language: {
-          not: null, // Ensure language is not null
+        orderBy: {
+          category: 'asc',
         },
-      },
-      distinct: ["language"],
-      select: {
-        language: true,
-      },
-      orderBy: {
-        language: "asc",
-      },
-    });
+      }),
+      prisma.session.groupBy({
+        by: ['language'],
+        where: {
+          companyId,
+          language: { not: null },
+        },
+        orderBy: {
+          language: 'asc',
+        },
+      }),
+    ]);
 
-    const distinctCategories = categories
-      .map((s) => s.category)
-      .filter(Boolean) as string[]; // Filter out any nulls and assert as string[]
-    const distinctLanguages = languages
-      .map((s) => s.language)
-      .filter(Boolean) as string[]; // Filter out any nulls and assert as string[]
+    const distinctCategories = categoryGroups
+      .map((g) => g.category)
+      .filter(Boolean) as string[];
+    
+    const distinctLanguages = languageGroups
+      .map((g) => g.language)
+      .filter(Boolean) as string[];
 
     return NextResponse.json({
       categories: distinctCategories,

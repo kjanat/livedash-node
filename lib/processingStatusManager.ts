@@ -180,9 +180,27 @@ export class ProcessingStatusManager {
       },
       include: {
         session: {
-          include: {
-            import: true,
-            company: true,
+          select: {
+            id: true,
+            companyId: true,
+            importId: true,
+            startTime: true,
+            endTime: true,
+            fullTranscriptUrl: true,
+            import: stage === ProcessingStage.TRANSCRIPT_FETCH ? {
+              select: {
+                id: true,
+                fullTranscriptUrl: true,
+                externalSessionId: true,
+              }
+            } : false,
+            company: {
+              select: {
+                id: true,
+                csvUsername: true,
+                csvPassword: true,
+              }
+            },
           },
         },
       },
@@ -234,14 +252,31 @@ export class ProcessingStatusManager {
 
     return await prisma.sessionProcessingStatus.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        sessionId: true,
+        stage: true,
+        status: true,
+        startedAt: true,
+        completedAt: true,
+        errorMessage: true,
+        retryCount: true,
         session: {
-          include: {
-            import: true,
+          select: {
+            id: true,
+            companyId: true,
+            startTime: true,
+            import: {
+              select: {
+                id: true,
+                externalSessionId: true,
+              }
+            },
           },
         },
       },
       orderBy: { completedAt: "desc" },
+      take: 100, // Limit failed sessions to prevent overfetching
     });
   }
 

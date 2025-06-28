@@ -17,10 +17,26 @@ export function startCsvImportScheduler() {
   );
 
   cron.schedule(config.csvImport.interval, async () => {
-    const companies = await prisma.company.findMany({
-      where: { status: "ACTIVE" } // Only process active companies
-    });
-    for (const company of companies) {
+    // Process companies in batches to avoid memory issues
+    const batchSize = 10;
+    let skip = 0;
+    let hasMore = true;
+
+    while (hasMore) {
+      const companies = await prisma.company.findMany({
+        where: { status: "ACTIVE" }, // Only process active companies
+        take: batchSize,
+        skip: skip,
+        orderBy: { createdAt: 'asc' }
+      });
+
+      if (companies.length === 0) {
+        hasMore = false;
+        break;
+      }
+
+      // Process companies in parallel within batch
+      await Promise.all(companies.map(async (company) => {
       try {
         const rawSessionData = await fetchAndParseCsv(
           company.csvUrl,
@@ -94,6 +110,13 @@ export function startCsvImportScheduler() {
         process.stderr.write(
           `[Scheduler] Failed to fetch CSV for company: ${company.name} - ${e}\n`
         );
+      }
+      }));
+
+      skip += batchSize;
+
+      if (companies.length < batchSize) {
+        hasMore = false;
       }
     }
   });
