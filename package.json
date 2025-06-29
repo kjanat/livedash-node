@@ -11,6 +11,10 @@
     "format:check": "npx prettier --check .",
     "lint": "next lint",
     "lint:fix": "npx eslint --fix",
+    "biome:check": "biome check .",
+    "biome:fix": "biome check --write .",
+    "biome:format": "biome format --write .",
+    "biome:lint": "biome lint .",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
@@ -106,6 +110,7 @@
     "eslint": "^9.30.0",
     "eslint-config-next": "^15.3.4",
     "eslint-plugin-prettier": "^5.5.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "jest-axe": "^10.0.0",
     "jsdom": "^26.1.0",
     "markdownlint-cli2": "^0.18.1",
@@ -171,5 +176,13 @@
       "*.json"
     ]
   },
-  "packageManager": "pnpm@10.12.4"
+  "packageManager": "pnpm@10.12.4",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json}": [
+      "biome check --write"
+    ],
+    "*.{md,markdown}": [
+      "markdownlint-cli2 --fix"
+    ]
+  }
 }

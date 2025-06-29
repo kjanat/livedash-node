@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { prisma } from "../../../../lib/prisma";
 import { authOptions } from "../../../../lib/auth";
+import { prisma } from "../../../../lib/prisma";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { csvUrl, csvUsername, csvPassword, sentimentThreshold } = body;
+  const { csvUrl, csvUsername, csvPassword } = body;
 
   await prisma.company.update({
     where: { id: user.companyId },

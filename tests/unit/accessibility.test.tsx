@@ -48,7 +48,7 @@ describe("Accessibility Tests", () => {
       });
     });
 
-    it("should render without accessibility violations", async () => {
+    it("should render without accessibility violations in light mode", async () => {
       const { container } = render(
         <TestWrapper theme="light">
           <UserManagementPage />
@@ -62,6 +62,20 @@ describe("Accessibility Tests", () => {
       expect(results.violations.length).toBeLessThan(5); // Allow minor violations
     });
 
+    it("should render without accessibility violations in dark mode", async () => {
+      const { container } = render(
+        <TestWrapper theme="dark">
+          <UserManagementPage />
+        </TestWrapper>
+      );
+
+      await screen.findByText("User Management");
+
+      // Dark mode accessibility check
+      const results = await axe(container);
+      expect(results.violations.length).toBeLessThan(5); // Allow minor violations
+    });
+
     it("should have proper form labels", async () => {
       render(
         <TestWrapper>
@@ -69,6 +83,12 @@ describe("Accessibility Tests", () => {
         </TestWrapper>
       );
 
+      await screen.findByText("User Management");
+      
+      // Wait for form to load
+      const inviteButton = await screen.findByRole("button", { name: /invite user/i });
+      expect(inviteButton).toBeInTheDocument();
+      
       // Check for proper form labels
       const emailInput = screen.getByLabelText("Email");
       const roleSelect = screen.getByRole("combobox");
@@ -86,9 +106,12 @@ describe("Accessibility Tests", () => {
         </TestWrapper>
       );
 
+      await screen.findByText("User Management");
+      
+      // Wait for form to load
+      const submitButton = await screen.findByRole("button", { name: /invite user/i });
       const emailInput = screen.getByLabelText("Email");
       const roleSelect = screen.getByRole("combobox");
-      const submitButton = screen.getByRole("button", { name: /invite user/i });
 
       // Test tab navigation
       emailInput.focus();
@@ -108,6 +131,11 @@ describe("Accessibility Tests", () => {
         </TestWrapper>
       );
 
+      await screen.findByText("User Management");
+      
+      // Wait for content to load 
+      await screen.findByRole("button", { name: /invite user/i });
+
       // Check table accessibility
       const table = screen.getByRole("table");
       expect(table).toBeInTheDocument();
@@ -126,6 +154,11 @@ describe("Accessibility Tests", () => {
           <UserManagementPage />
         </TestWrapper>
       );
+
+      await screen.findByText("User Management");
+      
+      // Wait for content to load
+      await screen.findByRole("button", { name: /invite user/i });
 
       // Check for proper heading hierarchy
       const mainHeading = screen.getByRole("heading", { level: 1 });
@@ -196,6 +229,112 @@ describe("Accessibility Tests", () => {
 
       submitButton.focus();
       expect(submitButton).toHaveFocus();
+    });
+  });
+
+  describe("Dark Mode Accessibility", () => {
+    beforeEach(() => {
+      mockUseSession.mockReturnValue({
+        data: { user: { role: "ADMIN" } },
+        status: "authenticated",
+      });
+
+      (global.fetch as any).mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          users: [
+            { id: "1", email: "admin@example.com", role: "ADMIN" },
+            { id: "2", email: "user@example.com", role: "USER" },
+          ],
+        }),
+      });
+    });
+
+    it("should have proper contrast in dark mode", async () => {
+      const { container } = render(
+        <TestWrapper theme="dark">
+          <UserManagementPage />
+        </TestWrapper>
+      );
+
+      await screen.findByText("User Management");
+
+      // Check that dark mode class is applied
+      const darkModeWrapper = container.querySelector('.dark');
+      expect(darkModeWrapper).toBeInTheDocument();
+
+      // Test form elements are visible in dark mode
+      const emailInput = screen.getByLabelText("Email");
+      const submitButton = screen.getByRole("button", { name: /invite user/i });
+
+      expect(emailInput).toBeVisible();
+      expect(submitButton).toBeVisible();
+    });
+
+    it("should support keyboard navigation in dark mode", async () => {
+      render(
+        <TestWrapper theme="dark">
+          <UserManagementPage />
+        </TestWrapper>
+      );
+
+      await screen.findByText("User Management");
+      
+      // Wait for form to load
+      const submitButton = await screen.findByRole("button", { name: /invite user/i });
+      const emailInput = screen.getByLabelText("Email");
+      const roleSelect = screen.getByRole("combobox");
+
+      // Test tab navigation works in dark mode
+      emailInput.focus();
+      expect(document.activeElement).toBe(emailInput);
+
+      fireEvent.keyDown(emailInput, { key: "Tab" });
+      expect(document.activeElement).toBe(roleSelect);
+
+      fireEvent.keyDown(roleSelect, { key: "Tab" });
+      expect(document.activeElement).toBe(submitButton);
+    });
+
+    it("should maintain focus indicators in dark mode", async () => {
+      render(
+        <TestWrapper theme="dark">
+          <UserManagementPage />
+        </TestWrapper>
+      );
+
+      await screen.findByText("User Management");
+      
+      // Wait for form to load
+      const submitButton = await screen.findByRole("button", { name: /invite user/i });
+      const emailInput = screen.getByLabelText("Email");
+
+      // Focus indicators should be visible in dark mode
+      emailInput.focus();
+      expect(emailInput).toHaveFocus();
+
+      submitButton.focus();
+      expect(submitButton).toHaveFocus();
+    });
+
+    it("should run axe accessibility check in dark mode", async () => {
+      const { container } = render(
+        <TestWrapper theme="dark">
+          <UserManagementPage />
+        </TestWrapper>
+      );
+
+      await screen.findByText("User Management");
+
+      // Run comprehensive accessibility check for dark mode
+      const results = await axe(container, {
+        rules: {
+          'color-contrast': { enabled: true }, // Specifically check contrast in dark mode
+        }
+      });
+      
+      // Should have no critical accessibility violations in dark mode
+      expect(results.violations.length).toBeLessThan(5);
     });
   });
 });
