@@ -48,6 +48,12 @@ export default function SessionsPage() {
   const sortOrderId = useId();
   const sortOrderHelpId = useId();
   const resultsHeadingId = useId();
+  const startDateFilterId = useId();
+  const startDateHelpId = useId();
+  const endDateFilterId = useId();
+  const endDateHelpId = useId();
+  const sortKeyId = useId();
+  const sortKeyHelpId = useId();
 
   // Filter states
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -276,43 +282,43 @@ export default function SessionsPage() {
 
                   {/* Start Date Filter */}
                   <div className="space-y-2">
-                    <Label htmlFor="start-date-filter">Start Date</Label>
+                    <Label htmlFor={startDateFilterId}>Start Date</Label>
                     <Input
                       type="date"
-                      id="start-date-filter"
+                      id={startDateFilterId}
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      aria-describedby="start-date-help"
+                      aria-describedby={startDateHelpId}
                     />
-                    <div id="start-date-help" className="sr-only">
+                    <div id={startDateHelpId} className="sr-only">
                       Filter sessions from this date onwards
                     </div>
                   </div>
 
                   {/* End Date Filter */}
                   <div className="space-y-2">
-                    <Label htmlFor="end-date-filter">End Date</Label>
+                    <Label htmlFor={endDateFilterId}>End Date</Label>
                     <Input
                       type="date"
-                      id="end-date-filter"
+                      id={endDateFilterId}
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      aria-describedby="end-date-help"
+                      aria-describedby={endDateHelpId}
                     />
-                    <div id="end-date-help" className="sr-only">
+                    <div id={endDateHelpId} className="sr-only">
                       Filter sessions up to this date
                     </div>
                   </div>
 
                   {/* Sort Key */}
                   <div className="space-y-2">
-                    <Label htmlFor="sort-key">Sort By</Label>
+                    <Label htmlFor={sortKeyId}>Sort By</Label>
                     <select
-                      id="sort-key"
+                      id={sortKeyId}
                       className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       value={sortKey}
                       onChange={(e) => setSortKey(e.target.value)}
-                      aria-describedby="sort-key-help"
+                      aria-describedby={sortKeyHelpId}
                     >
                       <option value="startTime">Start Time</option>
                       <option value="category">Category</option>
@@ -323,7 +329,7 @@ export default function SessionsPage() {
                         Avg. Response Time
                       </option>
                     </select>
-                    <div id="sort-key-help" className="sr-only">
+                    <div id={sortKeyHelpId} className="sr-only">
                       Choose field to sort sessions by
                     </div>
                   </div>

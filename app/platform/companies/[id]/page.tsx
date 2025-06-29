@@ -70,6 +70,12 @@ export default function CompanyManagement() {
   const params = useParams();
   const { toast } = useToast();
 
+  const companyNameFieldId = useId();
+  const companyEmailFieldId = useId();
+  const maxUsersFieldId = useId();
+  const inviteNameFieldId = useId();
+  const inviteEmailFieldId = useId();
+
   const fetchCompany = useCallback(async () => {
     try {
       const response = await fetch(`/api/platform/companies/${params.id}`);
@@ -473,9 +479,9 @@ export default function CompanyManagement() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Company Name</Label>
+                    <Label htmlFor={companyNameFieldId}>Company Name</Label>
                     <Input
-                      id="name"
+                      id={companyNameFieldId}
                       value={editData.name || ""}
                       onChange={(e) =>
                         setEditData((prev) => ({
@@ -487,9 +493,9 @@ export default function CompanyManagement() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Contact Email</Label>
+                    <Label htmlFor={companyEmailFieldId}>Contact Email</Label>
                     <Input
-                      id="email"
+                      id={companyEmailFieldId}
                       type="email"
                       value={editData.email || ""}
                       onChange={(e) =>
@@ -502,9 +508,9 @@ export default function CompanyManagement() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="maxUsers">Max Users</Label>
+                    <Label htmlFor={maxUsersFieldId}>Max Users</Label>
                     <Input
-                      id="maxUsers"
+                      id={maxUsersFieldId}
                       type="number"
                       value={editData.maxUsers || 0}
                       onChange={(e) =>
@@ -708,9 +714,9 @@ export default function CompanyManagement() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="inviteName">Name</Label>
+                <Label htmlFor={inviteNameFieldId}>Name</Label>
                 <Input
-                  id="inviteName"
+                  id={inviteNameFieldId}
                   value={inviteData.name}
                   onChange={(e) =>
                     setInviteData((prev) => ({ ...prev, name: e.target.value }))
@@ -719,9 +725,9 @@ export default function CompanyManagement() {
                 />
               </div>
               <div>
-                <Label htmlFor="inviteEmail">Email</Label>
+                <Label htmlFor={inviteEmailFieldId}>Email</Label>
                 <Input
-                  id="inviteEmail"
+                  id={inviteEmailFieldId}
                   type="email"
                   value={inviteData.email}
                   onChange={(e) =>
