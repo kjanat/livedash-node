@@ -10,6 +10,7 @@ import fetch from "node-fetch";
 import { prisma } from "./prisma.js";
 import { ProcessingStatusManager } from "./processingStatusManager";
 import { getSchedulerConfig } from "./schedulerConfig";
+import { withRetry, isRetryableError } from "./database-retry.js";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
@@ -663,6 +664,29 @@ export async function processUnprocessedSessions(
     "[ProcessingScheduler] Starting to process sessions needing AI analysis...\n"
   );
 
+  try {
+    await withRetry(
+      async () => {
+        await processUnprocessedSessionsInternal(batchSize, maxConcurrency);
+      },
+      {
+        maxRetries: 3,
+        initialDelay: 2000,
+        maxDelay: 10000,
+        backoffMultiplier: 2,
+      },
+      "processUnprocessedSessions"
+    );
+  } catch (error) {
+    console.error("[ProcessingScheduler] Failed after all retries:", error);
+    throw error;
+  }
+}
+
+async function processUnprocessedSessionsInternal(
+  batchSize: number | null = null,
+  maxConcurrency = 5
+): Promise<void> {
   // Get sessions that need AI processing using the new status system
   const sessionsNeedingAI =
     await ProcessingStatusManager.getSessionsNeedingProcessing(

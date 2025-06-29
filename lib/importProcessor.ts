@@ -8,6 +8,7 @@ import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
 } from "./transcriptFetcher";
+import { withRetry, isRetryableError } from "./database-retry.js";
 
 interface ImportRecord {
   id: string;
@@ -370,6 +371,26 @@ async function processSingleImport(
 export async function processQueuedImports(batchSize = 50): Promise<void> {
   console.log("[Import Processor] Starting to process unprocessed imports...");
 
+  try {
+    await withRetry(
+      async () => {
+        await processQueuedImportsInternal(batchSize);
+      },
+      {
+        maxRetries: 3,
+        initialDelay: 2000,
+        maxDelay: 10000,
+        backoffMultiplier: 2,
+      },
+      "processQueuedImports"
+    );
+  } catch (error) {
+    console.error("[Import Processor] Failed after all retries:", error);
+    throw error;
+  }
+}
+
+async function processQueuedImportsInternal(batchSize = 50): Promise<void> {
   let totalSuccessCount = 0;
   let totalErrorCount = 0;
   let batchNumber = 1;
