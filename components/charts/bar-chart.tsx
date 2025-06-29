@@ -1,19 +1,25 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+interface BarChartData {
+  name: string;
+  value: number;
+  [key: string]: string | number;
+}
+
 interface BarChartProps {
-  data: Array<{ name: string; value: number; [key: string]: any }>;
+  data: BarChartData[];
   title?: string;
   dataKey?: string;
   colors?: string[];
@@ -21,7 +27,13 @@ interface BarChartProps {
   className?: string;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; name?: string }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border bg-background p-3 shadow-md">
@@ -94,7 +106,7 @@ export default function ModernBarChart({
             >
               {data.map((entry, index) => (
                 <Cell
-                  key={`cell-${index}`}
+                  key={`cell-${entry.name}-${index}`}
                   fill={colors[index % colors.length]}
                   className="hover:opacity-80"
                 />

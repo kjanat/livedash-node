@@ -1,22 +1,21 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { FC } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
+  ArrowRight,
   BarChart3,
   MessageSquare,
   Settings,
-  Users,
-  ArrowRight,
-  TrendingUp,
   Shield,
+  TrendingUp,
+  Users,
   Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { type FC, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const DashboardPage: FC = () => {
   const { data: session, status } = useSession();
@@ -158,9 +157,9 @@ const DashboardPage: FC = () => {
 
       {/* Navigation Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {navigationCards.map((card, index) => (
+        {navigationCards.map((card) => (
           <Card
-            key={index}
+            key={card.href}
             className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 cursor-pointer group ${getCardClasses(
               card.variant
             )}`}
@@ -203,9 +202,9 @@ const DashboardPage: FC = () => {
             <CardContent className="relative space-y-4">
               {/* Features List */}
               <div className="space-y-2">
-                {card.features.map((feature, featureIndex) => (
+                {card.features.map((feature) => (
                   <div
-                    key={featureIndex}
+                    key={feature}
                     className="flex items-center gap-2 text-sm"
                   >
                     <Zap className="h-3 w-3 text-primary/60" />

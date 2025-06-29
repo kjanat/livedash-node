@@ -1,7 +1,7 @@
 // Centralized environment variable management
-import { readFileSync } from "fs";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 /**
  * Parse environment variable value by removing quotes, comments, and trimming whitespace
@@ -40,7 +40,7 @@ function parseIntWithDefault(
   if (!cleaned) return defaultValue;
 
   const parsed = parseInt(cleaned, 10);
-  return isNaN(parsed) ? defaultValue : parsed;
+  return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 
 // Load environment variables from .env.local
@@ -65,7 +65,7 @@ try {
       }
     }
   });
-} catch (error) {
+} catch (_error) {
   // Silently fail if .env.local doesn't exist
 }
 

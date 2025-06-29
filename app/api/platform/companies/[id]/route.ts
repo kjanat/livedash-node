@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { CompanyStatus } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { platformAuthOptions } from "../../../../../lib/platform-auth";
 import { prisma } from "../../../../../lib/prisma";
-import { CompanyStatus } from "@prisma/client";
 
 interface PlatformSession {
   user: {
@@ -16,14 +16,19 @@ interface PlatformSession {
 
 // GET /api/platform/companies/[id] - Get company details
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(platformAuthOptions) as PlatformSession | null;
+    const session = (await getServerSession(
+      platformAuthOptions
+    )) as PlatformSession | null;
 
     if (!session?.user?.isPlatformUser) {
-      return NextResponse.json({ error: "Platform access required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Platform access required" },
+        { status: 401 }
+      );
     }
 
     const { id } = await params;
@@ -59,7 +64,10 @@ export async function GET(
     return NextResponse.json(company);
   } catch (error) {
     console.error("Platform company details error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -71,15 +79,30 @@ export async function PATCH(
   try {
     const session = await getServerSession(platformAuthOptions);
 
-    if (!session?.user?.isPlatformUser || session.user.platformRole === "SUPPORT") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (
+      !session?.user?.isPlatformUser ||
+      session.user.platformRole === "SUPPORT"
+    ) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
     const body = await request.json();
-    const { name, email, maxUsers, csvUrl, csvUsername, csvPassword, status } = body;
+    const { name, email, maxUsers, csvUrl, csvUsername, csvPassword, status } =
+      body;
 
-    const updateData: any = {};
+    const updateData: {
+      name?: string;
+      email?: string;
+      maxUsers?: number;
+      csvUrl?: string;
+      csvUsername?: string;
+      csvPassword?: string;
+      status?: CompanyStatus;
+    } = {};
     if (name !== undefined) updateData.name = name;
     if (email !== undefined) updateData.email = email;
     if (maxUsers !== undefined) updateData.maxUsers = maxUsers;
@@ -96,20 +119,29 @@ export async function PATCH(
     return NextResponse.json({ company });
   } catch (error) {
     console.error("Platform company update error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE /api/platform/companies/[id] - Delete company (archives instead)
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(platformAuthOptions);
 
-    if (!session?.user?.isPlatformUser || session.user.platformRole !== "SUPER_ADMIN") {
-      return NextResponse.json({ error: "Super admin access required" }, { status: 403 });
+    if (
+      !session?.user?.isPlatformUser ||
+      session.user.platformRole !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json(
+        { error: "Super admin access required" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -123,6 +155,9 @@ export async function DELETE(
     return NextResponse.json({ company });
   } catch (error) {
     console.error("Platform company archive error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

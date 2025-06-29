@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { fetchAndParseCsv } from "../../../../lib/csvFetcher";
 import { processQueuedImports } from "../../../../lib/importProcessor";
 import { prisma } from "../../../../lib/prisma";
@@ -47,10 +47,10 @@ export async function POST(request: NextRequest) {
     // Check if company is active and can process data
     if (company.status !== "ACTIVE") {
       return NextResponse.json(
-        { 
+        {
           error: `Data processing is disabled for ${company.status.toLowerCase()} companies`,
-          companyStatus: company.status 
-        }, 
+          companyStatus: company.status,
+        },
         { status: 403 }
       );
     }

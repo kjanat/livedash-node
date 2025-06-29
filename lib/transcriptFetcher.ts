@@ -30,7 +30,7 @@ export async function fetchTranscriptContent(
     // Prepare authentication header if credentials provided
     const authHeader =
       username && password
-        ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+        ? `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
         : undefined;
 
     const headers: Record<string, string> = {
@@ -141,7 +141,7 @@ export function extractSessionIdFromTranscript(content: string): string | null {
 
   for (const pattern of patterns) {
     const match = content.match(pattern);
-    if (match && match[1]) {
+    if (match?.[1]) {
       return match[1].trim();
     }
   }

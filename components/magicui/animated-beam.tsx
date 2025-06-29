@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
-import { RefObject, useEffect, useId, useState } from "react";
+import { type RefObject, useEffect, useId, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -94,7 +94,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
     // Initialize ResizeObserver
     const resizeObserver = new ResizeObserver((entries) => {
       // For all entries, recalculate the path
-      for (const entry of entries) {
+      for (const _entry of entries) {
         updatePath();
       }
     });
@@ -134,6 +134,7 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
       )}
       viewBox={`0 0 ${svgDimensions.width} ${svgDimensions.height}`}
     >
+      <title>Animated connection beam</title>
       <path
         d={pathD}
         stroke={pathColor}

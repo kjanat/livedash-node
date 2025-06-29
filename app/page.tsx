@@ -1,25 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   ArrowRight,
   BarChart3,
   Brain,
+  Globe,
   MessageCircle,
   Shield,
-  Zap,
-  CheckCircle,
-  Star,
+  Sparkles,
   TrendingUp,
-  Users,
-  Globe,
-  Sparkles
+  Zap,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 export default function LandingPage() {
   const { data: session, status } = useSession();
@@ -43,7 +39,11 @@ export default function LandingPage() {
   };
 
   if (status === "loading") {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -93,9 +93,10 @@ export default function LandingPage() {
             </h1>
 
             <p className="text-xl lg:text-2xl text-gray-600 dark:text-gray-300 mb-12 max-w-4xl mx-auto leading-relaxed">
-              LiveDash analyzes your customer support conversations with advanced AI to deliver
-              real-time sentiment analysis, automated categorization, and powerful analytics
-              that drive better business decisions.
+              LiveDash analyzes your customer support conversations with
+              advanced AI to deliver real-time sentiment analysis, automated
+              categorization, and powerful analytics that drive better business
+              decisions.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -129,7 +130,8 @@ export default function LandingPage() {
               Powerful Features for Modern Teams
             </h2>
             <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              Everything you need to understand and optimize your customer interactions
+              Everything you need to understand and optimize your customer
+              interactions
             </p>
           </div>
 
@@ -138,16 +140,19 @@ export default function LandingPage() {
             <div className="relative">
               {/* Connection Lines */}
               <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-purple-200 to-transparent dark:from-blue-800 dark:via-purple-800 transform -translate-x-1/2 z-0"></div>
-              
+
               {/* Feature Cards */}
               <div className="space-y-16 relative z-10">
                 {/* AI Sentiment Analysis */}
                 <div className="flex items-center gap-8 group">
                   <div className="flex-1 text-right">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">AI Sentiment Analysis</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        AI Sentiment Analysis
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Automatically analyze customer emotions and satisfaction levels across all conversations with 99.9% accuracy
+                        Automatically analyze customer emotions and satisfaction
+                        levels across all conversations with 99.9% accuracy
                       </p>
                     </div>
                   </div>
@@ -165,9 +170,12 @@ export default function LandingPage() {
                   </div>
                   <div className="flex-1">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Smart Categorization</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        Smart Categorization
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Intelligently categorize conversations by topic, urgency, and department automatically using advanced ML
+                        Intelligently categorize conversations by topic,
+                        urgency, and department automatically using advanced ML
                       </p>
                     </div>
                   </div>
@@ -177,9 +185,12 @@ export default function LandingPage() {
                 <div className="flex items-center gap-8 group">
                   <div className="flex-1 text-right">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Real-time Analytics</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        Real-time Analytics
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Get instant insights with beautiful dashboards and real-time performance metrics that update live
+                        Get instant insights with beautiful dashboards and
+                        real-time performance metrics that update live
                       </p>
                     </div>
                   </div>
@@ -197,9 +208,12 @@ export default function LandingPage() {
                   </div>
                   <div className="flex-1">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Enterprise Security</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        Enterprise Security
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Bank-grade security with GDPR compliance, SOC 2 certification, and end-to-end encryption
+                        Bank-grade security with GDPR compliance, SOC 2
+                        certification, and end-to-end encryption
                       </p>
                     </div>
                   </div>
@@ -209,9 +223,12 @@ export default function LandingPage() {
                 <div className="flex items-center gap-8 group">
                   <div className="flex-1 text-right">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Lightning Fast</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        Lightning Fast
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Process thousands of conversations in seconds with our optimized AI pipeline and global CDN
+                        Process thousands of conversations in seconds with our
+                        optimized AI pipeline and global CDN
                       </p>
                     </div>
                   </div>
@@ -229,9 +246,12 @@ export default function LandingPage() {
                   </div>
                   <div className="flex-1">
                     <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Global Scale</h3>
+                      <h3 className="text-2xl font-bold mb-3 text-gray-900 dark:text-white">
+                        Global Scale
+                      </h3>
                       <p className="text-gray-600 dark:text-gray-300 text-lg">
-                        Multi-language support with global infrastructure for teams worldwide, serving 50+ countries
+                        Multi-language support with global infrastructure for
+                        teams worldwide, serving 50+ countries
                       </p>
                     </div>
                   </div>
@@ -251,16 +271,26 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             <div className="text-center">
-              <div className="text-4xl font-bold text-blue-600 mb-2">10,000+</div>
-              <div className="text-gray-600 dark:text-gray-300">Conversations Analyzed Daily</div>
+              <div className="text-4xl font-bold text-blue-600 mb-2">
+                10,000+
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Conversations Analyzed Daily
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-bold text-purple-600 mb-2">99.9%</div>
-              <div className="text-gray-600 dark:text-gray-300">Accuracy Rate</div>
+              <div className="text-4xl font-bold text-purple-600 mb-2">
+                99.9%
+              </div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Accuracy Rate
+              </div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-bold text-green-600 mb-2">50+</div>
-              <div className="text-gray-600 dark:text-gray-300">Enterprise Customers</div>
+              <div className="text-gray-600 dark:text-gray-300">
+                Enterprise Customers
+              </div>
             </div>
           </div>
         </div>
@@ -270,12 +300,11 @@ export default function LandingPage() {
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-            Ready to Transform Your
-            Customer Insights?
+            Ready to Transform Your Customer Insights?
           </h2>
           <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-            Join thousands of teams already using LiveDash to make data-driven decisions
-            and improve customer satisfaction.
+            Join thousands of teams already using LiveDash to make data-driven
+            decisions and improve customer satisfaction.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
@@ -318,30 +347,78 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">API</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Integrations</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Pricing
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    API
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Integrations
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Careers
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Contact
+                  </a>
+                </li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="#" className="hover:text-white transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Documentation
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Privacy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-white transition-colors">
+                    Terms
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

@@ -1,6 +1,7 @@
 // Combined scheduler initialization
-import { startCsvImportScheduler } from "./scheduler";
+
 import { startProcessingScheduler } from "./processingScheduler";
+import { startCsvImportScheduler } from "./scheduler";
 
 /**
  * Initialize all schedulers

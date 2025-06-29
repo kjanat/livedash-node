@@ -1,14 +1,14 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
 } from "recharts";
 
 interface ResponseTimeDistributionProps {
@@ -17,7 +17,13 @@ interface ResponseTimeDistributionProps {
   targetResponseTime?: number;
 }
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{ value: number; payload: { label: string; count: number } }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
       <div className="rounded-lg border bg-background p-3 shadow-md">
@@ -59,7 +65,7 @@ export default function ResponseTimeDistribution({
 
   // Create chart data
   const chartData = bins.map((count, i) => {
-    let label;
+    let label: string;
     if (i === bins.length - 1 && bins.length < maxTime + 1) {
       label = `${i}+ sec`;
     } else {
@@ -67,7 +73,7 @@ export default function ResponseTimeDistribution({
     }
 
     // Determine color based on response time
-    let color;
+    let color: string;
     if (i <= 2)
       color = "hsl(var(--chart-1))"; // Green for fast
     else if (i <= 5)
@@ -121,7 +127,7 @@ export default function ResponseTimeDistribution({
             maxBarSize={60}
           >
             {chartData.map((entry, index) => (
-              <Bar key={`cell-${index}`} fill={entry.color} />
+              <Bar key={`cell-${entry.name}-${index}`} fill={entry.color} />
             ))}
           </Bar>
 

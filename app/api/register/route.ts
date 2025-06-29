@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { registerSchema, validateInput } from "../../../lib/validation";
-import bcrypt from "bcryptjs";
 
 // In-memory rate limiting (for production, use Redis or similar)
 const registrationAttempts = new Map<

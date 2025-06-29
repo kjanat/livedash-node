@@ -1,14 +1,15 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
-import cron from "node-cron";
+
 import {
   PrismaClient,
-  SentimentCategory,
-  SessionCategory,
   ProcessingStage,
+  type SentimentCategory,
+  type SessionCategory,
 } from "@prisma/client";
+import cron from "node-cron";
 import fetch from "node-fetch";
-import { getSchedulerConfig } from "./schedulerConfig";
 import { ProcessingStatusManager } from "./processingStatusManager";
+import { getSchedulerConfig } from "./schedulerConfig";
 
 const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -201,32 +202,30 @@ async function processQuestions(
   });
 
   // Filter and prepare unique questions
-  const uniqueQuestions = [...new Set(questions.filter(q => q.trim()))];
+  const uniqueQuestions = [...new Set(questions.filter((q) => q.trim()))];
   if (uniqueQuestions.length === 0) return;
 
   // Batch create questions (skip duplicates)
   await prisma.question.createMany({
-    data: uniqueQuestions.map(content => ({ content: content.trim() })),
+    data: uniqueQuestions.map((content) => ({ content: content.trim() })),
     skipDuplicates: true,
   });
 
   // Fetch all question IDs in one query
   const existingQuestions = await prisma.question.findMany({
-    where: { content: { in: uniqueQuestions.map(q => q.trim()) } },
+    where: { content: { in: uniqueQuestions.map((q) => q.trim()) } },
     select: { id: true, content: true },
   });
 
   // Create a map for quick lookup
-  const questionMap = new Map(
-    existingQuestions.map(q => [q.content, q.id])
-  );
+  const questionMap = new Map(existingQuestions.map((q) => [q.content, q.id]));
 
   // Prepare session questions data
   const sessionQuestionsData = questions
     .map((questionText, index) => {
       const trimmed = questionText.trim();
       if (!trimmed) return null;
-      
+
       const questionId = questionMap.get(trimmed);
       if (!questionId) return null;
 

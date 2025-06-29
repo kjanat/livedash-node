@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
-import { TopQuestion } from "../lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import type { TopQuestion } from "../lib/types";
 
 interface TopQuestionsChartProps {
   data: TopQuestion[];
@@ -40,12 +39,12 @@ export default function TopQuestionsChart({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {data.map((question, index) => {
+          {data.map((question) => {
             const percentage =
               maxCount > 0 ? (question.count / maxCount) * 100 : 0;
 
             return (
-              <div key={index} className="relative pl-8">
+              <div key={question.question} className="relative pl-8">
                 {/* Question text */}
                 <div className="flex justify-between items-start mb-2">
                   <p className="text-sm font-medium leading-tight pr-4 flex-1 text-foreground">

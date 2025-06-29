@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import Chart, { Point, BubbleDataPoint } from "chart.js/auto";
+import Chart, { type BubbleDataPoint, type Point } from "chart.js/auto";
+import { useEffect, useRef } from "react";
 
 interface DonutChartProps {
   data: {
@@ -73,7 +73,7 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
           },
           tooltip: {
             callbacks: {
-              label: function (context) {
+              label: (context) => {
                 const label = context.label || "";
                 const value = context.formattedValue;
                 const total = context.chart.data.datasets[0].data.reduce(
@@ -106,7 +106,7 @@ export default function DonutChart({ data, centerText }: DonutChartProps) {
         ? [
             {
               id: "centerText",
-              beforeDraw: function (chart: Chart<"doughnut">) {
+              beforeDraw: (chart: Chart<"doughnut">) => {
                 const height = chart.height;
                 const ctx = chart.ctx;
                 ctx.restore();

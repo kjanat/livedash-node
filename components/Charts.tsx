@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useRef } from "react";
 import Chart from "chart.js/auto";
+import { useEffect, useRef } from "react";
 import { getLocalizedLanguageName } from "../lib/localization"; // Corrected import path
 
 interface SessionsData {
@@ -219,7 +219,7 @@ export function LanguagePieChart({ languages }: LanguagePieChartProps) {
           },
           tooltip: {
             callbacks: {
-              label: function (context) {
+              label: (context) => {
                 const label = context.label || "";
                 const value = context.formattedValue || "";
                 const index = context.dataIndex;

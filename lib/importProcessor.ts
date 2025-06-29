@@ -1,17 +1,16 @@
 // SessionImport to Session processor
 import {
   PrismaClient,
-  SentimentCategory,
-  SessionCategory,
   ProcessingStage,
+  SentimentCategory,
 } from "@prisma/client";
+import cron from "node-cron";
 import { getSchedulerConfig } from "./env";
+import { ProcessingStatusManager } from "./processingStatusManager";
 import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
 } from "./transcriptFetcher";
-import { ProcessingStatusManager } from "./processingStatusManager";
-import cron from "node-cron";
 
 const prisma = new PrismaClient();
 
@@ -44,7 +43,7 @@ function parseEuropeanDate(dateStr: string): Date {
   const isoDateStr = `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")} ${timePart}`;
   const date = new Date(isoDateStr);
 
-  if (isNaN(date.getTime())) {
+  if (Number.isNaN(date.getTime())) {
     throw new Error(`Failed to parse date: ${dateStr} -> ${isoDateStr}`);
   }
 
@@ -54,7 +53,7 @@ function parseEuropeanDate(dateStr: string): Date {
 /**
  * Helper function to parse sentiment from raw string (fallback only)
  */
-function parseFallbackSentiment(
+function _parseFallbackSentiment(
   sentimentRaw: string | null
 ): SentimentCategory | null {
   if (!sentimentRaw) return null;
@@ -72,7 +71,7 @@ function parseFallbackSentiment(
 /**
  * Helper function to parse boolean from raw string (fallback only)
  */
-function parseFallbackBoolean(rawValue: string | null): boolean | null {
+function _parseFallbackBoolean(rawValue: string | null): boolean | null {
   if (!rawValue) return null;
   return ["true", "1", "yes", "escalated", "forwarded"].includes(
     rawValue.toLowerCase()
@@ -113,7 +112,7 @@ async function parseTranscriptIntoMessages(
       try {
         timestamp = parseEuropeanDate(timestampMatch[1]);
         content = timestampMatch[2];
-      } catch (error) {
+      } catch (_error) {
         // If timestamp parsing fails, treat the whole line as content
         content = trimmedLine;
       }
@@ -367,8 +366,8 @@ export async function processQueuedImports(
       where: {
         session: null, // No session created yet
         company: {
-          status: "ACTIVE" // Only process imports from active companies
-        }
+          status: "ACTIVE", // Only process imports from active companies
+        },
       },
       take: batchSize,
       orderBy: {
@@ -403,7 +402,7 @@ export async function processQueuedImports(
     // Process with concurrency limit to avoid overwhelming the database
     const concurrencyLimit = 5;
     const results = [];
-    
+
     for (let i = 0; i < batchPromises.length; i += concurrencyLimit) {
       const chunk = batchPromises.slice(i, i + concurrencyLimit);
       const chunkResults = await Promise.all(chunk);

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { CompanyStatus } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { platformAuthOptions } from "../../../../lib/platform-auth";
 import { prisma } from "../../../../lib/prisma";
-import { CompanyStatus } from "@prisma/client";
 
 // GET /api/platform/companies - List all companies
 export async function GET(request: NextRequest) {
@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(platformAuthOptions);
 
     if (!session?.user?.isPlatformUser) {
-      return NextResponse.json({ error: "Platform access required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Platform access required" },
+        { status: 401 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
@@ -20,7 +23,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "20");
     const offset = (page - 1) * limit;
 
-    const where: any = {};
+    const where: {
+      status?: CompanyStatus;
+      name?: {
+        contains: string;
+        mode: "insensitive";
+      };
+    } = {};
     if (status) where.status = status;
     if (search) {
       where.name = {
@@ -65,7 +74,10 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Platform companies list error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -74,33 +86,46 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(platformAuthOptions);
 
-    if (!session?.user?.isPlatformUser || session.user.platformRole === "SUPPORT") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (
+      !session?.user?.isPlatformUser ||
+      session.user.platformRole === "SUPPORT"
+    ) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
-    const { 
-      name, 
-      csvUrl, 
-      csvUsername, 
-      csvPassword, 
+    const {
+      name,
+      csvUrl,
+      csvUsername,
+      csvPassword,
       adminEmail,
       adminName,
       adminPassword,
       maxUsers = 10,
-      status = "TRIAL" 
+      status = "TRIAL",
     } = body;
 
     if (!name || !csvUrl) {
-      return NextResponse.json({ error: "Name and CSV URL required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Name and CSV URL required" },
+        { status: 400 }
+      );
     }
 
     if (!adminEmail || !adminName) {
-      return NextResponse.json({ error: "Admin email and name required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Admin email and name required" },
+        { status: 400 }
+      );
     }
 
     // Generate password if not provided
-    const finalAdminPassword = adminPassword || `Temp${Math.random().toString(36).slice(2, 8)}!`;
+    const finalAdminPassword =
+      adminPassword || `Temp${Math.random().toString(36).slice(2, 8)}!`;
 
     // Hash the admin password
     const bcrypt = await import("bcryptjs");
@@ -133,20 +158,30 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return { company, adminUser, generatedPassword: adminPassword ? null : finalAdminPassword };
+      return {
+        company,
+        adminUser,
+        generatedPassword: adminPassword ? null : finalAdminPassword,
+      };
     });
 
-    return NextResponse.json({ 
-      company: result.company,
-      adminUser: {
-        email: result.adminUser.email,
-        name: result.adminUser.name,
-        role: result.adminUser.role,
+    return NextResponse.json(
+      {
+        company: result.company,
+        adminUser: {
+          email: result.adminUser.email,
+          name: result.adminUser.name,
+          role: result.adminUser.role,
+        },
+        generatedPassword: result.generatedPassword,
       },
-      generatedPassword: result.generatedPassword,
-    }, { status: 201 });
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Platform company creation error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

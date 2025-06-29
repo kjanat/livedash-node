@@ -157,6 +157,7 @@ export default function TranscriptViewer({
             </a>
           )}
           <button
+            type="button"
             onClick={() => setShowRaw(!showRaw)}
             className="text-sm text-sky-600 hover:text-sky-800 hover:underline"
             title={

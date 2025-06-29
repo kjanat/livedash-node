@@ -1,20 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Database, Save, Settings, ShieldX } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { Company } from "../../../lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useId, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ShieldX, Settings, Save, Database } from "lucide-react";
+import type { Company } from "../../../lib/types";
 
 export default function CompanySettingsPage() {
+  const csvUrlId = useId();
+  const csvUsernameId = useId();
+  const csvPasswordId = useId();
   const { data: session, status } = useSession();
   // We store the full company object for future use and updates after save operations
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const [company, setCompany] = useState<Company | null>(null);
+  const [_company, setCompany] = useState<Company | null>(null);
   const [csvUrl, setCsvUrl] = useState<string>("");
   const [csvUsername, setCsvUsername] = useState<string>("");
   const [csvPassword, setCsvPassword] = useState<string>("");
@@ -156,9 +159,9 @@ export default function CompanySettingsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="csvUrl">CSV Data Source URL</Label>
+                  <Label htmlFor={csvUrlId}>CSV Data Source URL</Label>
                   <Input
-                    id="csvUrl"
+                    id={csvUrlId}
                     type="text"
                     value={csvUrl}
                     onChange={(e) => setCsvUrl(e.target.value)}
@@ -168,9 +171,9 @@ export default function CompanySettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="csvUsername">CSV Username</Label>
+                  <Label htmlFor={csvUsernameId}>CSV Username</Label>
                   <Input
-                    id="csvUsername"
+                    id={csvUsernameId}
                     type="text"
                     value={csvUsername}
                     onChange={(e) => setCsvUsername(e.target.value)}
@@ -180,9 +183,9 @@ export default function CompanySettingsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="csvPassword">CSV Password</Label>
+                  <Label htmlFor={csvPasswordId}>CSV Password</Label>
                   <Input
-                    id="csvPassword"
+                    id={csvPasswordId}
                     type="password"
                     value={csvPassword}
                     onChange={(e) => setCsvPassword(e.target.value)}

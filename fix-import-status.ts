@@ -1,8 +1,4 @@
-import {
-  PrismaClient,
-  ProcessingStage,
-  ProcessingStatus,
-} from "@prisma/client";
+import { PrismaClient, ProcessingStatus } from "@prisma/client";
 import { ProcessingStatusManager } from "./lib/processingStatusManager";
 
 const prisma = new PrismaClient();

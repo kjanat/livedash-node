@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { prisma } from "../../../../lib/prisma";
-import { sessionMetrics } from "../../../../lib/metrics";
 import { authOptions } from "../../../../lib/auth";
-import { ChatSession } from "../../../../lib/types";
+import { sessionMetrics } from "../../../../lib/metrics";
+import { prisma } from "../../../../lib/prisma";
+import type { ChatSession } from "../../../../lib/types";
 
 interface SessionUser {
   email: string;
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
           name: true,
           csvUrl: true,
           status: true,
-        }
+        },
       },
     },
   });
@@ -46,14 +46,20 @@ export async function GET(request: NextRequest) {
   const endDate = searchParams.get("endDate");
 
   // Build where clause with optional date filtering
-  const whereClause: any = {
+  const whereClause: {
+    companyId: string;
+    startTime?: {
+      gte: Date;
+      lte: Date;
+    };
+  } = {
     companyId: user.companyId,
   };
 
   if (startDate && endDate) {
     whereClause.startTime = {
       gte: new Date(startDate),
-      lte: new Date(endDate + "T23:59:59.999Z"), // Include full end date
+      lte: new Date(`${endDate}T23:59:59.999Z`), // Include full end date
     };
   }
 
@@ -82,25 +88,28 @@ export async function GET(request: NextRequest) {
   });
 
   // Batch fetch questions for all sessions at once if needed for metrics
-  const sessionIds = prismaSessions.map(s => s.id);
+  const sessionIds = prismaSessions.map((s) => s.id);
   const sessionQuestions = await prisma.sessionQuestion.findMany({
     where: { sessionId: { in: sessionIds } },
     include: { question: true },
-    orderBy: { order: 'asc' },
+    orderBy: { order: "asc" },
   });
 
   // Group questions by session
-  const questionsBySession = sessionQuestions.reduce((acc, sq) => {
-    if (!acc[sq.sessionId]) acc[sq.sessionId] = [];
-    acc[sq.sessionId].push(sq.question.content);
-    return acc;
-  }, {} as Record<string, string[]>);
+  const questionsBySession = sessionQuestions.reduce(
+    (acc, sq) => {
+      if (!acc[sq.sessionId]) acc[sq.sessionId] = [];
+      acc[sq.sessionId].push(sq.question.content);
+      return acc;
+    },
+    {} as Record<string, string[]>
+  );
 
   // Convert Prisma sessions to ChatSession[] type for sessionMetrics
   const chatSessions: ChatSession[] = prismaSessions.map((ps) => {
     // Get questions for this session or empty array
     const questions = questionsBySession[ps.id] || [];
-    
+
     // Convert questions to mock messages for backward compatibility
     const mockMessages = questions.map((q, index) => ({
       id: `question-${index}`,
@@ -127,7 +136,8 @@ export async function GET(request: NextRequest) {
       ipAddress: ps.ipAddress || undefined,
       sentiment: ps.sentiment === null ? undefined : ps.sentiment,
       messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent,
-      avgResponseTime: ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
+      avgResponseTime:
+        ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
       escalated: ps.escalated || false,
       forwardedHr: ps.forwardedHr || false,
       initialMsg: ps.initialMsg || undefined,

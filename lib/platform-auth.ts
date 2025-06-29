@@ -1,7 +1,7 @@
-import { NextAuthOptions } from "next-auth";
+import bcrypt from "bcryptjs";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
-import bcrypt from "bcryptjs";
 
 // Define the shape of the JWT token for platform users
 declare module "next-auth/jwt" {
@@ -56,7 +56,10 @@ export const platformAuthOptions: NextAuthOptions = {
 
         if (!platformUser) return null;
 
-        const valid = await bcrypt.compare(credentials.password, platformUser.password);
+        const valid = await bcrypt.compare(
+          credentials.password,
+          platformUser.password
+        );
         if (!valid) return null;
 
         return {

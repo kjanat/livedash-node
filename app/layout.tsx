@@ -1,8 +1,8 @@
 // Main app layout with basic global style
 import "./globals.css";
-import { ReactNode } from "react";
-import { Providers } from "./providers";
+import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { Providers } from "./providers";
 
 export const metadata = {
   title: "LiveDash - AI-Powered Customer Conversation Analytics",
@@ -10,7 +10,7 @@ export const metadata = {
     "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics. Turn every conversation into competitive intelligence.",
   keywords: [
     "customer analytics",
-    "AI sentiment analysis", 
+    "AI sentiment analysis",
     "conversation intelligence",
     "customer support analytics",
     "chat analytics",
@@ -21,7 +21,7 @@ export const metadata = {
     "AI customer intelligence",
     "automated categorization",
     "real-time analytics",
-    "customer conversation dashboard"
+    "customer conversation dashboard",
   ],
   authors: [{ name: "Notso AI" }],
   creator: "Notso AI",
@@ -31,33 +31,37 @@ export const metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://livedash.notso.ai'),
+  metadataBase: new URL(
+    process.env.NEXTAUTH_URL || "https://livedash.notso.ai"
+  ),
   alternates: {
-    canonical: '/',
+    canonical: "/",
   },
   openGraph: {
     title: "LiveDash - AI-Powered Customer Conversation Analytics",
-    description: "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics. Turn every conversation into competitive intelligence.",
+    description:
+      "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics. Turn every conversation into competitive intelligence.",
     type: "website",
     siteName: "LiveDash",
     url: "/",
-    locale: 'en_US',
+    locale: "en_US",
     images: [
       {
-        url: '/og-image.png',
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: 'LiveDash - AI-Powered Customer Conversation Analytics Platform',
-      }
+        alt: "LiveDash - AI-Powered Customer Conversation Analytics Platform",
+      },
     ],
   },
   twitter: {
     card: "summary_large_image",
     title: "LiveDash - AI-Powered Customer Conversation Analytics",
-    description: "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
+    description:
+      "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
     creator: "@notsoai",
     site: "@notsoai",
-    images: ['/og-image.png'],
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -65,9 +69,9 @@ export const metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
     },
   },
   icons: {
@@ -79,41 +83,42 @@ export const metadata = {
   },
   manifest: "/manifest.json",
   other: {
-    'msapplication-TileColor': '#2563eb',
-    'theme-color': '#ffffff',
+    "msapplication-TileColor": "#2563eb",
+    "theme-color": "#ffffff",
   },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'SoftwareApplication',
-    name: 'LiveDash',
-    description: 'Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.',
-    url: process.env.NEXTAUTH_URL || 'https://livedash.notso.ai',
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "LiveDash",
+    description:
+      "Transform customer conversations into actionable insights with advanced AI sentiment analysis, automated categorization, and real-time analytics.",
+    url: process.env.NEXTAUTH_URL || "https://livedash.notso.ai",
     author: {
-      '@type': 'Organization',
-      name: 'Notso AI',
+      "@type": "Organization",
+      name: "Notso AI",
     },
-    applicationCategory: 'Business Analytics Software',
-    operatingSystem: 'Web Browser',
+    applicationCategory: "Business Analytics Software",
+    operatingSystem: "Web Browser",
     offers: {
-      '@type': 'Offer',
-      category: 'SaaS',
+      "@type": "Offer",
+      category: "SaaS",
     },
     aggregateRating: {
-      '@type': 'AggregateRating',
-      ratingValue: '4.8',
-      ratingCount: '150',
+      "@type": "AggregateRating",
+      ratingValue: "4.8",
+      ratingCount: "150",
     },
     featureList: [
-      'AI-powered sentiment analysis',
-      'Automated conversation categorization', 
-      'Real-time analytics dashboard',
-      'Multi-language support',
-      'Custom AI model integration',
-      'Enterprise-grade security'
-    ]
+      "AI-powered sentiment analysis",
+      "Automated conversation categorization",
+      "Real-time analytics dashboard",
+      "Multi-language support",
+      "Custom AI model integration",
+      "Enterprise-grade security",
+    ],
   };
 
   return (

@@ -1,13 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { AlertCircle, Eye, Shield, UserPlus, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCallback, useEffect, useId, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -16,14 +24,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Users, UserPlus, Shield, Eye, AlertCircle } from "lucide-react";
 
 interface UserItem {
   id: string;
@@ -38,20 +38,9 @@ export default function UserManagementPage() {
   const [role, setRole] = useState<string>("USER");
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const emailId = useId();
 
-  useEffect(() => {
-    if (status === "authenticated") {
-      if (session?.user?.role === "ADMIN") {
-        fetchUsers();
-      } else {
-        setLoading(false); // Stop loading for non-admin users
-      }
-    } else if (status === "unauthenticated") {
-      setLoading(false);
-    }
-  }, [status, session?.user?.role]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/dashboard/users");
@@ -63,7 +52,19 @@ export default function UserManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      if (session?.user?.role === "ADMIN") {
+        fetchUsers();
+      } else {
+        setLoading(false); // Stop loading for non-admin users
+      }
+    } else if (status === "unauthenticated") {
+      setLoading(false);
+    }
+  }, [status, session?.user?.role, fetchUsers]);
 
   async function inviteUser() {
     setMessage("");
@@ -163,12 +164,11 @@ export default function UserManagementPage() {
             }}
             autoComplete="off"
             data-testid="invite-form"
-            role="form"
           >
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor={emailId}>Email</Label>
               <Input
-                id="email"
+                id={emailId}
                 type="email"
                 placeholder="user@example.com"
                 value={email}

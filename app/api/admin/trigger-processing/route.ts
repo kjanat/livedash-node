@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { ProcessingStage } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { processUnprocessedSessions } from "../../../../lib/processingScheduler";
 import { ProcessingStatusManager } from "../../../../lib/processingStatusManager";
-import { ProcessingStage } from "@prisma/client";
 
 interface SessionUser {
   email: string;
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
           id: true,
           name: true,
           status: true,
-        }
+        },
       },
     },
   });
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Start processing (this will run asynchronously)
-    const startTime = Date.now();
+    const _startTime = Date.now();
 
     // Note: We're calling the function but not awaiting it to avoid timeout
     // The processing will continue in the background

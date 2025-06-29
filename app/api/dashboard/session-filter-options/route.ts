@@ -1,10 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
-import { SessionFilterOptions } from "../../../../lib/types";
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const authSession = await getServerSession(authOptions);
 
   if (!authSession || !authSession.user?.companyId) {
@@ -17,23 +16,23 @@ export async function GET(request: NextRequest) {
     // Use groupBy for better performance with distinct values
     const [categoryGroups, languageGroups] = await Promise.all([
       prisma.session.groupBy({
-        by: ['category'],
+        by: ["category"],
         where: {
           companyId,
           category: { not: null },
         },
         orderBy: {
-          category: 'asc',
+          category: "asc",
         },
       }),
       prisma.session.groupBy({
-        by: ['language'],
+        by: ["language"],
         where: {
           companyId,
           language: { not: null },
         },
         orderBy: {
-          language: 'asc',
+          language: "asc",
         },
       }),
     ]);
@@ -41,7 +40,7 @@ export async function GET(request: NextRequest) {
     const distinctCategories = categoryGroups
       .map((g) => g.category)
       .filter(Boolean) as string[];
-    
+
     const distinctLanguages = languageGroups
       .map((g) => g.language)
       .filter(Boolean) as string[];

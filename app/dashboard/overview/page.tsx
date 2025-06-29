@@ -1,42 +1,42 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
+import {
+  CheckCircle,
+  Clock,
+  Euro,
+  Globe,
+  LogOut,
+  MessageCircle,
+  MessageSquare,
+  MoreVertical,
+  RefreshCw,
+  TrendingUp,
+  Users,
+  Zap,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
-import { formatEnumValue } from "@/lib/format-enums";
-import MetricCard from "../../../components/ui/metric-card";
-import ModernLineChart from "../../../components/charts/line-chart";
-import ModernBarChart from "../../../components/charts/bar-chart";
-import ModernDonutChart from "../../../components/charts/donut-chart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { signOut, useSession } from "next-auth/react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  MessageSquare,
-  Users,
-  Clock,
-  Zap,
-  Euro,
-  TrendingUp,
-  CheckCircle,
-  RefreshCw,
-  LogOut,
-  MoreVertical,
-  Globe,
-  MessageCircle,
-} from "lucide-react";
-import WordCloud from "../../../components/WordCloud";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatEnumValue } from "@/lib/format-enums";
+import ModernBarChart from "../../../components/charts/bar-chart";
+import ModernDonutChart from "../../../components/charts/donut-chart";
+import ModernLineChart from "../../../components/charts/line-chart";
 import GeographicMap from "../../../components/GeographicMap";
 import ResponseTimeDistribution from "../../../components/ResponseTimeDistribution";
 import TopQuestionsChart from "../../../components/TopQuestionsChart";
+import MetricCard from "../../../components/ui/metric-card";
+import WordCloud from "../../../components/WordCloud";
+import type { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
 
 // Safely wrapped component with useSession
 function DashboardContent() {
@@ -48,10 +48,11 @@ function DashboardContent() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
+  const refreshStatusId = useId();
   const isAuditor = session?.user?.role === "AUDITOR";
 
   // Function to fetch metrics with optional date range
-  const fetchMetrics = async (
+  const fetchMetrics = useCallback(async (
     startDate?: string,
     endDate?: string,
     isInitial = false
@@ -78,7 +79,7 @@ function DashboardContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -91,7 +92,7 @@ function DashboardContent() {
     if (status === "authenticated" && isInitialLoad) {
       fetchMetrics(undefined, undefined, true);
     }
-  }, [status, router, isInitialLoad]);
+  }, [status, router, isInitialLoad, fetchMetrics]);
 
   async function handleRefresh() {
     if (isAuditor) return;
@@ -243,7 +244,7 @@ function DashboardContent() {
       return {
         name:
           formattedName.length > 15
-            ? formattedName.substring(0, 15) + "..."
+            ? `${formattedName.substring(0, 15)}...`
             : formattedName,
         value: value as number,
       };
@@ -323,7 +324,7 @@ function DashboardContent() {
                     ? "Refreshing dashboard data"
                     : "Refresh dashboard data"
                 }
-                aria-describedby={refreshing ? "refresh-status" : undefined}
+                aria-describedby={refreshing ? refreshStatusId : undefined}
               >
                 <RefreshCw
                   className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
@@ -332,7 +333,7 @@ function DashboardContent() {
                 {refreshing ? "Refreshing..." : "Refresh"}
               </Button>
               {refreshing && (
-                <div id="refresh-status" className="sr-only" aria-live="polite">
+                <div id={refreshStatusId} className="sr-only" aria-live="polite">
                   Dashboard data is being refreshed
                 </div>
               )}

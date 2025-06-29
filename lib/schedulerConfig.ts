@@ -42,6 +42,6 @@ export function getSchedulerConfig(): SchedulerConfig {
  * Log scheduler configuration
  * @deprecated Use logEnvConfig from lib/env.ts instead
  */
-export function logSchedulerConfig(config: SchedulerConfig): void {
+export function logSchedulerConfig(_config: SchedulerConfig): void {
   logEnvConfig();
 }

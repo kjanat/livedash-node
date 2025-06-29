@@ -174,9 +174,9 @@ export class ProcessingStatusManager {
         status: ProcessingStatus.PENDING,
         session: {
           company: {
-            status: "ACTIVE" // Only process sessions from active companies
-          }
-        }
+            status: "ACTIVE", // Only process sessions from active companies
+          },
+        },
       },
       include: {
         session: {
@@ -187,19 +187,22 @@ export class ProcessingStatusManager {
             startTime: true,
             endTime: true,
             fullTranscriptUrl: true,
-            import: stage === ProcessingStage.TRANSCRIPT_FETCH ? {
-              select: {
-                id: true,
-                fullTranscriptUrl: true,
-                externalSessionId: true,
-              }
-            } : false,
+            import:
+              stage === ProcessingStage.TRANSCRIPT_FETCH
+                ? {
+                    select: {
+                      id: true,
+                      fullTranscriptUrl: true,
+                      externalSessionId: true,
+                    },
+                  }
+                : false,
             company: {
               select: {
                 id: true,
                 csvUsername: true,
                 csvPassword: true,
-              }
+              },
             },
           },
         },
@@ -270,7 +273,7 @@ export class ProcessingStatusManager {
               select: {
                 id: true,
                 externalSessionId: true,
-              }
+              },
             },
           },
         },
@@ -338,7 +341,10 @@ export class ProcessingStatusManager {
     const previousStages = stageOrder.slice(0, currentStageIndex);
 
     for (const prevStage of previousStages) {
-      const isCompleted = await this.hasCompletedStage(sessionId, prevStage);
+      const isCompleted = await ProcessingStatusManager.hasCompletedStage(
+        sessionId,
+        prevStage
+      );
       if (!isCompleted) return false;
     }
 

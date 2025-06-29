@@ -1,27 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  Activity,
+  AlertCircle,
+  ArrowLeft,
+  Clock,
+  ExternalLink,
+  FileText,
+  Globe,
+  MessageSquare,
+  User,
+} from "lucide-react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import SessionDetails from "../../../../components/SessionDetails";
-import MessageViewer from "../../../../components/MessageViewer";
-import { ChatSession } from "../../../../lib/types";
-import { formatCategory } from "@/lib/format-enums";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  MessageSquare,
-  Clock,
-  Globe,
-  ExternalLink,
-  User,
-  AlertCircle,
-  FileText,
-  Activity,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCategory } from "@/lib/format-enums";
+import MessageViewer from "../../../../components/MessageViewer";
+import SessionDetails from "../../../../components/SessionDetails";
+import type { ChatSession } from "../../../../lib/types";
 
 export default function SessionViewPage() {
   const params = useParams();

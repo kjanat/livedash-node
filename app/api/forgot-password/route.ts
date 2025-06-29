@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { sendEmail } from "../../../lib/sendEmail";
 import { forgotPasswordSchema, validateInput } from "../../../lib/validation";
-import crypto from "crypto";
 
 // In-memory rate limiting for password reset requests
 const resetAttempts = new Map<string, { count: number; resetTime: number }>();
@@ -28,7 +28,10 @@ function checkRateLimit(ip: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting check
-    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown";
+    const ip =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         {

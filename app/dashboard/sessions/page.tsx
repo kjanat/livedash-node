@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { ChatSession } from "../../../lib/types";
-import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { formatCategory } from "@/lib/format-enums";
 import {
-  MessageSquare,
-  Search,
-  Filter,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Clock,
-  Globe,
-  Eye,
-  ChevronDown,
   ChevronUp,
+  Clock,
+  Eye,
+  Filter,
+  Globe,
+  MessageSquare,
+  Search,
 } from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { formatCategory } from "@/lib/format-enums";
+import type { ChatSession } from "../../../lib/types";
 
 // Placeholder for a SessionListItem component to be created later
 // For now, we'll display some basic info directly.
@@ -59,7 +59,7 @@ export default function SessionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  const [pageSize, setPageSize] = useState(10); // Or make this configurable
+  const [pageSize, _setPageSize] = useState(10); // Or make this configurable
 
   // UI states
   const [filtersExpanded, setFiltersExpanded] = useState(false);
@@ -404,7 +404,7 @@ export default function SessionsPage() {
 
         {/* Sessions List */}
         {!loading && !error && sessions.length > 0 && (
-          <ul role="list" aria-label="Chat sessions" className="grid gap-4">
+          <ul aria-label="Chat sessions" className="grid gap-4">
             {sessions.map((session) => (
               <li key={session.id}>
                 <Card className="hover:shadow-md transition-shadow">

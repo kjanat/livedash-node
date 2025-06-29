@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
+import bcrypt from "bcryptjs";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { resetPasswordSchema, validateInput } from "../../../lib/validation";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
 
 export async function POST(request: NextRequest) {
   try {

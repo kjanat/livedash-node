@@ -1,13 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
-import {
-  ChatSession,
-  SessionApiResponse,
-  SessionQuery,
-} from "../../../../lib/types";
-import { Prisma } from "@prisma/client";
+import type { ChatSession } from "../../../../lib/types";
 
 export async function GET(request: NextRequest) {
   const authSession = await getServerSession(authOptions);
@@ -48,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Category Filter
     if (category && category.trim() !== "") {
       // Cast to SessionCategory enum if it's a valid value
-      whereClause.category = category as any;
+      whereClause.category = category;
     }
 
     // Language Filter

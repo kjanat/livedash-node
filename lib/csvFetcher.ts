@@ -1,7 +1,8 @@
 // Simplified CSV fetcher - fetches and parses CSV data without any processing
 // Maps directly to SessionImport table fields
-import fetch from "node-fetch";
+
 import { parse } from "csv-parse/sync";
+import fetch from "node-fetch";
 
 // Raw CSV data interface matching SessionImport schema
 interface RawSessionImport {
@@ -38,7 +39,7 @@ export async function fetchAndParseCsv(
 ): Promise<RawSessionImport[]> {
   const authHeader =
     username && password
-      ? "Basic " + Buffer.from(`${username}:${password}`).toString("base64")
+      ? `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
       : undefined;
 
   const res = await fetch(url, {

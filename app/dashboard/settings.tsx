@@ -1,7 +1,7 @@
 "use client";
+import type { Session } from "next-auth";
 import { useState } from "react";
-import { Company } from "../../lib/types";
-import { Session } from "next-auth";
+import type { Company } from "../../lib/types";
 
 interface DashboardSettingsProps {
   company: Company;

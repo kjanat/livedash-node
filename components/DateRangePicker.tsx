@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useId, useState } from "react";
 
 interface DateRangePickerProps {
   minDate: string;
@@ -17,13 +17,19 @@ export default function DateRangePicker({
   initialStartDate,
   initialEndDate,
 }: DateRangePickerProps) {
+  const startDateId = useId();
+  const endDateId = useId();
   const [startDate, setStartDate] = useState(initialStartDate || minDate);
   const [endDate, setEndDate] = useState(initialEndDate || maxDate);
 
   useEffect(() => {
     // Only notify parent component when dates change, not when the callback changes
     onDateRangeChange(startDate, endDate);
-  }, [startDate, endDate]);
+  }, [
+    startDate,
+    endDate, // Only notify parent component when dates change, not when the callback changes
+    onDateRangeChange,
+  ]);
 
   const handleStartDateChange = (newStartDate: string) => {
     // Ensure start date is not before min date
@@ -93,11 +99,11 @@ export default function DateRangePicker({
 
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
             <div className="flex items-center gap-2">
-              <label htmlFor="start-date" className="text-sm text-gray-600">
+              <label htmlFor={startDateId} className="text-sm text-gray-600">
                 From:
               </label>
               <input
-                id="start-date"
+                id={startDateId}
                 type="date"
                 value={startDate}
                 min={minDate}
@@ -108,11 +114,11 @@ export default function DateRangePicker({
             </div>
 
             <div className="flex items-center gap-2">
-              <label htmlFor="end-date" className="text-sm text-gray-600">
+              <label htmlFor={endDateId} className="text-sm text-gray-600">
                 To:
               </label>
               <input
-                id="end-date"
+                id={endDateId}
                 type="date"
                 value={endDate}
                 min={minDate}
@@ -126,18 +132,21 @@ export default function DateRangePicker({
 
         <div className="flex flex-wrap gap-2">
           <button
+            type="button"
             onClick={setLast7Days}
             className="px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50 border border-sky-200 rounded-md hover:bg-sky-100 transition-colors"
           >
             Last 7 days
           </button>
           <button
+            type="button"
             onClick={setLast30Days}
             className="px-3 py-1.5 text-xs font-medium text-sky-600 bg-sky-50 border border-sky-200 rounded-md hover:bg-sky-100 transition-colors"
           >
             Last 30 days
           </button>
           <button
+            type="button"
             onClick={resetToFullRange}
             className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-md hover:bg-gray-100 transition-colors"
           >

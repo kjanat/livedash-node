@@ -1,16 +1,18 @@
 "use client";
 
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  Database,
+  Mail,
+  Save,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,20 +24,19 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
-  Building2,
-  Users,
-  Database,
-  Settings,
-  ArrowLeft,
-  Save,
-  Trash2,
-  UserPlus,
-  Mail,
-  Shield,
-  Activity,
-  Calendar
-} from "lucide-react";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
 interface User {
@@ -68,60 +69,73 @@ export default function CompanyManagement() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  
+
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [editData, setEditData] = useState<Partial<Company>>({});
   const [originalData, setOriginalData] = useState<Partial<Company>>({});
   const [showInviteUser, setShowInviteUser] = useState(false);
-  const [inviteData, setInviteData] = useState({ name: "", email: "", role: "USER" });
-  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false);
-  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [inviteData, setInviteData] = useState({
+    name: "",
+    email: "",
+    role: "USER",
+  });
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] =
+    useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(
+    null
+  );
 
   // Function to check if data has been modified
   const hasUnsavedChanges = useCallback(() => {
     // Normalize data for comparison (handle null/undefined/empty string equivalence)
-    const normalizeValue = (value: any) => {
+    const normalizeValue = (value: string | number | null | undefined) => {
       if (value === null || value === undefined || value === "") {
         return "";
       }
       return value;
     };
-    
+
     const normalizedEditData = {
       name: normalizeValue(editData.name),
       email: normalizeValue(editData.email),
       status: normalizeValue(editData.status),
       maxUsers: editData.maxUsers || 0,
     };
-    
+
     const normalizedOriginalData = {
       name: normalizeValue(originalData.name),
       email: normalizeValue(originalData.email),
       status: normalizeValue(originalData.status),
       maxUsers: originalData.maxUsers || 0,
     };
-    
-    return JSON.stringify(normalizedEditData) !== JSON.stringify(normalizedOriginalData);
+
+    return (
+      JSON.stringify(normalizedEditData) !==
+      JSON.stringify(normalizedOriginalData)
+    );
   }, [editData, originalData]);
 
   // Handle navigation protection - must be at top level
-  const handleNavigation = useCallback((url: string) => {
-    // Allow navigation within the same company (different tabs, etc.)
-    if (url.includes(`/platform/companies/${params.id}`)) {
-      router.push(url);
-      return;
-    }
+  const handleNavigation = useCallback(
+    (url: string) => {
+      // Allow navigation within the same company (different tabs, etc.)
+      if (url.includes(`/platform/companies/${params.id}`)) {
+        router.push(url);
+        return;
+      }
 
-    // If there are unsaved changes, show confirmation dialog
-    if (hasUnsavedChanges()) {
-      setPendingNavigation(url);
-      setShowUnsavedChangesDialog(true);
-    } else {
-      router.push(url);
-    }
-  }, [router, params.id, hasUnsavedChanges]);
+      // If there are unsaved changes, show confirmation dialog
+      if (hasUnsavedChanges()) {
+        setPendingNavigation(url);
+        setShowUnsavedChangesDialog(true);
+      } else {
+        router.push(url);
+      }
+    },
+    [router, params.id, hasUnsavedChanges]
+  );
 
   useEffect(() => {
     if (status === "loading") return;
@@ -132,7 +146,7 @@ export default function CompanyManagement() {
     }
 
     fetchCompany();
-  }, [session, status, router, params.id]);
+  }, [session, status, router, fetchCompany]);
 
   const fetchCompany = async () => {
     try {
@@ -193,7 +207,7 @@ export default function CompanyManagement() {
       } else {
         throw new Error("Failed to update company");
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update company",
@@ -206,7 +220,7 @@ export default function CompanyManagement() {
 
   const handleStatusChange = async (newStatus: string) => {
     const statusAction = newStatus === "SUSPENDED" ? "suspend" : "activate";
-    
+
     try {
       const response = await fetch(`/api/platform/companies/${params.id}`, {
         method: "PATCH",
@@ -215,8 +229,8 @@ export default function CompanyManagement() {
       });
 
       if (response.ok) {
-        setCompany(prev => prev ? { ...prev, status: newStatus } : null);
-        setEditData(prev => ({ ...prev, status: newStatus }));
+        setCompany((prev) => (prev ? { ...prev, status: newStatus } : null));
+        setEditData((prev) => ({ ...prev, status: newStatus }));
         toast({
           title: "Success",
           description: `Company ${statusAction}d successfully`,
@@ -224,7 +238,7 @@ export default function CompanyManagement() {
       } else {
         throw new Error(`Failed to ${statusAction} company`);
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: `Failed to ${statusAction} company`,
@@ -251,39 +265,42 @@ export default function CompanyManagement() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (hasUnsavedChanges()) {
         e.preventDefault();
-        e.returnValue = '';
+        e.returnValue = "";
       }
     };
 
     const handlePopState = (e: PopStateEvent) => {
       if (hasUnsavedChanges()) {
         const confirmLeave = window.confirm(
-          'You have unsaved changes. Are you sure you want to leave this page?'
+          "You have unsaved changes. Are you sure you want to leave this page?"
         );
         if (!confirmLeave) {
           // Push the current state back to prevent navigation
-          window.history.pushState(null, '', window.location.href);
+          window.history.pushState(null, "", window.location.href);
           e.preventDefault();
         }
       }
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [hasUnsavedChanges]);
 
   const handleInviteUser = async () => {
     try {
-      const response = await fetch(`/api/platform/companies/${params.id}/users`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(inviteData),
-      });
+      const response = await fetch(
+        `/api/platform/companies/${params.id}/users`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(inviteData),
+        }
+      );
 
       if (response.ok) {
         setShowInviteUser(false);
@@ -296,7 +313,7 @@ export default function CompanyManagement() {
       } else {
         throw new Error("Failed to invite user");
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to invite user",
@@ -307,11 +324,16 @@ export default function CompanyManagement() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "ACTIVE": return "default";
-      case "TRIAL": return "secondary";
-      case "SUSPENDED": return "destructive";
-      case "ARCHIVED": return "outline";
-      default: return "default";
+      case "ACTIVE":
+        return "default";
+      case "TRIAL":
+        return "secondary";
+      case "SUSPENDED":
+        return "destructive";
+      case "ARCHIVED":
+        return "outline";
+      default:
+        return "default";
     }
   };
 
@@ -335,9 +357,9 @@ export default function CompanyManagement() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => handleNavigation("/platform/dashboard")}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
@@ -387,11 +409,15 @@ export default function CompanyManagement() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Users
+                  </CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{company.users.length}</div>
+                  <div className="text-2xl font-bold">
+                    {company.users.length}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     of {company.maxUsers} maximum
                   </p>
@@ -400,21 +426,29 @@ export default function CompanyManagement() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Sessions
+                  </CardTitle>
                   <Database className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{company._count.sessions}</div>
+                  <div className="text-2xl font-bold">
+                    {company._count.sessions}
+                  </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Data Imports</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Data Imports
+                  </CardTitle>
                   <Activity className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{company._count.imports}</div>
+                  <div className="text-2xl font-bold">
+                    {company._count.imports}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -443,7 +477,12 @@ export default function CompanyManagement() {
                     <Input
                       id="name"
                       value={editData.name || ""}
-                      onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
                       disabled={!canEdit}
                     />
                   </div>
@@ -453,7 +492,12 @@ export default function CompanyManagement() {
                       id="email"
                       type="email"
                       value={editData.email || ""}
-                      onChange={(e) => setEditData(prev => ({ ...prev, email: e.target.value }))}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
                       disabled={!canEdit}
                     />
                   </div>
@@ -463,7 +507,12 @@ export default function CompanyManagement() {
                       id="maxUsers"
                       type="number"
                       value={editData.maxUsers || 0}
-                      onChange={(e) => setEditData(prev => ({ ...prev, maxUsers: parseInt(e.target.value) }))}
+                      onChange={(e) =>
+                        setEditData((prev) => ({
+                          ...prev,
+                          maxUsers: parseInt(e.target.value),
+                        }))
+                      }
                       disabled={!canEdit}
                     />
                   </div>
@@ -471,7 +520,9 @@ export default function CompanyManagement() {
                     <Label htmlFor="status">Status</Label>
                     <Select
                       value={editData.status}
-                      onValueChange={(value) => setEditData(prev => ({ ...prev, status: value }))}
+                      onValueChange={(value) =>
+                        setEditData((prev) => ({ ...prev, status: value }))
+                      }
                       disabled={!canEdit}
                     >
                       <SelectTrigger>
@@ -496,10 +547,7 @@ export default function CompanyManagement() {
                     >
                       Cancel Changes
                     </Button>
-                    <Button
-                      onClick={handleSave}
-                      disabled={isSaving}
-                    >
+                    <Button onClick={handleSave} disabled={isSaving}>
                       <Save className="w-4 h-4 mr-2" />
                       {isSaving ? "Saving..." : "Save Changes"}
                     </Button>
@@ -535,12 +583,17 @@ export default function CompanyManagement() {
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                           <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
-                            {user.name?.charAt(0) || user.email.charAt(0).toUpperCase()}
+                            {user.name?.charAt(0) ||
+                              user.email.charAt(0).toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <div className="font-medium">{user.name || "No name"}</div>
-                          <div className="text-sm text-muted-foreground">{user.email}</div>
+                          <div className="font-medium">
+                            {user.name || "No name"}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.email}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
@@ -564,7 +617,9 @@ export default function CompanyManagement() {
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-red-600 dark:text-red-400">Danger Zone</CardTitle>
+                <CardTitle className="text-red-600 dark:text-red-400">
+                  Danger Zone
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {canEdit && (
@@ -578,20 +633,28 @@ export default function CompanyManagement() {
                       </div>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button variant="destructive" disabled={company.status === "SUSPENDED"}>
-                            {company.status === "SUSPENDED" ? "Already Suspended" : "Suspend"}
+                          <Button
+                            variant="destructive"
+                            disabled={company.status === "SUSPENDED"}
+                          >
+                            {company.status === "SUSPENDED"
+                              ? "Already Suspended"
+                              : "Suspend"}
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
                             <AlertDialogTitle>Suspend Company</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Are you sure you want to suspend this company? This will disable access for all users.
+                              Are you sure you want to suspend this company?
+                              This will disable access for all users.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleStatusChange("SUSPENDED")}>
+                            <AlertDialogAction
+                              onClick={() => handleStatusChange("SUSPENDED")}
+                            >
                               Suspend
                             </AlertDialogAction>
                           </AlertDialogFooter>
@@ -607,7 +670,10 @@ export default function CompanyManagement() {
                             Restore access to this company
                           </p>
                         </div>
-                        <Button variant="default" onClick={() => handleStatusChange("ACTIVE")}>
+                        <Button
+                          variant="default"
+                          onClick={() => handleStatusChange("ACTIVE")}
+                        >
                           Reactivate
                         </Button>
                       </div>
@@ -646,7 +712,9 @@ export default function CompanyManagement() {
                 <Input
                   id="inviteName"
                   value={inviteData.name}
-                  onChange={(e) => setInviteData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) =>
+                    setInviteData((prev) => ({ ...prev, name: e.target.value }))
+                  }
                   placeholder="User's full name"
                 />
               </div>
@@ -656,7 +724,12 @@ export default function CompanyManagement() {
                   id="inviteEmail"
                   type="email"
                   value={inviteData.email}
-                  onChange={(e) => setInviteData(prev => ({ ...prev, email: e.target.value }))}
+                  onChange={(e) =>
+                    setInviteData((prev) => ({
+                      ...prev,
+                      email: e.target.value,
+                    }))
+                  }
                   placeholder="user@example.com"
                 />
               </div>
@@ -664,7 +737,9 @@ export default function CompanyManagement() {
                 <Label htmlFor="inviteRole">Role</Label>
                 <Select
                   value={inviteData.role}
-                  onValueChange={(value) => setInviteData(prev => ({ ...prev, role: value }))}
+                  onValueChange={(value) =>
+                    setInviteData((prev) => ({ ...prev, role: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -698,12 +773,16 @@ export default function CompanyManagement() {
       )}
 
       {/* Unsaved Changes Dialog */}
-      <AlertDialog open={showUnsavedChangesDialog} onOpenChange={setShowUnsavedChangesDialog}>
+      <AlertDialog
+        open={showUnsavedChangesDialog}
+        onOpenChange={setShowUnsavedChangesDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
             <AlertDialogDescription>
-              You have unsaved changes that will be lost if you leave this page. Are you sure you want to continue?
+              You have unsaved changes that will be lost if you leave this page.
+              Are you sure you want to continue?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

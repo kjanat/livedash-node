@@ -132,7 +132,7 @@ export function parseTranscriptToMessages(
         };
       } else if (currentMessage) {
         // Continue previous message (multi-line)
-        currentMessage.content += "\n" + trimmedLine;
+        currentMessage.content += `\n${trimmedLine}`;
       }
       // If no current message and no role match, skip the line (orphaned content)
     }
@@ -165,7 +165,7 @@ export function parseTranscriptToMessages(
         if (msgWithTimestamp.timestamp) {
           try {
             message.timestamp = parseEuropeanDate(msgWithTimestamp.timestamp);
-          } catch (error) {
+          } catch (_error) {
             // Fallback to distributed timestamp if parsing fails
             const sessionDurationMs = endTime.getTime() - startTime.getTime();
             const messageInterval =
@@ -282,7 +282,7 @@ export async function processSessionTranscript(
   await storeMessagesForSession(sessionId, parseResult.messages!);
 
   console.log(
-    `✅ Processed ${parseResult.messages!.length} messages for session ${sessionId}`
+    `✅ Processed ${parseResult.messages?.length} messages for session ${sessionId}`
   );
 }
 

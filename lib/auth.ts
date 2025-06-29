@@ -1,7 +1,7 @@
-import { NextAuthOptions } from "next-auth";
+import bcrypt from "bcryptjs";
+import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
-import bcrypt from "bcryptjs";
 
 // Define the shape of the JWT token
 declare module "next-auth/jwt" {

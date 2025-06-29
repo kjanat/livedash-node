@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { UserSession } from "../../lib/types";
+import { useEffect, useState } from "react";
+import type { UserSession } from "../../lib/types";
 
 interface UserItem {
   id: string;
@@ -56,6 +56,7 @@ export default function UserManagement({ session }: UserManagementProps) {
           <option value="AUDITOR">Auditor</option>
         </select>
         <button
+          type="button"
           className="bg-blue-600 text-white rounded px-4 py-2 sm:py-0 w-full sm:w-auto"
           onClick={inviteUser}
         >

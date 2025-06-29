@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import { getServerSession } from "next-auth";
-import { prisma } from "../../../../lib/prisma";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
+import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
+import { prisma } from "../../../../lib/prisma";
 
 interface UserBasicInfo {
   id: string;
@@ -11,7 +11,7 @@ interface UserBasicInfo {
   role: string;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

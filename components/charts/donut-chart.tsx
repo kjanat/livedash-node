@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  PieChart,
-  Pie,
   Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
   Tooltip,
-  Legend,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -22,7 +22,16 @@ interface DonutChartProps {
   className?: string;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    payload: { total: number };
+  }>;
+}
+
+const CustomTooltip = ({ active, payload }: TooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
@@ -38,11 +47,19 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const CustomLegend = ({ payload }: any) => {
+interface LegendProps {
+  payload?: Array<{
+    value: string;
+    color: string;
+    type?: string;
+  }>;
+}
+
+const CustomLegend = ({ payload }: LegendProps) => {
   return (
     <div className="flex flex-wrap justify-center gap-4 mt-4">
-      {payload.map((entry: any, index: number) => (
-        <div key={index} className="flex items-center gap-2">
+      {payload?.map((entry, index) => (
+        <div key={`legend-${entry.value}-${index}`} className="flex items-center gap-2">
           <div
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: entry.color }}
@@ -54,7 +71,15 @@ const CustomLegend = ({ payload }: any) => {
   );
 };
 
-const CenterLabel = ({ centerText, total }: any) => {
+interface CenterLabelProps {
+  centerText?: {
+    title: string;
+    value: string | number;
+  };
+  total: number;
+}
+
+const CenterLabel = ({ centerText }: CenterLabelProps) => {
   if (!centerText) return null;
 
   return (
@@ -117,7 +142,7 @@ export default function ModernDonutChart({
               >
                 {dataWithTotal.map((entry, index) => (
                   <Cell
-                    key={`cell-${index}`}
+                    key={`cell-${entry.name}-${index}`}
                     fill={entry.color || colors[index % colors.length]}
                     className="hover:opacity-80 cursor-pointer focus:opacity-80"
                     stroke="hsl(var(--background))"

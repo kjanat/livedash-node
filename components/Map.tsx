@@ -1,10 +1,10 @@
 "use client";
 
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from "react-leaflet";
+import { CircleMarker, MapContainer, TileLayer, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { getLocalizedCountryName } from "../lib/localization";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { getLocalizedCountryName } from "../lib/localization";
 
 interface CountryData {
   code: string;
@@ -17,7 +17,7 @@ interface MapProps {
   maxCount: number;
 }
 
-const Map = ({ countryData, maxCount }: MapProps) => {
+const CountryMap = ({ countryData, maxCount }: MapProps) => {
   const { theme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -79,4 +79,4 @@ const Map = ({ countryData, maxCount }: MapProps) => {
   );
 };
 
-export default Map;
+export default CountryMap;

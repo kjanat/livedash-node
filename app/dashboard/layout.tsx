@@ -1,11 +1,12 @@
 "use client";
 
-import { ReactNode, useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import { type ReactNode, useCallback, useEffect, useId, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const mainContentId = useId();
   const { status } = useSession();
   const router = useRouter();
 
@@ -66,7 +67,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       />
 
       <main
-        id="main-content"
+        id={mainContentId}
         className={`flex-1 overflow-auto transition-all duration-300 py-4 pr-4
           ${
             isSidebarExpanded

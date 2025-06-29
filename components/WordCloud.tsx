@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import cloud, { type Word } from "d3-cloud";
 import { select } from "d3-selection";
-import cloud, { Word } from "d3-cloud";
+import { useEffect, useRef, useState } from "react";
 
 interface WordCloudProps {
   words: {

@@ -1,9 +1,9 @@
 "use client";
 
 import {
-  CSSProperties,
-  ReactElement,
-  ReactNode,
+  type CSSProperties,
+  type ReactElement,
+  type ReactNode,
   useEffect,
   useRef,
   useState,
@@ -102,7 +102,7 @@ export const NeonGradientCard: React.FC<NeonGradientCardProps> = ({
       const { offsetWidth, offsetHeight } = containerRef.current;
       setDimensions({ width: offsetWidth, height: offsetHeight });
     }
-  }, [children]);
+  }, []);
 
   return (
     <div

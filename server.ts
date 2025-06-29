@@ -1,11 +1,11 @@
 // Custom Next.js server with configurable scheduler initialization
-import { createServer } from "http";
-import { parse } from "url";
+import { createServer } from "node:http";
+import { parse } from "node:url";
 import next from "next";
-import { startCsvImportScheduler } from "./lib/scheduler.js";
+import { getSchedulerConfig, logEnvConfig, validateEnv } from "./lib/env.js";
 import { startImportProcessingScheduler } from "./lib/importProcessor.js";
 import { startProcessingScheduler } from "./lib/processingScheduler.js";
-import { getSchedulerConfig, logEnvConfig, validateEnv } from "./lib/env.js";
+import { startCsvImportScheduler } from "./lib/scheduler.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";

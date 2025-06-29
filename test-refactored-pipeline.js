@@ -1,11 +1,11 @@
 // Test script for the refactored data processing pipeline
 import { PrismaClient } from "@prisma/client";
 import { processQueuedImports } from "./lib/importProcessor.ts";
-import { processAllUnparsedTranscripts } from "./lib/transcriptParser.ts";
 import {
-  processUnprocessedSessions,
   getAIProcessingCosts,
+  processUnprocessedSessions,
 } from "./lib/processingScheduler.ts";
+import { processAllUnparsedTranscripts } from "./lib/transcriptParser.ts";
 
 const prisma = new PrismaClient();
 

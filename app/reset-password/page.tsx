@@ -1,6 +1,6 @@
 "use client";
-import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useState } from "react";
 
 // Component that uses useSearchParams wrapped in Suspense
 function ResetPasswordForm() {

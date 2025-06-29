@@ -1,13 +1,13 @@
 "use client";
 
-import { ChatSession } from "../lib/types";
-import LanguageDisplay from "./LanguageDisplay";
-import CountryDisplay from "./CountryDisplay";
-import { formatCategory } from "@/lib/format-enums";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { ExternalLink } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { formatCategory } from "@/lib/format-enums";
+import type { ChatSession } from "../lib/types";
+import CountryDisplay from "./CountryDisplay";
+import LanguageDisplay from "./LanguageDisplay";
 
 interface SessionDetailsProps {
   session: ChatSession;

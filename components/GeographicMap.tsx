@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import * as countryCoder from "@rapideditor/country-coder";
 
@@ -60,7 +60,7 @@ const DEFAULT_COORDINATES = getCountryCoordinates();
 
 // Dynamically import the Map component to avoid SSR issues
 // This ensures the component only loads on the client side
-const Map = dynamic(() => import("./Map"), {
+const CountryMapComponent = dynamic(() => import("./Map"), {
   ssr: false,
   loading: () => (
     <div className="h-full w-full bg-muted flex items-center justify-center text-muted-foreground">
@@ -95,7 +95,7 @@ export default function GeographicMap({
 
           if (!countryCoords) {
             const feature = countryCoder.feature(code);
-            if (feature && feature.geometry) {
+            if (feature?.geometry) {
               if (feature.geometry.type === "Point") {
                 const [lon, lat] = feature.geometry.coordinates;
                 countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
@@ -160,7 +160,7 @@ export default function GeographicMap({
   return (
     <div style={{ height: `${height}px`, width: "100%" }} className="relative">
       {countryData.length > 0 ? (
-        <Map countryData={countryData} maxCount={maxCount} />
+        <CountryMapComponent countryData={countryData} maxCount={maxCount} />
       ) : (
         <div className="h-full w-full bg-muted flex items-center justify-center text-muted-foreground">
           No geographic data available

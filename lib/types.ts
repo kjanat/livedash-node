@@ -1,4 +1,4 @@
-import { Session as NextAuthSession } from "next-auth";
+import type { Session as NextAuthSession } from "next-auth";
 
 export interface UserSession extends NextAuthSession {
   user: {

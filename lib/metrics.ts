@@ -1,13 +1,13 @@
 // Functions to calculate metrics over sessions
-import {
-  ChatSession,
-  DayMetrics,
+import type {
   CategoryMetrics,
-  LanguageMetrics,
+  ChatSession,
   CountryMetrics, // Added CountryMetrics
+  DayMetrics,
+  LanguageMetrics,
   MetricsResult,
-  WordCloudWord, // Added WordCloudWord
   TopQuestion, // Added TopQuestion
+  WordCloudWord, // Added WordCloudWord
 } from "./types";
 
 interface CompanyConfig {
@@ -387,18 +387,18 @@ export function sessionMetrics(
       const startTimeMs = new Date(session.startTime).getTime();
       const endTimeMs = new Date(session.endTime).getTime();
 
-      if (isNaN(startTimeMs)) {
+      if (Number.isNaN(startTimeMs)) {
         console.warn(
           `[metrics] Invalid startTime for session ${session.id || session.sessionId}: ${session.startTime}`
         );
       }
-      if (isNaN(endTimeMs)) {
+      if (Number.isNaN(endTimeMs)) {
         console.warn(
           `[metrics] Invalid endTime for session ${session.id || session.sessionId}: ${session.endTime}`
         );
       }
 
-      if (!isNaN(startTimeMs) && !isNaN(endTimeMs)) {
+      if (!Number.isNaN(startTimeMs) && !Number.isNaN(endTimeMs)) {
         const timeDifference = endTimeMs - startTimeMs; // Calculate the signed delta
         // Use the absolute difference for duration, ensuring it's not negative.
         // If times are identical, duration will be 0.

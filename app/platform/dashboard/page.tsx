@@ -1,12 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  Activity,
+  BarChart3,
+  Building2,
+  Check,
+  Copy,
+  Database,
+  Plus,
+  Search,
+  Settings,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,19 +26,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Building2,
-  Users,
-  Database,
-  Activity,
-  Plus,
-  Settings,
-  BarChart3,
-  Search
-} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check } from "lucide-react";
 
 interface Company {
   id: string;
@@ -50,17 +51,29 @@ interface DashboardData {
   };
 }
 
+interface PlatformSession {
+  user: {
+    id: string;
+    email: string;
+    name?: string;
+    isPlatformUser: boolean;
+    platformRole: string;
+  };
+}
+
 // Custom hook for platform session
 function usePlatformSession() {
-  const [session, setSession] = useState<any>(null);
-  const [status, setStatus] = useState<"loading" | "authenticated" | "unauthenticated">("loading");
+  const [session, setSession] = useState<PlatformSession | null>(null);
+  const [status, setStatus] = useState<
+    "loading" | "authenticated" | "unauthenticated"
+  >("loading");
 
   useEffect(() => {
     const fetchSession = async () => {
       try {
         const response = await fetch("/api/platform/auth/session");
         const sessionData = await response.json();
-        
+
         if (sessionData?.user?.isPlatformUser) {
           setSession(sessionData);
           setStatus("authenticated");
@@ -85,7 +98,9 @@ export default function PlatformDashboard() {
   const { data: session, status } = usePlatformSession();
   const router = useRouter();
   const { toast } = useToast();
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [showAddCompany, setShowAddCompany] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -112,12 +127,12 @@ export default function PlatformDashboard() {
     }
 
     fetchDashboardData();
-  }, [session, status, router]);
+  }, [session, status, router, fetchDashboardData]);
 
-  const copyToClipboard = async (text: string, type: 'email' | 'password') => {
+  const copyToClipboard = async (text: string, type: "email" | "password") => {
     try {
       await navigator.clipboard.writeText(text);
-      if (type === 'email') {
+      if (type === "email") {
         setCopiedEmail(true);
         setTimeout(() => setCopiedEmail(false), 2000);
       } else {
@@ -125,14 +140,14 @@ export default function PlatformDashboard() {
         setTimeout(() => setCopiedPassword(false), 2000);
       }
     } catch (err) {
-      console.error('Failed to copy: ', err);
+      console.error("Failed to copy: ", err);
     }
   };
 
   const getFilteredCompanies = () => {
     if (!dashboardData?.companies) return [];
-    
-    return dashboardData.companies.filter(company =>
+
+    return dashboardData.companies.filter((company) =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
@@ -152,7 +167,12 @@ export default function PlatformDashboard() {
   };
 
   const handleCreateCompany = async () => {
-    if (!newCompanyData.name || !newCompanyData.csvUrl || !newCompanyData.adminEmail || !newCompanyData.adminName) {
+    if (
+      !newCompanyData.name ||
+      !newCompanyData.csvUrl ||
+      !newCompanyData.adminEmail ||
+      !newCompanyData.adminName
+    ) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -172,7 +192,7 @@ export default function PlatformDashboard() {
       if (response.ok) {
         const result = await response.json();
         setShowAddCompany(false);
-        
+
         const companyName = newCompanyData.name;
         setNewCompanyData({
           name: "",
@@ -184,43 +204,65 @@ export default function PlatformDashboard() {
           adminPassword: "",
           maxUsers: 10,
         });
-        
+
         fetchDashboardData(); // Refresh the list
-        
+
         // Show success message with copyable credentials
         if (result.generatedPassword) {
           toast({
             title: "Company Created Successfully!",
             description: (
               <div className="space-y-3">
-                <p className="font-medium">Company "{companyName}" has been created.</p>
+                <p className="font-medium">
+                  Company "{companyName}" has been created.
+                </p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between bg-muted p-2 rounded">
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Admin Email:</p>
-                      <p className="font-mono text-sm">{result.adminUser.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Admin Email:
+                      </p>
+                      <p className="font-mono text-sm">
+                        {result.adminUser.email}
+                      </p>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => copyToClipboard(result.adminUser.email, 'email')}
+                      onClick={() =>
+                        copyToClipboard(result.adminUser.email, "email")
+                      }
                       className="h-8 w-8 p-0"
                     >
-                      {copiedEmail ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedEmail ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
                     </Button>
                   </div>
                   <div className="flex items-center justify-between bg-muted p-2 rounded">
                     <div className="flex-1">
-                      <p className="text-xs text-muted-foreground">Admin Password:</p>
-                      <p className="font-mono text-sm">{result.generatedPassword}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Admin Password:
+                      </p>
+                      <p className="font-mono text-sm">
+                        {result.generatedPassword}
+                      </p>
                     </div>
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => copyToClipboard(result.generatedPassword, 'password')}
+                      onClick={() =>
+                        copyToClipboard(result.generatedPassword, "password")
+                      }
                       className="h-8 w-8 p-0"
                     >
-                      {copiedPassword ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                      {copiedPassword ? (
+                        <Check className="h-3 w-3" />
+                      ) : (
+                        <Copy className="h-3 w-3" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -241,7 +283,8 @@ export default function PlatformDashboard() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create company",
+        description:
+          error instanceof Error ? error.message : "Failed to create company",
         variant: "destructive",
       });
     } finally {
@@ -251,11 +294,16 @@ export default function PlatformDashboard() {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "ACTIVE": return "default";
-      case "TRIAL": return "secondary";
-      case "SUSPENDED": return "destructive";
-      case "ARCHIVED": return "outline";
-      default: return "default";
+      case "ACTIVE":
+        return "default";
+      case "TRIAL":
+        return "secondary";
+      case "SUSPENDED":
+        return "destructive";
+      case "ARCHIVED":
+        return "outline";
+      default:
+        return "default";
     }
   };
 
@@ -273,8 +321,16 @@ export default function PlatformDashboard() {
 
   const filteredCompanies = getFilteredCompanies();
   const totalCompanies = dashboardData?.pagination?.total || 0;
-  const totalUsers = dashboardData?.companies?.reduce((sum, company) => sum + company._count.users, 0) || 0;
-  const totalSessions = dashboardData?.companies?.reduce((sum, company) => sum + company._count.sessions, 0) || 0;
+  const totalUsers =
+    dashboardData?.companies?.reduce(
+      (sum, company) => sum + company._count.users,
+      0
+    ) || 0;
+  const totalSessions =
+    dashboardData?.companies?.reduce(
+      (sum, company) => sum + company._count.sessions,
+      0
+    ) || 0;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -291,7 +347,7 @@ export default function PlatformDashboard() {
             </div>
             <div className="flex gap-4 items-center">
               <ThemeToggle />
-              
+
               {/* Search Filter */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -316,7 +372,9 @@ export default function PlatformDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Companies</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Companies
+              </CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -336,7 +394,9 @@ export default function PlatformDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Sessions
+              </CardTitle>
               <Database className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -346,12 +406,15 @@ export default function PlatformDashboard() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Companies</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Active Companies
+              </CardTitle>
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {dashboardData?.companies?.filter(c => c.status === "ACTIVE").length || 0}
+                {dashboardData?.companies?.filter((c) => c.status === "ACTIVE")
+                  .length || 0}
               </div>
             </CardContent>
           </Card>
@@ -396,7 +459,12 @@ export default function PlatformDashboard() {
                         <Input
                           id="companyName"
                           value={newCompanyData.name}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           placeholder="Acme Corporation"
                         />
                       </div>
@@ -405,7 +473,12 @@ export default function PlatformDashboard() {
                         <Input
                           id="csvUrl"
                           value={newCompanyData.csvUrl}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvUrl: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              csvUrl: e.target.value,
+                            }))
+                          }
                           placeholder="https://api.company.com/sessions.csv"
                         />
                       </div>
@@ -414,7 +487,12 @@ export default function PlatformDashboard() {
                         <Input
                           id="csvUsername"
                           value={newCompanyData.csvUsername}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvUsername: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              csvUsername: e.target.value,
+                            }))
+                          }
                           placeholder="Optional HTTP auth username"
                         />
                       </div>
@@ -424,7 +502,12 @@ export default function PlatformDashboard() {
                           id="csvPassword"
                           type="password"
                           value={newCompanyData.csvPassword}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, csvPassword: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              csvPassword: e.target.value,
+                            }))
+                          }
                           placeholder="Optional HTTP auth password"
                         />
                       </div>
@@ -433,7 +516,12 @@ export default function PlatformDashboard() {
                         <Input
                           id="adminName"
                           value={newCompanyData.adminName}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminName: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              adminName: e.target.value,
+                            }))
+                          }
                           placeholder="John Doe"
                         />
                       </div>
@@ -443,7 +531,12 @@ export default function PlatformDashboard() {
                           id="adminEmail"
                           type="email"
                           value={newCompanyData.adminEmail}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminEmail: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              adminEmail: e.target.value,
+                            }))
+                          }
                           placeholder="admin@acme.com"
                         />
                       </div>
@@ -453,7 +546,12 @@ export default function PlatformDashboard() {
                           id="adminPassword"
                           type="password"
                           value={newCompanyData.adminPassword}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, adminPassword: e.target.value }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              adminPassword: e.target.value,
+                            }))
+                          }
                           placeholder="Leave empty to auto-generate"
                         />
                       </div>
@@ -463,17 +561,28 @@ export default function PlatformDashboard() {
                           id="maxUsers"
                           type="number"
                           value={newCompanyData.maxUsers}
-                          onChange={(e) => setNewCompanyData(prev => ({ ...prev, maxUsers: parseInt(e.target.value) || 10 }))}
+                          onChange={(e) =>
+                            setNewCompanyData((prev) => ({
+                              ...prev,
+                              maxUsers: parseInt(e.target.value) || 10,
+                            }))
+                          }
                           min="1"
                           max="1000"
                         />
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setShowAddCompany(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowAddCompany(false)}
+                      >
                         Cancel
                       </Button>
-                      <Button onClick={handleCreateCompany} disabled={isCreating}>
+                      <Button
+                        onClick={handleCreateCompany}
+                        disabled={isCreating}
+                      >
                         {isCreating ? "Creating..." : "Create Company"}
                       </Button>
                     </DialogFooter>
@@ -500,7 +609,10 @@ export default function PlatformDashboard() {
                       <span>{company._count.users} users</span>
                       <span>{company._count.sessions} sessions</span>
                       <span>{company._count.imports} imports</span>
-                      <span>Created {new Date(company.createdAt).toLocaleDateString()}</span>
+                      <span>
+                        Created{" "}
+                        {new Date(company.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                   <div className="flex gap-2">
@@ -508,10 +620,12 @@ export default function PlatformDashboard() {
                       <BarChart3 className="w-4 h-4 mr-2" />
                       Analytics
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
-                      onClick={() => router.push(`/platform/companies/${company.id}`)}
+                      onClick={() =>
+                        router.push(`/platform/companies/${company.id}`)
+                      }
                     >
                       <Settings className="w-4 h-4 mr-2" />
                       Manage
@@ -525,7 +639,11 @@ export default function PlatformDashboard() {
                   {searchTerm ? (
                     <div className="space-y-2">
                       <p>No companies match "{searchTerm}".</p>
-                      <Button variant="link" onClick={() => setSearchTerm("")} className="text-sm">
+                      <Button
+                        variant="link"
+                        onClick={() => setSearchTerm("")}
+                        className="text-sm"
+                      >
                         Clear search to see all companies
                       </Button>
                     </div>

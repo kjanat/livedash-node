@@ -1,9 +1,13 @@
 "use client";
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { BarChart3, Loader2, Shield, Zap } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { useId, useState } from "react";
+import { toast } from "sonner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -11,15 +15,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
-import { Loader2, Shield, BarChart3, Zap } from "lucide-react";
-import { toast } from "sonner";
 
 export default function LoginPage() {
+  const emailId = useId();
+  const emailHelpId = useId();
+  const passwordId = useId();
+  const passwordHelpId = useId();
+  const loadingStatusId = useId();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -157,38 +162,38 @@ export default function LoginPage() {
 
               <form onSubmit={handleLogin} className="space-y-4" noValidate>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor={emailId}>Email</Label>
                   <Input
-                    id="email"
+                    id={emailId}
                     type="email"
                     placeholder="name@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isLoading}
                     required
-                    aria-describedby="email-help"
+                    aria-describedby={emailHelpId}
                     aria-invalid={!!error}
                     className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
-                  <div id="email-help" className="sr-only">
+                  <div id={emailHelpId} className="sr-only">
                     Enter your company email address
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor={passwordId}>Password</Label>
                   <Input
-                    id="password"
+                    id={passwordId}
                     type="password"
                     placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isLoading}
                     required
-                    aria-describedby="password-help"
+                    aria-describedby={passwordHelpId}
                     aria-invalid={!!error}
                     className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                   />
-                  <div id="password-help" className="sr-only">
+                  <div id={passwordHelpId} className="sr-only">
                     Enter your account password
                   </div>
                 </div>
@@ -213,7 +218,7 @@ export default function LoginPage() {
                 </Button>
                 {isLoading && (
                   <div
-                    id="loading-status"
+                    id={loadingStatusId}
                     className="sr-only"
                     aria-live="polite"
                   >

@@ -1,13 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import {
   AnimatePresence,
-  HTMLMotionProps,
+  type HTMLMotionProps,
   motion,
   useMotionValue,
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface PointerProps extends Omit<HTMLMotionProps<"div">, "ref"> {
   children?: React.ReactNode;
@@ -109,6 +109,7 @@ export function Pointer({
                   className
                 )}
               >
+                <title>Mouse pointer</title>
                 <path d="M14.082 2.182a.5.5 0 0 1 .103.557L8.528 15.467a.5.5 0 0 1-.917-.007L5.57 10.694.803 8.652a.5.5 0 0 1-.006-.916l12.728-5.657a.5.5 0 0 1 .556.103z" />
               </svg>
             )}

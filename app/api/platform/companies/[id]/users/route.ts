@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { hash } from "bcryptjs";
+import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { platformAuthOptions } from "../../../../../../lib/platform-auth";
 import { prisma } from "../../../../../../lib/prisma";
-import { hash } from "bcryptjs";
 
 // POST /api/platform/companies/[id]/users - Invite user to company
 export async function POST(
@@ -12,8 +12,14 @@ export async function POST(
   try {
     const session = await getServerSession(platformAuthOptions);
 
-    if (!session?.user?.isPlatformUser || session.user.platformRole === "SUPPORT") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    if (
+      !session?.user?.isPlatformUser ||
+      session.user.platformRole === "SUPPORT"
+    ) {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { id: companyId } = await params;
@@ -21,7 +27,10 @@ export async function POST(
     const { name, email, role = "USER" } = body;
 
     if (!name || !email) {
-      return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Name and email are required" },
+        { status: 400 }
+      );
     }
 
     // Check if company exists
@@ -88,24 +97,31 @@ export async function POST(
     return NextResponse.json({
       user,
       tempPassword, // Remove this in production and send via email
-      message: "User invited successfully. In production, credentials would be sent via email.",
+      message:
+        "User invited successfully. In production, credentials would be sent via email.",
     });
   } catch (error) {
     console.error("Platform user invitation error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 // GET /api/platform/companies/[id]/users - Get company users
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(platformAuthOptions);
 
     if (!session?.user?.isPlatformUser) {
-      return NextResponse.json({ error: "Platform access required" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Platform access required" },
+        { status: 401 }
+      );
     }
 
     const { id: companyId } = await params;
@@ -127,6 +143,9 @@ export async function GET(
     return NextResponse.json({ users });
   } catch (error) {
     console.error("Platform users list error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

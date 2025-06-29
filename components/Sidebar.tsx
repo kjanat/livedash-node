@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react"; // No hooks needed since state is now managed by parent
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
+import type React from "react"; // No hooks needed since state is now managed by parent
+import { useId } from "react";
 import { SimpleThemeToggle } from "@/components/ui/theme-toggle";
 
 // Icons for the sidebar
@@ -16,6 +17,7 @@ const DashboardIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
+    <title>Dashboard</title>
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -51,6 +53,7 @@ const CompanyIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
+    <title>Company</title>
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -68,6 +71,7 @@ const UsersIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
+    <title>Users</title>
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -85,6 +89,7 @@ const SessionsIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
+    <title>Sessions</title>
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -102,6 +107,7 @@ const LogoutIcon = () => (
     viewBox="0 0 24 24"
     stroke="currentColor"
   >
+    <title>Logout</title>
     <path
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -119,6 +125,7 @@ const MinimalToggleIcon = ({ isExpanded }: { isExpanded: boolean }) => (
     stroke="currentColor"
     strokeWidth={2}
   >
+    <title>{isExpanded ? "Collapse sidebar" : "Expand sidebar"}</title>
     {isExpanded ? (
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
     ) : (
@@ -192,6 +199,7 @@ export default function Sidebar({
   isMobile = false,
   onNavigate,
 }: SidebarProps) {
+  const sidebarId = useId();
   const pathname = usePathname() || "";
 
   const handleLogout = () => {
@@ -205,11 +213,19 @@ export default function Sidebar({
         <div
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-10 transition-all duration-300"
           onClick={onToggle}
+          onKeyDown={(e) => {
+            if (e.key === "Escape") {
+              onToggle();
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
 
       <div
-        id="main-sidebar"
+        id={sidebarId}
         className={`fixed md:relative h-screen bg-card border-r border-border shadow-lg transition-all duration-300
         ${
           isExpanded ? (isMobile ? "w-full sm:w-80" : "w-56") : "w-16"
@@ -220,6 +236,7 @@ export default function Sidebar({
           {!isExpanded && (
             <div className="absolute top-1 left-1/2 transform -translate-x-1/2 z-30">
               <button
+                type="button"
                 onClick={(e) => {
                   e.preventDefault(); // Prevent any navigation
                   onToggle();
@@ -227,7 +244,7 @@ export default function Sidebar({
                 className="p-1.5 rounded-md hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary transition-colors group"
                 aria-label="Expand sidebar"
                 aria-expanded={isExpanded}
-                aria-controls="main-sidebar"
+                aria-controls={sidebarId}
               >
                 <MinimalToggleIcon isExpanded={isExpanded} />
               </button>
@@ -261,6 +278,7 @@ export default function Sidebar({
         {isExpanded && (
           <div className="absolute top-3 right-3 z-30">
             <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault(); // Prevent any navigation
                 onToggle();
@@ -275,7 +293,6 @@ export default function Sidebar({
           </div>
         )}
         <nav
-          role="navigation"
           aria-label="Main navigation"
           className={`flex-1 py-4 px-2 overflow-y-auto overflow-x-visible ${isExpanded ? "pt-12" : "pt-4"}`}
         >
@@ -350,6 +367,7 @@ export default function Sidebar({
 
           {/* Logout Button */}
           <button
+            type="button"
             onClick={handleLogout}
             className={`relative flex items-center p-3 w-full rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-all group ${
               isExpanded ? "" : "justify-center"
