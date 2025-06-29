@@ -1,10 +1,5 @@
-import {
-  PrismaClient,
-  ProcessingStage,
-  ProcessingStatus,
-} from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { ProcessingStage, ProcessingStatus } from "@prisma/client";
+import { prisma } from "./prisma.js";
 
 // Type-safe metadata interfaces
 interface ProcessingMetadata {

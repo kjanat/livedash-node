@@ -1,17 +1,16 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
 
 import {
-  PrismaClient,
   ProcessingStage,
   type SentimentCategory,
   type SessionCategory,
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
+import { prisma } from "./prisma.js";
 import { ProcessingStatusManager } from "./processingStatusManager";
 import { getSchedulerConfig } from "./schedulerConfig";
 
-const prisma = new PrismaClient();
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-4o";

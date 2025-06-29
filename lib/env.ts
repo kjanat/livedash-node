@@ -103,6 +103,16 @@ export const env = {
     5
   ),
 
+  // Database Connection Pooling
+  DATABASE_CONNECTION_LIMIT: parseIntWithDefault(
+    process.env.DATABASE_CONNECTION_LIMIT,
+    20
+  ),
+  DATABASE_POOL_TIMEOUT: parseIntWithDefault(
+    process.env.DATABASE_POOL_TIMEOUT,
+    10
+  ),
+
   // Server
   PORT: parseIntWithDefault(process.env.PORT, 3000),
 } as const;

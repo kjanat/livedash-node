@@ -1,18 +1,13 @@
 // SessionImport to Session processor
-import {
-  PrismaClient,
-  ProcessingStage,
-  SentimentCategory,
-} from "@prisma/client";
+import { ProcessingStage, SentimentCategory } from "@prisma/client";
 import cron from "node-cron";
 import { getSchedulerConfig } from "./env";
+import { prisma } from "./prisma.js";
 import { ProcessingStatusManager } from "./processingStatusManager";
 import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
 } from "./transcriptFetcher";
-
-const prisma = new PrismaClient();
 
 interface ImportRecord {
   id: string;
