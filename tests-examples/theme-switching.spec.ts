@@ -30,11 +30,15 @@ test.describe("Theme Switching Visual Tests", () => {
     });
   });
 
-  test("User Management page should render correctly in light theme", async ({ page }) => {
+  test("User Management page should render correctly in light theme", async ({
+    page,
+  }) => {
     await page.goto("/dashboard/users");
 
     // Wait for content to load
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Ensure light theme is active
     await page.evaluate(() => {
@@ -52,11 +56,15 @@ test.describe("Theme Switching Visual Tests", () => {
     });
   });
 
-  test("User Management page should render correctly in dark theme", async ({ page }) => {
+  test("User Management page should render correctly in dark theme", async ({
+    page,
+  }) => {
     await page.goto("/dashboard/users");
 
     // Wait for content to load
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Enable dark theme
     await page.evaluate(() => {
@@ -78,12 +86,14 @@ test.describe("Theme Switching Visual Tests", () => {
     await page.goto("/dashboard/users");
 
     // Wait for content to load
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Find theme toggle button (assuming it exists in the layout)
     const themeToggle = page.locator('[data-testid="theme-toggle"]').first();
 
-    if (await themeToggle.count() > 0) {
+    if ((await themeToggle.count()) > 0) {
       // Start with light theme
       await page.evaluate(() => {
         document.documentElement.classList.remove("dark");
@@ -92,24 +102,34 @@ test.describe("Theme Switching Visual Tests", () => {
       await page.waitForTimeout(300);
 
       // Take screenshot before toggle
-      await expect(page.locator("main")).toHaveScreenshot("before-theme-toggle.png", {
-        animations: "disabled",
-      });
+      await expect(page.locator("main")).toHaveScreenshot(
+        "before-theme-toggle.png",
+        {
+          animations: "disabled",
+        }
+      );
 
       // Toggle to dark theme
       await themeToggle.click();
       await page.waitForTimeout(300);
 
       // Take screenshot after toggle
-      await expect(page.locator("main")).toHaveScreenshot("after-theme-toggle.png", {
-        animations: "disabled",
-      });
+      await expect(page.locator("main")).toHaveScreenshot(
+        "after-theme-toggle.png",
+        {
+          animations: "disabled",
+        }
+      );
     }
   });
 
-  test("Form elements should have proper styling in both themes", async ({ page }) => {
+  test("Form elements should have proper styling in both themes", async ({
+    page,
+  }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Test light theme form styling
     await page.evaluate(() => {
@@ -119,7 +139,7 @@ test.describe("Theme Switching Visual Tests", () => {
     await page.waitForTimeout(300);
 
     const formSection = page.locator('[data-testid="invite-form"]').first();
-    if (await formSection.count() > 0) {
+    if ((await formSection.count()) > 0) {
       await expect(formSection).toHaveScreenshot("form-light-theme.png", {
         animations: "disabled",
       });
@@ -132,7 +152,7 @@ test.describe("Theme Switching Visual Tests", () => {
     });
     await page.waitForTimeout(300);
 
-    if (await formSection.count() > 0) {
+    if ((await formSection.count()) > 0) {
       await expect(formSection).toHaveScreenshot("form-dark-theme.png", {
         animations: "disabled",
       });
@@ -141,7 +161,9 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("Table should render correctly in both themes", async ({ page }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     const table = page.locator("table").first();
     await table.waitFor({ timeout: 5000 });
@@ -171,11 +193,13 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("Badges should render correctly in both themes", async ({ page }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Wait for badges to load
     const badges = page.locator('[data-testid="role-badge"]');
-    if (await badges.count() > 0) {
+    if ((await badges.count()) > 0) {
       await badges.first().waitFor({ timeout: 5000 });
 
       // Light theme badges
@@ -204,7 +228,9 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("Focus states should be visible in both themes", async ({ page }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     const emailInput = page.locator('input[type="email"]').first();
     await emailInput.waitFor({ timeout: 5000 });
@@ -236,7 +262,9 @@ test.describe("Theme Switching Visual Tests", () => {
 
   test("Error states should be visible in both themes", async ({ page }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Mock error response
     await page.route("**/api/dashboard/users", async (route) => {
@@ -287,7 +315,7 @@ test.describe("Theme Switching Visual Tests", () => {
     // Mock slow loading
     await page.route("**/api/dashboard/users", async (route) => {
       if (route.request().method() === "GET") {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
         const json = { users: [] };
         await route.fulfill({ json });
       }
@@ -302,7 +330,7 @@ test.describe("Theme Switching Visual Tests", () => {
     });
 
     const loadingElement = page.locator('text="Loading users..."').first();
-    if (await loadingElement.count() > 0) {
+    if ((await loadingElement.count()) > 0) {
       await expect(loadingElement).toHaveScreenshot("loading-light-theme.png", {
         animations: "disabled",
       });
@@ -314,14 +342,16 @@ test.describe("Theme Switching Visual Tests", () => {
       document.documentElement.classList.add("dark");
     });
 
-    if (await loadingElement.count() > 0) {
+    if ((await loadingElement.count()) > 0) {
       await expect(loadingElement).toHaveScreenshot("loading-dark-theme.png", {
         animations: "disabled",
       });
     }
   });
 
-  test("Empty states should render correctly in both themes", async ({ page }) => {
+  test("Empty states should render correctly in both themes", async ({
+    page,
+  }) => {
     // Mock empty response
     await page.route("**/api/dashboard/users", async (route) => {
       if (route.request().method() === "GET") {
@@ -331,7 +361,9 @@ test.describe("Theme Switching Visual Tests", () => {
     });
 
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Wait for empty state
     await page.waitForSelector('text="No users found"', { timeout: 5000 });
@@ -344,9 +376,12 @@ test.describe("Theme Switching Visual Tests", () => {
     await page.waitForTimeout(300);
 
     const emptyState = page.locator('text="No users found"').first();
-    await expect(emptyState.locator("..")).toHaveScreenshot("empty-state-light.png", {
-      animations: "disabled",
-    });
+    await expect(emptyState.locator("..")).toHaveScreenshot(
+      "empty-state-light.png",
+      {
+        animations: "disabled",
+      }
+    );
 
     // Dark theme empty state
     await page.evaluate(() => {
@@ -355,14 +390,19 @@ test.describe("Theme Switching Visual Tests", () => {
     });
     await page.waitForTimeout(300);
 
-    await expect(emptyState.locator("..")).toHaveScreenshot("empty-state-dark.png", {
-      animations: "disabled",
-    });
+    await expect(emptyState.locator("..")).toHaveScreenshot(
+      "empty-state-dark.png",
+      {
+        animations: "disabled",
+      }
+    );
   });
 
   test("Theme transition should be smooth", async ({ page }) => {
     await page.goto("/dashboard/users");
-    await page.waitForSelector('[data-testid="user-management-page"]', { timeout: 10000 });
+    await page.waitForSelector('[data-testid="user-management-page"]', {
+      timeout: 10000,
+    });
 
     // Start with light theme
     await page.evaluate(() => {
@@ -374,7 +414,7 @@ test.describe("Theme Switching Visual Tests", () => {
     // Find theme toggle if it exists
     const themeToggle = page.locator('[data-testid="theme-toggle"]').first();
 
-    if (await themeToggle.count() > 0) {
+    if ((await themeToggle.count()) > 0) {
       // Record video during theme switch
       await page.video()?.path();
 

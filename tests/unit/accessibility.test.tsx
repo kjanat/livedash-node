@@ -23,7 +23,13 @@ const mockUseParams = vi.mocked(useParams);
 global.fetch = vi.fn();
 
 // Test wrapper with theme provider
-const TestWrapper = ({ children, theme = "light" }: { children: React.ReactNode; theme?: "light" | "dark" }) => (
+const TestWrapper = ({
+  children,
+  theme = "light",
+}: {
+  children: React.ReactNode;
+  theme?: "light" | "dark";
+}) => (
   <ThemeProvider attribute="class" defaultTheme={theme} enableSystem={false}>
     <div className={theme}>{children}</div>
   </ThemeProvider>
@@ -39,12 +45,13 @@ describe("Accessibility Tests", () => {
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          users: [
-            { id: "1", email: "admin@example.com", role: "ADMIN" },
-            { id: "2", email: "user@example.com", role: "USER" },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            users: [
+              { id: "1", email: "admin@example.com", role: "ADMIN" },
+              { id: "2", email: "user@example.com", role: "USER" },
+            ],
+          }),
       });
     });
 
@@ -84,11 +91,13 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Wait for form to load
-      const inviteButton = await screen.findByRole("button", { name: /invite user/i });
+      const inviteButton = await screen.findByRole("button", {
+        name: /invite user/i,
+      });
       expect(inviteButton).toBeInTheDocument();
-      
+
       // Check for proper form labels
       const emailInput = screen.getByLabelText("Email");
       const roleSelect = screen.getByRole("combobox");
@@ -107,9 +116,11 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Wait for form to load
-      const submitButton = await screen.findByRole("button", { name: /invite user/i });
+      const submitButton = await screen.findByRole("button", {
+        name: /invite user/i,
+      });
       const emailInput = screen.getByLabelText("Email");
       const roleSelect = screen.getByRole("combobox");
 
@@ -132,8 +143,8 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
-      // Wait for content to load 
+
+      // Wait for content to load
       await screen.findByRole("button", { name: /invite user/i });
 
       // Check table accessibility
@@ -156,7 +167,7 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Wait for content to load
       await screen.findByRole("button", { name: /invite user/i });
 
@@ -241,12 +252,13 @@ describe("Accessibility Tests", () => {
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          users: [
-            { id: "1", email: "admin@example.com", role: "ADMIN" },
-            { id: "2", email: "user@example.com", role: "USER" },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            users: [
+              { id: "1", email: "admin@example.com", role: "ADMIN" },
+              { id: "2", email: "user@example.com", role: "USER" },
+            ],
+          }),
       });
     });
 
@@ -260,7 +272,7 @@ describe("Accessibility Tests", () => {
       await screen.findByText("User Management");
 
       // Check that dark mode class is applied
-      const darkModeWrapper = container.querySelector('.dark');
+      const darkModeWrapper = container.querySelector(".dark");
       expect(darkModeWrapper).toBeInTheDocument();
 
       // Test form elements are visible in dark mode
@@ -279,9 +291,11 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Wait for form to load
-      const submitButton = await screen.findByRole("button", { name: /invite user/i });
+      const submitButton = await screen.findByRole("button", {
+        name: /invite user/i,
+      });
       const emailInput = screen.getByLabelText("Email");
       const roleSelect = screen.getByRole("combobox");
 
@@ -304,9 +318,11 @@ describe("Accessibility Tests", () => {
       );
 
       await screen.findByText("User Management");
-      
+
       // Wait for form to load
-      const submitButton = await screen.findByRole("button", { name: /invite user/i });
+      const submitButton = await screen.findByRole("button", {
+        name: /invite user/i,
+      });
       const emailInput = screen.getByLabelText("Email");
 
       // Focus indicators should be visible in dark mode
@@ -329,10 +345,10 @@ describe("Accessibility Tests", () => {
       // Run comprehensive accessibility check for dark mode
       const results = await axe(container, {
         rules: {
-          'color-contrast': { enabled: true }, // Specifically check contrast in dark mode
-        }
+          "color-contrast": { enabled: true }, // Specifically check contrast in dark mode
+        },
       });
-      
+
       // Should have no critical accessibility violations in dark mode
       expect(results.violations.length).toBeLessThan(5);
     });

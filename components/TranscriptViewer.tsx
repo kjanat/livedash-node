@@ -26,8 +26,8 @@ function formatTranscript(content: string): React.ReactNode[] {
 
   // Process each line
   lines.forEach((line) => {
-    line = line.trim();
-    if (!line) {
+    const trimmedLine = line.trim();
+    if (!trimmedLine) {
       // Empty line, ignore
       return;
     }
@@ -74,15 +74,17 @@ function formatTranscript(content: string): React.ReactNode[] {
       }
 
       // Set the new current speaker
-      currentSpeaker = line.startsWith("User:") ? "User" : "Assistant";
+      currentSpeaker = trimmedLine.startsWith("User:") ? "User" : "Assistant";
       // Add the content after "User:" or "Assistant:"
-      const messageContent = line.substring(line.indexOf(":") + 1).trim();
+      const messageContent = trimmedLine
+        .substring(trimmedLine.indexOf(":") + 1)
+        .trim();
       if (messageContent) {
         currentMessages.push(messageContent);
       }
     } else if (currentSpeaker) {
       // This is a continuation of the current speaker's message
-      currentMessages.push(line);
+      currentMessages.push(trimmedLine);
     }
   });
 

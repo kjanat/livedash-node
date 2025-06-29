@@ -94,7 +94,7 @@ export const BorderBeam = ({
             : [`${initialOffset}%`, `${100 + initialOffset}%`],
         }}
         transition={{
-          repeat: Infinity,
+          repeat: Number.POSITIVE_INFINITY,
           ease: "linear",
           duration,
           delay: -delay,

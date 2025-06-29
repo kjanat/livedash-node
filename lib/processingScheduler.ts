@@ -18,6 +18,36 @@ const DEFAULT_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
 const USD_TO_EUR_RATE = 0.85; // Update periodically or fetch from API
 
+// Type-safe OpenAI API response interfaces
+interface OpenAIUsage {
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  prompt_tokens_details?: {
+    cached_tokens?: number;
+    audio_tokens?: number;
+  };
+  completion_tokens_details?: {
+    reasoning_tokens?: number;
+    audio_tokens?: number;
+    accepted_prediction_tokens?: number;
+    rejected_prediction_tokens?: number;
+  };
+}
+
+interface OpenAIResponse {
+  id: string;
+  model: string;
+  service_tier?: string;
+  system_fingerprint?: string;
+  usage: OpenAIUsage;
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+}
+
 /**
  * Get company's default AI model
  */
@@ -100,13 +130,26 @@ interface ProcessingResult {
   error?: string;
 }
 
+interface SessionMessage {
+  id: string;
+  timestamp: Date;
+  role: string;
+  content: string;
+  order: number;
+}
+
+interface SessionForProcessing {
+  id: string;
+  messages: SessionMessage[];
+}
+
 /**
  * Record AI processing request with detailed token tracking
  */
 async function recordAIProcessingRequest(
   sessionId: string,
-  openaiResponse: any,
-  processingType: string = "session_analysis"
+  openaiResponse: OpenAIResponse,
+  processingType = "session_analysis"
 ): Promise<void> {
   const usage = openaiResponse.usage;
   const model = openaiResponse.model;
@@ -345,7 +388,8 @@ async function processTranscriptWithOpenAI(
       throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
     }
 
-    const openaiResponse: any = await response.json();
+    const openaiResponse: OpenAIResponse =
+      (await response.json()) as OpenAIResponse;
 
     // Record the AI processing request for cost tracking
     await recordAIProcessingRequest(
@@ -376,7 +420,7 @@ async function processTranscriptWithOpenAI(
 /**
  * Validates the OpenAI response against our expected schema
  */
-function validateOpenAIResponse(data: any): void {
+function validateOpenAIResponse(data: ProcessedData): void {
   const requiredFields = [
     "language",
     "sentiment",
@@ -459,7 +503,9 @@ function validateOpenAIResponse(data: any): void {
 /**
  * Process a single session
  */
-async function processSingleSession(session: any): Promise<ProcessingResult> {
+async function processSingleSession(
+  session: SessionForProcessing
+): Promise<ProcessingResult> {
   if (session.messages.length === 0) {
     return {
       sessionId: session.id,
@@ -478,7 +524,7 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
     // Convert messages back to transcript format for OpenAI processing
     const transcript = session.messages
       .map(
-        (msg: any) =>
+        (msg: SessionMessage) =>
           `[${new Date(msg.timestamp)
             .toLocaleString("en-GB", {
               day: "2-digit",
@@ -576,8 +622,8 @@ async function processSingleSession(session: any): Promise<ProcessingResult> {
  * Process sessions in parallel with concurrency limit
  */
 async function processSessionsInParallel(
-  sessions: any[],
-  maxConcurrency: number = 5
+  sessions: SessionForProcessing[],
+  maxConcurrency = 5
 ): Promise<ProcessingResult[]> {
   const results: Promise<ProcessingResult>[] = [];
   const executing: Promise<ProcessingResult>[] = [];
@@ -612,7 +658,7 @@ async function processSessionsInParallel(
  */
 export async function processUnprocessedSessions(
   batchSize: number | null = null,
-  maxConcurrency: number = 5
+  maxConcurrency = 5
 ): Promise<void> {
   process.stdout.write(
     "[ProcessingScheduler] Starting to process sessions needing AI analysis...\n"
@@ -651,7 +697,8 @@ export async function processUnprocessedSessions(
 
   // Filter to only sessions that have messages
   const sessionsWithMessages = sessionsToProcess.filter(
-    (session: any) => session.messages && session.messages.length > 0
+    (session): session is SessionForProcessing =>
+      session.messages && session.messages.length > 0
   );
 
   if (sessionsWithMessages.length === 0) {

@@ -14,6 +14,27 @@ import {
 
 const prisma = new PrismaClient();
 
+interface ImportRecord {
+  id: string;
+  companyId: string;
+  startTimeRaw: string;
+  endTimeRaw: string;
+  externalSessionId: string;
+  sessionId?: string;
+  userId?: string;
+  category?: string;
+  language?: string;
+  sentiment?: string;
+  escalated?: boolean;
+  forwardedHr?: boolean;
+  avgResponseTime?: number;
+  messagesSent?: number;
+  fullTranscriptUrl?: string;
+  rawTranscriptContent?: string;
+  aiSummary?: string;
+  initialMsg?: string;
+}
+
 /**
  * Parse European date format (DD.MM.YYYY HH:mm:ss) to JavaScript Date
  */
@@ -61,11 +82,11 @@ function _parseFallbackSentiment(
   const sentimentStr = sentimentRaw.toLowerCase();
   if (sentimentStr.includes("positive")) {
     return SentimentCategory.POSITIVE;
-  } else if (sentimentStr.includes("negative")) {
-    return SentimentCategory.NEGATIVE;
-  } else {
-    return SentimentCategory.NEUTRAL;
   }
+  if (sentimentStr.includes("negative")) {
+    return SentimentCategory.NEGATIVE;
+  }
+  return SentimentCategory.NEUTRAL;
 }
 
 /**
@@ -155,7 +176,7 @@ async function parseTranscriptIntoMessages(
  * Uses new unified processing status tracking
  */
 async function processSingleImport(
-  importRecord: any
+  importRecord: ImportRecord
 ): Promise<{ success: boolean; error?: string }> {
   let sessionId: string | null = null;
 
@@ -351,9 +372,7 @@ async function processSingleImport(
  * Process unprocessed SessionImport records into Session records
  * Uses new processing status system to find imports that need processing
  */
-export async function processQueuedImports(
-  batchSize: number = 50
-): Promise<void> {
+export async function processQueuedImports(batchSize = 50): Promise<void> {
   console.log("[Import Processor] Starting to process unprocessed imports...");
 
   let totalSuccessCount = 0;
@@ -454,7 +473,7 @@ export function startImportProcessingScheduler(): void {
 
   // Use a more frequent interval for import processing (every 5 minutes by default)
   const interval = process.env.IMPORT_PROCESSING_INTERVAL || "*/5 * * * *";
-  const batchSize = parseInt(
+  const batchSize = Number.parseInt(
     process.env.IMPORT_PROCESSING_BATCH_SIZE || "50",
     10
   );

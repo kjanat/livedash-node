@@ -12,8 +12,8 @@ export class AppError extends Error {
 
   constructor(
     message: string,
-    statusCode: number = 500,
-    isOperational: boolean = true,
+    statusCode = 500,
+    isOperational = true,
     errorCode?: string
   ) {
     super(message);
@@ -53,7 +53,7 @@ export class ValidationError extends AppError {
  * Authentication error - 401 Unauthorized
  */
 export class AuthError extends AppError {
-  constructor(message: string = "Authentication failed") {
+  constructor(message = "Authentication failed") {
     super(message, 401, true, "AUTH_ERROR");
   }
 }
@@ -66,7 +66,7 @@ export class AuthorizationError extends AppError {
   public readonly userRole?: string;
 
   constructor(
-    message: string = "Insufficient permissions",
+    message = "Insufficient permissions",
     requiredRole?: string,
     userRole?: string
   ) {
@@ -84,7 +84,7 @@ export class NotFoundError extends AppError {
   public readonly resourceId?: string;
 
   constructor(
-    message: string = "Resource not found",
+    message = "Resource not found",
     resource?: string,
     resourceId?: string
   ) {
@@ -112,7 +112,7 @@ export class ConflictError extends AppError {
 export class RateLimitError extends AppError {
   public readonly retryAfter?: number;
 
-  constructor(message: string = "Rate limit exceeded", retryAfter?: number) {
+  constructor(message = "Rate limit exceeded", retryAfter?: number) {
     super(message, 429, true, "RATE_LIMIT_ERROR");
     this.retryAfter = retryAfter;
   }
@@ -227,7 +227,7 @@ export function createErrorResponse(error: AppError) {
 /**
  * Utility function to log errors with context
  */
-export function logError(error: Error, context?: Record<string, any>) {
+export function logError(error: Error, context?: Record<string, unknown>) {
   const errorInfo = {
     name: error.name,
     message: error.message,

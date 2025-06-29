@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -516,7 +516,7 @@ export default function CompanyManagement() {
                       onChange={(e) =>
                         setEditData((prev) => ({
                           ...prev,
-                          maxUsers: parseInt(e.target.value),
+                          maxUsers: Number.parseInt(e.target.value),
                         }))
                       }
                       disabled={!canEdit}

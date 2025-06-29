@@ -139,7 +139,7 @@ export default function LandingPage() {
             {/* Feature Stack */}
             <div className="relative">
               {/* Connection Lines */}
-              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-purple-200 to-transparent dark:from-blue-800 dark:via-purple-800 transform -translate-x-1/2 z-0"></div>
+              <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-blue-200 via-purple-200 to-transparent dark:from-blue-800 dark:via-purple-800 transform -translate-x-1/2 z-0" />
 
               {/* Feature Cards */}
               <div className="space-y-16 relative z-10">
@@ -159,12 +159,12 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <Brain className="w-8 h-8 text-white" />
                   </div>
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                 </div>
 
                 {/* Smart Categorization */}
                 <div className="flex items-center gap-8 group">
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                   <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <MessageCircle className="w-8 h-8 text-white" />
                   </div>
@@ -197,12 +197,12 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <TrendingUp className="w-8 h-8 text-white" />
                   </div>
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                 </div>
 
                 {/* Enterprise Security */}
                 <div className="flex items-center gap-8 group">
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                   <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <Shield className="w-8 h-8 text-white" />
                   </div>
@@ -235,12 +235,12 @@ export default function LandingPage() {
                   <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <Zap className="w-8 h-8 text-white" />
                   </div>
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                 </div>
 
                 {/* Global Scale */}
                 <div className="flex items-center gap-8 group">
-                  <div className="flex-1"></div>
+                  <div className="flex-1" />
                   <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                     <Globe className="w-8 h-8 text-white" />
                   </div>

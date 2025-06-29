@@ -53,12 +53,16 @@ describe("Format Enums Utility", () => {
     });
 
     it("should handle lowercase enum values", () => {
-      expect(formatEnumValue("salary_compensation")).toBe("Salary Compensation");
+      expect(formatEnumValue("salary_compensation")).toBe(
+        "Salary Compensation"
+      );
       expect(formatEnumValue("schedule_hours")).toBe("Schedule Hours");
     });
 
     it("should handle mixed case enum values", () => {
-      expect(formatEnumValue("Salary_COMPENSATION")).toBe("Salary Compensation");
+      expect(formatEnumValue("Salary_COMPENSATION")).toBe(
+        "Salary Compensation"
+      );
       expect(formatEnumValue("Schedule_Hours")).toBe("Schedule Hours");
     });
 
@@ -69,12 +73,16 @@ describe("Format Enums Utility", () => {
     });
 
     it("should handle values with multiple consecutive underscores", () => {
-      expect(formatEnumValue("SALARY___COMPENSATION")).toBe("Salary   Compensation");
+      expect(formatEnumValue("SALARY___COMPENSATION")).toBe(
+        "Salary   Compensation"
+      );
       expect(formatEnumValue("TEST__CASE")).toBe("Test  Case");
     });
 
     it("should handle values with leading/trailing underscores", () => {
-      expect(formatEnumValue("_SALARY_COMPENSATION_")).toBe(" Salary Compensation ");
+      expect(formatEnumValue("_SALARY_COMPENSATION_")).toBe(
+        " Salary Compensation "
+      );
       expect(formatEnumValue("__TEST_CASE__")).toBe("  Test Case  ");
     });
 
@@ -89,9 +97,15 @@ describe("Format Enums Utility", () => {
     });
 
     it("should be case insensitive for known enums", () => {
-      expect(formatEnumValue("salary_compensation")).toBe("Salary Compensation");
-      expect(formatEnumValue("SALARY_COMPENSATION")).toBe("Salary & Compensation");
-      expect(formatEnumValue("Salary_Compensation")).toBe("Salary Compensation");
+      expect(formatEnumValue("salary_compensation")).toBe(
+        "Salary Compensation"
+      );
+      expect(formatEnumValue("SALARY_COMPENSATION")).toBe(
+        "Salary & Compensation"
+      );
+      expect(formatEnumValue("Salary_Compensation")).toBe(
+        "Salary Compensation"
+      );
     });
   });
 
@@ -193,12 +207,12 @@ describe("Format Enums Utility", () => {
         "BENEFITS_INSURANCE",
       ];
 
-      const formattedOptions = dropdownOptions.map(option => ({
+      const formattedOptions = dropdownOptions.map((option) => ({
         value: option,
         label: formatEnumValue(option),
       }));
 
-      formattedOptions.forEach(option => {
+      formattedOptions.forEach((option) => {
         expect(option.label).toBeTruthy();
         expect(option.label).not.toContain("_");
         expect(option.label?.[0]).toBe(option.label?.[0]?.toUpperCase());
@@ -206,14 +220,9 @@ describe("Format Enums Utility", () => {
     });
 
     it("should provide readable text for badges and labels", () => {
-      const badgeValues = [
-        "ADMIN",
-        "USER",
-        "AUDITOR",
-        "UNRECOGNIZED_OTHER",
-      ];
+      const badgeValues = ["ADMIN", "USER", "AUDITOR", "UNRECOGNIZED_OTHER"];
 
-      badgeValues.forEach(value => {
+      badgeValues.forEach((value) => {
         const formatted = formatEnumValue(value);
         expect(formatted).toBeTruthy();
         expect(formatted?.length).toBeGreaterThan(0);
@@ -254,7 +263,7 @@ describe("Format Enums Utility", () => {
         "MENTAL_HEALTH_SUPPORT",
       ];
 
-      futureEnums.forEach(value => {
+      futureEnums.forEach((value) => {
         const result = formatEnumValue(value);
         expect(result).toBeTruthy();
         expect(result).not.toContain("_");

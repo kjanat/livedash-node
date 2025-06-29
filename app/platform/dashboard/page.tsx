@@ -573,7 +573,7 @@ export default function PlatformDashboard() {
                           onChange={(e) =>
                             setNewCompanyData((prev) => ({
                               ...prev,
-                              maxUsers: parseInt(e.target.value) || 10,
+                              maxUsers: Number.parseInt(e.target.value) || 10,
                             }))
                           }
                           min="1"

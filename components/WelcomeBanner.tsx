@@ -48,7 +48,7 @@ export default function WelcomeBanner({ companyName }: WelcomeBannerProps) {
         <div className="bg-white/20 backdrop-blur-sm p-4 rounded-lg">
           <div className="text-sm opacity-75">Current Status</div>
           <div className="text-xl font-semibold flex items-center">
-            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+            <span className="inline-block w-2 h-2 bg-green-400 rounded-full mr-2" />
             All Systems Operational
           </div>
         </div>

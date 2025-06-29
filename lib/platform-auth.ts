@@ -78,7 +78,7 @@ export const platformAuthOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `platform-auth.session-token`,
+      name: "platform-auth.session-token",
       options: {
         httpOnly: true,
         sameSite: "lax",

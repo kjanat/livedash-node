@@ -58,9 +58,11 @@ export async function POST(request: NextRequest) {
 
     // Validate parameters
     const validatedBatchSize =
-      batchSize && batchSize > 0 ? parseInt(batchSize) : null;
+      batchSize && batchSize > 0 ? Number.parseInt(batchSize) : null;
     const validatedMaxConcurrency =
-      maxConcurrency && maxConcurrency > 0 ? parseInt(maxConcurrency) : 5;
+      maxConcurrency && maxConcurrency > 0
+        ? Number.parseInt(maxConcurrency)
+        : 5;
 
     // Check how many sessions need AI processing using the new status system
     const sessionsNeedingAI =

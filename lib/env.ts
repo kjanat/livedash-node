@@ -39,7 +39,7 @@ function parseIntWithDefault(
   const cleaned = parseEnvValue(value);
   if (!cleaned) return defaultValue;
 
-  const parsed = parseInt(cleaned, 10);
+  const parsed = Number.parseInt(cleaned, 10);
   return Number.isNaN(parsed) ? defaultValue : parsed;
 }
 

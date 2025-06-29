@@ -411,11 +411,11 @@ describe("User Invitation Integration Tests", () => {
 
       // Execute requests concurrently
       const results = await Promise.allSettled(
-        requests.map(req => POST(req as any))
+        requests.map((req) => POST(req as any))
       );
 
       // Only one should succeed, others should fail with conflict
-      const successful = results.filter(r => r.status === "fulfilled").length;
+      const successful = results.filter((r) => r.status === "fulfilled").length;
       expect(successful).toBe(1);
     });
   });
@@ -449,7 +449,7 @@ describe("User Invitation Integration Tests", () => {
       }
 
       // All should succeed (no rate limiting implemented yet)
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.status).toBe(201);
         expect(result.data.user.email).toBe(result.email);
       });

@@ -6,6 +6,16 @@ import {
 
 const prisma = new PrismaClient();
 
+// Type-safe metadata interfaces
+interface ProcessingMetadata {
+  [key: string]: string | number | boolean | null | undefined;
+}
+
+interface WhereClause {
+  status: ProcessingStatus;
+  stage?: ProcessingStage;
+}
+
 /**
  * Centralized processing status management
  */
@@ -39,7 +49,7 @@ export class ProcessingStatusManager {
   static async startStage(
     sessionId: string,
     stage: ProcessingStage,
-    metadata?: any
+    metadata?: ProcessingMetadata
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
@@ -67,7 +77,7 @@ export class ProcessingStatusManager {
   static async completeStage(
     sessionId: string,
     stage: ProcessingStage,
-    metadata?: any
+    metadata?: ProcessingMetadata
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
@@ -97,7 +107,7 @@ export class ProcessingStatusManager {
     sessionId: string,
     stage: ProcessingStage,
     errorMessage: string,
-    metadata?: any
+    metadata?: ProcessingMetadata
   ): Promise<void> {
     await prisma.sessionProcessingStatus.upsert({
       where: {
@@ -166,7 +176,7 @@ export class ProcessingStatusManager {
    */
   static async getSessionsNeedingProcessing(
     stage: ProcessingStage,
-    limit: number = 50
+    limit = 50
   ) {
     return await prisma.sessionProcessingStatus.findMany({
       where: {
@@ -245,7 +255,7 @@ export class ProcessingStatusManager {
    * Get sessions with failed processing
    */
   static async getFailedSessions(stage?: ProcessingStage) {
-    const where: any = {
+    const where: WhereClause = {
       status: ProcessingStatus.FAILED,
     };
 

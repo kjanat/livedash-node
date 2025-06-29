@@ -36,8 +36,8 @@ const DashboardPage: FC = () => {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
           <div className="relative">
-            <div className="animate-spin rounded-full h-12 w-12 border-2 border-muted border-t-primary mx-auto"></div>
-            <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border border-primary opacity-20 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-2 border-muted border-t-primary mx-auto" />
+            <div className="absolute inset-0 animate-ping rounded-full h-12 w-12 border border-primary opacity-20 mx-auto" />
           </div>
           <p className="text-lg text-muted-foreground animate-pulse">
             Loading dashboard...

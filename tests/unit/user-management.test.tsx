@@ -139,7 +139,9 @@ describe("UserManagementPage", () => {
       await waitFor(() => {
         expect(screen.getByLabelText("Email")).toBeInTheDocument();
         expect(screen.getByRole("combobox")).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: /invite user/i })).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /invite user/i })
+        ).toBeInTheDocument();
       });
     });
 
@@ -157,21 +159,31 @@ describe("UserManagementPage", () => {
         .mockResolvedValueOnce(mockInviteResponse)
         .mockResolvedValueOnce({
           ok: true,
-          json: () => Promise.resolve({ users: [...mockUsers, { id: "4", email: "new@example.com", role: "USER" }] }),
+          json: () =>
+            Promise.resolve({
+              users: [
+                ...mockUsers,
+                { id: "4", email: "new@example.com", role: "USER" },
+              ],
+            }),
         });
 
       render(<UserManagementPage />);
 
       await waitFor(() => {
         const emailInput = screen.getByLabelText("Email");
-        const submitButton = screen.getByRole("button", { name: /invite user/i });
+        const submitButton = screen.getByRole("button", {
+          name: /invite user/i,
+        });
 
         fireEvent.change(emailInput, { target: { value: "new@example.com" } });
         fireEvent.click(submitButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("User invited successfully!")).toBeInTheDocument();
+        expect(
+          screen.getByText("User invited successfully!")
+        ).toBeInTheDocument();
       });
     });
 
@@ -192,14 +204,20 @@ describe("UserManagementPage", () => {
 
       await waitFor(() => {
         const emailInput = screen.getByLabelText("Email");
-        const submitButton = screen.getByRole("button", { name: /invite user/i });
+        const submitButton = screen.getByRole("button", {
+          name: /invite user/i,
+        });
 
-        fireEvent.change(emailInput, { target: { value: "existing@example.com" } });
+        fireEvent.change(emailInput, {
+          target: { value: "existing@example.com" },
+        });
         fireEvent.click(submitButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText(/Failed to invite user: Email already exists/)).toBeInTheDocument();
+        expect(
+          screen.getByText(/Failed to invite user: Email already exists/)
+        ).toBeInTheDocument();
       });
     });
 
@@ -224,7 +242,9 @@ describe("UserManagementPage", () => {
 
       await waitFor(() => {
         const emailInput = screen.getByLabelText("Email") as HTMLInputElement;
-        const submitButton = screen.getByRole("button", { name: /invite user/i });
+        const submitButton = screen.getByRole("button", {
+          name: /invite user/i,
+        });
 
         fireEvent.change(emailInput, { target: { value: "new@example.com" } });
         fireEvent.click(submitButton);
@@ -249,7 +269,9 @@ describe("UserManagementPage", () => {
       render(<UserManagementPage />);
 
       await waitFor(() => {
-        const submitButton = screen.getByRole("button", { name: /invite user/i });
+        const submitButton = screen.getByRole("button", {
+          name: /invite user/i,
+        });
         fireEvent.click(submitButton);
 
         // HTML5 validation should prevent submission
@@ -326,7 +348,9 @@ describe("UserManagementPage", () => {
       mockFetch.mockRejectedValue(new Error("Network error"));
 
       // Mock console.error to avoid noise in tests
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       render(<UserManagementPage />);
 
@@ -346,20 +370,26 @@ describe("UserManagementPage", () => {
         .mockRejectedValueOnce(new Error("Network error"));
 
       // Mock console.error to avoid noise in tests
-      const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
 
       render(<UserManagementPage />);
 
       await waitFor(() => {
         const emailInput = screen.getByLabelText("Email");
-        const submitButton = screen.getByRole("button", { name: /invite user/i });
+        const submitButton = screen.getByRole("button", {
+          name: /invite user/i,
+        });
 
         fireEvent.change(emailInput, { target: { value: "test@example.com" } });
         fireEvent.click(submitButton);
       });
 
       await waitFor(() => {
-        expect(screen.getByText("Failed to invite user. Please try again.")).toBeInTheDocument();
+        expect(
+          screen.getByText("Failed to invite user. Please try again.")
+        ).toBeInTheDocument();
       });
 
       consoleSpy.mockRestore();

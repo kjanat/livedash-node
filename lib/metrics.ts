@@ -597,7 +597,7 @@ export function sessionMetrics(
     const peakHour = Object.entries(hourlySessionCounts).sort(
       ([, a], [, b]) => b - a
     )[0][0];
-    const peakHourNum = parseInt(peakHour.split(":")[0]);
+    const peakHourNum = Number.parseInt(peakHour.split(":")[0]);
     const endHour = (peakHourNum + 1) % 24;
     peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, "0")}:00`;
   }

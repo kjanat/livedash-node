@@ -28,12 +28,13 @@ describe("Keyboard Navigation Tests", () => {
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          users: [
-            { id: "1", email: "admin@example.com", role: "ADMIN" },
-            { id: "2", email: "user@example.com", role: "USER" },
-          ],
-        }),
+        json: () =>
+          Promise.resolve({
+            users: [
+              { id: "1", email: "admin@example.com", role: "ADMIN" },
+              { id: "2", email: "user@example.com", role: "USER" },
+            ],
+          }),
       });
     });
 
@@ -69,18 +70,21 @@ describe("Keyboard Navigation Tests", () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
 
       // Mock successful submission
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          users: [
-            { id: "1", email: "admin@example.com", role: "ADMIN" },
-            { id: "2", email: "user@example.com", role: "USER" },
-          ],
-        }),
-      }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ message: "User invited successfully" }),
-      });
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              users: [
+                { id: "1", email: "admin@example.com", role: "ADMIN" },
+                { id: "2", email: "user@example.com", role: "USER" },
+              ],
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: "User invited successfully" }),
+        });
 
       // Submit with Enter key
       fireEvent.keyDown(submitButton, { key: "Enter" });
@@ -101,18 +105,21 @@ describe("Keyboard Navigation Tests", () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
 
       // Mock successful submission
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({
-          users: [
-            { id: "1", email: "admin@example.com", role: "ADMIN" },
-            { id: "2", email: "user@example.com", role: "USER" },
-          ],
-        }),
-      }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ message: "User invited successfully" }),
-      });
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              users: [
+                { id: "1", email: "admin@example.com", role: "ADMIN" },
+                { id: "2", email: "user@example.com", role: "USER" },
+              ],
+            }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: "User invited successfully" }),
+        });
 
       // Activate with Space key
       submitButton.focus();
@@ -192,29 +199,30 @@ describe("Keyboard Navigation Tests", () => {
 
       (global.fetch as any).mockResolvedValue({
         ok: true,
-        json: () => Promise.resolve({
-          session: {
-            id: "test-session-id",
-            sessionId: "test-session-id",
-            startTime: new Date().toISOString(),
-            endTime: new Date().toISOString(),
-            category: "SALARY_COMPENSATION",
-            language: "en",
-            country: "US",
-            sentiment: "positive",
-            messagesSent: 5,
-            userId: "user-123",
-            fullTranscriptUrl: "https://example.com/transcript",
-            messages: [
-              {
-                id: "msg-1",
-                content: "Hello",
-                role: "user",
-                timestamp: new Date().toISOString(),
-              },
-            ],
-          },
-        }),
+        json: () =>
+          Promise.resolve({
+            session: {
+              id: "test-session-id",
+              sessionId: "test-session-id",
+              startTime: new Date().toISOString(),
+              endTime: new Date().toISOString(),
+              category: "SALARY_COMPENSATION",
+              language: "en",
+              country: "US",
+              sentiment: "positive",
+              messagesSent: 5,
+              userId: "user-123",
+              fullTranscriptUrl: "https://example.com/transcript",
+              messages: [
+                {
+                  id: "msg-1",
+                  content: "Hello",
+                  role: "user",
+                  timestamp: new Date().toISOString(),
+                },
+              ],
+            },
+          }),
       });
     });
 
@@ -223,7 +231,9 @@ describe("Keyboard Navigation Tests", () => {
 
       await screen.findByText("Session Details");
 
-      const backButton = screen.getByRole("button", { name: /return to sessions list/i });
+      const backButton = screen.getByRole("button", {
+        name: /return to sessions list/i,
+      });
 
       // Focus and activate with keyboard
       backButton.focus();
@@ -242,7 +252,9 @@ describe("Keyboard Navigation Tests", () => {
 
       await screen.findByText("Session Details");
 
-      const transcriptLink = screen.getByRole("link", { name: /open original transcript in new tab/i });
+      const transcriptLink = screen.getByRole("link", {
+        name: /open original transcript in new tab/i,
+      });
 
       // Focus the link
       transcriptLink.focus();
@@ -262,8 +274,12 @@ describe("Keyboard Navigation Tests", () => {
       await screen.findByText("Session Details");
 
       // Get all focusable elements
-      const backButton = screen.getByRole("button", { name: /return to sessions list/i });
-      const transcriptLink = screen.getByRole("link", { name: /open original transcript in new tab/i });
+      const backButton = screen.getByRole("button", {
+        name: /return to sessions list/i,
+      });
+      const transcriptLink = screen.getByRole("link", {
+        name: /open original transcript in new tab/i,
+      });
 
       // Test tab order
       backButton.focus();
@@ -284,11 +300,7 @@ describe("Keyboard Navigation Tests", () => {
 
     it("should support keyboard focus on chart elements", () => {
       render(
-        <ModernDonutChart
-          data={mockData}
-          title="Test Chart"
-          height={300}
-        />
+        <ModernDonutChart data={mockData} title="Test Chart" height={300} />
       );
 
       const chart = screen.getByRole("img", { name: /test chart/i });
@@ -303,11 +315,7 @@ describe("Keyboard Navigation Tests", () => {
 
     it("should handle keyboard interactions on chart", () => {
       render(
-        <ModernDonutChart
-          data={mockData}
-          title="Test Chart"
-          height={300}
-        />
+        <ModernDonutChart data={mockData} title="Test Chart" height={300} />
       );
 
       const chart = screen.getByRole("img", { name: /test chart/i });
@@ -326,11 +334,7 @@ describe("Keyboard Navigation Tests", () => {
 
     it("should provide keyboard alternative for chart interactions", () => {
       render(
-        <ModernDonutChart
-          data={mockData}
-          title="Test Chart"
-          height={300}
-        />
+        <ModernDonutChart data={mockData} title="Test Chart" height={300} />
       );
 
       // Chart should have ARIA label for screen readers
@@ -368,13 +372,15 @@ describe("Keyboard Navigation Tests", () => {
       fireEvent.change(emailInput, { target: { value: "test@example.com" } });
 
       // Mock successful response
-      (global.fetch as any).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ message: "User invited successfully" }),
-      }).mockResolvedValueOnce({
-        ok: true,
-        json: () => Promise.resolve({ users: [] }),
-      });
+      (global.fetch as any)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ message: "User invited successfully" }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve({ users: [] }),
+        });
 
       fireEvent.click(submitButton);
 
@@ -488,7 +494,7 @@ describe("Keyboard Navigation Tests", () => {
       // Mock high contrast media query
       Object.defineProperty(window, "matchMedia", {
         writable: true,
-        value: vi.fn().mockImplementation(query => ({
+        value: vi.fn().mockImplementation((query) => ({
           matches: query === "(prefers-contrast: high)",
           media: query,
           onchange: null,

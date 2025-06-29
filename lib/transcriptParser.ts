@@ -28,12 +28,12 @@ function parseEuropeanDate(dateStr: string): Date {
 
   const [, day, month, year, hour, minute, second] = match;
   return new Date(
-    parseInt(year, 10),
-    parseInt(month, 10) - 1, // JavaScript months are 0-indexed
-    parseInt(day, 10),
-    parseInt(hour, 10),
-    parseInt(minute, 10),
-    parseInt(second, 10)
+    Number.parseInt(year, 10),
+    Number.parseInt(month, 10) - 1, // JavaScript months are 0-indexed
+    Number.parseInt(day, 10),
+    Number.parseInt(hour, 10),
+    Number.parseInt(minute, 10),
+    Number.parseInt(second, 10)
   );
 }
 
@@ -156,13 +156,21 @@ export function parseTranscriptToMessages(
     }
 
     // Calculate timestamps - use parsed timestamps if available, otherwise distribute across session duration
-    const hasTimestamps = messages.some((msg) => (msg as any).timestamp);
+    interface MessageWithTimestamp extends ParsedMessage {
+      timestamp: Date | string;
+    }
+    const hasTimestamps = messages.some(
+      (msg) => (msg as MessageWithTimestamp).timestamp
+    );
 
     if (hasTimestamps) {
       // Use parsed timestamps from the transcript
       messages.forEach((message, index) => {
-        const msgWithTimestamp = message as any;
-        if (msgWithTimestamp.timestamp) {
+        const msgWithTimestamp = message as MessageWithTimestamp;
+        if (
+          msgWithTimestamp.timestamp &&
+          typeof msgWithTimestamp.timestamp === "string"
+        ) {
           try {
             message.timestamp = parseEuropeanDate(msgWithTimestamp.timestamp);
           } catch (_error) {
@@ -279,7 +287,9 @@ export async function processSessionTranscript(
   }
 
   // Store the messages
-  await storeMessagesForSession(sessionId, parseResult.messages!);
+  if (parseResult.messages) {
+    await storeMessagesForSession(sessionId, parseResult.messages);
+  }
 
   console.log(
     `✅ Processed ${parseResult.messages?.length} messages for session ${sessionId}`
@@ -329,7 +339,7 @@ export async function processAllUnparsedTranscripts(): Promise<void> {
     }
   }
 
-  console.log(`\n📊 Processing complete:`);
+  console.log("\n📊 Processing complete:");
   console.log(`  ✅ Successfully processed: ${processed} sessions`);
   console.log(`  ❌ Errors: ${errors} sessions`);
   console.log(`  📝 Total messages created: ${await getTotalMessageCount()}`);
