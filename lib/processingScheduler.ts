@@ -7,10 +7,15 @@ import {
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
+import { withRetry } from "./database-retry.js";
 import { prisma } from "./prisma.js";
-import { ProcessingStatusManager } from "./processingStatusManager";
+import {
+  completeStage,
+  failStage,
+  getSessionsNeedingProcessing,
+  startStage,
+} from "./processingStatusManager.js";
 import { getSchedulerConfig } from "./schedulerConfig";
-import { withRetry, isRetryableError } from "./database-retry.js";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const OPENAI_API_URL = "https://api.openai.com/v1/chat/completions";
@@ -516,10 +521,7 @@ async function processSingleSession(
 
   try {
     // Mark AI analysis as started
-    await ProcessingStatusManager.startStage(
-      session.id,
-      ProcessingStage.AI_ANALYSIS
-    );
+    await startStage(session.id, ProcessingStage.AI_ANALYSIS);
 
     // Convert messages back to transcript format for OpenAI processing
     const transcript = session.messages
@@ -569,34 +571,23 @@ async function processSingleSession(
     });
 
     // Mark AI analysis as completed
-    await ProcessingStatusManager.completeStage(
-      session.id,
-      ProcessingStage.AI_ANALYSIS,
-      {
-        language: processedData.language,
-        sentiment: processedData.sentiment,
-        category: processedData.category,
-        questionsCount: processedData.questions.length,
-      }
-    );
+    await completeStage(session.id, ProcessingStage.AI_ANALYSIS, {
+      language: processedData.language,
+      sentiment: processedData.sentiment,
+      category: processedData.category,
+      questionsCount: processedData.questions.length,
+    });
 
     // Start question extraction stage
-    await ProcessingStatusManager.startStage(
-      session.id,
-      ProcessingStage.QUESTION_EXTRACTION
-    );
+    await startStage(session.id, ProcessingStage.QUESTION_EXTRACTION);
 
     // Process questions into separate tables
     await processQuestions(session.id, processedData.questions);
 
     // Mark question extraction as completed
-    await ProcessingStatusManager.completeStage(
-      session.id,
-      ProcessingStage.QUESTION_EXTRACTION,
-      {
-        questionsProcessed: processedData.questions.length,
-      }
-    );
+    await completeStage(session.id, ProcessingStage.QUESTION_EXTRACTION, {
+      questionsProcessed: processedData.questions.length,
+    });
 
     return {
       sessionId: session.id,
@@ -604,7 +595,7 @@ async function processSingleSession(
     };
   } catch (error) {
     // Mark AI analysis as failed
-    await ProcessingStatusManager.failStage(
+    await failStage(
       session.id,
       ProcessingStage.AI_ANALYSIS,
       error instanceof Error ? error.message : String(error)
@@ -688,11 +679,10 @@ async function processUnprocessedSessionsInternal(
   maxConcurrency = 5
 ): Promise<void> {
   // Get sessions that need AI processing using the new status system
-  const sessionsNeedingAI =
-    await ProcessingStatusManager.getSessionsNeedingProcessing(
-      ProcessingStage.AI_ANALYSIS,
-      batchSize || 50
-    );
+  const sessionsNeedingAI = await getSessionsNeedingProcessing(
+    ProcessingStage.AI_ANALYSIS,
+    batchSize || 50
+  );
 
   if (sessionsNeedingAI.length === 0) {
     process.stdout.write(

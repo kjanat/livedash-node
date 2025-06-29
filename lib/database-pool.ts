@@ -33,19 +33,19 @@ const createConnectionPool = () => {
   });
 
   // Connection pool event handlers
-  pool.on("connect", (_client) => {
+  pool.on("connect", () => {
     console.log(
       `Database connection established. Active connections: ${pool.totalCount}`
     );
   });
 
-  pool.on("acquire", (_client) => {
+  pool.on("acquire", () => {
     console.log(
       `Connection acquired from pool. Waiting: ${pool.waitingCount}, Idle: ${pool.idleCount}`
     );
   });
 
-  pool.on("release", (_client) => {
+  pool.on("release", () => {
     console.log(
       `Connection released to pool. Active: ${pool.totalCount - pool.idleCount}, Idle: ${pool.idleCount}`
     );
@@ -55,7 +55,7 @@ const createConnectionPool = () => {
     console.error("Database pool error:", err);
   });
 
-  pool.on("remove", (_client) => {
+  pool.on("remove", () => {
     console.log(
       `Connection removed from pool. Total connections: ${pool.totalCount}`
     );

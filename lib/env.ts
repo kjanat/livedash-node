@@ -103,6 +103,10 @@ export const env = {
     5
   ),
 
+  // Database Configuration
+  DATABASE_URL: parseEnvValue(process.env.DATABASE_URL) || "",
+  DATABASE_URL_DIRECT: parseEnvValue(process.env.DATABASE_URL_DIRECT) || "",
+  
   // Database Connection Pooling
   DATABASE_CONNECTION_LIMIT: parseIntWithDefault(
     process.env.DATABASE_CONNECTION_LIMIT,
@@ -122,6 +126,10 @@ export const env = {
  */
 export function validateEnv(): { valid: boolean; errors: string[] } {
   const errors: string[] = [];
+
+  if (!env.DATABASE_URL) {
+    errors.push("DATABASE_URL is required");
+  }
 
   if (!env.NEXTAUTH_SECRET) {
     errors.push("NEXTAUTH_SECRET is required");

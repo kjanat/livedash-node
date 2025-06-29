@@ -1,14 +1,20 @@
 // SessionImport to Session processor
 import { ProcessingStage, SentimentCategory } from "@prisma/client";
 import cron from "node-cron";
+import { withRetry } from "./database-retry.js";
 import { getSchedulerConfig } from "./env";
 import { prisma } from "./prisma.js";
-import { ProcessingStatusManager } from "./processingStatusManager";
+import {
+  completeStage,
+  failStage,
+  initializeSession,
+  skipStage,
+  startStage,
+} from "./processingStatusManager.js";
 import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
 } from "./transcriptFetcher";
-import { withRetry, isRetryableError } from "./database-retry.js";
 
 interface ImportRecord {
   id: string;
@@ -168,6 +174,160 @@ async function parseTranscriptIntoMessages(
 }
 
 /**
+ * Create or update a Session record from ImportRecord
+ */
+async function createSession(importRecord: ImportRecord): Promise<string> {
+  const startTime = parseEuropeanDate(importRecord.startTimeRaw);
+  const endTime = parseEuropeanDate(importRecord.endTimeRaw);
+
+  console.log(
+    `[Import Processor] Processing ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`
+  );
+
+  const session = await prisma.session.upsert({
+    where: {
+      importId: importRecord.id,
+    },
+    update: {
+      startTime,
+      endTime,
+      ipAddress: importRecord.ipAddress,
+      country: importRecord.countryCode,
+      fullTranscriptUrl: importRecord.fullTranscriptUrl,
+      avgResponseTime: importRecord.avgResponseTimeSeconds,
+      initialMsg: importRecord.initialMessage,
+    },
+    create: {
+      companyId: importRecord.companyId,
+      importId: importRecord.id,
+      startTime,
+      endTime,
+      ipAddress: importRecord.ipAddress,
+      country: importRecord.countryCode,
+      fullTranscriptUrl: importRecord.fullTranscriptUrl,
+      avgResponseTime: importRecord.avgResponseTimeSeconds,
+      initialMsg: importRecord.initialMessage,
+    },
+  });
+
+  return session.id;
+}
+
+/**
+ * Handle transcript fetching for a session
+ */
+async function handleTranscriptFetching(
+  sessionId: string,
+  importRecord: ImportRecord
+): Promise<string | null> {
+  let transcriptContent = importRecord.rawTranscriptContent;
+
+  if (
+    !transcriptContent &&
+    importRecord.fullTranscriptUrl &&
+    isValidTranscriptUrl(importRecord.fullTranscriptUrl)
+  ) {
+    await startStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH);
+
+    console.log(
+      `[Import Processor] Fetching transcript for ${importRecord.externalSessionId}...`
+    );
+
+    const company = await prisma.company.findUnique({
+      where: { id: importRecord.companyId },
+      select: { csvUsername: true, csvPassword: true },
+    });
+
+    const transcriptResult = await fetchTranscriptContent(
+      importRecord.fullTranscriptUrl,
+      company?.csvUsername || undefined,
+      company?.csvPassword || undefined
+    );
+
+    if (transcriptResult.success) {
+      transcriptContent = transcriptResult.content;
+      console.log(
+        `[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`
+      );
+
+      await prisma.sessionImport.update({
+        where: { id: importRecord.id },
+        data: { rawTranscriptContent: transcriptContent },
+      });
+
+      await completeStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, {
+        contentLength: transcriptContent?.length || 0,
+        url: importRecord.fullTranscriptUrl,
+      });
+    } else {
+      console.log(
+        `[Import Processor] ⚠️ Failed to fetch transcript for ${importRecord.externalSessionId}: ${transcriptResult.error}`
+      );
+      await failStage(
+        sessionId,
+        ProcessingStage.TRANSCRIPT_FETCH,
+        transcriptResult.error || "Unknown error"
+      );
+    }
+  } else if (!importRecord.fullTranscriptUrl) {
+    await skipStage(
+      sessionId,
+      ProcessingStage.TRANSCRIPT_FETCH,
+      "No transcript URL provided"
+    );
+  } else {
+    await completeStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, {
+      contentLength: transcriptContent?.length || 0,
+      source: "already_fetched",
+    });
+  }
+
+  return transcriptContent;
+}
+
+/**
+ * Handle session creation (message parsing)
+ */
+async function handleSessionCreation(
+  sessionId: string,
+  transcriptContent: string | null
+): Promise<void> {
+  await startStage(sessionId, ProcessingStage.SESSION_CREATION);
+
+  if (transcriptContent) {
+    await parseTranscriptIntoMessages(sessionId, transcriptContent);
+  }
+
+  await completeStage(sessionId, ProcessingStage.SESSION_CREATION, {
+    hasTranscript: !!transcriptContent,
+    transcriptLength: transcriptContent?.length || 0,
+  });
+}
+
+/**
+ * Handle errors and mark appropriate stage as failed
+ */
+async function handleProcessingError(
+  sessionId: string | null,
+  error: unknown
+): Promise<void> {
+  if (!sessionId) return;
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  if (errorMessage.includes("transcript") || errorMessage.includes("fetch")) {
+    await failStage(sessionId, ProcessingStage.TRANSCRIPT_FETCH, errorMessage);
+  } else if (
+    errorMessage.includes("message") ||
+    errorMessage.includes("parse")
+  ) {
+    await failStage(sessionId, ProcessingStage.SESSION_CREATION, errorMessage);
+  } else {
+    await failStage(sessionId, ProcessingStage.CSV_IMPORT, errorMessage);
+  }
+}
+
+/**
  * Process a single SessionImport record into a Session record
  * Uses new unified processing status tracking
  */
@@ -177,189 +337,22 @@ async function processSingleImport(
   let sessionId: string | null = null;
 
   try {
-    // Parse dates using European format parser
-    const startTime = parseEuropeanDate(importRecord.startTimeRaw);
-    const endTime = parseEuropeanDate(importRecord.endTimeRaw);
+    sessionId = await createSession(importRecord);
+    await initializeSession(sessionId);
+    await completeStage(sessionId, ProcessingStage.CSV_IMPORT);
 
-    console.log(
-      `[Import Processor] Processing ${importRecord.externalSessionId}: ${startTime.toISOString()} - ${endTime.toISOString()}`
-    );
-
-    // Create or update Session record with MINIMAL processing
-    const session = await prisma.session.upsert({
-      where: {
-        importId: importRecord.id,
-      },
-      update: {
-        startTime,
-        endTime,
-        // Direct copies (minimal processing)
-        ipAddress: importRecord.ipAddress,
-        country: importRecord.countryCode, // Keep as country code
-        fullTranscriptUrl: importRecord.fullTranscriptUrl,
-        avgResponseTime: importRecord.avgResponseTimeSeconds,
-        initialMsg: importRecord.initialMessage,
-      },
-      create: {
-        companyId: importRecord.companyId,
-        importId: importRecord.id,
-        startTime,
-        endTime,
-        // Direct copies (minimal processing)
-        ipAddress: importRecord.ipAddress,
-        country: importRecord.countryCode, // Keep as country code
-        fullTranscriptUrl: importRecord.fullTranscriptUrl,
-        avgResponseTime: importRecord.avgResponseTimeSeconds,
-        initialMsg: importRecord.initialMessage,
-      },
-    });
-
-    sessionId = session.id;
-
-    // Initialize processing status for this session
-    await ProcessingStatusManager.initializeSession(sessionId);
-
-    // Mark CSV_IMPORT as completed
-    await ProcessingStatusManager.completeStage(
+    const transcriptContent = await handleTranscriptFetching(
       sessionId,
-      ProcessingStage.CSV_IMPORT
+      importRecord
     );
-
-    // Handle transcript fetching
-    let transcriptContent = importRecord.rawTranscriptContent;
-
-    if (
-      !transcriptContent &&
-      importRecord.fullTranscriptUrl &&
-      isValidTranscriptUrl(importRecord.fullTranscriptUrl)
-    ) {
-      await ProcessingStatusManager.startStage(
-        sessionId,
-        ProcessingStage.TRANSCRIPT_FETCH
-      );
-
-      console.log(
-        `[Import Processor] Fetching transcript for ${importRecord.externalSessionId}...`
-      );
-
-      // Get company credentials for transcript fetching
-      const company = await prisma.company.findUnique({
-        where: { id: importRecord.companyId },
-        select: { csvUsername: true, csvPassword: true },
-      });
-
-      const transcriptResult = await fetchTranscriptContent(
-        importRecord.fullTranscriptUrl,
-        company?.csvUsername || undefined,
-        company?.csvPassword || undefined
-      );
-
-      if (transcriptResult.success) {
-        transcriptContent = transcriptResult.content;
-        console.log(
-          `[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`
-        );
-
-        // Update the import record with the fetched content
-        await prisma.sessionImport.update({
-          where: { id: importRecord.id },
-          data: { rawTranscriptContent: transcriptContent },
-        });
-
-        await ProcessingStatusManager.completeStage(
-          sessionId,
-          ProcessingStage.TRANSCRIPT_FETCH,
-          {
-            contentLength: transcriptContent?.length || 0,
-            url: importRecord.fullTranscriptUrl,
-          }
-        );
-      } else {
-        console.log(
-          `[Import Processor] ⚠️ Failed to fetch transcript for ${importRecord.externalSessionId}: ${transcriptResult.error}`
-        );
-        await ProcessingStatusManager.failStage(
-          sessionId,
-          ProcessingStage.TRANSCRIPT_FETCH,
-          transcriptResult.error || "Unknown error"
-        );
-      }
-    } else if (!importRecord.fullTranscriptUrl) {
-      // No transcript URL available - skip this stage
-      await ProcessingStatusManager.skipStage(
-        sessionId,
-        ProcessingStage.TRANSCRIPT_FETCH,
-        "No transcript URL provided"
-      );
-    } else {
-      // Transcript already fetched
-      await ProcessingStatusManager.completeStage(
-        sessionId,
-        ProcessingStage.TRANSCRIPT_FETCH,
-        {
-          contentLength: transcriptContent?.length || 0,
-          source: "already_fetched",
-        }
-      );
-    }
-
-    // Handle session creation (parse messages)
-    await ProcessingStatusManager.startStage(
-      sessionId,
-      ProcessingStage.SESSION_CREATION
-    );
-
-    if (transcriptContent) {
-      await parseTranscriptIntoMessages(sessionId, transcriptContent);
-    }
-
-    await ProcessingStatusManager.completeStage(
-      sessionId,
-      ProcessingStage.SESSION_CREATION,
-      {
-        hasTranscript: !!transcriptContent,
-        transcriptLength: transcriptContent?.length || 0,
-      }
-    );
+    await handleSessionCreation(sessionId, transcriptContent);
 
     return { success: true };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Mark the current stage as failed if we have a sessionId
-    if (sessionId) {
-      // Determine which stage failed based on the error
-      if (
-        errorMessage.includes("transcript") ||
-        errorMessage.includes("fetch")
-      ) {
-        await ProcessingStatusManager.failStage(
-          sessionId,
-          ProcessingStage.TRANSCRIPT_FETCH,
-          errorMessage
-        );
-      } else if (
-        errorMessage.includes("message") ||
-        errorMessage.includes("parse")
-      ) {
-        await ProcessingStatusManager.failStage(
-          sessionId,
-          ProcessingStage.SESSION_CREATION,
-          errorMessage
-        );
-      } else {
-        // General failure - mark CSV_IMPORT as failed
-        await ProcessingStatusManager.failStage(
-          sessionId,
-          ProcessingStage.CSV_IMPORT,
-          errorMessage
-        );
-      }
-    }
-
+    await handleProcessingError(sessionId, error);
     return {
       success: false,
-      error: errorMessage,
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
