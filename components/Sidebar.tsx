@@ -315,6 +315,7 @@ export default function Sidebar({
                 viewBox="0 0 24 24"
                 stroke="currentColor"
               >
+                <title>Analytics Chart</title>
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"

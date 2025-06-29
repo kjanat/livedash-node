@@ -13,7 +13,7 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +37,17 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const searchHeadingId = useId();
+  const filtersHeadingId = useId();
+  const filterContentId = useId();
+  const categoryFilterId = useId();
+  const categoryHelpId = useId();
+  const languageFilterId = useId();
+  const languageHelpId = useId();
+  const sortOrderId = useId();
+  const sortOrderHelpId = useId();
+  const resultsHeadingId = useId();
 
   // Filter states
   const [filterOptions, setFilterOptions] = useState<FilterOptions>({
@@ -156,8 +167,8 @@ export default function SessionsPage() {
       </Card>
 
       {/* Search Input */}
-      <section aria-labelledby="search-heading">
-        <h2 id="search-heading" className="sr-only">
+      <section aria-labelledby={searchHeadingId}>
+        <h2 id={searchHeadingId} className="sr-only">
           Search Sessions
         </h2>
         <Card>
@@ -180,13 +191,13 @@ export default function SessionsPage() {
       </section>
 
       {/* Filter and Sort Controls */}
-      <section aria-labelledby="filters-heading">
+      <section aria-labelledby={filtersHeadingId}>
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Filter className="h-5 w-5" aria-hidden="true" />
-                <CardTitle as="h2" id="filters-heading" className="text-lg">
+                <CardTitle as="h2" id={filtersHeadingId} className="text-lg">
                   Filters & Sorting
                 </CardTitle>
               </div>
@@ -196,7 +207,7 @@ export default function SessionsPage() {
                 onClick={() => setFiltersExpanded(!filtersExpanded)}
                 className="gap-2"
                 aria-expanded={filtersExpanded}
-                aria-controls="filter-content"
+                aria-controls={filterContentId}
               >
                 {filtersExpanded ? (
                   <>
@@ -213,7 +224,7 @@ export default function SessionsPage() {
             </div>
           </CardHeader>
           {filtersExpanded && (
-            <CardContent id="filter-content">
+            <CardContent id={filterContentId}>
               <fieldset>
                 <legend className="sr-only">
                   Session Filters and Sorting Options
@@ -221,13 +232,13 @@ export default function SessionsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                   {/* Category Filter */}
                   <div className="space-y-2">
-                    <Label htmlFor="category-filter">Category</Label>
+                    <Label htmlFor={categoryFilterId}>Category</Label>
                     <select
-                      id="category-filter"
+                      id={categoryFilterId}
                       className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
-                      aria-describedby="category-help"
+                      aria-describedby={categoryHelpId}
                     >
                       <option value="">All Categories</option>
                       {filterOptions.categories.map((cat) => (
@@ -236,20 +247,20 @@ export default function SessionsPage() {
                         </option>
                       ))}
                     </select>
-                    <div id="category-help" className="sr-only">
+                    <div id={categoryHelpId} className="sr-only">
                       Filter sessions by category type
                     </div>
                   </div>
 
                   {/* Language Filter */}
                   <div className="space-y-2">
-                    <Label htmlFor="language-filter">Language</Label>
+                    <Label htmlFor={languageFilterId}>Language</Label>
                     <select
-                      id="language-filter"
+                      id={languageFilterId}
                       className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       value={selectedLanguage}
                       onChange={(e) => setSelectedLanguage(e.target.value)}
-                      aria-describedby="language-help"
+                      aria-describedby={languageHelpId}
                     >
                       <option value="">All Languages</option>
                       {filterOptions.languages.map((lang) => (
@@ -258,7 +269,7 @@ export default function SessionsPage() {
                         </option>
                       ))}
                     </select>
-                    <div id="language-help" className="sr-only">
+                    <div id={languageHelpId} className="sr-only">
                       Filter sessions by language
                     </div>
                   </div>
@@ -319,20 +330,20 @@ export default function SessionsPage() {
 
                   {/* Sort Order */}
                   <div className="space-y-2">
-                    <Label htmlFor="sort-order">Order</Label>
+                    <Label htmlFor={sortOrderId}>Order</Label>
                     <select
-                      id="sort-order"
+                      id={sortOrderId}
                       className="w-full h-10 px-3 py-2 text-sm rounded-md border border-input bg-background ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                       value={sortOrder}
                       onChange={(e) =>
                         setSortOrder(e.target.value as "asc" | "desc")
                       }
-                      aria-describedby="sort-order-help"
+                      aria-describedby={sortOrderHelpId}
                     >
                       <option value="desc">Descending</option>
                       <option value="asc">Ascending</option>
                     </select>
-                    <div id="sort-order-help" className="sr-only">
+                    <div id={sortOrderHelpId} className="sr-only">
                       Choose ascending or descending order
                     </div>
                   </div>
@@ -344,13 +355,13 @@ export default function SessionsPage() {
       </section>
 
       {/* Results section */}
-      <section aria-labelledby="results-heading">
-        <h2 id="results-heading" className="sr-only">
+      <section aria-labelledby={resultsHeadingId}>
+        <h2 id={resultsHeadingId} className="sr-only">
           Session Results
         </h2>
 
         {/* Live region for screen reader announcements */}
-        <div role="status" aria-live="polite" className="sr-only">
+        <output aria-live="polite" className="sr-only">
           {loading && "Loading sessions..."}
           {error && `Error loading sessions: ${error}`}
           {!loading &&
@@ -358,7 +369,7 @@ export default function SessionsPage() {
             sessions.length > 0 &&
             `Found ${sessions.length} sessions`}
           {!loading && !error && sessions.length === 0 && "No sessions found"}
-        </div>
+        </output>
 
         {/* Loading State */}
         {loading && (

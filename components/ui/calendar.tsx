@@ -14,7 +14,13 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const CalendarRoot = ({ className, rootRef, ...props }: any) => {
+interface CalendarRootProps {
+  className?: string;
+  rootRef?: React.Ref<HTMLDivElement>;
+  [key: string]: unknown;
+}
+
+const CalendarRoot = ({ className, rootRef, ...props }: CalendarRootProps) => {
   return (
     <div
       data-slot="calendar"
@@ -25,7 +31,17 @@ const CalendarRoot = ({ className, rootRef, ...props }: any) => {
   );
 };
 
-const CalendarChevron = ({ className, orientation, ...props }: any) => {
+interface CalendarChevronProps {
+  className?: string;
+  orientation: "left" | "right" | "up" | "down";
+  [key: string]: unknown;
+}
+
+const CalendarChevron = ({
+  className,
+  orientation,
+  ...props
+}: CalendarChevronProps) => {
   if (orientation === "left") {
     return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
   }
@@ -43,7 +59,15 @@ const CalendarChevron = ({ className, orientation, ...props }: any) => {
   return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
 };
 
-const CalendarWeekNumber = ({ children, ...props }: any) => {
+interface CalendarWeekNumberProps {
+  children: React.ReactNode;
+  [key: string]: unknown;
+}
+
+const CalendarWeekNumber = ({
+  children,
+  ...props
+}: CalendarWeekNumberProps) => {
   return (
     <td {...props}>
       <div className="flex size-9 items-center justify-center p-0 text-sm">

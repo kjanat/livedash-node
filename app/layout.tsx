@@ -126,6 +126,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script
           type="application/ld+json"
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe use for JSON-LD structured data
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>

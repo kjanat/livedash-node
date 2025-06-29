@@ -13,7 +13,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -118,6 +118,29 @@ export default function PlatformDashboard() {
     maxUsers: 10,
   });
 
+  const companyNameId = useId();
+  const csvUrlId = useId();
+  const csvUsernameId = useId();
+  const csvPasswordId = useId();
+  const adminNameId = useId();
+  const adminEmailId = useId();
+  const adminPasswordId = useId();
+  const maxUsersId = useId();
+
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      const response = await fetch("/api/platform/companies");
+      if (response.ok) {
+        const data = await response.json();
+        setDashboardData(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch dashboard data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (status === "loading") return;
 
@@ -150,20 +173,6 @@ export default function PlatformDashboard() {
     return dashboardData.companies.filter((company) =>
       company.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  };
-
-  const fetchDashboardData = async () => {
-    try {
-      const response = await fetch("/api/platform/companies");
-      if (response.ok) {
-        const data = await response.json();
-        setDashboardData(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleCreateCompany = async () => {
@@ -455,9 +464,9 @@ export default function PlatformDashboard() {
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="companyName">Company Name *</Label>
+                        <Label htmlFor={companyNameId}>Company Name *</Label>
                         <Input
-                          id="companyName"
+                          id={companyNameId}
                           value={newCompanyData.name}
                           onChange={(e) =>
                             setNewCompanyData((prev) => ({
@@ -469,9 +478,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="csvUrl">CSV Data URL *</Label>
+                        <Label htmlFor={csvUrlId}>CSV Data URL *</Label>
                         <Input
-                          id="csvUrl"
+                          id={csvUrlId}
                           value={newCompanyData.csvUrl}
                           onChange={(e) =>
                             setNewCompanyData((prev) => ({
@@ -483,9 +492,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="csvUsername">CSV Auth Username</Label>
+                        <Label htmlFor={csvUsernameId}>CSV Auth Username</Label>
                         <Input
-                          id="csvUsername"
+                          id={csvUsernameId}
                           value={newCompanyData.csvUsername}
                           onChange={(e) =>
                             setNewCompanyData((prev) => ({
@@ -497,9 +506,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="csvPassword">CSV Auth Password</Label>
+                        <Label htmlFor={csvPasswordId}>CSV Auth Password</Label>
                         <Input
-                          id="csvPassword"
+                          id={csvPasswordId}
                           type="password"
                           value={newCompanyData.csvPassword}
                           onChange={(e) =>
@@ -512,9 +521,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="adminName">Admin Name *</Label>
+                        <Label htmlFor={adminNameId}>Admin Name *</Label>
                         <Input
-                          id="adminName"
+                          id={adminNameId}
                           value={newCompanyData.adminName}
                           onChange={(e) =>
                             setNewCompanyData((prev) => ({
@@ -526,9 +535,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="adminEmail">Admin Email *</Label>
+                        <Label htmlFor={adminEmailId}>Admin Email *</Label>
                         <Input
-                          id="adminEmail"
+                          id={adminEmailId}
                           type="email"
                           value={newCompanyData.adminEmail}
                           onChange={(e) =>
@@ -541,9 +550,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="adminPassword">Admin Password</Label>
+                        <Label htmlFor={adminPasswordId}>Admin Password</Label>
                         <Input
-                          id="adminPassword"
+                          id={adminPasswordId}
                           type="password"
                           value={newCompanyData.adminPassword}
                           onChange={(e) =>
@@ -556,9 +565,9 @@ export default function PlatformDashboard() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="maxUsers">Max Users</Label>
+                        <Label htmlFor={maxUsersId}>Max Users</Label>
                         <Input
-                          id="maxUsers"
+                          id={maxUsersId}
                           type="number"
                           value={newCompanyData.maxUsers}
                           onChange={(e) =>

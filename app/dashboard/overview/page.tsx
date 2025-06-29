@@ -52,34 +52,33 @@ function DashboardContent() {
   const isAuditor = session?.user?.role === "AUDITOR";
 
   // Function to fetch metrics with optional date range
-  const fetchMetrics = useCallback(async (
-    startDate?: string,
-    endDate?: string,
-    isInitial = false
-  ) => {
-    setLoading(true);
-    try {
-      let url = "/api/dashboard/metrics";
-      if (startDate && endDate) {
-        url += `?startDate=${startDate}&endDate=${endDate}`;
+  const fetchMetrics = useCallback(
+    async (startDate?: string, endDate?: string, isInitial = false) => {
+      setLoading(true);
+      try {
+        let url = "/api/dashboard/metrics";
+        if (startDate && endDate) {
+          url += `?startDate=${startDate}&endDate=${endDate}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+
+        setMetrics(data.metrics);
+        setCompany(data.company);
+
+        // Set initial load flag
+        if (isInitial) {
+          setIsInitialLoad(false);
+        }
+      } catch (error) {
+        console.error("Error fetching metrics:", error);
+      } finally {
+        setLoading(false);
       }
-
-      const res = await fetch(url);
-      const data = await res.json();
-
-      setMetrics(data.metrics);
-      setCompany(data.company);
-
-      // Set initial load flag
-      if (isInitial) {
-        setIsInitialLoad(false);
-      }
-    } catch (error) {
-      console.error("Error fetching metrics:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -167,9 +166,26 @@ function DashboardContent() {
 
         {/* Metrics Grid Skeleton */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <MetricCard key={i} title="" value="" isLoading />
-          ))}
+          {Array.from({ length: 8 }, (_, i) => {
+            const metricTypes = [
+              "sessions",
+              "users",
+              "time",
+              "response",
+              "costs",
+              "peak",
+              "resolution",
+              "languages",
+            ];
+            return (
+              <MetricCard
+                key={`skeleton-${metricTypes[i] || "metric"}-card-loading`}
+                title=""
+                value=""
+                isLoading
+              />
+            );
+          })}
         </div>
 
         {/* Charts Skeleton */}
@@ -333,7 +349,11 @@ function DashboardContent() {
                 {refreshing ? "Refreshing..." : "Refresh"}
               </Button>
               {refreshing && (
-                <div id={refreshStatusId} className="sr-only" aria-live="polite">
+                <div
+                  id={refreshStatusId}
+                  className="sr-only"
+                  aria-live="polite"
+                >
                   Dashboard data is being refreshed
                 </div>
               )}

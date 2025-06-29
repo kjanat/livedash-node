@@ -45,7 +45,7 @@ export const Meteors = ({
       {[...meteorStyles].map((style, idx) => (
         // Meteor Head
         <span
-          key={idx}
+          key={`meteor-${style.left}-${style.animationDelay}-${idx}`}
           style={{ ...style }}
           className={cn(
             "pointer-events-none absolute size-0.5 rotate-[var(--angle)] animate-meteor rounded-full bg-zinc-500 shadow-[0_0_0_1px_#ffffff10]",

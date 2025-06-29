@@ -93,9 +93,9 @@ export default function DateRangePicker({
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
         <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+          <span className="text-sm font-medium text-gray-700 whitespace-nowrap">
             Date Range:
-          </label>
+          </span>
 
           <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
             <div className="flex items-center gap-2">

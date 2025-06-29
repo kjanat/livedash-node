@@ -64,7 +64,13 @@ interface NeonGradientCardProps {
    * */
   neonColors?: NeonColorsProps;
 
-  [key: string]: any;
+  // Allow additional HTML div properties
+  style?: CSSProperties;
+  id?: string;
+  onClick?: () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+  "data-testid"?: string;
 }
 
 export const NeonGradientCard: React.FC<NeonGradientCardProps> = ({

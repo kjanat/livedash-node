@@ -149,10 +149,10 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent>
               {/* Live region for screen reader announcements */}
-              <div role="status" aria-live="polite" className="sr-only">
+              <output aria-live="polite" className="sr-only">
                 {isLoading && "Signing in, please wait..."}
                 {error && `Error: ${error}`}
-              </div>
+              </output>
 
               {error && (
                 <Alert variant="destructive" className="mb-6" role="alert">

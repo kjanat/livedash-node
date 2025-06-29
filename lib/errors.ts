@@ -207,14 +207,18 @@ export function createErrorResponse(error: AppError) {
       statusCode: error.statusCode,
       ...(process.env.NODE_ENV === "development" && {
         stack: error.stack,
-        ...((error as any).field && { field: (error as any).field }),
-        ...((error as any).validationErrors && {
-          validationErrors: (error as any).validationErrors,
-        }),
-        ...((error as any).resource && { resource: (error as any).resource }),
-        ...((error as any).resourceId && {
-          resourceId: (error as any).resourceId,
-        }),
+        ...(error instanceof ValidationError &&
+          error.field && { field: error.field }),
+        ...(error instanceof ValidationError &&
+          error.validationErrors && {
+            validationErrors: error.validationErrors,
+          }),
+        ...(error instanceof ResourceNotFoundError &&
+          error.resource && { resource: error.resource }),
+        ...(error instanceof ResourceNotFoundError &&
+          error.resourceId && {
+            resourceId: error.resourceId,
+          }),
       }),
     },
   };

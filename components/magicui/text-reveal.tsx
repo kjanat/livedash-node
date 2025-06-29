@@ -48,7 +48,11 @@ export const TextReveal: FC<TextRevealProps> = ({ children, className }) => {
             const start = i / words.length;
             const end = start + 1 / words.length;
             return (
-              <Word key={i} progress={scrollYProgress} range={[start, end]}>
+              <Word
+                key={`word-${word}-${i}-${start}`}
+                progress={scrollYProgress}
+                range={[start, end]}
+              >
                 {word}
               </Word>
             );

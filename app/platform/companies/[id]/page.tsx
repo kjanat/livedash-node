@@ -70,6 +70,39 @@ export default function CompanyManagement() {
   const params = useParams();
   const { toast } = useToast();
 
+  const fetchCompany = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/platform/companies/${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCompany(data);
+        const companyData = {
+          name: data.name,
+          email: data.email,
+          status: data.status,
+          maxUsers: data.maxUsers,
+        };
+        setEditData(companyData);
+        setOriginalData(companyData);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load company data",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Failed to fetch company:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load company data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params.id, toast]);
+
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -147,39 +180,6 @@ export default function CompanyManagement() {
 
     fetchCompany();
   }, [session, status, router, fetchCompany]);
-
-  const fetchCompany = async () => {
-    try {
-      const response = await fetch(`/api/platform/companies/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCompany(data);
-        const companyData = {
-          name: data.name,
-          email: data.email,
-          status: data.status,
-          maxUsers: data.maxUsers,
-        };
-        setEditData(companyData);
-        setOriginalData(companyData);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load company data",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch company:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load company data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleSave = async () => {
     setIsSaving(true);

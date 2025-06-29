@@ -51,7 +51,7 @@ function formatTranscript(content: string): React.ReactNode[] {
               {currentMessages.map((msg, i) => (
                 // Use ReactMarkdown to render each message part
                 <ReactMarkdown
-                  key={i}
+                  key={`msg-${msg.substring(0, 20).replace(/\s/g, "-")}-${i}`}
                   rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
                   components={{
                     p: "span",
@@ -103,7 +103,7 @@ function formatTranscript(content: string): React.ReactNode[] {
           {currentMessages.map((msg, i) => (
             // Use ReactMarkdown to render each message part
             <ReactMarkdown
-              key={i}
+              key={`msg-final-${msg.substring(0, 20).replace(/\s/g, "-")}-${i}`}
               rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
               components={{
                 p: "span",
