@@ -3,7 +3,7 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
 import { Pool } from "pg";
-import { env } from "./env.js";
+import { env } from "./env";
 
 // Enhanced connection pool configuration
 const createConnectionPool = () => {
@@ -66,8 +66,29 @@ const createConnectionPool = () => {
 
 // Create adapter with connection pool
 export const createEnhancedPrismaClient = () => {
-  const pool = createConnectionPool();
-  const adapter = new PrismaPg(pool);
+  // Parse DATABASE_URL to get connection parameters
+  const dbUrl = new URL(env.DATABASE_URL);
+  
+  const poolConfig = {
+    host: dbUrl.hostname,
+    port: parseInt(dbUrl.port || "5432"),
+    database: dbUrl.pathname.slice(1), // Remove leading '/'
+    user: dbUrl.username,
+    password: decodeURIComponent(dbUrl.password),
+    ssl: dbUrl.searchParams.get("sslmode") !== "disable" ? { rejectUnauthorized: false } : undefined,
+    
+    // Connection pool settings
+    max: 20, // Maximum number of connections
+    idleTimeoutMillis: 30000, // 30 seconds
+    connectionTimeoutMillis: 5000, // 5 seconds
+    query_timeout: 10000, // 10 seconds
+    statement_timeout: 10000, // 10 seconds
+    
+    // Connection lifecycle
+    allowExitOnIdle: true,
+  };
+  
+  const adapter = new PrismaPg(poolConfig);
 
   return new PrismaClient({
     adapter,

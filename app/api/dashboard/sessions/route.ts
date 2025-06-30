@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import { SessionCategory, type Prisma } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../lib/auth";
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     // Category Filter
     if (category && category.trim() !== "") {
       // Cast to SessionCategory enum if it's a valid value
-      whereClause.category = category;
+      whereClause.category = category as SessionCategory;
     }
 
     // Language Filter

@@ -4,11 +4,30 @@ import { prisma } from "../../../lib/prisma";
 import { sendEmail } from "../../../lib/sendEmail";
 import { forgotPasswordSchema, validateInput } from "../../../lib/validation";
 
-// In-memory rate limiting for password reset requests
+// In-memory rate limiting with automatic cleanup
 const resetAttempts = new Map<string, { count: number; resetTime: number }>();
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const MAX_ENTRIES = 10000;
+
+setInterval(() => {
+  const now = Date.now();
+  resetAttempts.forEach((attempts, ip) => {
+    if (now > attempts.resetTime) {
+      resetAttempts.delete(ip);
+    }
+  });
+}, CLEANUP_INTERVAL);
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+  // Prevent unbounded growth
+  if (resetAttempts.size > MAX_ENTRIES) {
+    const entries = Array.from(resetAttempts.entries());
+    entries.sort((a, b) => a[1].resetTime - b[1].resetTime);
+    entries.slice(0, Math.floor(MAX_ENTRIES / 2)).forEach(([ip]) => {
+      resetAttempts.delete(ip);
+    });
+  }
   const attempts = resetAttempts.get(ip);
 
   if (!attempts || now > attempts.resetTime) {

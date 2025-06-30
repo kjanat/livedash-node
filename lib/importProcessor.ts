@@ -1,16 +1,16 @@
 // SessionImport to Session processor
 import { ProcessingStage, SentimentCategory } from "@prisma/client";
 import cron from "node-cron";
-import { withRetry } from "./database-retry.js";
+import { withRetry } from "./database-retry";
 import { getSchedulerConfig } from "./env";
-import { prisma } from "./prisma.js";
+import { prisma } from "./prisma";
 import {
   completeStage,
   failStage,
   initializeSession,
   skipStage,
   startStage,
-} from "./processingStatusManager.js";
+} from "./processingStatusManager";
 import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
@@ -22,19 +22,23 @@ interface ImportRecord {
   startTimeRaw: string;
   endTimeRaw: string;
   externalSessionId: string;
-  sessionId?: string;
-  userId?: string;
-  category?: string;
-  language?: string;
-  sentiment?: string;
-  escalated?: boolean;
-  forwardedHr?: boolean;
-  avgResponseTime?: number;
-  messagesSent?: number;
-  fullTranscriptUrl?: string;
-  rawTranscriptContent?: string;
-  aiSummary?: string;
-  initialMsg?: string;
+  sessionId?: string | null;
+  userId?: string | null;
+  category: string | null;
+  language: string | null;
+  sentiment?: string | null;
+  escalated?: boolean | null;
+  forwardedHr?: boolean | null;
+  avgResponseTime?: number | null;
+  messagesSent: number | null;
+  fullTranscriptUrl: string | null;
+  rawTranscriptContent: string | null;
+  aiSummary?: string | null;
+  initialMsg?: string | null;
+  ipAddress: string | null;
+  countryCode: string | null;
+  avgResponseTimeSeconds: number | null;
+  initialMessage: string | null;
 }
 
 /**
@@ -245,7 +249,7 @@ async function handleTranscriptFetching(
     );
 
     if (transcriptResult.success) {
-      transcriptContent = transcriptResult.content;
+      transcriptContent = transcriptResult.content ?? null;
       console.log(
         `[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`
       );
@@ -282,7 +286,7 @@ async function handleTranscriptFetching(
     });
   }
 
-  return transcriptContent;
+  return transcriptContent ?? null;
 }
 
 /**
@@ -429,7 +433,10 @@ async function processQueuedImportsInternal(batchSize = 50): Promise<void> {
 
     // Process with concurrency limit to avoid overwhelming the database
     const concurrencyLimit = 5;
-    const results = [];
+    const results: Array<{
+      importRecord: typeof unprocessedImports[0];
+      result: Awaited<ReturnType<typeof processSingleImport>>;
+    }> = [];
 
     for (let i = 0; i < batchPromises.length; i += concurrencyLimit) {
       const chunk = batchPromises.slice(i, i + concurrencyLimit);

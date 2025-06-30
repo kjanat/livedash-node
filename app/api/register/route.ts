@@ -3,14 +3,36 @@ import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { registerSchema, validateInput } from "../../../lib/validation";
 
-// In-memory rate limiting (for production, use Redis or similar)
+// In-memory rate limiting with automatic cleanup
 const registrationAttempts = new Map<
   string,
   { count: number; resetTime: number }
 >();
 
+// Clean up expired entries every 5 minutes
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const MAX_ENTRIES = 10000; // Prevent unbounded growth
+
+setInterval(() => {
+  const now = Date.now();
+  registrationAttempts.forEach((attempts, ip) => {
+    if (now > attempts.resetTime) {
+      registrationAttempts.delete(ip);
+    }
+  });
+}, CLEANUP_INTERVAL);
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
+  // Prevent unbounded growth
+  if (registrationAttempts.size > MAX_ENTRIES) {
+    // Remove oldest entries
+    const entries = Array.from(registrationAttempts.entries());
+    entries.sort((a, b) => a[1].resetTime - b[1].resetTime);
+    entries.slice(0, Math.floor(MAX_ENTRIES / 2)).forEach(([ip]) => {
+      registrationAttempts.delete(ip);
+    });
+  }
   const attempts = registrationAttempts.get(ip);
 
   if (!attempts || now > attempts.resetTime) {
@@ -29,9 +51,12 @@ function checkRateLimit(ip: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting check
-    const ip =
-      request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    // Rate limiting check - improved IP extraction
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    const ip = forwardedFor
+      ? forwardedFor.split(",")[0].trim() // Get first IP if multiple
+      : request.headers.get("x-real-ip") ||
+        "unknown";
     if (!checkRateLimit(ip)) {
       return NextResponse.json(
         {

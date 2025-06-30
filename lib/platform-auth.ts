@@ -65,7 +65,7 @@ export const platformAuthOptions: NextAuthOptions = {
         return {
           id: platformUser.id,
           email: platformUser.email,
-          name: platformUser.name,
+          name: platformUser.name || undefined,
           isPlatformUser: true,
           platformRole: platformUser.role,
         };

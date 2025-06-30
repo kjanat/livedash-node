@@ -6,8 +6,10 @@ import { prisma } from "./prisma";
 // Define the shape of the JWT token
 declare module "next-auth/jwt" {
   interface JWT {
-    companyId: string;
-    role: string;
+    companyId?: string;
+    role?: string;
+    isPlatformUser?: boolean;
+    platformRole?: string;
   }
 }
 
@@ -18,8 +20,11 @@ declare module "next-auth" {
       id?: string;
       name?: string;
       email?: string;
+      image?: string;
       companyId?: string;
       role?: string;
+      isPlatformUser?: boolean;
+      platformRole?: string;
     };
   }
 
@@ -27,8 +32,10 @@ declare module "next-auth" {
     id: string;
     email: string;
     name?: string;
-    companyId: string;
-    role: string;
+    companyId?: string;
+    role?: string;
+    isPlatformUser?: boolean;
+    platformRole?: string;
   }
 }
 
@@ -50,13 +57,13 @@ export const authOptions: NextAuthOptions = {
           include: { company: true },
         });
 
-        if (!user || !user.hashedPassword) {
+        if (!user || !user.password) {
           return null;
         }
 
         const isPasswordValid = await bcrypt.compare(
           credentials.password,
-          user.hashedPassword
+          user.password
         );
 
         if (!isPasswordValid) {
@@ -71,7 +78,7 @@ export const authOptions: NextAuthOptions = {
         return {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: user.name || undefined,
           companyId: user.companyId,
           role: user.role,
         };
@@ -98,6 +105,8 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.companyId = user.companyId;
         token.role = user.role;
+        token.isPlatformUser = user.isPlatformUser;
+        token.platformRole = user.platformRole;
       }
       return token;
     },
@@ -105,6 +114,8 @@ export const authOptions: NextAuthOptions = {
       if (token && session.user) {
         session.user.companyId = token.companyId;
         session.user.role = token.role;
+        session.user.isPlatformUser = token.isPlatformUser;
+        session.user.platformRole = token.platformRole;
       }
       return session;
     },
