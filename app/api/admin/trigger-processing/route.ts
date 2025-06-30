@@ -4,7 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
 import { prisma } from "../../../../lib/prisma";
 import { processUnprocessedSessions } from "../../../../lib/processingScheduler";
-import { ProcessingStatusManager } from "../../../../lib/processingStatusManager";
+import { getSessionsNeedingProcessing } from "../../../../lib/processingStatusManager";
 
 interface SessionUser {
   email: string;
@@ -65,11 +65,10 @@ export async function POST(request: NextRequest) {
         : 5;
 
     // Check how many sessions need AI processing using the new status system
-    const sessionsNeedingAI =
-      await ProcessingStatusManager.getSessionsNeedingProcessing(
-        ProcessingStage.AI_ANALYSIS,
-        1000 // Get count only
-      );
+    const sessionsNeedingAI = await getSessionsNeedingProcessing(
+      ProcessingStage.AI_ANALYSIS,
+      1000 // Get count only
+    );
 
     // Filter to sessions for this company
     const companySessionsNeedingAI = sessionsNeedingAI.filter(

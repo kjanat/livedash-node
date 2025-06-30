@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  ChevronDownIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "lucide-react";
 import * as React from "react";
 import {
   type DayButton,
@@ -13,69 +8,6 @@ import {
 } from "react-day-picker";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-
-interface CalendarRootProps {
-  className?: string;
-  rootRef?: React.Ref<HTMLDivElement>;
-  [key: string]: unknown;
-}
-
-const CalendarRoot = ({ className, rootRef, ...props }: CalendarRootProps) => {
-  return (
-    <div
-      data-slot="calendar"
-      ref={rootRef}
-      className={cn(className)}
-      {...props}
-    />
-  );
-};
-
-interface CalendarChevronProps {
-  className?: string;
-  orientation: "left" | "right" | "up" | "down";
-  [key: string]: unknown;
-}
-
-const CalendarChevron = ({
-  className,
-  orientation,
-  ...props
-}: CalendarChevronProps) => {
-  if (orientation === "left") {
-    return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
-  }
-  if (orientation === "right") {
-    return <ChevronRightIcon className={cn("size-4", className)} {...props} />;
-  }
-  if (orientation === "up") {
-    return (
-      <ChevronDownIcon
-        className={cn("size-4 rotate-180", className)}
-        {...props}
-      />
-    );
-  }
-  return <ChevronDownIcon className={cn("size-4", className)} {...props} />;
-};
-
-interface CalendarWeekNumberProps {
-  children: React.ReactNode;
-  [key: string]: unknown;
-}
-
-const CalendarWeekNumber = ({
-  children,
-  ...props
-}: CalendarWeekNumberProps) => {
-  return (
-    <td {...props}>
-      <div className="flex size-9 items-center justify-center p-0 text-sm">
-        {children}
-      </div>
-    </td>
-  );
-};
 
 function Calendar({
   className,
@@ -188,10 +120,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Root: CalendarRoot,
-        Chevron: CalendarChevron,
         DayButton: CalendarDayButton,
-        WeekNumber: CalendarWeekNumber,
         ...components,
       }}
       {...props}

@@ -106,7 +106,7 @@ export const env = {
   // Database Configuration
   DATABASE_URL: parseEnvValue(process.env.DATABASE_URL) || "",
   DATABASE_URL_DIRECT: parseEnvValue(process.env.DATABASE_URL_DIRECT) || "",
-  
+
   // Database Connection Pooling
   DATABASE_CONNECTION_LIMIT: parseIntWithDefault(
     process.env.DATABASE_CONNECTION_LIMIT,

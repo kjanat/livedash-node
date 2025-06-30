@@ -2,13 +2,14 @@ import { PrismaClient } from "@prisma/client";
 import { ProcessingStatusManager } from "./lib/processingStatusManager";
 
 const prisma = new PrismaClient();
+const statusManager = new ProcessingStatusManager(prisma);
 
 async function checkRefactoredPipelineStatus() {
   try {
     console.log("=== REFACTORED PIPELINE STATUS ===\n");
 
     // Get pipeline status using the new system
-    const pipelineStatus = await ProcessingStatusManager.getPipelineStatus();
+    const pipelineStatus = await statusManager.getPipelineStatus();
 
     console.log(`Total Sessions: ${pipelineStatus.totalSessions}\n`);
 
@@ -53,7 +54,7 @@ async function checkRefactoredPipelineStatus() {
     }
 
     // Show failed sessions if any
-    const failedSessions = await ProcessingStatusManager.getFailedSessions();
+    const failedSessions = await statusManager.getFailedSessions();
     if (failedSessions.length > 0) {
       console.log("\n=== FAILED SESSIONS ===");
       failedSessions.slice(0, 5).forEach((failure) => {
@@ -71,7 +72,7 @@ async function checkRefactoredPipelineStatus() {
 
     // Show sessions ready for AI processing
     const readyForAI =
-      await ProcessingStatusManager.getSessionsNeedingProcessing(
+      await statusManager.getSessionsNeedingProcessing(
         "AI_ANALYSIS",
         5
       );

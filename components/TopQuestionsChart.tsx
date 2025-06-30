@@ -39,7 +39,7 @@ export default function TopQuestionsChart({
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {data.map((question) => {
+          {data.map((question, index) => {
             const percentage =
               maxCount > 0 ? (question.count / maxCount) * 100 : 0;
 

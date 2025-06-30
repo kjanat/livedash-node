@@ -1,5 +1,5 @@
 // Transcript parsing utility for converting raw transcript content into structured messages
-import { prisma } from "./prisma.js";
+import { prisma } from "./prisma";
 
 export interface ParsedMessage {
   sessionId: string;
@@ -156,7 +156,7 @@ export function parseTranscriptToMessages(
     }
 
     // Calculate timestamps - use parsed timestamps if available, otherwise distribute across session duration
-    interface MessageWithTimestamp extends ParsedMessage {
+    interface MessageWithTimestamp extends Omit<ParsedMessage, 'timestamp'> {
       timestamp: Date | string;
     }
     const hasTimestamps = messages.some(

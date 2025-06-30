@@ -167,7 +167,7 @@ export default function SessionsPage() {
         <CardHeader>
           <div className="flex items-center gap-3">
             <MessageSquare className="h-6 w-6" />
-            <CardTitle as="h2">Chat Sessions</CardTitle>
+            <CardTitle>Chat Sessions</CardTitle>
           </div>
         </CardHeader>
       </Card>
@@ -203,7 +203,7 @@ export default function SessionsPage() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Filter className="h-5 w-5" aria-hidden="true" />
-                <CardTitle as="h2" id={filtersHeadingId} className="text-lg">
+                <CardTitle id={filtersHeadingId} className="text-lg">
                   Filters & Sorting
                 </CardTitle>
               </div>

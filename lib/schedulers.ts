@@ -1,6 +1,6 @@
 // Combined scheduler initialization with graceful shutdown
 
-import { prisma } from "./prisma.js";
+import { prisma } from "./prisma";
 import { startProcessingScheduler } from "./processingScheduler";
 import { startCsvImportScheduler } from "./scheduler";
 

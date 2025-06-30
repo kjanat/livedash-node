@@ -14,6 +14,8 @@ export async function GET(_request: NextRequest) {
 
   try {
     // Use groupBy for better performance with distinct values
+    // Limit results to prevent unbounded queries
+    const MAX_FILTER_OPTIONS = 1000;
     const [categoryGroups, languageGroups] = await Promise.all([
       prisma.session.groupBy({
         by: ["category"],
@@ -24,6 +26,7 @@ export async function GET(_request: NextRequest) {
         orderBy: {
           category: "asc",
         },
+        take: MAX_FILTER_OPTIONS,
       }),
       prisma.session.groupBy({
         by: ["language"],
@@ -34,6 +37,7 @@ export async function GET(_request: NextRequest) {
         orderBy: {
           language: "asc",
         },
+        take: MAX_FILTER_OPTIONS,
       }),
     ]);
 

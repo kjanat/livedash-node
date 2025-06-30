@@ -1,7 +1,7 @@
 // Enhanced Prisma client setup with connection pooling
 import { PrismaClient } from "@prisma/client";
-import { createEnhancedPrismaClient } from "./database-pool.js";
-import { env } from "./env.js";
+import { createEnhancedPrismaClient } from "./database-pool";
+import { env } from "./env";
 
 // Add prisma to the NodeJS global type
 declare const global: {

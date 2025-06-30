@@ -7,14 +7,14 @@ import {
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
-import { withRetry } from "./database-retry.js";
-import { prisma } from "./prisma.js";
+import { withRetry } from "./database-retry";
+import { prisma } from "./prisma";
 import {
   completeStage,
   failStage,
   getSessionsNeedingProcessing,
   startStage,
-} from "./processingStatusManager.js";
+} from "./processingStatusManager";
 import { getSchedulerConfig } from "./schedulerConfig";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -137,15 +137,19 @@ interface ProcessingResult {
 
 interface SessionMessage {
   id: string;
-  timestamp: Date;
+  timestamp: Date | null;
   role: string;
   content: string;
   order: number;
+  createdAt: Date;
+  sessionId: string;
 }
 
 interface SessionForProcessing {
   id: string;
   messages: SessionMessage[];
+  companyId: string;
+  endTime: Date | null;
 }
 
 /**
@@ -250,7 +254,7 @@ async function processQuestions(
   });
 
   // Filter and prepare unique questions
-  const uniqueQuestions = [...new Set(questions.filter((q) => q.trim()))];
+  const uniqueQuestions = Array.from(new Set(questions.filter((q) => q.trim())));
   if (uniqueQuestions.length === 0) return;
 
   // Batch create questions (skip duplicates)
@@ -527,7 +531,7 @@ async function processSingleSession(
     const transcript = session.messages
       .map(
         (msg: SessionMessage) =>
-          `[${new Date(msg.timestamp)
+          `[${new Date(msg.timestamp || msg.createdAt)
             .toLocaleString("en-GB", {
               day: "2-digit",
               month: "2-digit",
@@ -552,7 +556,7 @@ async function processSingleSession(
     // Calculate endTime from latest Message timestamp
     const calculatedEndTime = await calculateEndTime(
       session.id,
-      session.endTime
+      session.endTime || new Date()
     );
 
     // Update the session with processed data
@@ -710,9 +714,8 @@ async function processUnprocessedSessionsInternal(
 
   // Filter to only sessions that have messages
   const sessionsWithMessages = sessionsToProcess.filter(
-    (session): session is SessionForProcessing =>
-      session.messages && session.messages.length > 0
-  );
+    (session) => session.messages && session.messages.length > 0
+  ) as SessionForProcessing[];
 
   if (sessionsWithMessages.length === 0) {
     process.stdout.write(

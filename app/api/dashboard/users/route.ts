@@ -27,6 +27,8 @@ export async function GET(_request: NextRequest) {
 
   const users = await prisma.user.findMany({
     where: { companyId: user.companyId },
+    take: 1000, // Limit to prevent unbounded queries
+    orderBy: { createdAt: "desc" },
   });
 
   const mappedUsers: UserBasicInfo[] = users.map((u) => ({
