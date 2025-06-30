@@ -75,7 +75,6 @@ export default function SessionsPage() {
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const [pageSize, _setPageSize] = useState(10); // Or make this configurable
 
   // UI states

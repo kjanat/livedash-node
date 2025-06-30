@@ -55,7 +55,6 @@ function formatTranscript(content: string): React.ReactNode[] {
                   rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
                   components={{
                     p: "span",
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
                     a: ({ node: _node, ...props }) => (
                       <a
                         className="text-sky-600 hover:text-sky-800 underline"
