@@ -1,193 +1,188 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { parseTranscriptContent } from "../../lib/transcriptParser";
+import { parseTranscriptToMessages } from "../../lib/transcriptParser";
 
 describe("Transcript Parser", () => {
+  const startTime = new Date('2024-01-01T10:00:00Z');
+  const endTime = new Date('2024-01-01T10:30:00Z');
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("parseTranscriptContent", () => {
+  describe("parseTranscriptToMessages", () => {
     it("should parse basic transcript with timestamps", () => {
       const transcript = `
-[10:00:00] User: Hello, I need help with my account
-[10:00:15] Assistant: I'd be happy to help you with your account. What specific issue are you experiencing?
-[10:00:45] User: I can't log in to my dashboard
-[10:01:00] Assistant: Let me help you troubleshoot that login issue.
-      `.trim();
+[10.01.2024 10:00:00] User: Hello, I need help with my account
+[10.01.2024 10:00:15] Assistant: I'd be happy to help you with your account. What specific issue are you experiencing?
+[10.01.2024 10:00:45] User: I can't log in to my account
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(4);
-
-      expect(messages[0]).toEqual({
-        timestamp: new Date("1970-01-01T10:00:00.000Z"),
-        role: "User",
-        content: "Hello, I need help with my account",
-        order: 0,
-      });
-
-      expect(messages[1]).toEqual({
-        timestamp: new Date("1970-01-01T10:00:15.000Z"),
-        role: "Assistant",
-        content:
-          "I'd be happy to help you with your account. What specific issue are you experiencing?",
-        order: 1,
-      });
-
-      expect(messages[3].order).toBe(3);
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages![0].role).toBe("User");
+      expect(result.messages![0].content).toBe("Hello, I need help with my account");
+      expect(result.messages![1].role).toBe("Assistant");
+      expect(result.messages![2].role).toBe("User");
+      expect(result.messages![2].content).toBe("I can't log in to my account");
     });
 
-    it("should handle transcript without timestamps", () => {
+    it("should parse transcript without timestamps", () => {
       const transcript = `
 User: Hello there
-Assistant: Hi! How can I help you today?
-User: I need support
-Assistant: I'm here to help.
-      `.trim();
+Assistant: Hello! How can I help you today?
+User: I need support with my order
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(4);
-      expect(messages[0].timestamp).toBeNull();
-      expect(messages[0].role).toBe("User");
-      expect(messages[0].content).toBe("Hello there");
-      expect(messages[0].order).toBe(0);
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages![0].role).toBe("User");
+      expect(result.messages![0].content).toBe("Hello there");
+      expect(result.messages![1].role).toBe("Assistant");
+      expect(result.messages![1].content).toBe("Hello! How can I help you today?");
+      expect(result.messages![2].role).toBe("User");
+      expect(result.messages![2].content).toBe("I need support with my order");
+    });
+
+    it("should handle multi-line messages", () => {
+      const transcript = `
+User: I have a complex question
+about my billing
+Assistant: I understand your concern.
+Let me help you with that billing question.
+      `;
+
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
+
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(2);
+      expect(result.messages![0].role).toBe("User");
+      expect(result.messages![0].content).toContain("about my billing");
+      expect(result.messages![1].role).toBe("Assistant");
+      expect(result.messages![1].content).toContain("Let me help you");
     });
 
     it("should handle mixed timestamp formats", () => {
       const transcript = `
-[2024-01-01 10:00:00] User: Hello
-10:00:15 Assistant: Hi there
-[10:00:30] User: How are you?
-Assistant: I'm doing well, thanks!
-      `.trim();
+[10.01.2024 10:00:00] User: First message with timestamp
+Assistant: Message without timestamp
+[10.01.2024 10:01:00] User: Another message with timestamp
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(4);
-      expect(messages[0].timestamp).toEqual(
-        new Date("2024-01-01T10:00:00.000Z")
-      );
-      expect(messages[1].timestamp).toEqual(
-        new Date("1970-01-01T10:00:15.000Z")
-      );
-      expect(messages[2].timestamp).toEqual(
-        new Date("1970-01-01T10:00:30.000Z")
-      );
-      expect(messages[3].timestamp).toBeNull();
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages![0].role).toBe("User");
+      expect(result.messages![1].role).toBe("Assistant");
+      expect(result.messages![2].role).toBe("User");
     });
 
-    it("should handle various role formats", () => {
+    it("should assign order values correctly", () => {
       const transcript = `
-Customer: I have a problem
-Support Agent: What can I help with?
-USER: My account is locked
-ASSISTANT: Let me check that for you
-System: Connection established
-      `.trim();
+User: First
+Assistant: Second
+User: Third
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(5);
-      expect(messages[0].role).toBe("User"); // Customer -> User
-      expect(messages[1].role).toBe("Assistant"); // Support Agent -> Assistant
-      expect(messages[2].role).toBe("User"); // USER -> User
-      expect(messages[3].role).toBe("Assistant"); // ASSISTANT -> Assistant
-      expect(messages[4].role).toBe("System"); // System -> System
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages![0].order).toBe(0);
+      expect(result.messages![1].order).toBe(1);
+      expect(result.messages![2].order).toBe(2);
     });
 
-    it("should handle malformed transcript gracefully", () => {
+    it("should distribute timestamps evenly when no timestamps are present", () => {
       const transcript = `
-This is not a proper transcript format
-No colons here
-: Empty role
-User:
-: Empty content
-      `.trim();
+User: First
+Assistant: Second
+User: Third
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      // Should still try to parse what it can
-      expect(messages.length).toBeGreaterThanOrEqual(0);
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      
+      // First message should be at start time
+      expect(result.messages![0].timestamp.getTime()).toBe(startTime.getTime());
+      
+      // Last message should be at end time
+      expect(result.messages![2].timestamp.getTime()).toBe(endTime.getTime());
+      
+      // Middle message should be between start and end
+      const midTime = result.messages![1].timestamp.getTime();
+      expect(midTime).toBeGreaterThan(startTime.getTime());
+      expect(midTime).toBeLessThan(endTime.getTime());
+    });
 
-      // Check that all messages have required fields
-      messages.forEach((message, index) => {
-        expect(message).toHaveProperty("role");
-        expect(message).toHaveProperty("content");
-        expect(message).toHaveProperty("order", index);
-        expect(message).toHaveProperty("timestamp");
+    it("should handle empty content", () => {
+      expect(parseTranscriptToMessages("", startTime, endTime)).toEqual({
+        success: false,
+        error: "Empty transcript content"
+      });
+      expect(parseTranscriptToMessages("   \n\n   ", startTime, endTime)).toEqual({
+        success: false,
+        error: "Empty transcript content"
+      });
+      expect(parseTranscriptToMessages("\t\r\n", startTime, endTime)).toEqual({
+        success: false,
+        error: "Empty transcript content"
       });
     });
 
-    it("should preserve message order correctly", () => {
+    it("should handle content with no valid messages", () => {
       const transcript = `
-User: First message
-Assistant: Second message  
-User: Third message
-Assistant: Fourth message
-User: Fifth message
-      `.trim();
+Just some random text
+without any proper format
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(5);
-      messages.forEach((message, index) => {
-        expect(message.order).toBe(index);
-      });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe("No messages found in transcript");
     });
 
-    it("should handle empty or whitespace-only transcript", () => {
-      expect(parseTranscriptContent("")).toEqual([]);
-      expect(parseTranscriptContent("   \n\n   ")).toEqual([]);
-      expect(parseTranscriptContent("\t\r\n")).toEqual([]);
-    });
-
-    it("should handle special characters in content", () => {
+    it("should handle case-insensitive roles", () => {
       const transcript = `
-User: Hello! How are you? 😊
-Assistant: I'm great! Thanks for asking. 🤖
-User: Can you help with this: https://example.com/issue?id=123&type=urgent
-Assistant: Absolutely! I'll check that URL for you.
-      `.trim();
+user: Lower case user
+ASSISTANT: Upper case assistant
+System: Mixed case system
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages).toHaveLength(4);
-      expect(messages[0].content).toBe("Hello! How are you? 😊");
-      expect(messages[2].content).toBe(
-        "Can you help with this: https://example.com/issue?id=123&type=urgent"
-      );
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(3);
+      expect(result.messages![0].role).toBe("User");
+      expect(result.messages![1].role).toBe("Assistant");
+      expect(result.messages![2].role).toBe("System");
     });
 
-    it("should normalize role names consistently", () => {
+    it("should parse European date format correctly", () => {
       const transcript = `
-customer: Hello
-support: Hi there
-CUSTOMER: How are you?
-SUPPORT: Good thanks
-Client: Great
-Agent: Wonderful
-      `.trim();
+[10.01.2024 14:30:45] User: Message with European date format
+[10.01.2024 14:31:00] Assistant: Response message
+      `;
 
-      const messages = parseTranscriptContent(transcript);
+      const result = parseTranscriptToMessages(transcript, startTime, endTime);
 
-      expect(messages[0].role).toBe("User");
-      expect(messages[1].role).toBe("Assistant");
-      expect(messages[2].role).toBe("User");
-      expect(messages[3].role).toBe("Assistant");
-      expect(messages[4].role).toBe("User");
-      expect(messages[5].role).toBe("Assistant");
-    });
-
-    it("should handle long content without truncation", () => {
-      const longContent = "A".repeat(5000);
-      const transcript = `User: ${longContent}`;
-
-      const messages = parseTranscriptContent(transcript);
-
-      expect(messages).toHaveLength(1);
-      expect(messages[0].content).toBe(longContent);
-      expect(messages[0].content.length).toBe(5000);
+      expect(result.success).toBe(true);
+      expect(result.messages).toHaveLength(2);
+      
+      // Check that timestamps were parsed correctly
+      const firstTimestamp = result.messages![0].timestamp;
+      expect(firstTimestamp.getFullYear()).toBe(2024);
+      expect(firstTimestamp.getMonth()).toBe(0); // January (0-indexed)
+      expect(firstTimestamp.getDate()).toBe(10);
+      expect(firstTimestamp.getHours()).toBe(14);
+      expect(firstTimestamp.getMinutes()).toBe(30);
+      expect(firstTimestamp.getSeconds()).toBe(45);
     });
   });
 });

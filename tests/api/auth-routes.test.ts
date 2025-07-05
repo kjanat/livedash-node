@@ -63,8 +63,12 @@ describe("Authentication API Routes", () => {
       const mockCompany = {
         id: "company1",
         name: "Test Company",
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         csvUrl: "http://example.com/data.csv",
+        csvUsername: null,
+        csvPassword: null,
+        dashboardOpts: {},
+        maxUsers: 10,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -74,8 +78,12 @@ describe("Authentication API Routes", () => {
         email: "test@example.com",
         name: "Test User",
         companyId: "company1",
-        role: "USER",
+        role: "USER" as const,
         password: "hashed-password",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -197,8 +205,12 @@ describe("Authentication API Routes", () => {
       const mockCompany = {
         id: "company1",
         name: "Test Company",
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         csvUrl: "http://example.com/data.csv",
+        csvUsername: null,
+        csvPassword: null,
+        dashboardOpts: {},
+        maxUsers: 10,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -208,8 +220,12 @@ describe("Authentication API Routes", () => {
         email: "test@example.com",
         name: "Existing User",
         companyId: "company1",
-        role: "USER",
+        role: "USER" as const,
         password: "hashed-password",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -240,15 +256,17 @@ describe("Authentication API Routes", () => {
     it("should handle rate limiting", async () => {
       const { InMemoryRateLimiter } = await import("../../lib/rateLimiter");
 
-      // Mock rate limiter to return not allowed
-      const mockRateLimiter = {
-        checkRateLimit: vi.fn().mockReturnValue({
-          allowed: false,
-          resetTime: Date.now() + 60000,
-        }),
-      };
+      // Mock rate limiter class constructor
+      const mockCheckRateLimit = vi.fn().mockReturnValue({
+        allowed: false,
+        resetTime: Date.now() + 60000,
+      });
 
-      vi.mocked(InMemoryRateLimiter).mockImplementation(() => mockRateLimiter);
+      vi.mocked(InMemoryRateLimiter).mockImplementation(() => ({
+        checkRateLimit: mockCheckRateLimit,
+        cleanup: vi.fn(),
+        destroy: vi.fn(),
+      } as any));
 
       const request = new NextRequest("http://localhost:3000/api/register", {
         method: "POST",
@@ -283,8 +301,12 @@ describe("Authentication API Routes", () => {
         email: "test@example.com",
         name: "Test User",
         companyId: "company1",
-        role: "USER",
+        role: "USER" as const,
         password: "hashed-password",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -418,8 +440,12 @@ describe("Authentication API Routes", () => {
         email: "test@example.com",
         name: "Test User",
         companyId: "company1",
-        role: "USER",
+        role: "USER" as const,
         password: "hashed-password",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };

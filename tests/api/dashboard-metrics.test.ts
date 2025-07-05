@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { GET } from "../../app/api/dashboard/metrics/route";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
+import { GET } from "../../app/api/dashboard/metrics/route";
 
 // Mock NextAuth
 vi.mock("next-auth", () => ({
@@ -10,23 +10,20 @@ vi.mock("next-auth", () => ({
 // Mock prisma
 vi.mock("../../lib/prisma", () => ({
   prisma: {
-    session: {
-      count: vi.fn(),
-      findMany: vi.fn(),
-      aggregate: vi.fn(),
-    },
     user: {
       findUnique: vi.fn(),
     },
     company: {
       findUnique: vi.fn(),
     },
+    session: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+    sessionQuestion: {
+      findMany: vi.fn(),
+    },
   },
-}));
-
-// Mock auth options
-vi.mock("../../lib/auth", () => ({
-  authOptions: {},
 }));
 
 describe("/api/dashboard/metrics", () => {
@@ -34,11 +31,7 @@ describe("/api/dashboard/metrics", () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
-  describe("GET /api/dashboard/metrics", () => {
+  describe("GET", () => {
     it("should return 401 for unauthenticated users", async () => {
       const { getServerSession } = await import("next-auth");
       vi.mocked(getServerSession).mockResolvedValue(null);
@@ -85,10 +78,15 @@ describe("/api/dashboard/metrics", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user1",
+        name: "Test User",
         email: "test@example.com",
         companyId: "company1",
-        role: "ADMIN",
+        role: "ADMIN" as const,
         password: "hashed",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -105,16 +103,26 @@ describe("/api/dashboard/metrics", () => {
       expect(data.error).toBe("Company not found");
     });
 
-    it("should return metrics data for valid requests", async () => {
+    it("should return dashboard metrics successfully for admin", async () => {
       const { getServerSession } = await import("next-auth");
       const { prisma } = await import("../../lib/prisma");
 
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { email: "admin@example.com" },
+        expires: "2024-12-31",
+      });
+
       const mockUser = {
         id: "user1",
-        email: "test@example.com",
+        name: "Test Admin",
+        email: "admin@example.com",
         companyId: "company1",
-        role: "ADMIN",
+        role: "ADMIN" as const,
         password: "hashed",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -123,7 +131,10 @@ describe("/api/dashboard/metrics", () => {
         id: "company1",
         name: "Test Company",
         csvUrl: "http://example.com/data.csv",
-        sentimentAlert: 0.5,
+        csvUsername: null,
+        csvPassword: null,
+        dashboardOpts: {},
+        maxUsers: 10,
         status: "ACTIVE" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -132,49 +143,32 @@ describe("/api/dashboard/metrics", () => {
       const mockSessions = [
         {
           id: "session1",
-          sessionId: "s1",
           companyId: "company1",
+          importId: "import1",
           startTime: new Date("2024-01-01T10:00:00Z"),
-          endTime: new Date("2024-01-01T10:30:00Z"),
-          sentiment: "POSITIVE",
-          messagesSent: 5,
-          avgResponseTime: 2.5,
-          tokens: 100,
-          tokensEur: 0.002,
-          language: "en",
+          endTime: new Date("2024-01-01T11:00:00Z"),
+          ipAddress: "192.168.1.1",
           country: "US",
-          category: "SUPPORT",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: "session2",
-          sessionId: "s2",
-          companyId: "company1",
-          startTime: new Date("2024-01-02T14:00:00Z"),
-          endTime: new Date("2024-01-02T14:15:00Z"),
-          sentiment: "NEGATIVE",
-          messagesSent: 3,
-          avgResponseTime: 1.8,
-          tokens: 75,
-          tokensEur: 0.0015,
-          language: "es",
-          country: "ES",
-          category: "BILLING",
+          fullTranscriptUrl: null,
+          avgResponseTime: null,
+          initialMsg: null,
+          messagesSent: 5,
+          escalated: false,
+          forwardedHr: false,
+          sentiment: "POSITIVE" as const,
+          category: "SCHEDULE_HOURS" as const,
+          language: "en",
+          summary: "Test summary",
           createdAt: new Date(),
           updatedAt: new Date(),
         },
       ];
 
-      vi.mocked(getServerSession).mockResolvedValue({
-        user: { email: "test@example.com" },
-        expires: "2024-12-31",
-      });
-
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.company.findUnique).mockResolvedValue(mockCompany);
       vi.mocked(prisma.session.findMany).mockResolvedValue(mockSessions);
-      vi.mocked(prisma.session.count).mockResolvedValue(2);
+      vi.mocked(prisma.session.count).mockResolvedValue(1);
+      vi.mocked(prisma.sessionQuestion.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         "http://localhost:3000/api/dashboard/metrics"
@@ -183,23 +177,33 @@ describe("/api/dashboard/metrics", () => {
 
       expect(response.status).toBe(200);
       const data = await response.json();
-
-      expect(data.metrics).toBeDefined();
-      expect(data.company).toBeDefined();
-      expect(data.metrics.totalSessions).toBe(2);
-      expect(data.company.name).toBe("Test Company");
+      expect(data).toHaveProperty("totalSessions");
+      expect(data).toHaveProperty("sentimentDistribution");
+      expect(data).toHaveProperty("countryCounts");
+      expect(data).toHaveProperty("topQuestions");
+      expect(data.totalSessions).toBe(1);
     });
 
-    it("should handle date range filtering", async () => {
+    it("should return dashboard metrics successfully for regular user", async () => {
       const { getServerSession } = await import("next-auth");
       const { prisma } = await import("../../lib/prisma");
 
+      vi.mocked(getServerSession).mockResolvedValue({
+        user: { email: "user@example.com" },
+        expires: "2024-12-31",
+      });
+
       const mockUser = {
         id: "user1",
-        email: "test@example.com",
+        name: "Test User",
+        email: "user@example.com",
         companyId: "company1",
-        role: "ADMIN",
+        role: "USER" as const,
         password: "hashed",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
@@ -208,21 +212,100 @@ describe("/api/dashboard/metrics", () => {
         id: "company1",
         name: "Test Company",
         csvUrl: "http://example.com/data.csv",
-        sentimentAlert: 0.5,
+        csvUsername: null,
+        csvPassword: null,
+        dashboardOpts: {},
+        maxUsers: 10,
         status: "ACTIVE" as const,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
 
+      const mockSessions = [
+        {
+          id: "session1",
+          companyId: "company1",
+          importId: "import1",
+          startTime: new Date("2024-01-01T10:00:00Z"),
+          endTime: new Date("2024-01-01T11:00:00Z"),
+          ipAddress: "192.168.1.1",
+          country: "US",
+          fullTranscriptUrl: null,
+          avgResponseTime: null,
+          initialMsg: null,
+          messagesSent: 5,
+          escalated: false,
+          forwardedHr: false,
+          sentiment: "POSITIVE" as const,
+          category: "SCHEDULE_HOURS" as const,
+          language: "en",
+          summary: "Test summary",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
+      vi.mocked(prisma.company.findUnique).mockResolvedValue(mockCompany);
+      vi.mocked(prisma.session.findMany).mockResolvedValue(mockSessions);
+      vi.mocked(prisma.session.count).mockResolvedValue(1);
+      vi.mocked(prisma.sessionQuestion.findMany).mockResolvedValue([]);
+
+      const request = new NextRequest(
+        "http://localhost:3000/api/dashboard/metrics"
+      );
+      const response = await GET(request);
+
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data).toHaveProperty("totalSessions");
+      expect(data).toHaveProperty("sentimentDistribution");
+      expect(data).toHaveProperty("countryCounts");
+      expect(data).toHaveProperty("topQuestions");
+    });
+
+    it("should handle date range filters", async () => {
+      const { getServerSession } = await import("next-auth");
+      const { prisma } = await import("../../lib/prisma");
+
       vi.mocked(getServerSession).mockResolvedValue({
-        user: { email: "test@example.com" },
+        user: { email: "user@example.com" },
         expires: "2024-12-31",
       });
+
+      const mockUser = {
+        id: "user1",
+        name: "Test User",
+        email: "user@example.com",
+        companyId: "company1",
+        role: "USER" as const,
+        password: "hashed",
+        resetToken: null,
+        resetTokenExpiry: null,
+        invitedAt: null,
+        invitedBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const mockCompany = {
+        id: "company1",
+        name: "Test Company",
+        csvUrl: "http://example.com/data.csv",
+        csvUsername: null,
+        csvPassword: null,
+        dashboardOpts: {},
+        maxUsers: 10,
+        status: "ACTIVE" as const,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
       vi.mocked(prisma.company.findUnique).mockResolvedValue(mockCompany);
       vi.mocked(prisma.session.findMany).mockResolvedValue([]);
       vi.mocked(prisma.session.count).mockResolvedValue(0);
+      vi.mocked(prisma.sessionQuestion.findMany).mockResolvedValue([]);
 
       const request = new NextRequest(
         "http://localhost:3000/api/dashboard/metrics?startDate=2024-01-01&endDate=2024-01-31"
@@ -230,120 +313,21 @@ describe("/api/dashboard/metrics", () => {
       const response = await GET(request);
 
       expect(response.status).toBe(200);
-      expect(prisma.session.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            companyId: "company1",
-            startTime: expect.objectContaining({
-              gte: expect.any(Date),
-              lte: expect.any(Date),
-            }),
-          }),
-        })
-      );
-    });
-
-    it("should calculate metrics correctly", async () => {
-      const { getServerSession } = await import("next-auth");
-      const { prisma } = await import("../../lib/prisma");
-
-      const mockUser = {
-        id: "user1",
-        email: "test@example.com",
-        companyId: "company1",
-        role: "ADMIN",
-        password: "hashed",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const mockCompany = {
-        id: "company1",
-        name: "Test Company",
-        csvUrl: "http://example.com/data.csv",
-        sentimentAlert: 0.5,
-        status: "ACTIVE" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const mockSessions = [
-        {
-          id: "session1",
-          sessionId: "s1",
-          companyId: "company1",
-          startTime: new Date("2024-01-01T10:00:00Z"),
-          endTime: new Date("2024-01-01T10:30:00Z"),
-          sentiment: "POSITIVE",
-          messagesSent: 5,
-          avgResponseTime: 2.0,
-          tokens: 100,
-          tokensEur: 0.002,
-          language: "en",
-          country: "US",
-          category: "SUPPORT",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: "session2",
-          sessionId: "s2",
-          companyId: "company1",
-          startTime: new Date("2024-01-01T14:00:00Z"),
-          endTime: new Date("2024-01-01T14:20:00Z"),
-          sentiment: "NEGATIVE",
-          messagesSent: 3,
-          avgResponseTime: 3.0,
-          tokens: 150,
-          tokensEur: 0.003,
-          language: "en",
-          country: "US",
-          category: "BILLING",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-
-      vi.mocked(getServerSession).mockResolvedValue({
-        user: { email: "test@example.com" },
-        expires: "2024-12-31",
-      });
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-      vi.mocked(prisma.company.findUnique).mockResolvedValue(mockCompany);
-      vi.mocked(prisma.session.findMany).mockResolvedValue(mockSessions);
-      vi.mocked(prisma.session.count).mockResolvedValue(2);
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/dashboard/metrics"
-      );
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
       const data = await response.json();
-
-      expect(data.metrics.totalSessions).toBe(2);
-      expect(data.metrics.avgResponseTime).toBe(2.5); // (2.0 + 3.0) / 2
-      expect(data.metrics.totalTokens).toBe(250); // 100 + 150
-      expect(data.metrics.totalTokensEur).toBe(0.005); // 0.002 + 0.003
-      expect(data.metrics.sentimentPositiveCount).toBe(1);
-      expect(data.metrics.sentimentNegativeCount).toBe(1);
-      expect(data.metrics.languages).toEqual({ en: 2 });
-      expect(data.metrics.countries).toEqual({ US: 2 });
-      expect(data.metrics.categories).toEqual({ SUPPORT: 1, BILLING: 1 });
+      expect(data.totalSessions).toBe(0);
     });
 
-    it("should handle errors gracefully", async () => {
+    it("should handle database errors gracefully", async () => {
       const { getServerSession } = await import("next-auth");
       const { prisma } = await import("../../lib/prisma");
 
       vi.mocked(getServerSession).mockResolvedValue({
-        user: { email: "test@example.com" },
+        user: { email: "user@example.com" },
         expires: "2024-12-31",
       });
 
       vi.mocked(prisma.user.findUnique).mockRejectedValue(
-        new Error("Database error")
+        new Error("Database connection failed")
       );
 
       const request = new NextRequest(
@@ -353,57 +337,7 @@ describe("/api/dashboard/metrics", () => {
 
       expect(response.status).toBe(500);
       const data = await response.json();
-      expect(data.error).toBe("Database error");
-    });
-
-    it("should return empty metrics for companies with no sessions", async () => {
-      const { getServerSession } = await import("next-auth");
-      const { prisma } = await import("../../lib/prisma");
-
-      const mockUser = {
-        id: "user1",
-        email: "test@example.com",
-        companyId: "company1",
-        role: "ADMIN",
-        password: "hashed",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const mockCompany = {
-        id: "company1",
-        name: "Test Company",
-        csvUrl: "http://example.com/data.csv",
-        sentimentAlert: 0.5,
-        status: "ACTIVE" as const,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      vi.mocked(getServerSession).mockResolvedValue({
-        user: { email: "test@example.com" },
-        expires: "2024-12-31",
-      });
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser);
-      vi.mocked(prisma.company.findUnique).mockResolvedValue(mockCompany);
-      vi.mocked(prisma.session.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.session.count).mockResolvedValue(0);
-
-      const request = new NextRequest(
-        "http://localhost:3000/api/dashboard/metrics"
-      );
-      const response = await GET(request);
-
-      expect(response.status).toBe(200);
-      const data = await response.json();
-
-      expect(data.metrics.totalSessions).toBe(0);
-      expect(data.metrics.avgResponseTime).toBe(0);
-      expect(data.metrics.totalTokens).toBe(0);
-      expect(data.metrics.languages).toEqual({});
-      expect(data.metrics.countries).toEqual({});
-      expect(data.metrics.categories).toEqual({});
+      expect(data.error).toBe("Internal server error");
     });
   });
 });

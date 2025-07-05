@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "leaflet/dist/leaflet.css";
 import * as countryCoder from "@rapideditor/country-coder";
 
@@ -18,45 +18,53 @@ interface GeographicMapProps {
   height?: number; // Optional height for the container
 }
 
-// Get country coordinates from the @rapideditor/country-coder package
-const getCountryCoordinates = (): Record<string, [number, number]> => {
-  // Initialize with some fallback coordinates for common countries
-  const coordinates: Record<string, [number, number]> = {
-    US: [37.0902, -95.7129],
-    GB: [55.3781, -3.436],
-    BA: [43.9159, 17.6791],
-    NL: [52.1326, 5.2913],
-    DE: [51.1657, 10.4515],
-    FR: [46.6034, 1.8883],
-    IT: [41.8719, 12.5674],
-    ES: [40.4637, -3.7492],
-    CA: [56.1304, -106.3468],
-    PL: [51.9194, 19.1451],
-    SE: [60.1282, 18.6435],
-    NO: [60.472, 8.4689],
-    FI: [61.9241, 25.7482],
-    CH: [46.8182, 8.2275],
-    AT: [47.5162, 14.5501],
-    BE: [50.8503, 4.3517],
-    DK: [56.2639, 9.5018],
-    CZ: [49.8175, 15.473],
-    HU: [47.1625, 19.5033],
-    PT: [39.3999, -8.2245],
-    GR: [39.0742, 21.8243],
-    RO: [45.9432, 24.9668],
-    IE: [53.4129, -8.2439],
-    BG: [42.7339, 25.4858],
-    HR: [45.1, 15.2],
-    SK: [48.669, 19.699],
-    SI: [46.1512, 14.9955],
-  };
-  // This function now primarily returns fallbacks.
-  // The actual fetching using @rapideditor/country-coder will be in the component's useEffect.
-  return coordinates;
-};
+/**
+ * Get coordinates for a country using the country-coder library
+ * This automatically extracts coordinates from the country geometry
+ */
+function getCoordinatesFromCountryCoder(countryCode: string): [number, number] | undefined {
+  try {
+    const feature = countryCoder.feature(countryCode);
+    if (!feature?.geometry) {
+      return undefined;
+    }
 
-// Load coordinates once when module is imported
-const DEFAULT_COORDINATES = getCountryCoordinates();
+    // Extract center coordinates from the geometry
+    if (feature.geometry.type === "Point") {
+      const [lon, lat] = feature.geometry.coordinates;
+      return [lat, lon]; // Leaflet expects [lat, lon]
+    }
+
+    if (feature.geometry.type === "Polygon" && feature.geometry.coordinates?.[0]?.[0]) {
+      // For polygons, calculate centroid from the first ring
+      const coordinates = feature.geometry.coordinates[0];
+      let lat = 0;
+      let lon = 0;
+      for (const [lng, ltd] of coordinates) {
+        lon += lng;
+        lat += ltd;
+      }
+      return [lat / coordinates.length, lon / coordinates.length];
+    }
+
+    if (feature.geometry.type === "MultiPolygon" && feature.geometry.coordinates?.[0]?.[0]?.[0]) {
+      // For multipolygons, use the first polygon's first ring for centroid
+      const coordinates = feature.geometry.coordinates[0][0];
+      let lat = 0;
+      let lon = 0;
+      for (const [lng, ltd] of coordinates) {
+        lon += lng;
+        lat += ltd;
+      }
+      return [lat / coordinates.length, lon / coordinates.length];
+    }
+
+    return undefined;
+  } catch (error) {
+    console.warn(`Failed to get coordinates for country ${countryCode}:`, error);
+    return undefined;
+  }
+}
 
 // Dynamically import the Map component to avoid SSR issues
 // This ensures the component only loads on the client side
@@ -71,7 +79,7 @@ const CountryMapComponent = dynamic(() => import("./Map"), {
 
 export default function GeographicMap({
   countries,
-  countryCoordinates = DEFAULT_COORDINATES,
+  countryCoordinates = {},
   height = 400,
 }: GeographicMapProps) {
   const [countryData, setCountryData] = useState<CountryData[]>([]);
@@ -82,42 +90,6 @@ export default function GeographicMap({
     setIsClient(true);
   }, []);
 
-  /**
-   * Extract coordinates from a geometry feature
-   */
-  function extractCoordinatesFromGeometry(
-    geometry: any
-  ): [number, number] | undefined {
-    if (geometry.type === "Point") {
-      const [lon, lat] = geometry.coordinates;
-      return [lat, lon]; // Leaflet expects [lat, lon]
-    }
-
-    if (
-      geometry.type === "Polygon" &&
-      geometry.coordinates &&
-      geometry.coordinates[0] &&
-      geometry.coordinates[0][0]
-    ) {
-      // For Polygons, use the first coordinate of the first ring as a fallback representative point
-      const [lon, lat] = geometry.coordinates[0][0];
-      return [lat, lon]; // Leaflet expects [lat, lon]
-    }
-
-    if (
-      geometry.type === "MultiPolygon" &&
-      geometry.coordinates &&
-      geometry.coordinates[0] &&
-      geometry.coordinates[0][0] &&
-      geometry.coordinates[0][0][0]
-    ) {
-      // For MultiPolygons, use the first coordinate of the first ring of the first polygon
-      const [lon, lat] = geometry.coordinates[0][0][0];
-      return [lat, lon]; // Leaflet expects [lat, lon]
-    }
-
-    return undefined;
-  }
 
   /**
    * Get coordinates for a country code
@@ -126,15 +98,12 @@ export default function GeographicMap({
     code: string,
     countryCoordinates: Record<string, [number, number]>
   ): [number, number] | undefined {
-    // Try predefined coordinates first
-    let coords = countryCoordinates[code] || DEFAULT_COORDINATES[code];
+    // Try custom coordinates first (allows overrides)
+    let coords: [number, number] | undefined = countryCoordinates[code];
 
     if (!coords) {
-      // Try to get coordinates from country coder
-      const feature = countryCoder.feature(code);
-      if (feature?.geometry) {
-        coords = extractCoordinatesFromGeometry(feature.geometry);
-      }
+      // Automatically get coordinates from country-coder library
+      coords = getCoordinatesFromCountryCoder(code);
     }
 
     return coords;
@@ -160,10 +129,10 @@ export default function GeographicMap({
   /**
    * Process all countries data into CountryData array
    */
-  function processCountriesData(
+  const processCountriesData = useCallback((
     countries: Record<string, number>,
     countryCoordinates: Record<string, [number, number]>
-  ): CountryData[] {
+  ): CountryData[] => {
     const data = Object.entries(countries || {})
       .map(([code, count]) =>
         processCountryEntry(code, count, countryCoordinates)
@@ -175,7 +144,7 @@ export default function GeographicMap({
     );
 
     return data;
-  }
+  }, []);
 
   // Process country data when client is ready and dependencies change
   useEffect(() => {
@@ -188,7 +157,7 @@ export default function GeographicMap({
       console.error("Error processing geographic data:", error);
       setCountryData([]);
     }
-  }, [countries, countryCoordinates, isClient]);
+  }, [countries, countryCoordinates, isClient, processCountriesData]);
 
   // Find the max count for scaling circles - handle empty or null countries object
   const countryValues = countries ? Object.values(countries) : [];
