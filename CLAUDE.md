@@ -87,6 +87,9 @@ The system processes user sessions through distinct stages tracked in `SessionPr
 - `lib/processingScheduler.ts` - AI analysis pipeline
 - `lib/transcriptFetcher.ts` - External transcript fetching
 - `lib/transcriptParser.ts` - Message parsing from transcripts
+- `lib/batchProcessor.ts` - OpenAI Batch API integration for cost-efficient processing
+- `lib/batchScheduler.ts` - Automated batch job lifecycle management
+- `lib/rateLimiter.ts` - In-memory rate limiting utility for API endpoints
 
 ### Development Environment
 
@@ -117,10 +120,11 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 
 - Schedulers are optional and controlled by `SCHEDULER_ENABLED` environment variable
 - Use `pnpm dev:next-only` to run without schedulers for pure frontend development
-- Three separate schedulers handle different pipeline stages:
+- Four separate schedulers handle different pipeline stages:
   - CSV Import Scheduler (`lib/scheduler.ts`)
   - Import Processing Scheduler (`lib/importProcessor.ts`)
   - Session Processing Scheduler (`lib/processingScheduler.ts`)
+  - Batch Processing Scheduler (`lib/batchScheduler.ts`) - Manages OpenAI Batch API lifecycle
 
 **Database Migrations:**
 
@@ -135,6 +139,11 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 - Support for multiple AI models per company
 - Time-based pricing management for accurate cost calculation
 - Processing stages can be retried on failure with retry count tracking
+- **Batch API Integration**: 50% cost reduction using OpenAI Batch API
+  - Automatic batching of AI requests every 5 minutes
+  - Batch status checking every 2 minutes
+  - Result processing every minute
+  - Failed request retry with individual API calls
 
 **Code Quality Standards:**
 
@@ -142,3 +151,18 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 - TypeScript with ES modules (type: "module" in package.json)
 - React 19 with Next.js 15 App Router
 - TailwindCSS 4 for styling
+
+**Security Features:**
+
+- **Rate Limiting**: In-memory rate limiting for all authentication endpoints
+  - Login: 5 attempts per 15 minutes
+  - Registration: 3 attempts per hour  
+  - Password Reset: 5 attempts per 15 minutes
+- **Input Validation**: Comprehensive Zod schemas for all user inputs
+  - Strong password requirements (12+ chars, uppercase, lowercase, numbers, special chars)
+  - Email normalization and validation
+  - XSS and SQL injection prevention
+- **Session Security**: 
+  - JWT tokens with 24-hour expiration
+  - HttpOnly, Secure, SameSite cookies
+  - Company status verification on login
