@@ -5,6 +5,7 @@ import {
   type SentimentCategory,
   type SessionCategory,
   AIRequestStatus,
+  type AIProcessingRequest,
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
@@ -877,7 +878,7 @@ async function createBatchRequestsForSessions(batchSize: number | null = null): 
   }
 
   // Create AI processing requests for batch processing
-  const batchRequests = [];
+  const batchRequests: AIProcessingRequest[] = [];
   for (const session of sessionsWithMessages) {
     try {
       // Get company's AI model

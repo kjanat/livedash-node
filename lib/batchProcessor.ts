@@ -152,7 +152,7 @@ export async function createBatchRequest(
         },
         {
           role: "user",
-          content: formatMessagesForProcessing(request.session?.messages || []),
+          content: formatMessagesForProcessing((request as any).session?.messages || []),
         },
       ],
       temperature: 0.1,
