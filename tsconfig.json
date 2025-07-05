@@ -25,7 +25,14 @@
     "strictNullChecks": true,
     "target": "es5"
   },
-  "exclude": ["node_modules", "check-*.ts", "migrate-*.ts", "fix-*.ts", "debug-*.ts", "test-*.ts"],
+  "exclude": [
+    "node_modules",
+    "check-*.ts",
+    "migrate-*.ts",
+    "fix-*.ts",
+    "debug-*.ts",
+    "test-*.ts"
+  ],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

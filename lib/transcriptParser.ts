@@ -38,6 +38,150 @@ function parseEuropeanDate(dateStr: string): Date {
 }
 
 /**
+ * Parse a single line for timestamp and role pattern
+ */
+function parseTimestampRoleLine(line: string): {
+  type: "timestamp-role";
+  timestamp: string;
+  role: string;
+  content: string;
+} | null {
+  const timestampRoleMatch = line.match(
+    /^\[(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})\]\s+(User|Assistant|System|user|assistant|system):\s*(.*)$/i
+  );
+
+  if (timestampRoleMatch) {
+    return {
+      type: "timestamp-role",
+      timestamp: timestampRoleMatch[1],
+      role:
+        timestampRoleMatch[2].charAt(0).toUpperCase() +
+        timestampRoleMatch[2].slice(1).toLowerCase(),
+      content: timestampRoleMatch[3] || "",
+    };
+  }
+  return null;
+}
+
+/**
+ * Parse a single line for role pattern only
+ */
+function parseRoleLine(line: string): {
+  type: "role";
+  role: string;
+  content: string;
+} | null {
+  const roleMatch = line.match(
+    /^(User|Assistant|System|user|assistant|system):\s*(.*)$/i
+  );
+
+  if (roleMatch) {
+    return {
+      type: "role",
+      role:
+        roleMatch[1].charAt(0).toUpperCase() +
+        roleMatch[1].slice(1).toLowerCase(),
+      content: roleMatch[2] || "",
+    };
+  }
+  return null;
+}
+
+/**
+ * Save current message to messages array
+ */
+function saveCurrentMessage(
+  currentMessage: { role: string; content: string; timestamp?: string } | null,
+  messages: ParsedMessage[],
+  order: number
+): number {
+  if (currentMessage) {
+    messages.push({
+      sessionId: "", // Will be set by caller
+      timestamp: new Date(), // Will be calculated later
+      role: currentMessage.role,
+      content: currentMessage.content.trim(),
+      order,
+    });
+    return order + 1;
+  }
+  return order;
+}
+
+/**
+ * Calculate timestamp for a message using distributed timing
+ */
+function calculateDistributedTimestamp(
+  startTime: Date,
+  endTime: Date,
+  index: number,
+  totalMessages: number
+): Date {
+  const sessionDurationMs = endTime.getTime() - startTime.getTime();
+  const messageInterval =
+    totalMessages > 1 ? sessionDurationMs / (totalMessages - 1) : 0;
+  return new Date(startTime.getTime() + index * messageInterval);
+}
+
+/**
+ * Process timestamp calculations for all messages
+ */
+function processMessageTimestamps(
+  messages: ParsedMessage[],
+  startTime: Date,
+  endTime: Date
+): void {
+  interface MessageWithTimestamp extends Omit<ParsedMessage, "timestamp"> {
+    timestamp: Date | string;
+  }
+
+  const hasTimestamps = messages.some(
+    (msg) => (msg as MessageWithTimestamp).timestamp
+  );
+
+  if (hasTimestamps) {
+    // Use parsed timestamps from the transcript
+    messages.forEach((message, index) => {
+      const msgWithTimestamp = message as MessageWithTimestamp;
+      if (
+        msgWithTimestamp.timestamp &&
+        typeof msgWithTimestamp.timestamp === "string"
+      ) {
+        try {
+          message.timestamp = parseEuropeanDate(msgWithTimestamp.timestamp);
+        } catch {
+          // Fallback to distributed timestamp if parsing fails
+          message.timestamp = calculateDistributedTimestamp(
+            startTime,
+            endTime,
+            index,
+            messages.length
+          );
+        }
+      } else {
+        // Fallback to distributed timestamp
+        message.timestamp = calculateDistributedTimestamp(
+          startTime,
+          endTime,
+          index,
+          messages.length
+        );
+      }
+    });
+  } else {
+    // Distribute messages across session duration
+    messages.forEach((message, index) => {
+      message.timestamp = calculateDistributedTimestamp(
+        startTime,
+        endTime,
+        index,
+        messages.length
+      );
+    });
+  }
+}
+
+/**
  * Parse raw transcript content into structured messages
  * @param content Raw transcript content
  * @param startTime Session start time
@@ -74,79 +218,43 @@ export function parseTranscriptToMessages(
         continue;
       }
 
-      // Check if line starts with a timestamp and role [DD.MM.YYYY HH:MM:SS] Role: content
-      const timestampRoleMatch = trimmedLine.match(
-        /^\[(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2})\]\s+(User|Assistant|System|user|assistant|system):\s*(.*)$/i
-      );
-
-      // Check if line starts with just a role (User:, Assistant:, System:, etc.)
-      const roleMatch = trimmedLine.match(
-        /^(User|Assistant|System|user|assistant|system):\s*(.*)$/i
-      );
-
-      if (timestampRoleMatch) {
+      // Try parsing timestamp + role pattern first
+      const timestampRoleResult = parseTimestampRoleLine(trimmedLine);
+      if (timestampRoleResult) {
         // Save previous message if exists
-        if (currentMessage) {
-          messages.push({
-            sessionId: "", // Will be set by caller
-            timestamp: new Date(), // Will be calculated below
-            role: currentMessage.role,
-            content: currentMessage.content.trim(),
-            order: order++,
-          });
-        }
+        order = saveCurrentMessage(currentMessage, messages, order);
 
         // Start new message with timestamp
-        const timestamp = timestampRoleMatch[1];
-        const role =
-          timestampRoleMatch[2].charAt(0).toUpperCase() +
-          timestampRoleMatch[2].slice(1).toLowerCase();
-        const content = timestampRoleMatch[3] || "";
-
         currentMessage = {
-          role,
-          content,
-          timestamp, // Store the timestamp for later parsing
+          role: timestampRoleResult.role,
+          content: timestampRoleResult.content,
+          timestamp: timestampRoleResult.timestamp,
         };
-      } else if (roleMatch) {
+        continue;
+      }
+
+      // Try parsing role-only pattern
+      const roleResult = parseRoleLine(trimmedLine);
+      if (roleResult) {
         // Save previous message if exists
-        if (currentMessage) {
-          messages.push({
-            sessionId: "", // Will be set by caller
-            timestamp: new Date(), // Will be calculated below
-            role: currentMessage.role,
-            content: currentMessage.content.trim(),
-            order: order++,
-          });
-        }
+        order = saveCurrentMessage(currentMessage, messages, order);
 
         // Start new message without timestamp
-        const role =
-          roleMatch[1].charAt(0).toUpperCase() +
-          roleMatch[1].slice(1).toLowerCase();
-        const content = roleMatch[2] || "";
-
         currentMessage = {
-          role,
-          content,
+          role: roleResult.role,
+          content: roleResult.content,
         };
-      } else if (currentMessage) {
-        // Continue previous message (multi-line)
+        continue;
+      }
+
+      // Continue previous message (multi-line) or skip orphaned content
+      if (currentMessage) {
         currentMessage.content += `\n${trimmedLine}`;
       }
-      // If no current message and no role match, skip the line (orphaned content)
     }
 
     // Save the last message
-    if (currentMessage) {
-      messages.push({
-        sessionId: "", // Will be set by caller
-        timestamp: new Date(), // Will be calculated below
-        role: currentMessage.role,
-        content: currentMessage.content.trim(),
-        order: order++,
-      });
-    }
+    saveCurrentMessage(currentMessage, messages, order);
 
     if (messages.length === 0) {
       return {
@@ -155,57 +263,8 @@ export function parseTranscriptToMessages(
       };
     }
 
-    // Calculate timestamps - use parsed timestamps if available, otherwise distribute across session duration
-    interface MessageWithTimestamp extends Omit<ParsedMessage, 'timestamp'> {
-      timestamp: Date | string;
-    }
-    const hasTimestamps = messages.some(
-      (msg) => (msg as MessageWithTimestamp).timestamp
-    );
-
-    if (hasTimestamps) {
-      // Use parsed timestamps from the transcript
-      messages.forEach((message, index) => {
-        const msgWithTimestamp = message as MessageWithTimestamp;
-        if (
-          msgWithTimestamp.timestamp &&
-          typeof msgWithTimestamp.timestamp === "string"
-        ) {
-          try {
-            message.timestamp = parseEuropeanDate(msgWithTimestamp.timestamp);
-          } catch (_error) {
-            // Fallback to distributed timestamp if parsing fails
-            const sessionDurationMs = endTime.getTime() - startTime.getTime();
-            const messageInterval =
-              messages.length > 1
-                ? sessionDurationMs / (messages.length - 1)
-                : 0;
-            message.timestamp = new Date(
-              startTime.getTime() + index * messageInterval
-            );
-          }
-        } else {
-          // Fallback to distributed timestamp
-          const sessionDurationMs = endTime.getTime() - startTime.getTime();
-          const messageInterval =
-            messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
-          message.timestamp = new Date(
-            startTime.getTime() + index * messageInterval
-          );
-        }
-      });
-    } else {
-      // Distribute messages across session duration
-      const sessionDurationMs = endTime.getTime() - startTime.getTime();
-      const messageInterval =
-        messages.length > 1 ? sessionDurationMs / (messages.length - 1) : 0;
-
-      messages.forEach((message, index) => {
-        message.timestamp = new Date(
-          startTime.getTime() + index * messageInterval
-        );
-      });
-    }
+    // Calculate timestamps for all messages
+    processMessageTimestamps(messages, startTime, endTime);
 
     return {
       success: true,

@@ -6,29 +6,7 @@ import { prisma } from "../../../../lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    let { companyId } = body;
-
-    if (!companyId) {
-      // Try to get user from prisma based on session cookie
-      try {
-        const session = await prisma.session.findFirst({
-          orderBy: { createdAt: "desc" },
-          where: {
-            /* Add session check criteria here */
-          },
-        });
-
-        if (session) {
-          companyId = session.companyId;
-        }
-      } catch (error) {
-        // Log error for server-side debugging
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
-        // Use a server-side logging approach instead of console
-        process.stderr.write(`Error fetching session: ${errorMessage}\n`);
-      }
-    }
+    const { companyId } = body;
 
     if (!companyId) {
       return NextResponse.json(

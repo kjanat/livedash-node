@@ -64,7 +64,11 @@ export default function TopQuestionsChart({
                 </div>
 
                 {/* Rank indicator */}
-                <div className="absolute -left-1 top-0 w-6 h-6 bg-primary text-primary-foreground text-xs font-bold rounded-full flex items-center justify-center">
+                <div
+                  className="absolute -left-1 top-0 w-6 h-6 bg-primary text-primary-foreground text-xs font-bold rounded-full flex items-center justify-center"
+                  role="img"
+                  aria-label={`Rank ${index + 1}`}
+                >
                   {index + 1}
                 </div>
               </div>

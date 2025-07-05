@@ -1,63 +1,24 @@
 import bcrypt from "bcryptjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { extractClientIP, InMemoryRateLimiter } from "../../../lib/rateLimiter";
 import { registerSchema, validateInput } from "../../../lib/validation";
 
-// In-memory rate limiting with automatic cleanup
-const registrationAttempts = new Map<
-  string,
-  { count: number; resetTime: number }
->();
-
-// Clean up expired entries every 5 minutes
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
-const MAX_ENTRIES = 10000; // Prevent unbounded growth
-
-setInterval(() => {
-  const now = Date.now();
-  registrationAttempts.forEach((attempts, ip) => {
-    if (now > attempts.resetTime) {
-      registrationAttempts.delete(ip);
-    }
-  });
-}, CLEANUP_INTERVAL);
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  // Prevent unbounded growth
-  if (registrationAttempts.size > MAX_ENTRIES) {
-    // Remove oldest entries
-    const entries = Array.from(registrationAttempts.entries());
-    entries.sort((a, b) => a[1].resetTime - b[1].resetTime);
-    entries.slice(0, Math.floor(MAX_ENTRIES / 2)).forEach(([ip]) => {
-      registrationAttempts.delete(ip);
-    });
-  }
-  const attempts = registrationAttempts.get(ip);
-
-  if (!attempts || now > attempts.resetTime) {
-    registrationAttempts.set(ip, { count: 1, resetTime: now + 60 * 60 * 1000 }); // 1 hour window
-    return true;
-  }
-
-  if (attempts.count >= 3) {
-    // Max 3 registrations per hour per IP
-    return false;
-  }
-
-  attempts.count++;
-  return true;
-}
+// Rate limiting for registration endpoint
+const registrationLimiter = new InMemoryRateLimiter({
+  maxAttempts: 3,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxEntries: 10000,
+  cleanupIntervalMs: 5 * 60 * 1000, // 5 minutes
+});
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting check - improved IP extraction
-    const forwardedFor = request.headers.get("x-forwarded-for");
-    const ip = forwardedFor
-      ? forwardedFor.split(",")[0].trim() // Get first IP if multiple
-      : request.headers.get("x-real-ip") ||
-        "unknown";
-    if (!checkRateLimit(ip)) {
+    // Rate limiting check using shared utility
+    const ip = extractClientIP(request);
+    const rateLimitResult = registrationLimiter.checkRateLimit(ip);
+
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
           success: false,

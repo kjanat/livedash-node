@@ -1,11 +1,7 @@
-
 # Refactoring Plan: Integrating tRPC for End-to-End Type Safety
 
-**Objective:** Incrementally adopt tRPC to replace existing RESTful API endpoints, enhancing type safety, developer experience, and maintainability.
-
-**Assignee:** Claude Code
-
-**Mentor:** Max
+> **Objective:** _Incrementally adopt `tRPC` to replace existing RESTful API endpoints, enhancing type safety, developer experience, and maintainability._
+> **Assignee:** _Claude Code_
 
 ---
 
@@ -50,8 +46,8 @@ Create a new file at `lib/trpc/server.ts` to initialize tRPC. This file will exp
 
 ```typescript
 // lib/trpc/server.ts
-import { initTRPC } from '@trpc/server';
-import { db } from '@/lib/prisma'; // Assuming prisma client is here
+import { initTRPC } from "@trpc/server";
+import { db } from "@/lib/prisma"; // Assuming prisma client is here
 
 // Avoid exporting the entire t-object since it's not very descriptive.
 const t = initTRPC.create();
@@ -67,8 +63,8 @@ Create a file for the main tRPC router at `lib/trpc/routers/_app.ts`. This route
 
 ```typescript
 // lib/trpc/routers/_app.ts
-import { router } from '../server';
-import { userRouter } from './user'; // Example sub-router
+import { router } from "../server";
+import { userRouter } from "./user"; // Example sub-router
 
 export const appRouter = router({
   user: userRouter,
@@ -85,9 +81,9 @@ Create an example router for user-related endpoints at `lib/trpc/routers/user.ts
 
 ```typescript
 // lib/trpc/routers/user.ts
-import { router, procedure } from '../server';
-import { z } from 'zod';
-import { db } from '@/lib/prisma';
+import { router, procedure } from "../server";
+import { z } from "zod";
+import { db } from "@/lib/prisma";
 
 export const userRouter = router({
   // Example query to get all users
@@ -97,12 +93,10 @@ export const userRouter = router({
   }),
 
   // Example query to get a user by ID
-  byId: procedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const user = await db.user.findUnique({ where: { id: input.id } });
-      return user;
-    }),
+  byId: procedure.input(z.object({ id: z.string() })).query(async ({ input }) => {
+    const user = await db.user.findUnique({ where: { id: input.id } });
+    return user;
+  }),
 });
 ```
 
@@ -112,12 +106,12 @@ Create the entry point for all tRPC API calls at `app/api/trpc/[trpc]/route.ts`.
 
 ```typescript
 // app/api/trpc/[trpc]/route.ts
-import { fetchRequestHandler } from '@trpc/server/adapters/fetch';
-import { appRouter } from '@/lib/trpc/routers/_app';
+import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { appRouter } from "@/lib/trpc/routers/_app";
 
 const handler = (req: Request) =>
   fetchRequestHandler({
-    endpoint: '/api/trpc',
+    endpoint: "/api/trpc",
     req,
     router: appRouter,
     createContext: () => ({}), // We will add context later
@@ -134,8 +128,8 @@ Create a file at `lib/trpc/client.ts` to configure the client-side hooks.
 
 ```typescript
 // lib/trpc/client.ts
-import { createTRPCReact } from '@trpc/react-query';
-import { type AppRouter } from '@/lib/trpc/routers/_app';
+import { createTRPCReact } from "@trpc/react-query";
+import { type AppRouter } from "@/lib/trpc/routers/_app";
 
 export const trpc = createTRPCReact<AppRouter>({});
 ```
@@ -146,13 +140,13 @@ We need a new provider that wraps our app in both a `QueryClientProvider` (from 
 
 ```tsx
 // lib/trpc/Provider.tsx
-'use client';
+"use client";
 
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { httpBatchLink } from '@trpc/client';
-import React, { useState } from 'react';
-import { trpc } from './client';
-import { getBaseUrl } from '@/lib/utils'; // You might need to create this helper
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { httpBatchLink } from "@trpc/client";
+import React, { useState } from "react";
+import { trpc } from "./client";
+import { getBaseUrl } from "@/lib/utils"; // You might need to create this helper
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({}));
@@ -174,13 +168,15 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
 }
 ```
 
-*Note: You will need a `getBaseUrl` utility function to resolve the correct API URL on the client and server. You can place this in `lib/utils.ts`.*
+!!! note
+
+    Note: You will need a `getBaseUrl` utility function to resolve the correct API URL on the client and server. You can place this in `lib/utils.ts`.
 
 ```typescript
 // lib/utils.ts
 
 export function getBaseUrl() {
-  if (typeof window !== 'undefined') return ''; // browser should use relative url
+  if (typeof window !== "undefined") return ""; // browser should use relative url
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // SSR should use vercel url
   return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR should use localhost
 }
@@ -192,19 +188,14 @@ Wrap the application with the new `TRPCProvider` in `app/providers.tsx`.
 
 ```tsx
 // app/providers.tsx
-'use client';
+"use client";
 
-import { ThemeProvider } from '@/components/theme-provider';
-import { TRPCProvider } from '@/lib/trpc/Provider'; // Import the new provider
+import { ThemeProvider } from "@/components/theme-provider";
+import { TRPCProvider } from "@/lib/trpc/Provider"; // Import the new provider
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
       <TRPCProvider>{children}</TRPCProvider> {/* Wrap with TRPCProvider */}
     </ThemeProvider>
   );
@@ -217,9 +208,9 @@ Now you can replace a traditional `fetch` call with the new tRPC hook. For examp
 
 ```tsx
 // app/dashboard/users/page.tsx (Example)
-'use client';
+"use client";
 
-import { trpc } from '@/lib/trpc/client';
+import { trpc } from "@/lib/trpc/client";
 
 export default function UsersPage() {
   const { data: users, isLoading, error } = trpc.user.list.useQuery();
@@ -237,7 +228,9 @@ export default function UsersPage() {
       <h1>Users</h1>
       <ul>
         {users?.map((user) => (
-          <li key={user.id}>{user.name} ({user.email})</li>
+          <li key={user.id}>
+            {user.name} ({user.email})
+          </li>
         ))}
       </ul>
     </div>
@@ -254,4 +247,5 @@ export default function UsersPage() {
 - **Optimistic UI:** For mutations, implement optimistic updates to provide a faster user experience.
 
 ---
+
 This structured approach will ensure a smooth and successful integration of tRPC, leading to a more robust and maintainable codebase.

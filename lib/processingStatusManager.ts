@@ -1,4 +1,8 @@
-import { ProcessingStage, ProcessingStatus, type PrismaClient } from "@prisma/client";
+import {
+  type PrismaClient,
+  ProcessingStage,
+  ProcessingStatus,
+} from "@prisma/client";
 import { prisma } from "./prisma";
 
 // Type-safe metadata interfaces
@@ -172,10 +176,7 @@ export class ProcessingStatusManager {
   /**
    * Get sessions that need processing for a specific stage
    */
-  async getSessionsNeedingProcessing(
-    stage: ProcessingStage,
-    limit = 50
-  ) {
+  async getSessionsNeedingProcessing(stage: ProcessingStage, limit = 50) {
     return await this.prisma.sessionProcessingStatus.findMany({
       where: {
         stage,
@@ -361,20 +362,40 @@ export class ProcessingStatusManager {
 export const processingStatusManager = new ProcessingStatusManager();
 
 // Also export the individual functions for backward compatibility
-export const initializeSession = (sessionId: string) => processingStatusManager.initializeSession(sessionId);
-export const startStage = (sessionId: string, stage: ProcessingStage, metadata?: ProcessingMetadata) =>
-  processingStatusManager.startStage(sessionId, stage, metadata);
-export const completeStage = (sessionId: string, stage: ProcessingStage, metadata?: ProcessingMetadata) =>
-  processingStatusManager.completeStage(sessionId, stage, metadata);
-export const failStage = (sessionId: string, stage: ProcessingStage, errorMessage: string, metadata?: ProcessingMetadata) =>
+export const initializeSession = (sessionId: string) =>
+  processingStatusManager.initializeSession(sessionId);
+export const startStage = (
+  sessionId: string,
+  stage: ProcessingStage,
+  metadata?: ProcessingMetadata
+) => processingStatusManager.startStage(sessionId, stage, metadata);
+export const completeStage = (
+  sessionId: string,
+  stage: ProcessingStage,
+  metadata?: ProcessingMetadata
+) => processingStatusManager.completeStage(sessionId, stage, metadata);
+export const failStage = (
+  sessionId: string,
+  stage: ProcessingStage,
+  errorMessage: string,
+  metadata?: ProcessingMetadata
+) =>
   processingStatusManager.failStage(sessionId, stage, errorMessage, metadata);
-export const skipStage = (sessionId: string, stage: ProcessingStage, reason: string) =>
-  processingStatusManager.skipStage(sessionId, stage, reason);
-export const getSessionStatus = (sessionId: string) => processingStatusManager.getSessionStatus(sessionId);
-export const getSessionsNeedingProcessing = (stage: ProcessingStage, limit?: number) =>
-  processingStatusManager.getSessionsNeedingProcessing(stage, limit);
-export const getPipelineStatus = () => processingStatusManager.getPipelineStatus();
-export const getFailedSessions = (stage?: ProcessingStage) => processingStatusManager.getFailedSessions(stage);
+export const skipStage = (
+  sessionId: string,
+  stage: ProcessingStage,
+  reason: string
+) => processingStatusManager.skipStage(sessionId, stage, reason);
+export const getSessionStatus = (sessionId: string) =>
+  processingStatusManager.getSessionStatus(sessionId);
+export const getSessionsNeedingProcessing = (
+  stage: ProcessingStage,
+  limit?: number
+) => processingStatusManager.getSessionsNeedingProcessing(stage, limit);
+export const getPipelineStatus = () =>
+  processingStatusManager.getPipelineStatus();
+export const getFailedSessions = (stage?: ProcessingStage) =>
+  processingStatusManager.getFailedSessions(stage);
 export const resetStageForRetry = (sessionId: string, stage: ProcessingStage) =>
   processingStatusManager.resetStageForRetry(sessionId, stage);
 export const hasCompletedStage = (sessionId: string, stage: ProcessingStage) =>

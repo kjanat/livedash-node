@@ -2,92 +2,36 @@
 
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@prisma/client";
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import { env } from "./env";
-
-// Enhanced connection pool configuration
-const createConnectionPool = () => {
-  // Parse DATABASE_URL to get connection parameters
-  const databaseUrl = new URL(env.DATABASE_URL);
-
-  const pool = new Pool({
-    host: databaseUrl.hostname,
-    port: Number.parseInt(databaseUrl.port) || 5432,
-    user: databaseUrl.username,
-    password: databaseUrl.password,
-    database: databaseUrl.pathname.slice(1), // Remove leading slash
-    ssl: databaseUrl.searchParams.get("sslmode") !== "disable",
-
-    // Connection pool configuration
-    max: env.DATABASE_CONNECTION_LIMIT, // Maximum number of connections
-    min: 2, // Minimum number of connections to maintain
-    idleTimeoutMillis: env.DATABASE_POOL_TIMEOUT * 1000, // Close idle connections after timeout
-    connectionTimeoutMillis: 10000, // Connection timeout
-    maxUses: 1000, // Maximum uses per connection before cycling
-    allowExitOnIdle: true, // Allow process to exit when all connections are idle
-
-    // Health check configuration
-    query_timeout: 30000, // Query timeout
-    keepAlive: true,
-    keepAliveInitialDelayMillis: 30000,
-  });
-
-  // Connection pool event handlers
-  pool.on("connect", () => {
-    console.log(
-      `Database connection established. Active connections: ${pool.totalCount}`
-    );
-  });
-
-  pool.on("acquire", () => {
-    console.log(
-      `Connection acquired from pool. Waiting: ${pool.waitingCount}, Idle: ${pool.idleCount}`
-    );
-  });
-
-  pool.on("release", () => {
-    console.log(
-      `Connection released to pool. Active: ${pool.totalCount - pool.idleCount}, Idle: ${pool.idleCount}`
-    );
-  });
-
-  pool.on("error", (err) => {
-    console.error("Database pool error:", err);
-  });
-
-  pool.on("remove", () => {
-    console.log(
-      `Connection removed from pool. Total connections: ${pool.totalCount}`
-    );
-  });
-
-  return pool;
-};
 
 // Create adapter with connection pool
 export const createEnhancedPrismaClient = () => {
   // Parse DATABASE_URL to get connection parameters
   const dbUrl = new URL(env.DATABASE_URL);
-  
+
   const poolConfig = {
     host: dbUrl.hostname,
-    port: parseInt(dbUrl.port || "5432"),
+    port: Number.parseInt(dbUrl.port || "5432"),
     database: dbUrl.pathname.slice(1), // Remove leading '/'
     user: dbUrl.username,
     password: decodeURIComponent(dbUrl.password),
-    ssl: dbUrl.searchParams.get("sslmode") !== "disable" ? { rejectUnauthorized: false } : undefined,
-    
+    ssl:
+      dbUrl.searchParams.get("sslmode") !== "disable"
+        ? { rejectUnauthorized: false }
+        : undefined,
+
     // Connection pool settings
-    max: 20, // Maximum number of connections
-    idleTimeoutMillis: 30000, // 30 seconds
+    max: env.DATABASE_CONNECTION_LIMIT || 20, // Maximum number of connections
+    idleTimeoutMillis: env.DATABASE_POOL_TIMEOUT * 1000 || 30000, // Use env timeout
     connectionTimeoutMillis: 5000, // 5 seconds
     query_timeout: 10000, // 10 seconds
     statement_timeout: 10000, // 10 seconds
-    
+
     // Connection lifecycle
     allowExitOnIdle: true,
   };
-  
+
   const adapter = new PrismaPg(poolConfig);
 
   return new PrismaClient({

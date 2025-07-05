@@ -82,61 +82,107 @@ export default function GeographicMap({
     setIsClient(true);
   }, []);
 
+  /**
+   * Extract coordinates from a geometry feature
+   */
+  function extractCoordinatesFromGeometry(
+    geometry: any
+  ): [number, number] | undefined {
+    if (geometry.type === "Point") {
+      const [lon, lat] = geometry.coordinates;
+      return [lat, lon]; // Leaflet expects [lat, lon]
+    }
+
+    if (
+      geometry.type === "Polygon" &&
+      geometry.coordinates &&
+      geometry.coordinates[0] &&
+      geometry.coordinates[0][0]
+    ) {
+      // For Polygons, use the first coordinate of the first ring as a fallback representative point
+      const [lon, lat] = geometry.coordinates[0][0];
+      return [lat, lon]; // Leaflet expects [lat, lon]
+    }
+
+    if (
+      geometry.type === "MultiPolygon" &&
+      geometry.coordinates &&
+      geometry.coordinates[0] &&
+      geometry.coordinates[0][0] &&
+      geometry.coordinates[0][0][0]
+    ) {
+      // For MultiPolygons, use the first coordinate of the first ring of the first polygon
+      const [lon, lat] = geometry.coordinates[0][0][0];
+      return [lat, lon]; // Leaflet expects [lat, lon]
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Get coordinates for a country code
+   */
+  function getCountryCoordinates(
+    code: string,
+    countryCoordinates: Record<string, [number, number]>
+  ): [number, number] | undefined {
+    // Try predefined coordinates first
+    let coords = countryCoordinates[code] || DEFAULT_COORDINATES[code];
+
+    if (!coords) {
+      // Try to get coordinates from country coder
+      const feature = countryCoder.feature(code);
+      if (feature?.geometry) {
+        coords = extractCoordinatesFromGeometry(feature.geometry);
+      }
+    }
+
+    return coords;
+  }
+
+  /**
+   * Process a single country entry into CountryData
+   */
+  function processCountryEntry(
+    code: string,
+    count: number,
+    countryCoordinates: Record<string, [number, number]>
+  ): CountryData | null {
+    const coordinates = getCountryCoordinates(code, countryCoordinates);
+
+    if (coordinates) {
+      return { code, count, coordinates };
+    }
+
+    return null; // Skip if no coordinates found
+  }
+
+  /**
+   * Process all countries data into CountryData array
+   */
+  function processCountriesData(
+    countries: Record<string, number>,
+    countryCoordinates: Record<string, [number, number]>
+  ): CountryData[] {
+    const data = Object.entries(countries || {})
+      .map(([code, count]) =>
+        processCountryEntry(code, count, countryCoordinates)
+      )
+      .filter((item): item is CountryData => item !== null);
+
+    console.log(
+      `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
+    );
+
+    return data;
+  }
+
   // Process country data when client is ready and dependencies change
   useEffect(() => {
     if (!isClient || !countries) return;
 
     try {
-      // Generate CountryData array for the Map component
-      const data: CountryData[] = Object.entries(countries || {})
-        .map(([code, count]) => {
-          let countryCoords: [number, number] | undefined =
-            countryCoordinates[code] || DEFAULT_COORDINATES[code];
-
-          if (!countryCoords) {
-            const feature = countryCoder.feature(code);
-            if (feature?.geometry) {
-              if (feature.geometry.type === "Point") {
-                const [lon, lat] = feature.geometry.coordinates;
-                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
-              } else if (
-                feature.geometry.type === "Polygon" &&
-                feature.geometry.coordinates &&
-                feature.geometry.coordinates[0] &&
-                feature.geometry.coordinates[0][0]
-              ) {
-                // For Polygons, use the first coordinate of the first ring as a fallback representative point
-                const [lon, lat] = feature.geometry.coordinates[0][0];
-                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
-              } else if (
-                feature.geometry.type === "MultiPolygon" &&
-                feature.geometry.coordinates &&
-                feature.geometry.coordinates[0] &&
-                feature.geometry.coordinates[0][0] &&
-                feature.geometry.coordinates[0][0][0]
-              ) {
-                // For MultiPolygons, use the first coordinate of the first ring of the first polygon
-                const [lon, lat] = feature.geometry.coordinates[0][0][0];
-                countryCoords = [lat, lon]; // Leaflet expects [lat, lon]
-              }
-            }
-          }
-
-          if (countryCoords) {
-            return {
-              code,
-              count,
-              coordinates: countryCoords,
-            };
-          }
-          return null; // Skip if no coordinates found
-        })
-        .filter((item): item is CountryData => item !== null);
-
-      console.log(
-        `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
-      );
-
+      const data = processCountriesData(countries, countryCoordinates);
       setCountryData(data);
     } catch (error) {
       console.error("Error processing geographic data:", error);

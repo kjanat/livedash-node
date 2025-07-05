@@ -77,6 +77,17 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // TODO: Email user their temp password (stub, for demo) - Implement a robust and secure email sending mechanism. Consider using a transactional email service.
-  return NextResponse.json({ ok: true, tempPassword });
+  const { sendPasswordResetEmail } = await import("../../../../lib/sendEmail");
+  const emailResult = await sendPasswordResetEmail(email, tempPassword);
+
+  if (!emailResult.success) {
+    console.warn("Failed to send password email:", emailResult.error);
+  }
+
+  return NextResponse.json({
+    ok: true,
+    tempPassword,
+    emailSent: emailResult.success,
+    emailError: emailResult.error,
+  });
 }

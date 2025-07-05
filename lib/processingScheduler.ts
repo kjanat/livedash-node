@@ -254,7 +254,9 @@ async function processQuestions(
   });
 
   // Filter and prepare unique questions
-  const uniqueQuestions = Array.from(new Set(questions.filter((q) => q.trim())));
+  const uniqueQuestions = Array.from(
+    new Set(questions.filter((q) => q.trim()))
+  );
   if (uniqueQuestions.length === 0) return;
 
   // Batch create questions (skip duplicates)

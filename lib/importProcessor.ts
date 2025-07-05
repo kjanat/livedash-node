@@ -434,7 +434,7 @@ async function processQueuedImportsInternal(batchSize = 50): Promise<void> {
     // Process with concurrency limit to avoid overwhelming the database
     const concurrencyLimit = 5;
     const results: Array<{
-      importRecord: typeof unprocessedImports[0];
+      importRecord: (typeof unprocessedImports)[0];
       result: Awaited<ReturnType<typeof processSingleImport>>;
     }> = [];
 
