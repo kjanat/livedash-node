@@ -4,6 +4,7 @@ import {
   ProcessingStage,
   type SentimentCategory,
   type SessionCategory,
+  AIRequestStatus,
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
@@ -651,20 +652,20 @@ async function processSessionsInParallel(
 }
 
 /**
- * Process unprocessed sessions using the new processing status system
+ * Process unprocessed sessions using the new batch processing system
  */
 export async function processUnprocessedSessions(
   batchSize: number | null = null,
-  maxConcurrency = 5
+  _maxConcurrency = 5
 ): Promise<void> {
   process.stdout.write(
-    "[ProcessingScheduler] Starting to process sessions needing AI analysis...\n"
+    "[ProcessingScheduler] Starting to create batch requests for sessions needing AI analysis...\n"
   );
 
   try {
     await withRetry(
       async () => {
-        await processUnprocessedSessionsInternal(batchSize, maxConcurrency);
+        await createBatchRequestsForSessions(batchSize);
       },
       {
         maxRetries: 3,
@@ -680,7 +681,7 @@ export async function processUnprocessedSessions(
   }
 }
 
-async function processUnprocessedSessionsInternal(
+async function _processUnprocessedSessionsInternal(
   batchSize: number | null = null,
   maxConcurrency = 5
 ): Promise<void> {
@@ -757,14 +758,16 @@ async function processUnprocessedSessionsInternal(
  */
 export async function getAIProcessingCosts(): Promise<{
   totalCostEur: number;
+  totalRequests: number;
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
   totalTokens: number;
-  requestCount: number;
-  successfulRequests: number;
-  failedRequests: number;
 }> {
   const result = await prisma.aIProcessingRequest.aggregate({
     _sum: {
       totalCostEur: true,
+      promptTokens: true,
+      completionTokens: true,
       totalTokens: true,
     },
     _count: {
@@ -772,20 +775,12 @@ export async function getAIProcessingCosts(): Promise<{
     },
   });
 
-  const successfulRequests = await prisma.aIProcessingRequest.count({
-    where: { success: true },
-  });
-
-  const failedRequests = await prisma.aIProcessingRequest.count({
-    where: { success: false },
-  });
-
   return {
     totalCostEur: result._sum.totalCostEur || 0,
+    totalRequests: result._count.id || 0,
+    totalPromptTokens: result._sum.promptTokens || 0,
+    totalCompletionTokens: result._sum.completionTokens || 0,
     totalTokens: result._sum.totalTokens || 0,
-    requestCount: result._count.id || 0,
-    successfulRequests,
-    failedRequests,
   };
 }
 
@@ -824,4 +819,99 @@ export function startProcessingScheduler(): void {
       );
     }
   });
+}
+
+/**
+ * Create batch requests for sessions needing AI processing
+ */
+async function createBatchRequestsForSessions(batchSize: number | null = null): Promise<void> {
+  // Get sessions that need AI processing using the new status system
+  const sessionsNeedingAI = await getSessionsNeedingProcessing(
+    ProcessingStage.AI_ANALYSIS,
+    batchSize || 50
+  );
+
+  if (sessionsNeedingAI.length === 0) {
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions found requiring AI processing.\n"
+    );
+    return;
+  }
+
+  // Get session IDs that need processing
+  const sessionIds = sessionsNeedingAI.map(
+    (statusRecord) => statusRecord.sessionId
+  );
+
+  // Fetch full session data with messages
+  const sessionsToProcess = await prisma.session.findMany({
+    where: {
+      id: { in: sessionIds },
+    },
+    include: {
+      messages: {
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+
+  // Filter to only sessions that have messages
+  const sessionsWithMessages = sessionsToProcess.filter(
+    (session) => session.messages && session.messages.length > 0
+  );
+
+  if (sessionsWithMessages.length === 0) {
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions with messages found requiring processing.\n"
+    );
+    return;
+  }
+
+  process.stdout.write(
+    `[ProcessingScheduler] Found ${sessionsWithMessages.length} sessions to convert to batch requests.\n`
+  );
+
+  // Start AI analysis stage for all sessions
+  for (const session of sessionsWithMessages) {
+    await startStage(session.id, ProcessingStage.AI_ANALYSIS);
+  }
+
+  // Create AI processing requests for batch processing
+  const batchRequests = [];
+  for (const session of sessionsWithMessages) {
+    try {
+      // Get company's AI model
+      const aiModel = await getCompanyAIModel(session.companyId);
+
+      // Create batch processing request record
+      const processingRequest = await prisma.aIProcessingRequest.create({
+        data: {
+          sessionId: session.id,
+          model: aiModel,
+          promptTokens: 0, // Will be filled when batch completes
+          completionTokens: 0,
+          totalTokens: 0,
+          promptTokenCost: 0,
+          completionTokenCost: 0,
+          totalCostEur: 0,
+          processingType: "session_analysis",
+          success: false, // Will be updated when batch completes
+          processingStatus: AIRequestStatus.PENDING_BATCHING,
+        },
+      });
+
+      batchRequests.push(processingRequest);
+    } catch (error) {
+      console.error(`Failed to create batch request for session ${session.id}:`, error);
+      await failStage(
+        session.id,
+        ProcessingStage.AI_ANALYSIS,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  process.stdout.write(
+    `[ProcessingScheduler] Created ${batchRequests.length} batch processing requests.\n`
+  );
 }

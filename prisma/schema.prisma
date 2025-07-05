@@ -55,6 +55,7 @@ model Company {
   sessions        Session[]
   imports         SessionImport[]
   users           User[]           @relation("CompanyUsers")
+  aiBatchRequests AIBatchRequest[]
 
   @@index([name])
   @@index([status])
@@ -246,14 +247,42 @@ model SessionQuestion {
 }
 
 /// *
+/// * AI BATCH REQUEST TRACKING (OpenAI Batch API)
+/// * Tracks batch jobs submitted to OpenAI for cost-efficient processing
+model AIBatchRequest {
+  id                 String               @id @default(cuid())
+  companyId          String
+  company            Company              @relation(fields: [companyId], references: [id])
+
+  /// OpenAI specific IDs
+  openaiBatchId      String               @unique
+  inputFileId        String
+  outputFileId       String?
+  errorFileId        String?
+
+  /// Our internal status tracking
+  status             AIBatchRequestStatus @default(PENDING)
+
+  /// Timestamps
+  createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+  completedAt        DateTime?            @db.Timestamptz(6)
+  processedAt        DateTime?            @db.Timestamptz(6) // When we finished processing the results
+
+  /// Relation to the individual requests included in this batch
+  processingRequests AIProcessingRequest[]
+
+  @@index([companyId, status])
+}
+
+/// *
 /// * AI PROCESSING COST TRACKING
 model AIProcessingRequest {
-  id                       String    @id @default(uuid())
+  id                       String         @id @default(uuid())
   sessionId                String
-  openaiRequestId          String?   @db.VarChar(255)
-  model                    String    @db.VarChar(100)
-  serviceTier              String?   @db.VarChar(50)
-  systemFingerprint        String?   @db.VarChar(255)
+  openaiRequestId          String?        @db.VarChar(255)
+  model                    String         @db.VarChar(100)
+  serviceTier              String?        @db.VarChar(50)
+  systemFingerprint        String?        @db.VarChar(255)
   promptTokens             Int
   completionTokens         Int
   totalTokens              Int
@@ -263,21 +292,28 @@ model AIProcessingRequest {
   audioTokensCompletion    Int?
   acceptedPredictionTokens Int?
   rejectedPredictionTokens Int?
-  promptTokenCost          Float     @db.Real
-  completionTokenCost      Float     @db.Real
-  totalCostEur             Float     @db.Real
-  processingType           String    @db.VarChar(100)
+  promptTokenCost          Float          @db.Real
+  completionTokenCost      Float          @db.Real
+  totalCostEur             Float          @db.Real
+  processingType           String         @db.VarChar(100)
   success                  Boolean
   errorMessage             String?
-  requestedAt              DateTime  @default(now()) @db.Timestamptz(6)
-  completedAt              DateTime? @db.Timestamptz(6)
-  session                  Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  requestedAt              DateTime       @default(now()) @db.Timestamptz(6)
+  completedAt              DateTime?      @db.Timestamptz(6)
+  
+  /// === NEW BATCH API FIELDS ===
+  processingStatus         AIRequestStatus @default(PENDING_BATCHING)
+  batchId                  String?
+  batch                    AIBatchRequest? @relation(fields: [batchId], references: [id])
+  
+  session                  Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([sessionId, requestedAt])
   @@index([requestedAt])
   @@index([model])
   @@index([success, requestedAt])
+  @@index([processingStatus]) // Add this index for efficient querying
 }
 
 /// *
@@ -426,4 +462,38 @@ enum ProcessingStatus {
   FAILED
   /// Stage was intentionally skipped
   SKIPPED
+}
+
+/// OpenAI Batch Request Status
+enum AIBatchRequestStatus {
+  /// Batch request created, waiting to upload file to OpenAI
+  PENDING
+  /// Currently uploading file to OpenAI
+  UPLOADING
+  /// OpenAI is validating the uploaded file
+  VALIDATING
+  /// Batch is queued or running on OpenAI's side
+  IN_PROGRESS
+  /// OpenAI is finalizing the batch results
+  FINALIZING
+  /// Batch completed on OpenAI, ready for processing
+  COMPLETED
+  /// We have processed the results from the completed batch
+  PROCESSED
+  /// Batch failed during processing
+  FAILED
+  /// Batch was cancelled
+  CANCELLED
+}
+
+/// Status for individual AI processing requests within a batch
+enum AIRequestStatus {
+  /// Request is waiting to be included in a batch
+  PENDING_BATCHING
+  /// Request is currently part of a batch being processed
+  BATCHING_IN_PROGRESS
+  /// Processing completed successfully
+  PROCESSING_COMPLETE
+  /// Processing failed
+  PROCESSING_FAILED
 }

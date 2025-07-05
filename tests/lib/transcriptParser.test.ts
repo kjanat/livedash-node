@@ -108,13 +108,13 @@ User: Third
 
       expect(result.success).toBe(true);
       expect(result.messages).toHaveLength(3);
-      
+
       // First message should be at start time
       expect(result.messages![0].timestamp.getTime()).toBe(startTime.getTime());
-      
+
       // Last message should be at end time
       expect(result.messages![2].timestamp.getTime()).toBe(endTime.getTime());
-      
+
       // Middle message should be between start and end
       const midTime = result.messages![1].timestamp.getTime();
       expect(midTime).toBeGreaterThan(startTime.getTime());
@@ -174,7 +174,7 @@ System: Mixed case system
 
       expect(result.success).toBe(true);
       expect(result.messages).toHaveLength(2);
-      
+
       // Check that timestamps were parsed correctly
       const firstTimestamp = result.messages![0].timestamp;
       expect(firstTimestamp.getFullYear()).toBe(2024);
