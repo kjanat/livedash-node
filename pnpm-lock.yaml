@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@prisma/adapter-pg':
-        specifier: ^6.10.1
-        version: 6.10.1(pg@8.16.3)
+        specifier: ^6.11.1
+        version: 6.11.1
       '@prisma/client':
         specifier: ^6.10.1
         version: 6.10.1(prisma@6.10.1(typescript@5.8.3))(typescript@5.8.3)
@@ -908,10 +908,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@prisma/adapter-pg@6.10.1':
-    resolution: {integrity: sha512-4Kpz5EV1jEOsKDuKYMjfJKMiIIcsuR9Ou1B8zLzehYtB7/oi+1ooDoK1K+T7sMisHkP69aYat5j0dskxvJTgdQ==}
-    peerDependencies:
-      pg: ^8.11.3
+  '@prisma/adapter-pg@6.11.1':
+    resolution: {integrity: sha512-30wZL5UaSO8ypHQfpxFxveMNuH1hTkmP5VkNC9QpEqwhdMrf/4Rb9x0BVbzomFDPX24uwKG1w+welfIxnUrK5w==}
 
   '@prisma/client@6.10.1':
     resolution: {integrity: sha512-Re4pMlcUsQsUTAYMK7EJ4Bw2kg3WfZAAlr8GjORJaK4VOP6LxRQUQ1TuLnxcF42XqGkWQ36q5CQF1yVadANQ6w==}
@@ -931,8 +929,11 @@ packages:
   '@prisma/debug@6.10.1':
     resolution: {integrity: sha512-k2YT53cWxv9OLjW4zSYTZ6Z7j0gPfCzcr2Mj99qsuvlxr8WAKSZ2NcSR0zLf/mP4oxnYG842IMj3utTgcd7CaA==}
 
-  '@prisma/driver-adapter-utils@6.10.1':
-    resolution: {integrity: sha512-MJ7NiiMA5YQUD1aMHiOcLmRpW0U0NTpygyeuLMxHXnKbcq+HX/cy10qilFMLVzpveuIEHuwxziR67z6i0K1MKA==}
+  '@prisma/debug@6.11.1':
+    resolution: {integrity: sha512-lWRb/YSWu8l4Yum1UXfGLtqFzZkVS2ygkWYpgkbgMHn9XJlMITIgeMvJyX5GepChzhmxuSuiq/MY/kGFweOpGw==}
+
+  '@prisma/driver-adapter-utils@6.11.1':
+    resolution: {integrity: sha512-y09aIY3XTJIgPI1ZMfybn5kndbhu11Rjg81cH6pSi/Rg/PnbxomWVHhu4NnKmCGioidUqJ5KeQ7i75dIOVsSXQ==}
 
   '@prisma/engines-version@6.10.1-1.9b628578b3b7cae625e8c927178f15a170e74a9c':
     resolution: {integrity: sha512-ZJFTsEqapiTYVzXya6TUKYDFnSWCNegfUiG5ik9fleQva5Sk3DNyyUi7X1+0ZxWFHwHDr6BZV5Vm+iwP+LlciA==}
@@ -5443,11 +5444,13 @@ snapshots:
     dependencies:
       playwright: 1.53.1
 
-  '@prisma/adapter-pg@6.10.1(pg@8.16.3)':
+  '@prisma/adapter-pg@6.11.1':
     dependencies:
-      '@prisma/driver-adapter-utils': 6.10.1
+      '@prisma/driver-adapter-utils': 6.11.1
       pg: 8.16.3
       postgres-array: 3.0.4
+    transitivePeerDependencies:
+      - pg-native
 
   '@prisma/client@6.10.1(prisma@6.10.1(typescript@5.8.3))(typescript@5.8.3)':
     optionalDependencies:
@@ -5460,9 +5463,11 @@ snapshots:
 
   '@prisma/debug@6.10.1': {}
 
-  '@prisma/driver-adapter-utils@6.10.1':
+  '@prisma/debug@6.11.1': {}
+
+  '@prisma/driver-adapter-utils@6.11.1':
     dependencies:
-      '@prisma/debug': 6.10.1
+      '@prisma/debug': 6.11.1
 
   '@prisma/engines-version@6.10.1-1.9b628578b3b7cae625e8c927178f15a170e74a9c': {}
 
