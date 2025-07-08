@@ -33,7 +33,7 @@
     "lint:md:fix": "markdownlint-cli2  --fix \"**/*.md\" \"!.trunk/**\" \"!.venv/**\" \"!node_modules/**\""
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^6.10.1",
+    "@prisma/adapter-pg": "^6.11.1",
     "@prisma/client": "^6.10.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
