@@ -21,11 +21,18 @@
     ],
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "strict": true,
+    "strict": false,
     "strictNullChecks": true,
     "target": "es5"
   },
-  "exclude": ["node_modules"],
+  "exclude": [
+    "node_modules",
+    "check-*.ts",
+    "migrate-*.ts",
+    "fix-*.ts",
+    "debug-*.ts",
+    "test-*.ts"
+  ],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

@@ -1,0 +1,323 @@
+
+> livedash-node@0.2.0 lint /home/kjanat/Projects/livedash-node-max-branch
+> next lint
+
+
+./app/api/admin/audit-logs/route.ts
+78:18  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/admin/security-monitoring/threat-analysis/route.ts
+35:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+112:49  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+134:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+152:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/api/admin/trigger-processing/route.ts
+90:11  Warning: '_startTime' is assigned a value but never used.  no-unused-vars
+90:11  Warning: '_startTime' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/csrf-token/route.ts
+17:21  Warning: '_request' is defined but never used.  no-unused-vars
+17:21  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/dashboard/config/route.ts
+6:27  Warning: '_request' is defined but never used.  no-unused-vars
+6:27  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/dashboard/session-filter-options/route.ts
+6:27  Warning: '_request' is defined but never used.  no-unused-vars
+6:27  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/api/dashboard/users/route.ts
+14:27  Warning: '_request' is defined but never used.  no-unused-vars
+14:27  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/dashboard/audit-logs/page.tsx
+43:14  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+141:9  Warning: The 'fetchAuditLogs' function makes the dependencies of useEffect Hook (at line 139) change on every render. To fix this, wrap the definition of 'fetchAuditLogs' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+197:20  Warning: `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`.  react/no-unescaped-entities
+
+./app/dashboard/company/page.tsx
+18:10  Warning: '_company' is assigned a value but never used.  no-unused-vars
+18:10  Warning: '_company' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./app/dashboard/overview/page.tsx
+473:19  Warning: '_setCompany' is assigned a value but never used.  no-unused-vars
+473:19  Warning: '_setCompany' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+508:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/dashboard/sessions/page.tsx
+33:24  Warning: 'expanded' is defined but never used.  no-unused-vars
+35:19  Warning: 'term' is defined but never used.  no-unused-vars
+37:25  Warning: 'category' is defined but never used.  no-unused-vars
+39:25  Warning: 'language' is defined but never used.  no-unused-vars
+41:18  Warning: 'date' is defined but never used.  no-unused-vars
+43:16  Warning: 'date' is defined but never used.  no-unused-vars
+45:16  Warning: 'key' is defined but never used.  no-unused-vars
+47:18  Warning: 'order' is defined but never used.  no-unused-vars
+385:20  Warning: 'page' is defined but never used.  no-unused-vars
+385:37  Warning: 'prev' is defined but never used.  no-unused-vars
+490:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+508:45  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./app/platform/companies/[id]/page.tsx
+216:14  Warning: '_error' is defined but never used.  no-unused-vars
+216:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+247:14  Warning: '_error' is defined but never used.  no-unused-vars
+247:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+322:14  Warning: '_error' is defined but never used.  no-unused-vars
+322:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/platform/dashboard/page.tsx
+238:27  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+238:41  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+504:29  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+504:42  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+706:45  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+706:58  Warning: `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`.  react/no-unescaped-entities
+
+./app/platform/login/page.tsx
+41:14  Warning: '_error' is defined but never used.  no-unused-vars
+41:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./app/platform/security/page.tsx
+49:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+50:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+71:9  Warning: The 'loadSecurityData' function makes the dependencies of useEffect Hook (at line 69) change on every render. To fix this, wrap the definition of 'loadSecurityData' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+
+./app/platform/settings/page.tsx
+21:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+92:14  Warning: '_error' is defined but never used.  no-unused-vars
+92:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+137:14  Warning: '_error' is defined but never used.  no-unused-vars
+137:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/DateRangePicker.tsx
+8:23  Warning: 'startDate' is defined but never used.  no-unused-vars
+8:42  Warning: 'endDate' is defined but never used.  no-unused-vars
+
+./components/GeographicMap.tsx
+125:3  Warning: The 'processCountryEntry' function makes the dependencies of useCallback Hook (at line 159) change on every render. Move it inside the useCallback callback. Alternatively, wrap the definition of 'processCountryEntry' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+
+./components/TranscriptViewer.tsx
+35:27  Warning: '_node' is defined but never used.  no-unused-vars
+35:27  Warning: '_node' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/admin/BatchMonitoringDashboard.tsx
+61:11  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+151:14  Warning: '_error' is defined but never used.  no-unused-vars
+151:14  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./components/forms/CSRFProtectedForm.tsx
+17:15  Warning: 'formData' is defined but never used.  no-unused-vars
+
+./components/magicui/animated-beam.tsx
+97:18  Warning: '_entry' is assigned a value but never used.  no-unused-vars
+97:18  Warning: '_entry' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./components/magicui/confetti.tsx
+24:10  Warning: 'options' is defined but never used.  no-unused-vars
+
+./components/providers/CSRFProvider.tsx
+19:21  Warning: 'options' is defined but never used.  no-unused-vars
+20:24  Warning: 'formData' is defined but never used.  no-unused-vars
+22:5  Warning: 'obj' is defined but never used.  no-unused-vars
+43:9  Warning: The 'fetchToken' function makes the dependencies of useEffect Hook (at line 95) change on every render. To fix this, wrap the definition of 'fetchToken' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+
+./components/security/GeographicThreatMap.tsx
+152:52  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/security/SecurityAlertsTable.tsx
+25:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+32:19  Warning: 'alertId' is defined but never used.  no-unused-vars
+
+./components/security/SecurityConfigModal.tsx
+65:9  Warning: The 'loadConfig' function makes the dependencies of useEffect Hook (at line 63) change on every render. Move it inside the useEffect callback. Alternatively, wrap the definition of 'loadConfig' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+116:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./components/security/ThreatLevelIndicator.tsx
+73:43  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/auditLogRetention.ts
+127:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/auth.ts
+57:36  Warning: '_req' is defined but never used.  no-unused-vars
+57:36  Warning: '_req' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/batchLogger.ts
+17:3  Warning: 'DEBUG' is defined but never used.  no-unused-vars
+18:3  Warning: 'INFO' is defined but never used.  no-unused-vars
+19:3  Warning: 'WARN' is defined but never used.  no-unused-vars
+20:3  Warning: 'ERROR' is defined but never used.  no-unused-vars
+21:3  Warning: 'CRITICAL' is defined but never used.  no-unused-vars
+25:3  Warning: 'BATCH_CREATION' is defined but never used.  no-unused-vars
+26:3  Warning: 'BATCH_STATUS_CHECK' is defined but never used.  no-unused-vars
+27:3  Warning: 'BATCH_RESULT_PROCESSING' is defined but never used.  no-unused-vars
+28:3  Warning: 'FILE_UPLOAD' is defined but never used.  no-unused-vars
+29:3  Warning: 'FILE_DOWNLOAD' is defined but never used.  no-unused-vars
+30:3  Warning: 'CIRCUIT_BREAKER_ACTION' is defined but never used.  no-unused-vars
+31:3  Warning: 'RETRY_OPERATION' is defined but never used.  no-unused-vars
+32:3  Warning: 'SCHEDULER_ACTION' is defined but never used.  no-unused-vars
+33:3  Warning: 'INDIVIDUAL_REQUEST_RETRY' is defined but never used.  no-unused-vars
+34:3  Warning: 'COST_TRACKING' is defined but never used.  no-unused-vars
+51:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+432:34  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+447:37  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+551:54  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+559:38  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+568:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+582:42  Warning: '_' is defined but never used.  no-unused-vars
+582:42  Warning: '_' is defined but never used.  @typescript-eslint/no-unused-vars
+604:21  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+606:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/batchProcessor.ts
+125:21  Warning: 'cause' is defined but never used.  no-unused-vars
+142:21  Warning: 'isRetryable' is assigned a value but never used.  no-unused-vars
+437:9  Warning: '_operationId' is assigned a value but never used.  no-unused-vars
+437:9  Warning: '_operationId' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+465:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1193:3  Warning: '_maxRetries' is assigned a value but never used.  no-unused-vars
+1193:3  Warning: '_maxRetries' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+1240:50  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1240:64  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1321:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1322:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+1323:17  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/batchProcessorOptimized.ts
+125:22  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+171:55  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+193:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+224:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+251:15  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+286:44  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+354:39  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+415:12  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/batchSchedulerOptimized.ts
+140:22  Warning: 'name' is assigned a value but never used.  no-unused-vars
+140:22  Warning: 'name' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./lib/csp-monitoring.ts
+22:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/csp.ts
+43:5  Warning: 'enforceMode' is assigned a value but never used.  no-unused-vars
+43:5  Warning: 'enforceMode' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+46:5  Warning: 'reportingLevel' is assigned a value but never used.  no-unused-vars
+46:5  Warning: 'reportingLevel' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+155:11  Warning: '_request' is defined but never used.  no-unused-vars
+155:11  Warning: '_request' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/env.ts
+68:10  Warning: '_error' is defined but never used.  no-unused-vars
+68:10  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/importProcessor.ts
+83:10  Warning: '_parseFallbackSentiment' is defined but never used.  no-unused-vars
+83:10  Warning: '_parseFallbackSentiment' is defined but never used.  @typescript-eslint/no-unused-vars
+101:10  Warning: '_parseFallbackBoolean' is defined but never used.  no-unused-vars
+101:10  Warning: '_parseFallbackBoolean' is defined but never used.  @typescript-eslint/no-unused-vars
+142:16  Warning: '_error' is defined but never used.  no-unused-vars
+142:16  Warning: '_error' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/mocks/openai-mock-server.ts
+69:46  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+263:20  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+362:23  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+364:27  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+371:32  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+383:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+400:30  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/processingScheduler.ts
+676:3  Warning: '_maxConcurrency' is assigned a value but never used.  no-unused-vars
+676:3  Warning: '_maxConcurrency' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+701:16  Warning: '_processUnprocessedSessionsInternal' is defined but never used.  no-unused-vars
+701:16  Warning: '_processUnprocessedSessionsInternal' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/schedulerConfig.ts
+45:36  Warning: '_config' is defined but never used.  no-unused-vars
+45:36  Warning: '_config' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/securityAuditLogger.ts
+14:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+27:3  Warning: 'AUTHENTICATION' is defined but never used.  no-unused-vars
+28:3  Warning: 'AUTHORIZATION' is defined but never used.  no-unused-vars
+29:3  Warning: 'USER_MANAGEMENT' is defined but never used.  no-unused-vars
+30:3  Warning: 'COMPANY_MANAGEMENT' is defined but never used.  no-unused-vars
+31:3  Warning: 'RATE_LIMITING' is defined but never used.  no-unused-vars
+32:3  Warning: 'CSRF_PROTECTION' is defined but never used.  no-unused-vars
+33:3  Warning: 'SECURITY_HEADERS' is defined but never used.  no-unused-vars
+34:3  Warning: 'PASSWORD_RESET' is defined but never used.  no-unused-vars
+35:3  Warning: 'PLATFORM_ADMIN' is defined but never used.  no-unused-vars
+36:3  Warning: 'DATA_PRIVACY' is defined but never used.  no-unused-vars
+37:3  Warning: 'SYSTEM_CONFIG' is defined but never used.  no-unused-vars
+38:3  Warning: 'API_SECURITY' is defined but never used.  no-unused-vars
+42:3  Warning: 'SUCCESS' is defined but never used.  no-unused-vars
+43:3  Warning: 'FAILURE' is defined but never used.  no-unused-vars
+44:3  Warning: 'BLOCKED' is defined but never used.  no-unused-vars
+45:3  Warning: 'RATE_LIMITED' is defined but never used.  no-unused-vars
+46:3  Warning: 'SUSPICIOUS' is defined but never used.  no-unused-vars
+50:3  Warning: 'INFO' is defined but never used.  no-unused-vars
+51:3  Warning: 'LOW' is defined but never used.  no-unused-vars
+52:3  Warning: 'MEDIUM' is defined but never used.  no-unused-vars
+53:3  Warning: 'HIGH' is defined but never used.  no-unused-vars
+54:3  Warning: 'CRITICAL' is defined but never used.  no-unused-vars
+396:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+422:24  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+423:19  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+424:35  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/securityMonitoring.ts
+19:28  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+26:3  Warning: 'LOW' is defined but never used.  no-unused-vars
+27:3  Warning: 'MEDIUM' is defined but never used.  no-unused-vars
+28:3  Warning: 'HIGH' is defined but never used.  no-unused-vars
+29:3  Warning: 'CRITICAL' is defined but never used.  no-unused-vars
+33:3  Warning: 'AUTHENTICATION_ANOMALY' is defined but never used.  no-unused-vars
+34:3  Warning: 'RATE_LIMIT_BREACH' is defined but never used.  no-unused-vars
+35:3  Warning: 'MULTIPLE_FAILED_LOGINS' is defined but never used.  no-unused-vars
+36:3  Warning: 'SUSPICIOUS_IP_ACTIVITY' is defined but never used.  no-unused-vars
+37:3  Warning: 'PRIVILEGE_ESCALATION' is defined but never used.  no-unused-vars
+38:3  Warning: 'DATA_BREACH_ATTEMPT' is defined but never used.  no-unused-vars
+39:3  Warning: 'CSRF_ATTACK' is defined but never used.  no-unused-vars
+40:3  Warning: 'CSP_VIOLATION_SPIKE' is defined but never used.  no-unused-vars
+41:3  Warning: 'ACCOUNT_ENUMERATION' is defined but never used.  no-unused-vars
+42:3  Warning: 'BRUTE_FORCE_ATTACK' is defined but never used.  no-unused-vars
+43:3  Warning: 'UNUSUAL_ADMIN_ACTIVITY' is defined but never used.  no-unused-vars
+44:3  Warning: 'GEOLOCATION_ANOMALY' is defined but never used.  no-unused-vars
+45:3  Warning: 'MASS_DATA_ACCESS' is defined but never used.  no-unused-vars
+46:3  Warning: 'SUSPICIOUS_USER_AGENT' is defined but never used.  no-unused-vars
+47:3  Warning: 'SESSION_HIJACKING' is defined but never used.  no-unused-vars
+66:3  Warning: 'LOW' is defined but never used.  no-unused-vars
+67:3  Warning: 'MODERATE' is defined but never used.  no-unused-vars
+68:3  Warning: 'HIGH' is defined but never used.  no-unused-vars
+69:3  Warning: 'CRITICAL' is defined but never used.  no-unused-vars
+95:3  Warning: 'EMAIL' is defined but never used.  no-unused-vars
+96:3  Warning: 'WEBHOOK' is defined but never used.  no-unused-vars
+97:3  Warning: 'SLACK' is defined but never used.  no-unused-vars
+98:3  Warning: 'DISCORD' is defined but never used.  no-unused-vars
+99:3  Warning: 'PAGERDUTY' is defined but never used.  no-unused-vars
+134:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+380:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+380:42  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+380:48  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+477:31  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+710:13  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+715:47  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+940:29  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+./lib/sendEmail.ts
+90:3  Warning: '_options' is defined but never used.  no-unused-vars
+90:3  Warning: '_options' is defined but never used.  @typescript-eslint/no-unused-vars
+91:3  Warning: '_config' is defined but never used.  no-unused-vars
+91:3  Warning: '_config' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./lib/trpc.ts
+172:9  Warning: Unexpected any. Specify a different type.  @typescript-eslint/no-explicit-any
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules

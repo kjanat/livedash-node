@@ -3,245 +3,268 @@
 ## 🚀 CRITICAL PRIORITY - Architectural Refactoring
 
 ### Phase 1: Service Decomposition & Platform Management (Weeks 1-4)
-- [x] **Create Platform Management Layer** (80% Complete)
-  - [x] Add Organization/PlatformUser models to Prisma schema
-  - [x] Implement super-admin authentication system (/platform/login)
-  - [x] Build platform dashboard for Notso AI team (/platform/dashboard)
-  - [x] Add company creation workflows
-  - [x] Add basic platform API endpoints with tests
-  - [x] Create stunning SaaS landing page with modern design
-  - [x] Add company editing/management workflows
-  - [x] Create company suspension/activation UI features
-  - [x] Add proper SEO metadata and OpenGraph tags
-  - [x] Add user management within companies from platform
-  - [ ] Add AI model management UI
-  - [ ] Add cost tracking/quotas UI
 
-- [ ] **Extract Data Ingestion Service (Golang)**
-  - [ ] Create new Golang service for CSV processing
-  - [ ] Implement concurrent CSV downloading & parsing
-  - [ ] Add transcript fetching with rate limiting
-  - [ ] Set up Redis message queues (BullMQ/RabbitMQ)
-  - [ ] Migrate lib/scheduler.ts and lib/csvFetcher.ts logic
+-   [x] **Create Platform Management Layer** (80% Complete)
+    -   [x] Add Organization/PlatformUser models to Prisma schema
+    -   [x] Implement super-admin authentication system (/platform/login)
+    -   [x] Build platform dashboard for Notso AI team (/platform/dashboard)
+    -   [x] Add company creation workflows
+    -   [x] Add basic platform API endpoints with tests
+    -   [x] Create stunning SaaS landing page with modern design
+    -   [x] Add company editing/management workflows
+    -   [x] Create company suspension/activation UI features
+    -   [x] Add proper SEO metadata and OpenGraph tags
+    -   [x] Add user management within companies from platform
+    -   [ ] Add AI model management UI
+    -   [ ] Add cost tracking/quotas UI
 
-- [ ] **Implement tRPC Infrastructure**
-  - [ ] Add tRPC to existing Next.js app
-  - [ ] Create type-safe API procedures for frontend
-  - [ ] Implement inter-service communication protocols
-  - [ ] Add proper error handling and validation
+-   [ ] **Extract Data Ingestion Service (Golang)**
+    -   [ ] Create new Golang service for CSV processing
+    -   [ ] Implement concurrent CSV downloading & parsing
+    -   [ ] Add transcript fetching with rate limiting
+    -   [ ] Set up Redis message queues (BullMQ/RabbitMQ)
+    -   [ ] Migrate lib/scheduler.ts and lib/csvFetcher.ts logic
+
+-   [ ] **Implement tRPC Infrastructure**
+    -   [ ] Add tRPC to existing Next.js app
+    -   [ ] Create type-safe API procedures for frontend
+    -   [ ] Implement inter-service communication protocols
+    -   [ ] Add proper error handling and validation
 
 ### Phase 2: AI Service Separation & Compliance (Weeks 5-8)
-- [ ] **Extract AI Processing Service**
-  - [ ] Separate lib/processingScheduler.ts into standalone service
-  - [ ] Implement async AI processing with queues
-  - [ ] Add per-company AI cost tracking and quotas
-  - [ ] Create AI model management per company
-  - [ ] Add retry logic and failure handling
 
-- [ ] **GDPR & ISO 27001 Compliance Foundation**
-  - [ ] Implement data isolation boundaries between services
-  - [ ] Add audit logging for all data processing
-  - [ ] Create data retention policies per company
-  - [ ] Add consent management for data processing
-  - [ ] Implement data export/deletion workflows (Right to be Forgotten)
+-   [ ] **Extract AI Processing Service**
+    -   [ ] Separate lib/processingScheduler.ts into standalone service
+    -   [ ] Implement async AI processing with queues
+    -   [ ] Add per-company AI cost tracking and quotas
+    -   [ ] Create AI model management per company
+    -   [ ] Add retry logic and failure handling
+
+-   [ ] **GDPR & ISO 27001 Compliance Foundation**
+    -   [ ] Implement data isolation boundaries between services
+    -   [ ] Add audit logging for all data processing
+    -   [ ] Create data retention policies per company
+    -   [ ] Add consent management for data processing
+    -   [ ] Implement data export/deletion workflows (Right to be Forgotten)
 
 ### Phase 3: Performance & Monitoring (Weeks 9-12)
-- [ ] **Monitoring & Observability**
-  - [ ] Add distributed tracing across services (Jaeger/Zipkin)
-  - [ ] Implement health checks for all services
-  - [ ] Create cross-service metrics dashboard
-  - [ ] Add alerting for service failures and SLA breaches
-  - [ ] Monitor AI processing costs and quotas
 
-- [ ] **Database Optimization**
-  - [ ] Implement connection pooling per service
-  - [ ] Add read replicas for dashboard queries
-  - [ ] Create database sharding strategy for multi-tenancy
-  - [ ] Optimize queries with proper indexing
+-   [ ] **Monitoring & Observability**
+    -   [ ] Add distributed tracing across services (Jaeger/Zipkin)
+    -   [ ] Implement health checks for all services
+    -   [ ] Create cross-service metrics dashboard
+    -   [ ] Add alerting for service failures and SLA breaches
+    -   [ ] Monitor AI processing costs and quotas
+
+-   [ ] **Database Optimization**
+    -   [ ] Implement connection pooling per service
+    -   [ ] Add read replicas for dashboard queries
+    -   [ ] Create database sharding strategy for multi-tenancy
+    -   [ ] Optimize queries with proper indexing
 
 ## High Priority
 
 ### PR #20 Feedback Actions (Code Review)
-- [ ] **Fix Environment Variable Testing**
-  - [ ] Replace process.env access with proper environment mocking in tests
-  - [ ] Update existing tests to avoid direct environment variable dependencies
-  - [ ] Add environment validation tests for critical config values
 
-- [ ] **Enforce Zero Accessibility Violations**
-  - [ ] Set Playwright accessibility tests to fail on any violations (not just warn)
-  - [ ] Add accessibility regression tests for all major components
-  - [ ] Implement accessibility checklist for new components
+-   [ ] **Fix Environment Variable Testing**
+    -   [ ] Replace process.env access with proper environment mocking in tests
+    -   [ ] Update existing tests to avoid direct environment variable dependencies
+    -   [ ] Add environment validation tests for critical config values
 
-- [ ] **Improve Error Handling with Custom Error Classes**
-  - [ ] Create custom error classes for different error types (ValidationError, AuthError, etc.)
-  - [ ] Replace generic Error throws with specific error classes
-  - [ ] Add proper error logging and monitoring integration
+-   [ ] **Enforce Zero Accessibility Violations**
+    -   [ ] Set Playwright accessibility tests to fail on any violations (not just warn)
+    -   [ ] Add accessibility regression tests for all major components
+    -   [ ] Implement accessibility checklist for new components
 
-- [ ] **Refactor Long className Strings** 
-  - [ ] Extract complex className combinations into utility functions
-  - [ ] Consider using cn() utility from utils for cleaner class composition
-  - [ ] Break down overly complex className props into semantic components
+-   [ ] **Improve Error Handling with Custom Error Classes**
+    -   [ ] Create custom error classes for different error types (ValidationError, AuthError, etc.)
+    -   [ ] Replace generic Error throws with specific error classes
+    -   [ ] Add proper error logging and monitoring integration
 
-- [ ] **Add Dark Mode Accessibility Tests**
-  - [ ] Create comprehensive test suite for dark mode color contrast
-  - [ ] Verify focus indicators work properly in both light and dark modes
-  - [ ] Test screen reader compatibility with theme switching
+-   [ ] **Refactor Long className Strings**
+    -   [ ] Extract complex className combinations into utility functions
+    -   [ ] Consider using cn() utility from utils for cleaner class composition
+    -   [ ] Break down overly complex className props into semantic components
 
-- [ ] **Fix Platform Login Authentication Issue**
-  - [ ] NEXTAUTH_SECRET was using placeholder value (FIXED)
-  - [ ] Investigate platform cookie path restrictions in /platform auth
-  - [ ] Test platform login flow end-to-end after fixes
+-   [ ] **Add Dark Mode Accessibility Tests**
+    -   [ ] Create comprehensive test suite for dark mode color contrast
+    -   [ ] Verify focus indicators work properly in both light and dark modes
+    -   [ ] Test screen reader compatibility with theme switching
+
+-   [ ] **Fix Platform Login Authentication Issue**
+    -   [ ] NEXTAUTH_SECRET was using placeholder value (FIXED)
+    -   [ ] Investigate platform cookie path restrictions in /platform auth
+    -   [ ] Test platform login flow end-to-end after fixes
 
 ### Testing & Quality Assurance
-- [ ] Add comprehensive test coverage for API endpoints (currently minimal)
-- [ ] Implement integration tests for the data processing pipeline
-- [ ] Add unit tests for validation schemas and authentication logic
-- [ ] Create E2E tests for critical user flows (registration, login, dashboard)
+
+-   [ ] Add comprehensive test coverage for API endpoints (currently minimal)
+-   [ ] Implement integration tests for the data processing pipeline
+-   [ ] Add unit tests for validation schemas and authentication logic
+-   [ ] Create E2E tests for critical user flows (registration, login, dashboard)
 
 ### Error Handling & Monitoring
-- [ ] Implement global error boundaries for React components
-- [ ] Add structured logging with correlation IDs for request tracing
-- [ ] Set up error monitoring and alerting (e.g., Sentry integration)
-- [ ] Add proper error pages for 404, 500, and other HTTP status codes
+
+-   [ ] Implement global error boundaries for React components
+-   [ ] Add structured logging with correlation IDs for request tracing
+-   [ ] Set up error monitoring and alerting (e.g., Sentry integration)
+-   [ ] Add proper error pages for 404, 500, and other HTTP status codes
 
 ### Performance Optimization
-- [ ] Implement database query optimization and indexing strategy
-- [ ] Add caching layer for frequently accessed data (Redis/in-memory)
-- [ ] Optimize React components with proper memoization
-- [ ] Implement lazy loading for dashboard components and charts
+
+-   [ ] Implement database query optimization and indexing strategy
+-   [ ] Add caching layer for frequently accessed data (Redis/in-memory)
+-   [ ] Optimize React components with proper memoization
+-   [ ] Implement lazy loading for dashboard components and charts
 
 ## Medium Priority
 
 ### Security Enhancements
-- [ ] Add CSRF protection for state-changing operations
-- [ ] Implement session timeout and refresh token mechanism
-- [ ] Add API rate limiting with Redis-backed storage (replace in-memory)
-- [ ] Implement role-based access control (RBAC) for different user types
-- [ ] Add audit logging for sensitive operations
+
+-   [ ] Add CSRF protection for state-changing operations
+-   [ ] Implement session timeout and refresh token mechanism
+-   [ ] Add API rate limiting with Redis-backed storage (replace in-memory)
+-   [ ] Implement role-based access control (RBAC) for different user types
+-   [ ] Add audit logging for sensitive operations
 
 ### Code Quality & Maintenance
-- [ ] Resolve remaining ESLint warnings and type issues
-- [ ] Standardize chart library usage (currently mixing Chart.js and other libraries)
-- [ ] Add proper TypeScript strict mode configuration
-- [ ] Implement consistent API response formats across all endpoints
+
+-   [ ] Resolve remaining ESLint warnings and type issues
+-   [ ] Standardize chart library usage (currently mixing Chart.js and other libraries)
+-   [ ] Add proper TypeScript strict mode configuration
+-   [ ] Implement consistent API response formats across all endpoints
 
 ### Database & Schema
-- [ ] Add database connection pooling configuration
-- [ ] Implement proper database migrations for production deployment
-- [ ] Add data retention policies for session data
-- [ ] Consider database partitioning for large-scale data
+
+-   [ ] Add database connection pooling configuration
+-   [ ] Implement proper database migrations for production deployment
+-   [ ] Add data retention policies for session data
+-   [ ] Consider database partitioning for large-scale data
 
 ### User Experience
-- [ ] Add loading states and skeleton components throughout the application
-- [ ] Implement proper form validation feedback and error messages
-- [ ] Add pagination for large data sets in dashboard tables
-- [ ] Implement real-time notifications for processing status updates
+
+-   [ ] Add loading states and skeleton components throughout the application
+-   [ ] Implement proper form validation feedback and error messages
+-   [ ] Add pagination for large data sets in dashboard tables
+-   [ ] Implement real-time notifications for processing status updates
 
 ## Low Priority
 
 ### Documentation & Development
-- [ ] Add API documentation (OpenAPI/Swagger)
-- [ ] Create deployment guides for different environments
-- [ ] Add contributing guidelines and code review checklist
-- [ ] Implement development environment setup automation
+
+-   [ ] Add API documentation (OpenAPI/Swagger)
+-   [ ] Create deployment guides for different environments
+-   [ ] Add contributing guidelines and code review checklist
+-   [ ] Implement development environment setup automation
 
 ### Feature Enhancements
-- [ ] Add data export functionality (CSV, PDF reports)
-- [ ] Implement dashboard customization and user preferences
-- [ ] Add multi-language support (i18n)
-- [ ] Create admin panel for system configuration
+
+-   [ ] Add data export functionality (CSV, PDF reports)
+-   [ ] Implement dashboard customization and user preferences
+-   [ ] Add multi-language support (i18n)
+-   [ ] Create admin panel for system configuration
 
 ### Infrastructure & DevOps
-- [ ] Add Docker configuration for containerized deployment
-- [ ] Implement CI/CD pipeline with automated testing
-- [ ] Add environment-specific configuration management
-- [ ] Set up monitoring and health check endpoints
+
+-   [ ] Add Docker configuration for containerized deployment
+-   [ ] Implement CI/CD pipeline with automated testing
+-   [ ] Add environment-specific configuration management
+-   [ ] Set up monitoring and health check endpoints
 
 ### Analytics & Insights
-- [ ] Add more detailed analytics and reporting features
-- [ ] Implement A/B testing framework for UI improvements
-- [ ] Add user behavior tracking and analytics
-- [ ] Create automated report generation and scheduling
+
+-   [ ] Add more detailed analytics and reporting features
+-   [ ] Implement A/B testing framework for UI improvements
+-   [ ] Add user behavior tracking and analytics
+-   [ ] Create automated report generation and scheduling
 
 ## Completed ✅
-- [x] Fix duplicate MetricCard components
-- [x] Add input validation schema with Zod
-- [x] Strengthen password requirements (12+ chars, complexity)
-- [x] Fix schema drift - create missing migrations
-- [x] Add rate limiting to authentication endpoints
-- [x] Update README.md to use pnpm instead of npm
-- [x] Implement platform authentication and basic dashboard
-- [x] Add platform API endpoints for company management
-- [x] Write tests for platform features (auth, dashboard, API)
+
+-   [x] Fix duplicate MetricCard components
+-   [x] Add input validation schema with Zod
+-   [x] Strengthen password requirements (12+ chars, complexity)
+-   [x] Fix schema drift - create missing migrations
+-   [x] Add rate limiting to authentication endpoints
+-   [x] Update README.md to use pnpm instead of npm
+-   [x] Implement platform authentication and basic dashboard
+-   [x] Add platform API endpoints for company management
+-   [x] Write tests for platform features (auth, dashboard, API)
 
 ## 📊 Test Coverage Status (< 30% Overall)
 
-### ✅ Features WITH Tests:
-- User Authentication (regular users)
-- User Management UI & API
-- Basic database connectivity
-- Transcript Fetcher
-- Input validation
-- Environment configuration
-- Format enums
-- Accessibility features
-- Keyboard navigation
-- Platform authentication (NEW)
-- Platform dashboard (NEW)
-- Platform API endpoints (NEW)
+### ✅ Features WITH Tests
 
-### ❌ Features WITHOUT Tests (Critical Gaps):
-- **Data Processing Pipeline** (0 tests)
-  - CSV import scheduler
-  - Import processor
-  - Processing scheduler
-  - AI processing functionality
-  - Transcript parser
-- **Most API Endpoints** (0 tests)
-  - Dashboard endpoints
-  - Session management
-  - Admin endpoints
-  - Password reset flow
-- **Custom Server** (0 tests)
-- **Dashboard Features** (0 tests)
-  - Charts and visualizations
-  - Session details
-  - Company settings
-- **AI Integration** (0 tests)
-- **Real-time Features** (0 tests)
-- **E2E Tests** (only examples exist)
+-   User Authentication (regular users)
+-   User Management UI & API
+-   Basic database connectivity
+-   Transcript Fetcher
+-   Input validation
+-   Environment configuration
+-   Format enums
+-   Accessibility features
+-   Keyboard navigation
+-   Platform authentication (NEW)
+-   Platform dashboard (NEW)
+-   Platform API endpoints (NEW)
+
+### ❌ Features WITHOUT Tests (Critical Gaps)
+
+-   **Data Processing Pipeline** (0 tests)
+    -   CSV import scheduler
+    -   Import processor
+    -   Processing scheduler
+    -   AI processing functionality
+    -   Transcript parser
+-   **Most API Endpoints** (0 tests)
+    -   Dashboard endpoints
+    -   Session management
+    -   Admin endpoints
+    -   Password reset flow
+-   **Custom Server** (0 tests)
+-   **Dashboard Features** (0 tests)
+    -   Charts and visualizations
+    -   Session details
+    -   Company settings
+-   **AI Integration** (0 tests)
+-   **Real-time Features** (0 tests)
+-   **E2E Tests** (only examples exist)
 
 ## 🏛️ Architectural Decisions & Rationale
 
 ### Service Technology Choices
-- **Dashboard Service**: Next.js + tRPC (existing, proven stack)
-- **Data Ingestion Service**: Golang (high-performance CSV processing, concurrency)
-- **AI Processing Service**: Node.js/Python (existing AI integrations, async processing)
-- **Message Queue**: Redis + BullMQ (Node.js ecosystem compatibility)
-- **Database**: PostgreSQL (existing, excellent for multi-tenancy)
+
+-   **Dashboard Service**: Next.js + tRPC (existing, proven stack)
+-   **Data Ingestion Service**: Golang (high-performance CSV processing, concurrency)
+-   **AI Processing Service**: Node.js/Python (existing AI integrations, async processing)
+-   **Message Queue**: Redis + BullMQ (Node.js ecosystem compatibility)
+-   **Database**: PostgreSQL (existing, excellent for multi-tenancy)
 
 ### Why Golang for Data Ingestion?
-- **Performance**: 10-100x faster CSV processing than Node.js
-- **Concurrency**: Native goroutines for parallel transcript fetching
-- **Memory Efficiency**: Lower memory footprint for large CSV files
-- **Deployment**: Single binary deployment, excellent for containers
-- **Team Growth**: Easy to hire Golang developers for data processing
+
+-   **Performance**: 10-100x faster CSV processing than Node.js
+-   **Concurrency**: Native goroutines for parallel transcript fetching
+-   **Memory Efficiency**: Lower memory footprint for large CSV files
+-   **Deployment**: Single binary deployment, excellent for containers
+-   **Team Growth**: Easy to hire Golang developers for data processing
 
 ### Migration Strategy
-1. **Keep existing working system** while building new services
-2. **Feature flagging** to gradually migrate companies to new processing
-3. **Dual-write approach** during transition period
-4. **Zero-downtime migration** with careful rollback plans
+
+1.  **Keep existing working system** while building new services
+2.  **Feature flagging** to gradually migrate companies to new processing
+3.  **Dual-write approach** during transition period
+4.  **Zero-downtime migration** with careful rollback plans
 
 ### Compliance Benefits
-- **Data Isolation**: Each service has limited database access
-- **Audit Trail**: All inter-service communication logged
-- **Data Retention**: Automated per-company data lifecycle
-- **Security Boundaries**: DMZ for ingestion, private network for processing
+
+-   **Data Isolation**: Each service has limited database access
+-   **Audit Trail**: All inter-service communication logged
+-   **Data Retention**: Automated per-company data lifecycle
+-   **Security Boundaries**: DMZ for ingestion, private network for processing
 
 ## Notes
-- **CRITICAL**: Architectural refactoring must be priority #1 for scalability
-- **Platform Management**: Notso AI needs self-service customer onboarding
-- **Compliance First**: GDPR/ISO 27001 requirements drive service boundaries
-- **Performance**: Current monolith blocks on CSV/AI processing
-- **Technology Evolution**: Golang for data processing, tRPC for type safety
+
+-   **CRITICAL**: Architectural refactoring must be priority #1 for scalability
+-   **Platform Management**: Notso AI needs self-service customer onboarding
+-   **Compliance First**: GDPR/ISO 27001 requirements drive service boundaries
+-   **Performance**: Current monolith blocks on CSV/AI processing
+-   **Technology Evolution**: Golang for data processing, tRPC for type safety

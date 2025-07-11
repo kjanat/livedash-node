@@ -321,11 +321,346 @@ const stopWords = new Set([
   // Add more domain-specific stop words if necessary
 ]);
 
+/**
+ * Extract unique user identifiers from session data
+ */
+function extractUniqueUsers(
+  session: ChatSession,
+  uniqueUserIds: Set<string>
+): void {
+  let identifierAdded = false;
+  if (session.ipAddress && session.ipAddress.trim() !== "") {
+    uniqueUserIds.add(session.ipAddress.trim());
+    identifierAdded = true;
+  }
+  // Fallback to sessionId only if ipAddress was not usable and sessionId is valid
+  if (
+    !identifierAdded &&
+    session.sessionId &&
+    session.sessionId.trim() !== ""
+  ) {
+    uniqueUserIds.add(session.sessionId.trim());
+  }
+}
+
+/**
+ * Validate and convert timestamps to milliseconds
+ */
+function validateTimestamps(
+  session: ChatSession,
+  startTimeMs: number,
+  endTimeMs: number
+): boolean {
+  if (Number.isNaN(startTimeMs)) {
+    console.warn(
+      `[metrics] Invalid startTime for session ${session.id || session.sessionId}: ${session.startTime}`
+    );
+    return false;
+  }
+  if (Number.isNaN(endTimeMs)) {
+    console.warn(
+      `[metrics] Invalid endTime for session ${session.id || session.sessionId}: ${session.endTime}`
+    );
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Log duration warnings for edge cases
+ */
+function logDurationWarnings(
+  session: ChatSession,
+  timeDifference: number,
+  duration: number
+): void {
+  if (timeDifference < 0) {
+    console.warn(
+      `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / 1000).toFixed(2)} seconds).`
+    );
+  }
+}
+
+/**
+ * Calculate session duration and update totals
+ */
+function processSessionDuration(
+  session: ChatSession,
+  totals: { totalSessionDuration: number; validSessionsForDuration: number }
+): void {
+  if (!session.startTime || !session.endTime) {
+    if (!session.startTime) {
+      console.warn(
+        `[metrics] Missing startTime for session ${session.id || session.sessionId}`
+      );
+    }
+    if (!session.endTime) {
+      console.log(
+        `[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`
+      );
+    }
+    return;
+  }
+
+  const startTimeMs = new Date(session.startTime).getTime();
+  const endTimeMs = new Date(session.endTime).getTime();
+
+  if (!validateTimestamps(session, startTimeMs, endTimeMs)) {
+    return;
+  }
+
+  const timeDifference = endTimeMs - startTimeMs;
+  const duration = Math.abs(timeDifference);
+
+  totals.totalSessionDuration += duration;
+  totals.validSessionsForDuration++;
+
+  logDurationWarnings(session, timeDifference, duration);
+}
+
+/**
+ * Update sentiment counters based on session sentiment
+ */
+function processSentiment(
+  session: ChatSession,
+  sentimentCounts: {
+    sentimentPositiveCount: number;
+    sentimentNeutralCount: number;
+    sentimentNegativeCount: number;
+  }
+): void {
+  if (session.sentiment !== undefined && session.sentiment !== null) {
+    if (session.sentiment === "POSITIVE")
+      sentimentCounts.sentimentPositiveCount++;
+    else if (session.sentiment === "NEGATIVE")
+      sentimentCounts.sentimentNegativeCount++;
+    else if (session.sentiment === "NEUTRAL")
+      sentimentCounts.sentimentNeutralCount++;
+  }
+}
+
+/**
+ * Update category-based metrics
+ */
+function updateCategoryMetrics(
+  session: ChatSession,
+  metrics: {
+    byDay: DayMetrics;
+    byCategory: CategoryMetrics;
+    byLanguage: LanguageMetrics;
+    byCountry: CountryMetrics;
+  }
+): void {
+  // Daily metrics
+  const day = new Date(session.startTime).toISOString().split("T")[0];
+  metrics.byDay[day] = (metrics.byDay[day] || 0) + 1;
+
+  // Category metrics
+  if (session.category) {
+    metrics.byCategory[session.category] =
+      (metrics.byCategory[session.category] || 0) + 1;
+  }
+
+  // Language metrics
+  if (session.language) {
+    metrics.byLanguage[session.language] =
+      (metrics.byLanguage[session.language] || 0) + 1;
+  }
+
+  // Country metrics
+  if (session.country) {
+    metrics.byCountry[session.country] =
+      (metrics.byCountry[session.country] || 0) + 1;
+  }
+}
+
+/**
+ * Extract questions from session messages and initial message
+ */
+function extractQuestions(
+  session: ChatSession,
+  questionCounts: { [question: string]: number }
+): void {
+  const isQuestion = (content: string): boolean => {
+    return (
+      content.endsWith("?") ||
+      /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(
+        content
+      )
+    );
+  };
+
+  // Extract questions from user messages
+  if (session.messages) {
+    session.messages
+      .filter((msg) => msg.role === "User")
+      .forEach((msg) => {
+        const content = msg.content.trim();
+        if (isQuestion(content)) {
+          questionCounts[content] = (questionCounts[content] || 0) + 1;
+        }
+      });
+  }
+
+  // Extract questions from initial message as fallback
+  if (session.initialMsg) {
+    const content = session.initialMsg.trim();
+    if (isQuestion(content)) {
+      questionCounts[content] = (questionCounts[content] || 0) + 1;
+    }
+  }
+}
+
+/**
+ * Process text for word cloud generation
+ */
+function processTextForWordCloud(
+  text: string | undefined | null,
+  wordCounts: { [key: string]: number }
+): void {
+  if (!text) return;
+
+  const words = text
+    .toLowerCase()
+    .replace(/[^\w\s'-]/gi, "")
+    .split(/\s+/);
+
+  for (const word of words) {
+    const cleanedWord = word.replace(/^['-]|['-]$/g, "");
+    if (cleanedWord && !stopWords.has(cleanedWord) && cleanedWord.length > 2) {
+      wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
+    }
+  }
+}
+
+/**
+ * Calculate peak usage time from hourly session counts
+ */
+function calculatePeakUsageTime(hourlySessionCounts: {
+  [hour: string]: number;
+}): string {
+  if (Object.keys(hourlySessionCounts).length === 0) {
+    return "N/A";
+  }
+
+  const peakHour = Object.entries(hourlySessionCounts).sort(
+    ([, a], [, b]) => b - a
+  )[0][0];
+  const peakHourNum = Number.parseInt(peakHour.split(":")[0]);
+  const endHour = (peakHourNum + 1) % 24;
+  return `${peakHour}-${endHour.toString().padStart(2, "0")}:00`;
+}
+
+/**
+ * Calculate top questions from question counts
+ */
+function calculateTopQuestions(questionCounts: {
+  [question: string]: number;
+}): TopQuestion[] {
+  return Object.entries(questionCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([question, count]) => ({ question, count }));
+}
+
+/**
+ * Process a single session and update all metrics
+ */
+function processSession(
+  session: ChatSession,
+  companyConfig: CompanyConfig,
+  metrics: {
+    uniqueUserIds: Set<string>;
+    sessionDurationTotals: {
+      totalSessionDuration: number;
+      validSessionsForDuration: number;
+    };
+    sentimentCounts: {
+      sentimentPositiveCount: number;
+      sentimentNeutralCount: number;
+      sentimentNegativeCount: number;
+    };
+    categoryMetrics: {
+      byDay: DayMetrics;
+      byCategory: CategoryMetrics;
+      byLanguage: LanguageMetrics;
+      byCountry: CountryMetrics;
+    };
+    hourlySessionCounts: { [hour: string]: number };
+    questionCounts: { [question: string]: number };
+    wordCounts: { [key: string]: number };
+    counters: {
+      escalatedCount: number;
+      forwardedHrCount: number;
+      totalResponseTime: number;
+      validSessionsForResponseTime: number;
+      alerts: number;
+      resolvedChatsCount: number;
+    };
+  }
+): void {
+  // Track hourly usage
+  if (session.startTime) {
+    const hour = new Date(session.startTime).getHours();
+    const hourKey = `${hour.toString().padStart(2, "0")}:00`;
+    metrics.hourlySessionCounts[hourKey] =
+      (metrics.hourlySessionCounts[hourKey] || 0) + 1;
+  }
+
+  // Count resolved chats
+  if (session.endTime && !session.escalated) {
+    metrics.counters.resolvedChatsCount++;
+  }
+
+  // Extract unique users
+  extractUniqueUsers(session, metrics.uniqueUserIds);
+
+  // Process session duration
+  processSessionDuration(session, metrics.sessionDurationTotals);
+
+  // Process response time
+  if (
+    session.avgResponseTime !== undefined &&
+    session.avgResponseTime !== null &&
+    session.avgResponseTime >= 0
+  ) {
+    metrics.counters.totalResponseTime += session.avgResponseTime;
+    metrics.counters.validSessionsForResponseTime++;
+  }
+
+  // Count escalated and forwarded
+  if (session.escalated) metrics.counters.escalatedCount++;
+  if (session.forwardedHr) metrics.counters.forwardedHrCount++;
+
+  // Process sentiment
+  processSentiment(session, metrics.sentimentCounts);
+
+  // Check sentiment alerts
+  if (
+    companyConfig.sentimentAlert !== undefined &&
+    session.sentiment === "NEGATIVE"
+  ) {
+    metrics.counters.alerts++;
+  }
+
+  // Update category metrics
+  updateCategoryMetrics(session, metrics.categoryMetrics);
+
+  // Extract questions
+  extractQuestions(session, metrics.questionCounts);
+
+  // Process text for word cloud
+  processTextForWordCloud(session.initialMsg, metrics.wordCounts);
+}
+
+/**
+ * Main function to calculate session metrics with reduced complexity
+ */
 export function sessionMetrics(
   sessions: ChatSession[],
   companyConfig: CompanyConfig = {}
 ): MetricsResult {
-  const totalSessions = sessions.length; // Renamed from 'total' for clarity
+  const totalSessions = sessions.length;
   const byDay: DayMetrics = {};
   const byCategory: CategoryMetrics = {};
   const byLanguage: LanguageMetrics = {};
@@ -333,236 +668,56 @@ export function sessionMetrics(
   const tokensByDay: DayMetrics = {};
   const tokensCostByDay: DayMetrics = {};
 
-  let escalatedCount = 0; // Renamed from 'escalated' to match MetricsResult
-  let forwardedHrCount = 0; // Renamed from 'forwarded' to match MetricsResult
+  // Initialize all metrics in a structured way
+  const metrics = {
+    uniqueUserIds: new Set<string>(),
+    sessionDurationTotals: {
+      totalSessionDuration: 0,
+      validSessionsForDuration: 0,
+    },
+    sentimentCounts: {
+      sentimentPositiveCount: 0,
+      sentimentNeutralCount: 0,
+      sentimentNegativeCount: 0,
+    },
+    categoryMetrics: { byDay, byCategory, byLanguage, byCountry },
+    hourlySessionCounts: {} as { [hour: string]: number },
+    questionCounts: {} as { [question: string]: number },
+    wordCounts: {} as { [key: string]: number },
+    counters: {
+      escalatedCount: 0,
+      forwardedHrCount: 0,
+      totalResponseTime: 0,
+      validSessionsForResponseTime: 0,
+      alerts: 0,
+      resolvedChatsCount: 0,
+    },
+  };
 
-  // Variables for calculations
-  const uniqueUserIds = new Set<string>();
-  let totalSessionDuration = 0;
-  let validSessionsForDuration = 0;
-  let totalResponseTime = 0;
-  let validSessionsForResponseTime = 0;
-  let sentimentPositiveCount = 0;
-  let sentimentNeutralCount = 0;
-  let sentimentNegativeCount = 0;
-  const totalTokens = 0;
-  const totalTokensEur = 0;
-  const wordCounts: { [key: string]: number } = {};
-  let alerts = 0;
-
-  // New metrics variables
-  const hourlySessionCounts: { [hour: string]: number } = {};
-  let resolvedChatsCount = 0;
-  const questionCounts: { [question: string]: number } = {};
-
+  // Process each session
   for (const session of sessions) {
-    // Track hourly usage for peak time calculation
-    if (session.startTime) {
-      const hour = new Date(session.startTime).getHours();
-      const hourKey = `${hour.toString().padStart(2, "0")}:00`;
-      hourlySessionCounts[hourKey] = (hourlySessionCounts[hourKey] || 0) + 1;
-    }
-
-    // Count resolved chats (sessions that have ended and are not escalated)
-    if (session.endTime && !session.escalated) {
-      resolvedChatsCount++;
-    }
-    // Unique Users: Prefer non-empty ipAddress, fallback to non-empty sessionId
-    let identifierAdded = false;
-    if (session.ipAddress && session.ipAddress.trim() !== "") {
-      uniqueUserIds.add(session.ipAddress.trim());
-      identifierAdded = true;
-    }
-    // Fallback to sessionId only if ipAddress was not usable and sessionId is valid
-    if (
-      !identifierAdded &&
-      session.sessionId &&
-      session.sessionId.trim() !== ""
-    ) {
-      uniqueUserIds.add(session.sessionId.trim());
-    }
-
-    // Avg. Session Time
-    if (session.startTime && session.endTime) {
-      const startTimeMs = new Date(session.startTime).getTime();
-      const endTimeMs = new Date(session.endTime).getTime();
-
-      if (Number.isNaN(startTimeMs)) {
-        console.warn(
-          `[metrics] Invalid startTime for session ${session.id || session.sessionId}: ${session.startTime}`
-        );
-      }
-      if (Number.isNaN(endTimeMs)) {
-        console.warn(
-          `[metrics] Invalid endTime for session ${session.id || session.sessionId}: ${session.endTime}`
-        );
-      }
-
-      if (!Number.isNaN(startTimeMs) && !Number.isNaN(endTimeMs)) {
-        const timeDifference = endTimeMs - startTimeMs; // Calculate the signed delta
-        // Use the absolute difference for duration, ensuring it's not negative.
-        // If times are identical, duration will be 0.
-        // If endTime is before startTime, this still yields a positive duration representing the magnitude of the difference.
-        const duration = Math.abs(timeDifference);
-        // console.log(
-        //   `[metrics] duration is ${duration} for session ${session.id || session.sessionId}`
-        // );
-
-        totalSessionDuration += duration; // Add this duration
-
-        if (timeDifference < 0) {
-          // Log a specific warning if the original endTime was before startTime
-          console.warn(
-            `[metrics] endTime (${session.endTime}) was before startTime (${session.startTime}) for session ${session.id || session.sessionId}. Using absolute difference as duration (${(duration / 1000).toFixed(2)} seconds).`
-          );
-        } else if (timeDifference === 0) {
-          // // Optionally, log if times are identical, though this might be verbose if common
-          // console.log(
-          //   `[metrics] startTime and endTime are identical for session ${session.id || session.sessionId}. Duration is 0.`
-          // );
-        }
-        // If timeDifference > 0, it's a normal positive duration, no special logging needed here for that case.
-
-        validSessionsForDuration++; // Count this session for averaging
-      }
-    } else {
-      if (!session.startTime) {
-        console.warn(
-          `[metrics] Missing startTime for session ${session.id || session.sessionId}`
-        );
-      }
-      if (!session.endTime) {
-        // This is a common case for ongoing sessions, might not always be an error
-        console.log(
-          `[metrics] Missing endTime for session ${session.id || session.sessionId} - likely ongoing or data issue.`
-        );
-      }
-    }
-
-    // Avg. Response Time
-    if (
-      session.avgResponseTime !== undefined &&
-      session.avgResponseTime !== null &&
-      session.avgResponseTime >= 0
-    ) {
-      totalResponseTime += session.avgResponseTime;
-      validSessionsForResponseTime++;
-    }
-
-    // Escalated and Forwarded
-    if (session.escalated) escalatedCount++;
-    if (session.forwardedHr) forwardedHrCount++;
-
-    // Sentiment (now using enum values)
-    if (session.sentiment !== undefined && session.sentiment !== null) {
-      if (session.sentiment === "POSITIVE") sentimentPositiveCount++;
-      else if (session.sentiment === "NEGATIVE") sentimentNegativeCount++;
-      else if (session.sentiment === "NEUTRAL") sentimentNeutralCount++;
-    }
-
-    // Sentiment Alert Check (simplified for enum)
-    if (
-      companyConfig.sentimentAlert !== undefined &&
-      session.sentiment === "NEGATIVE"
-    ) {
-      alerts++;
-    }
-
-    // Daily metrics
-    const day = new Date(session.startTime).toISOString().split("T")[0];
-    byDay[day] = (byDay[day] || 0) + 1; // Sessions per day
-    // Note: tokens and tokensEur are not available in the new schema
-
-    // Category metrics
-    if (session.category) {
-      byCategory[session.category] = (byCategory[session.category] || 0) + 1;
-    }
-
-    // Language metrics
-    if (session.language) {
-      byLanguage[session.language] = (byLanguage[session.language] || 0) + 1;
-    }
-
-    // Country metrics
-    if (session.country) {
-      byCountry[session.country] = (byCountry[session.country] || 0) + 1;
-    }
-
-    // Extract questions from session
-    const extractQuestions = () => {
-      // 1. Extract questions from user messages (if available)
-      if (session.messages) {
-        session.messages
-          .filter((msg) => msg.role === "User")
-          .forEach((msg) => {
-            const content = msg.content.trim();
-            // Simple heuristic: if message ends with ? or contains question words, treat as question
-            if (
-              content.endsWith("?") ||
-              /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(
-                content
-              )
-            ) {
-              questionCounts[content] = (questionCounts[content] || 0) + 1;
-            }
-          });
-      }
-
-      // 3. Extract questions from initial message as fallback
-      if (session.initialMsg) {
-        const content = session.initialMsg.trim();
-        if (
-          content.endsWith("?") ||
-          /\b(what|when|where|why|how|who|which|can|could|would|will|is|are|do|does|did)\b/i.test(
-            content
-          )
-        ) {
-          questionCounts[content] = (questionCounts[content] || 0) + 1;
-        }
-      }
-    };
-
-    extractQuestions();
-
-    // Word Cloud Data (from initial message and transcript content)
-    const processTextForWordCloud = (text: string | undefined | null) => {
-      if (!text) return;
-      const words = text
-        .toLowerCase()
-        .replace(/[^\w\s'-]/gi, "")
-        .split(/\s+/); // Keep apostrophes and hyphens
-      for (const word of words) {
-        const cleanedWord = word.replace(/^['-]|['-]$/g, ""); // Remove leading/trailing apostrophes/hyphens
-        if (
-          cleanedWord &&
-          !stopWords.has(cleanedWord) &&
-          cleanedWord.length > 2
-        ) {
-          wordCounts[cleanedWord] = (wordCounts[cleanedWord] || 0) + 1;
-        }
-      }
-    };
-    processTextForWordCloud(session.initialMsg);
-    // Note: transcriptContent is not available in ChatSession type
-    // Could be added later if transcript parsing is implemented
+    processSession(session, companyConfig, metrics);
   }
 
-  const uniqueUsers = uniqueUserIds.size;
+  // Calculate derived metrics
+  const uniqueUsers = metrics.uniqueUserIds.size;
   const avgSessionLength =
-    validSessionsForDuration > 0
-      ? totalSessionDuration / validSessionsForDuration / 1000 // Convert ms to minutes
+    metrics.sessionDurationTotals.validSessionsForDuration > 0
+      ? metrics.sessionDurationTotals.totalSessionDuration /
+        metrics.sessionDurationTotals.validSessionsForDuration /
+        1000
       : 0;
   const avgResponseTime =
-    validSessionsForResponseTime > 0
-      ? totalResponseTime / validSessionsForResponseTime
-      : 0; // in seconds
+    metrics.counters.validSessionsForResponseTime > 0
+      ? metrics.counters.totalResponseTime /
+        metrics.counters.validSessionsForResponseTime
+      : 0;
 
-  const wordCloudData: WordCloudWord[] = Object.entries(wordCounts)
+  const wordCloudData: WordCloudWord[] = Object.entries(metrics.wordCounts)
     .sort(([, a], [, b]) => b - a)
-    .slice(0, 50) // Top 50 words
+    .slice(0, 50)
     .map(([text, value]) => ({ text, value }));
 
-  // Calculate avgSessionsPerDay
   const numDaysWithSessions = Object.keys(byDay).length;
   const avgSessionsPerDay =
     numDaysWithSessions > 0 ? totalSessions / numDaysWithSessions : 0;
@@ -585,73 +740,48 @@ export function sessionMetrics(
     mockPreviousPeriodData.avgResponseTime
   );
 
-  // Calculate new metrics
-
-  // 1. Average Daily Costs (euros)
+  // Calculate additional metrics
+  const totalTokens = 0;
+  const totalTokensEur = 0;
   const avgDailyCosts =
     numDaysWithSessions > 0 ? totalTokensEur / numDaysWithSessions : 0;
-
-  // 2. Peak Usage Time
-  let peakUsageTime = "N/A";
-  if (Object.keys(hourlySessionCounts).length > 0) {
-    const peakHour = Object.entries(hourlySessionCounts).sort(
-      ([, a], [, b]) => b - a
-    )[0][0];
-    const peakHourNum = Number.parseInt(peakHour.split(":")[0]);
-    const endHour = (peakHourNum + 1) % 24;
-    peakUsageTime = `${peakHour}-${endHour.toString().padStart(2, "0")}:00`;
-  }
-
-  // 3. Resolved Chats Percentage
+  const peakUsageTime = calculatePeakUsageTime(metrics.hourlySessionCounts);
   const resolvedChatsPercentage =
-    totalSessions > 0 ? (resolvedChatsCount / totalSessions) * 100 : 0;
-
-  // 4. Top 5 Asked Questions
-  const topQuestions: TopQuestion[] = Object.entries(questionCounts)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 5) // Top 5 questions
-    .map(([question, count]) => ({ question, count }));
-
-  // console.log("Debug metrics calculation:", {
-  //   totalSessionDuration,
-  //   validSessionsForDuration,
-  //   calculatedAvgSessionLength: avgSessionLength,
-  // });
+    totalSessions > 0
+      ? (metrics.counters.resolvedChatsCount / totalSessions) * 100
+      : 0;
+  const topQuestions = calculateTopQuestions(metrics.questionCounts);
 
   return {
     totalSessions,
     uniqueUsers,
-    avgSessionLength, // Corrected to match MetricsResult interface
-    avgResponseTime, // Corrected to match MetricsResult interface
-    escalatedCount,
-    forwardedCount: forwardedHrCount, // Corrected to match MetricsResult interface (forwardedCount)
-    sentimentPositiveCount,
-    sentimentNeutralCount,
-    sentimentNegativeCount,
-    days: byDay, // Corrected to match MetricsResult interface (days)
-    categories: byCategory, // Corrected to match MetricsResult interface (categories)
-    languages: byLanguage, // Corrected to match MetricsResult interface (languages)
-    countries: byCountry, // Corrected to match MetricsResult interface (countries)
+    avgSessionLength,
+    avgResponseTime,
+    escalatedCount: metrics.counters.escalatedCount,
+    forwardedCount: metrics.counters.forwardedHrCount,
+    sentimentPositiveCount: metrics.sentimentCounts.sentimentPositiveCount,
+    sentimentNeutralCount: metrics.sentimentCounts.sentimentNeutralCount,
+    sentimentNegativeCount: metrics.sentimentCounts.sentimentNegativeCount,
+    days: byDay,
+    categories: byCategory,
+    languages: byLanguage,
+    countries: byCountry,
     tokensByDay,
     tokensCostByDay,
     totalTokens,
     totalTokensEur,
     wordCloudData,
-    belowThresholdCount: alerts, // Corrected to match MetricsResult interface (belowThresholdCount)
-    avgSessionsPerDay, // Added to satisfy MetricsResult interface
-    // Map trend values to the expected property names in MetricsResult
+    belowThresholdCount: metrics.counters.alerts,
+    avgSessionsPerDay,
     sessionTrend: totalSessionsTrend,
     usersTrend: uniqueUsersTrend,
     avgSessionTimeTrend: avgSessionLengthTrend,
-    // For response time, a negative trend is actually positive (faster responses are better)
-    avgResponseTimeTrend: -avgResponseTimeTrend, // Invert as lower response time is better
-    // Additional fields
+    avgResponseTimeTrend: -avgResponseTimeTrend,
     sentimentThreshold: companyConfig.sentimentAlert,
     lastUpdated: Date.now(),
-    totalSessionDuration,
-    validSessionsForDuration,
-
-    // New metrics
+    totalSessionDuration: metrics.sessionDurationTotals.totalSessionDuration,
+    validSessionsForDuration:
+      metrics.sessionDurationTotals.validSessionsForDuration,
     avgDailyCosts,
     peakUsageTime,
     resolvedChatsPercentage,

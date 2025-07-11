@@ -11,7 +11,7 @@ interface UserBasicInfo {
   role: string;
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -27,6 +27,8 @@ export async function GET(_request: NextRequest) {
 
   const users = await prisma.user.findMany({
     where: { companyId: user.companyId },
+    take: 1000, // Limit to prevent unbounded queries
+    orderBy: { createdAt: "desc" },
   });
 
   const mappedUsers: UserBasicInfo[] = users.map((u) => ({
@@ -75,6 +77,17 @@ export async function POST(request: NextRequest) {
     },
   });
 
-  // TODO: Email user their temp password (stub, for demo) - Implement a robust and secure email sending mechanism. Consider using a transactional email service.
-  return NextResponse.json({ ok: true, tempPassword });
+  const { sendPasswordResetEmail } = await import("../../../../lib/sendEmail");
+  const emailResult = await sendPasswordResetEmail(email, tempPassword);
+
+  if (!emailResult.success) {
+    console.warn("Failed to send password email:", emailResult.error);
+  }
+
+  return NextResponse.json({
+    ok: true,
+    tempPassword,
+    emailSent: emailResult.success,
+    emailError: emailResult.error,
+  });
 }

@@ -33,14 +33,8 @@ export async function GET(request: NextRequest) {
       prisma.session.count(),
       // Count processing status records
       prisma.sessionProcessingStatus.count(),
-      // Count recent AI requests
-      prisma.aIProcessingRequest.count({
-        where: {
-          createdAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000), // Last 24 hours
-          },
-        },
-      }),
+      // Count total AI requests
+      prisma.aIProcessingRequest.count(),
     ]);
 
     const [sessionsResult, statusResult, aiRequestsResult] = metrics;

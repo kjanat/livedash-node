@@ -18,10 +18,10 @@ import {
   useRef,
 } from "react";
 
-import { Button, type ButtonProps } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 
 type Api = {
-  fire: (options?: ConfettiOptions) => void;
+  fire: (_options?: ConfettiOptions) => void;
 };
 
 type Props = React.ComponentPropsWithRef<"canvas"> & {
@@ -110,7 +110,7 @@ ConfettiComponent.displayName = "Confetti";
 // Export as Confetti
 export const Confetti = ConfettiComponent;
 
-interface ConfettiButtonProps extends ButtonProps {
+interface ConfettiButtonProps extends React.ComponentProps<typeof Button> {
   options?: ConfettiOptions &
     ConfettiGlobalOptions & { canvas?: HTMLCanvasElement };
   children?: React.ReactNode;

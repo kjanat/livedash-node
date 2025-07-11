@@ -2,6 +2,8 @@
 import "./globals.css";
 import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { NonceProvider } from "@/lib/nonce-context";
+import { getNonce } from "@/lib/nonce-utils";
 import { Providers } from "./providers";
 
 export const metadata = {
@@ -88,7 +90,13 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const nonce = await getNonce();
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -126,7 +134,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script
           type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe use for JSON-LD structured data
+          nonce={nonce}
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Safe use for JSON-LD structured data with CSP nonce
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
@@ -138,7 +147,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to main content
         </a>
-        <Providers>{children}</Providers>
+        <NonceProvider nonce={nonce}>
+          <Providers>{children}</Providers>
+        </NonceProvider>
         <Toaster />
       </body>
     </html>

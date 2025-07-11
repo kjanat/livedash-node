@@ -3,83 +3,152 @@ import { ProcessingStatusManager } from "./lib/processingStatusManager";
 
 const prisma = new PrismaClient();
 
+/**
+ * Log pipeline status for each processing stage
+ */
+async function logPipelineStatus() {
+  const pipelineStatus = await ProcessingStatusManager.getPipelineStatus();
+  console.log(`Total Sessions: ${pipelineStatus.totalSessions}\n`);
+
+  const stages = [
+    "CSV_IMPORT",
+    "TRANSCRIPT_FETCH",
+    "SESSION_CREATION",
+    "AI_ANALYSIS",
+    "QUESTION_EXTRACTION",
+  ];
+
+  for (const stage of stages) {
+    console.log(`${stage}:`);
+    const stageData = pipelineStatus.pipeline[stage] || {};
+
+    const pending = stageData.PENDING || 0;
+    const inProgress = stageData.IN_PROGRESS || 0;
+    const completed = stageData.COMPLETED || 0;
+    const skipped = stageData.SKIPPED || 0;
+    const failed = stageData.FAILED || 0;
+
+    console.log(`  PENDING: ${pending}`);
+    console.log(`  IN_PROGRESS: ${inProgress}`);
+    console.log(`  COMPLETED: ${completed}`);
+    console.log(`  SKIPPED: ${skipped}`);
+    console.log(`  FAILED: ${failed}\n`);
+  }
+}
+
+/**
+ * Log session import relationship analysis
+ */
+async function logSessionImportRelationship() {
+  console.log("=== SESSION <-> IMPORT RELATIONSHIP ===");
+
+  const sessionWithImport = await prisma.session.count({
+    where: { importId: { not: null } },
+  });
+
+  const sessionWithoutImport = await prisma.session.count({
+    where: { importId: null },
+  });
+
+  const importWithSession = await prisma.sessionImport.count({
+    where: { session: { isNot: null } },
+  });
+
+  const importWithoutSession = await prisma.sessionImport.count({
+    where: { session: null },
+  });
+
+  console.log(`Sessions with ImportId: ${sessionWithImport}`);
+  console.log(`Sessions without ImportId: ${sessionWithoutImport}`);
+  console.log(`Imports with Session: ${importWithSession}`);
+  console.log(`Imports without Session: ${importWithoutSession}\n`);
+}
+
+/**
+ * Log failed processing sessions
+ */
+async function logFailedSessions() {
+  console.log("=== FAILED PROCESSING ANALYSIS ===");
+
+  const failedSessions = await prisma.sessionProcessingStatus.findMany({
+    where: { status: "FAILED" },
+    include: {
+      session: {
+        select: {
+          id: true,
+          import: {
+            select: { externalSessionId: true },
+          },
+        },
+      },
+    },
+    take: 5,
+  });
+
+  if (failedSessions.length > 0) {
+    console.log("Sample failed sessions:");
+    for (const failed of failedSessions) {
+      console.log(
+        `  Session ${failed.session?.import?.externalSessionId || failed.sessionId} - Stage: ${failed.stage}, Error: ${failed.error}`
+      );
+    }
+  } else {
+    console.log("No failed processing found");
+  }
+  console.log("");
+}
+
+/**
+ * Log processing pipeline needs analysis
+ */
+async function logProcessingNeeds(pipelineStatus: {
+  pipeline: Record<string, Record<string, number>>;
+}) {
+  console.log("=== WHAT NEEDS PROCESSING? ===");
+
+  const needsTranscriptFetch =
+    pipelineStatus.pipeline.TRANSCRIPT_FETCH?.PENDING || 0;
+  const needsSessionCreation =
+    pipelineStatus.pipeline.SESSION_CREATION?.PENDING || 0;
+  const needsAIAnalysis = pipelineStatus.pipeline.AI_ANALYSIS?.PENDING || 0;
+  const needsQuestionExtraction =
+    pipelineStatus.pipeline.QUESTION_EXTRACTION?.PENDING || 0;
+
+  if (needsTranscriptFetch > 0) {
+    console.log(`${needsTranscriptFetch} sessions need transcript fetching`);
+  }
+  if (needsSessionCreation > 0) {
+    console.log(`${needsSessionCreation} sessions need session creation`);
+  }
+  if (needsAIAnalysis > 0) {
+    console.log(`${needsAIAnalysis} sessions need AI analysis`);
+  }
+  if (needsQuestionExtraction > 0) {
+    console.log(`${needsQuestionExtraction} sessions need question extraction`);
+  }
+
+  if (
+    needsTranscriptFetch +
+      needsSessionCreation +
+      needsAIAnalysis +
+      needsQuestionExtraction ===
+    0
+  ) {
+    console.log("All sessions are fully processed!");
+  }
+  console.log("");
+}
+
 async function debugImportStatus() {
   try {
     console.log("=== DEBUGGING PROCESSING STATUS (REFACTORED SYSTEM) ===\n");
 
-    // Get pipeline status using the new system
     const pipelineStatus = await ProcessingStatusManager.getPipelineStatus();
 
-    console.log(`Total Sessions: ${pipelineStatus.totalSessions}\n`);
-
-    // Display status for each stage
-    const stages = [
-      "CSV_IMPORT",
-      "TRANSCRIPT_FETCH",
-      "SESSION_CREATION",
-      "AI_ANALYSIS",
-      "QUESTION_EXTRACTION",
-    ];
-
-    for (const stage of stages) {
-      console.log(`${stage}:`);
-      const stageData = pipelineStatus.pipeline[stage] || {};
-
-      const pending = stageData.PENDING || 0;
-      const inProgress = stageData.IN_PROGRESS || 0;
-      const completed = stageData.COMPLETED || 0;
-      const failed = stageData.FAILED || 0;
-      const skipped = stageData.SKIPPED || 0;
-
-      console.log(`  PENDING: ${pending}`);
-      console.log(`  IN_PROGRESS: ${inProgress}`);
-      console.log(`  COMPLETED: ${completed}`);
-      console.log(`  FAILED: ${failed}`);
-      console.log(`  SKIPPED: ${skipped}`);
-      console.log("");
-    }
-
-    // Check Sessions vs SessionImports
-    console.log("=== SESSION IMPORT RELATIONSHIP ===");
-    const sessionsWithImports = await prisma.session.count({
-      where: { importId: { not: null } },
-    });
-    const totalSessions = await prisma.session.count();
-
-    console.log(`  Sessions with importId: ${sessionsWithImports}`);
-    console.log(`  Total sessions: ${totalSessions}`);
-
-    // Show failed sessions if any
-    const failedSessions = await ProcessingStatusManager.getFailedSessions();
-    if (failedSessions.length > 0) {
-      console.log("\n=== FAILED SESSIONS ===");
-      failedSessions.slice(0, 10).forEach((failure) => {
-        console.log(
-          `  ${failure.session.import?.externalSessionId || failure.sessionId}: ${failure.stage} - ${failure.errorMessage}`
-        );
-      });
-
-      if (failedSessions.length > 10) {
-        console.log(
-          `  ... and ${failedSessions.length - 10} more failed sessions`
-        );
-      }
-    } else {
-      console.log("\n✓ No failed sessions found");
-    }
-
-    // Show what needs processing
-    console.log("\n=== WHAT NEEDS PROCESSING ===");
-
-    for (const stage of stages) {
-      const stageData = pipelineStatus.pipeline[stage] || {};
-      const pending = stageData.PENDING || 0;
-      const failed = stageData.FAILED || 0;
-
-      if (pending > 0 || failed > 0) {
-        console.log(`• ${stage}: ${pending} pending, ${failed} failed`);
-      }
-    }
+    await logPipelineStatus();
+    await logSessionImportRelationship();
+    await logFailedSessions();
+    await logProcessingNeeds(pipelineStatus);
   } catch (error) {
     console.error("Error debugging processing status:", error);
   } finally {

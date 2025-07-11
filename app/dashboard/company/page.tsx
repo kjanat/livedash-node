@@ -15,8 +15,6 @@ export default function CompanySettingsPage() {
   const csvUsernameId = useId();
   const csvPasswordId = useId();
   const { data: session, status } = useSession();
-  // We store the full company object for future use and updates after save operations
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   const [_company, setCompany] = useState<Company | null>(null);
   const [csvUrl, setCsvUrl] = useState<string>("");
   const [csvUsername, setCsvUsername] = useState<string>("");

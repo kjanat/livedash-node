@@ -1,20 +1,24 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
 
 import {
+  type AIProcessingRequest,
+  AIRequestStatus,
   ProcessingStage,
   type SentimentCategory,
   type SessionCategory,
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
-import { withRetry } from "./database-retry.js";
-import { prisma } from "./prisma.js";
+import { withRetry } from "./database-retry";
+import { env } from "./env";
+import { openAIMock } from "./mocks/openai-mock-server";
+import { prisma } from "./prisma";
 import {
   completeStage,
   failStage,
   getSessionsNeedingProcessing,
   startStage,
-} from "./processingStatusManager.js";
+} from "./processingStatusManager";
 import { getSchedulerConfig } from "./schedulerConfig";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -137,15 +141,19 @@ interface ProcessingResult {
 
 interface SessionMessage {
   id: string;
-  timestamp: Date;
+  timestamp: Date | null;
   role: string;
   content: string;
   order: number;
+  createdAt: Date;
+  sessionId: string;
 }
 
 interface SessionForProcessing {
   id: string;
   messages: SessionMessage[];
+  companyId: string;
+  endTime: Date | null;
 }
 
 /**
@@ -250,7 +258,9 @@ async function processQuestions(
   });
 
   // Filter and prepare unique questions
-  const uniqueQuestions = [...new Set(questions.filter((q) => q.trim()))];
+  const uniqueQuestions = Array.from(
+    new Set(questions.filter((q) => q.trim()))
+  );
   if (uniqueQuestions.length === 0) return;
 
   // Batch create questions (skip duplicates)
@@ -322,15 +332,17 @@ async function calculateEndTime(
 }
 
 /**
- * Processes a session transcript using OpenAI API
+ * Processes a session transcript using OpenAI API (real or mock)
  */
 async function processTranscriptWithOpenAI(
   sessionId: string,
   transcript: string,
   companyId: string
 ): Promise<ProcessedData> {
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY environment variable is not set");
+  if (!OPENAI_API_KEY && !env.OPENAI_MOCK_MODE) {
+    throw new Error(
+      "OPENAI_API_KEY environment variable is not set (or enable OPENAI_MOCK_MODE for development)"
+    );
   }
 
   // Get company's AI model
@@ -365,36 +377,48 @@ async function processTranscriptWithOpenAI(
   `;
 
   try {
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: aiModel, // Use company's configured AI model
-        messages: [
-          {
-            role: "system",
-            content: systemMessage,
-          },
-          {
-            role: "user",
-            content: transcript,
-          },
-        ],
-        temperature: 0.3, // Lower temperature for more consistent results
-        response_format: { type: "json_object" },
-      }),
-    });
+    let openaiResponse: OpenAIResponse;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    const requestParams = {
+      model: aiModel, // Use company's configured AI model
+      messages: [
+        {
+          role: "system",
+          content: systemMessage,
+        },
+        {
+          role: "user",
+          content: transcript,
+        },
+      ],
+      temperature: 0.3, // Lower temperature for more consistent results
+      response_format: { type: "json_object" },
+    };
+
+    if (env.OPENAI_MOCK_MODE) {
+      // Use mock OpenAI API for cost-safe development/testing
+      console.log(
+        `[OpenAI Mock] Processing session ${sessionId} with mock API`
+      );
+      openaiResponse = await openAIMock.mockChatCompletion(requestParams);
+    } else {
+      // Use real OpenAI API
+      const response = await fetch(OPENAI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify(requestParams),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      openaiResponse = (await response.json()) as OpenAIResponse;
     }
-
-    const openaiResponse: OpenAIResponse =
-      (await response.json()) as OpenAIResponse;
 
     // Record the AI processing request for cost tracking
     await recordAIProcessingRequest(
@@ -527,7 +551,7 @@ async function processSingleSession(
     const transcript = session.messages
       .map(
         (msg: SessionMessage) =>
-          `[${new Date(msg.timestamp)
+          `[${new Date(msg.timestamp || msg.createdAt)
             .toLocaleString("en-GB", {
               day: "2-digit",
               month: "2-digit",
@@ -552,7 +576,7 @@ async function processSingleSession(
     // Calculate endTime from latest Message timestamp
     const calculatedEndTime = await calculateEndTime(
       session.id,
-      session.endTime
+      session.endTime || new Date()
     );
 
     // Update the session with processed data
@@ -645,20 +669,20 @@ async function processSessionsInParallel(
 }
 
 /**
- * Process unprocessed sessions using the new processing status system
+ * Process unprocessed sessions using the new batch processing system
  */
 export async function processUnprocessedSessions(
   batchSize: number | null = null,
-  maxConcurrency = 5
+  _maxConcurrency = 5
 ): Promise<void> {
   process.stdout.write(
-    "[ProcessingScheduler] Starting to process sessions needing AI analysis...\n"
+    "[ProcessingScheduler] Starting to create batch requests for sessions needing AI analysis...\n"
   );
 
   try {
     await withRetry(
       async () => {
-        await processUnprocessedSessionsInternal(batchSize, maxConcurrency);
+        await createBatchRequestsForSessions(batchSize);
       },
       {
         maxRetries: 3,
@@ -674,7 +698,7 @@ export async function processUnprocessedSessions(
   }
 }
 
-async function processUnprocessedSessionsInternal(
+async function _processUnprocessedSessionsInternal(
   batchSize: number | null = null,
   maxConcurrency = 5
 ): Promise<void> {
@@ -710,9 +734,8 @@ async function processUnprocessedSessionsInternal(
 
   // Filter to only sessions that have messages
   const sessionsWithMessages = sessionsToProcess.filter(
-    (session): session is SessionForProcessing =>
-      session.messages && session.messages.length > 0
-  );
+    (session) => session.messages && session.messages.length > 0
+  ) as SessionForProcessing[];
 
   if (sessionsWithMessages.length === 0) {
     process.stdout.write(
@@ -752,14 +775,16 @@ async function processUnprocessedSessionsInternal(
  */
 export async function getAIProcessingCosts(): Promise<{
   totalCostEur: number;
+  totalRequests: number;
+  totalPromptTokens: number;
+  totalCompletionTokens: number;
   totalTokens: number;
-  requestCount: number;
-  successfulRequests: number;
-  failedRequests: number;
 }> {
   const result = await prisma.aIProcessingRequest.aggregate({
     _sum: {
       totalCostEur: true,
+      promptTokens: true,
+      completionTokens: true,
       totalTokens: true,
     },
     _count: {
@@ -767,20 +792,12 @@ export async function getAIProcessingCosts(): Promise<{
     },
   });
 
-  const successfulRequests = await prisma.aIProcessingRequest.count({
-    where: { success: true },
-  });
-
-  const failedRequests = await prisma.aIProcessingRequest.count({
-    where: { success: false },
-  });
-
   return {
     totalCostEur: result._sum.totalCostEur || 0,
+    totalRequests: result._count.id || 0,
+    totalPromptTokens: result._sum.promptTokens || 0,
+    totalCompletionTokens: result._sum.completionTokens || 0,
     totalTokens: result._sum.totalTokens || 0,
-    requestCount: result._count.id || 0,
-    successfulRequests,
-    failedRequests,
   };
 }
 
@@ -819,4 +836,104 @@ export function startProcessingScheduler(): void {
       );
     }
   });
+}
+
+/**
+ * Create batch requests for sessions needing AI processing
+ */
+async function createBatchRequestsForSessions(
+  batchSize: number | null = null
+): Promise<void> {
+  // Get sessions that need AI processing using the new status system
+  const sessionsNeedingAI = await getSessionsNeedingProcessing(
+    ProcessingStage.AI_ANALYSIS,
+    batchSize || 50
+  );
+
+  if (sessionsNeedingAI.length === 0) {
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions found requiring AI processing.\n"
+    );
+    return;
+  }
+
+  // Get session IDs that need processing
+  const sessionIds = sessionsNeedingAI.map(
+    (statusRecord) => statusRecord.sessionId
+  );
+
+  // Fetch full session data with messages
+  const sessionsToProcess = await prisma.session.findMany({
+    where: {
+      id: { in: sessionIds },
+    },
+    include: {
+      messages: {
+        orderBy: { order: "asc" },
+      },
+    },
+  });
+
+  // Filter to only sessions that have messages
+  const sessionsWithMessages = sessionsToProcess.filter(
+    (session) => session.messages && session.messages.length > 0
+  );
+
+  if (sessionsWithMessages.length === 0) {
+    process.stdout.write(
+      "[ProcessingScheduler] No sessions with messages found requiring processing.\n"
+    );
+    return;
+  }
+
+  process.stdout.write(
+    `[ProcessingScheduler] Found ${sessionsWithMessages.length} sessions to convert to batch requests.\n`
+  );
+
+  // Start AI analysis stage for all sessions
+  for (const session of sessionsWithMessages) {
+    await startStage(session.id, ProcessingStage.AI_ANALYSIS);
+  }
+
+  // Create AI processing requests for batch processing
+  const batchRequests: AIProcessingRequest[] = [];
+  for (const session of sessionsWithMessages) {
+    try {
+      // Get company's AI model
+      const aiModel = await getCompanyAIModel(session.companyId);
+
+      // Create batch processing request record
+      const processingRequest = await prisma.aIProcessingRequest.create({
+        data: {
+          sessionId: session.id,
+          model: aiModel,
+          promptTokens: 0, // Will be filled when batch completes
+          completionTokens: 0,
+          totalTokens: 0,
+          promptTokenCost: 0,
+          completionTokenCost: 0,
+          totalCostEur: 0,
+          processingType: "session_analysis",
+          success: false, // Will be updated when batch completes
+          processingStatus: AIRequestStatus.PENDING_BATCHING,
+        },
+      });
+
+      batchRequests.push(processingRequest);
+    } catch (error) {
+      console.error(
+        `Failed to create batch request for session ${session.id}:`,
+        error
+      );
+      await failStage(
+        session.id,
+        ProcessingStage.AI_ANALYSIS,
+        error instanceof Error ? error.message : String(error)
+      );
+    }
+  }
+
+  process.stdout.write(
+    `[ProcessingScheduler] Created ${batchRequests.length} batch processing requests.\n`
+  );
 }
