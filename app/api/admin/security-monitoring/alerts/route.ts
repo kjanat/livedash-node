@@ -45,9 +45,17 @@ export async function GET(request: NextRequest) {
     const context = await createAuditContext(request, session);
 
     // Get alerts based on filters
-    const alerts = securityMonitoring.getActiveAlerts(
+    let alerts = securityMonitoring.getActiveAlerts(
       query.severity as AlertSeverity
     );
+
+    // Apply acknowledged filter if provided
+    if (query.acknowledged !== undefined) {
+      const showAcknowledged = query.acknowledged === "true";
+      alerts = alerts.filter((alert) =>
+        showAcknowledged ? alert.acknowledged : !alert.acknowledged
+      );
+    }
 
     // Apply pagination
     const limit = query.limit || 50;

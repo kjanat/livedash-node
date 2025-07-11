@@ -25,6 +25,8 @@ function usePlatformSession() {
       name?: string;
       role: string;
       companyId?: string;
+      isPlatformUser?: boolean;
+      platformRole?: string;
     };
   } | null>(null);
   const [status, setStatus] = useState<
@@ -32,26 +34,47 @@ function usePlatformSession() {
   >("loading");
 
   useEffect(() => {
+    const abortController = new AbortController();
+
+    const handleAuthSuccess = (sessionData: any) => {
+      if (sessionData?.user?.isPlatformUser) {
+        setSession(sessionData);
+        setStatus("authenticated");
+      } else {
+        handleAuthFailure();
+      }
+    };
+
+    const handleAuthFailure = (error?: unknown) => {
+      if (error instanceof Error && error.name === "AbortError") return;
+      if (error) console.error("Platform session fetch error:", error);
+      setSession(null);
+      setStatus("unauthenticated");
+    };
+
     const fetchSession = async () => {
       try {
-        const response = await fetch("/api/platform/auth/session");
-        const sessionData = await response.json();
+        const response = await fetch("/api/platform/auth/session", {
+          signal: abortController.signal,
+        });
 
-        if (sessionData?.user?.isPlatformUser) {
-          setSession(sessionData);
-          setStatus("authenticated");
-        } else {
-          setSession(null);
-          setStatus("unauthenticated");
+        if (!response.ok) {
+          if (response.status === 401) return handleAuthFailure();
+          throw new Error(`Failed to fetch session: ${response.status}`);
         }
+
+        const sessionData = await response.json();
+        handleAuthSuccess(sessionData);
       } catch (error) {
-        console.error("Platform session fetch error:", error);
-        setSession(null);
-        setStatus("unauthenticated");
+        handleAuthFailure(error);
       }
     };
 
     fetchSession();
+
+    return () => {
+      abortController.abort();
+    };
   }, []);
 
   return { data: session, status };

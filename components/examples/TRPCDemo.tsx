@@ -31,11 +31,17 @@ export function TRPCDemo() {
     refetch: refetchSessions,
   } = trpc.dashboard.getSessions.useQuery(sessionFilters);
 
-  const { data: overview, isLoading: overviewLoading } =
-    trpc.dashboard.getOverview.useQuery({});
+  const {
+    data: overview,
+    isLoading: overviewLoading,
+    error: overviewError,
+  } = trpc.dashboard.getOverview.useQuery({});
 
-  const { data: topQuestions, isLoading: questionsLoading } =
-    trpc.dashboard.getTopQuestions.useQuery({ limit: 3 });
+  const {
+    data: topQuestions,
+    isLoading: questionsLoading,
+    error: questionsError,
+  } = trpc.dashboard.getTopQuestions.useQuery({ limit: 3 });
 
   // Mutations
   const refreshSessionsMutation = trpc.dashboard.refreshSessions.useMutation({
@@ -84,6 +90,11 @@ export function TRPCDemo() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {overviewError && (
+              <div className="text-red-600 text-sm mb-2">
+                Error: {overviewError.message}
+              </div>
+            )}
             {overviewLoading ? (
               <div className="flex items-center">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -102,6 +113,11 @@ export function TRPCDemo() {
             <CardTitle className="text-sm font-medium">Avg Messages</CardTitle>
           </CardHeader>
           <CardContent>
+            {overviewError && (
+              <div className="text-red-600 text-sm mb-2">
+                Error: {overviewError.message}
+              </div>
+            )}
             {overviewLoading ? (
               <div className="flex items-center">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -122,6 +138,11 @@ export function TRPCDemo() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {overviewError && (
+              <div className="text-red-600 text-sm mb-2">
+                Error: {overviewError.message}
+              </div>
+            )}
             {overviewLoading ? (
               <div className="flex items-center">
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -150,6 +171,11 @@ export function TRPCDemo() {
           <CardTitle>Top Questions</CardTitle>
         </CardHeader>
         <CardContent>
+          {questionsError && (
+            <div className="text-red-600 mb-4">
+              Error loading questions: {questionsError.message}
+            </div>
+          )}
           {questionsLoading ? (
             <div className="flex items-center">
               <Loader2 className="h-4 w-4 animate-spin mr-2" />

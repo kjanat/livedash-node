@@ -21,15 +21,24 @@ export const createEnhancedPrismaClient = () => {
         ? { rejectUnauthorized: false }
         : undefined,
 
-    // Connection pool settings
-    max: env.DATABASE_CONNECTION_LIMIT || 20, // Maximum number of connections
+    // Connection pool settings optimized for Neon
+    max: env.DATABASE_CONNECTION_LIMIT || 15, // Maximum number of connections (reduced for Neon)
+    min: 2, // Minimum connections to keep warm (prevent auto-pause)
     idleTimeoutMillis: env.DATABASE_POOL_TIMEOUT * 1000 || 30000, // Use env timeout
-    connectionTimeoutMillis: 5000, // 5 seconds
-    query_timeout: 10000, // 10 seconds
-    statement_timeout: 10000, // 10 seconds
+    connectionTimeoutMillis: 10000, // 10 seconds (increased for Neon cold starts)
+    query_timeout: 15000, // 15 seconds (increased for Neon)
+    statement_timeout: 15000, // 15 seconds (increased for Neon)
+
+    // Keepalive settings to prevent Neon auto-pause
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+
+    // Application name for monitoring in Neon dashboard
+    application_name:
+      dbUrl.searchParams.get("application_name") || "livedash-app",
 
     // Connection lifecycle
-    allowExitOnIdle: true,
+    allowExitOnIdle: false, // Keep minimum connections alive for Neon
   };
 
   const adapter = new PrismaPg(poolConfig);

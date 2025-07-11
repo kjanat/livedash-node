@@ -401,30 +401,30 @@ export function parseCSPViolation(report: CSPViolationReport): {
 }
 
 /**
- * CSP bypass detection patterns
+ * CSP bypass detection patterns - optimized to prevent ReDoS attacks
  */
 export const CSP_BYPASS_PATTERNS = [
-  // Common XSS bypass attempts
-  /javascript:/i,
-  /data:text\/html/i,
-  /vbscript:/i,
-  /livescript:/i,
+  // Common XSS bypass attempts (exact matches to prevent ReDoS)
+  /^javascript:/i,
+  /^data:text\/html/i,
+  /^vbscript:/i,
+  /^livescript:/i,
 
-  // Base64 encoded attempts
-  /data:.*base64.*script/i,
-  /data:text\/javascript/i,
-  /data:application\/javascript/i,
+  // Base64 encoded attempts (limited quantifiers to prevent ReDoS)
+  /^data:[^;]{0,50};base64[^,]{0,100},.*script/i,
+  /^data:text\/javascript/i,
+  /^data:application\/javascript/i,
 
-  // JSONP callback manipulation
-  /callback=.*script/i,
+  // JSONP callback manipulation (limited lookahead)
+  /callback=[^&]{0,200}script/i,
 
-  // Common CSP bypass techniques
-  /location\.href.*javascript/i,
-  /document\.write.*script/i,
-  /eval\(/i,
+  // Common CSP bypass techniques (limited quantifiers)
+  /location\.href[^;]{0,100}javascript/i,
+  /document\.write[^;]{0,100}script/i,
+  /\beval\s*\(/i,
   /\bnew\s+Function\s*\(/i,
-  /setTimeout\s*\(\s*['"`].*['"`]/i,
-  /setInterval\s*\(\s*['"`].*['"`]/i,
+  /setTimeout\s*\(\s*['"`][^'"`]{0,500}['"`]/i,
+  /setInterval\s*\(\s*['"`][^'"`]{0,500}['"`]/i,
 ];
 
 /**
@@ -550,14 +550,14 @@ export function detectCSPBypass(content: string): {
     }
   }
 
-  // Determine risk level based on pattern types
+  // Determine risk level based on pattern types (ReDoS-safe patterns)
   const highRiskPatterns = [
-    /javascript:/i,
-    /eval\(/i,
+    /^javascript:/i,
+    /\beval\s*\(/i,
     /\bnew\s+Function\s*\(/i,
-    /data:text\/javascript/i,
-    /data:application\/javascript/i,
-    /data:.*base64.*script/i,
+    /^data:text\/javascript/i,
+    /^data:application\/javascript/i,
+    /^data:[^;]{0,50};base64[^,]{0,100},.*script/i,
   ];
 
   const hasHighRiskPattern = detectedPatterns.some((pattern) =>

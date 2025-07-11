@@ -51,11 +51,11 @@ function mapPrismaSessionToChatSession(prismaSession: {
     country: prismaSession.country ?? null,
     ipAddress: prismaSession.ipAddress ?? null,
     sentiment: prismaSession.sentiment ?? null,
-    messagesSent: prismaSession.messagesSent ?? undefined, // Use undefined if ChatSession expects number | undefined
+    messagesSent: prismaSession.messagesSent ?? null, // Maintain consistency with other nullable fields
     avgResponseTime: prismaSession.avgResponseTime ?? null,
-    escalated: prismaSession.escalated ?? undefined,
-    forwardedHr: prismaSession.forwardedHr ?? undefined,
-    initialMsg: prismaSession.initialMsg ?? undefined,
+    escalated: prismaSession.escalated,
+    forwardedHr: prismaSession.forwardedHr,
+    initialMsg: prismaSession.initialMsg ?? null,
     fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
     summary: prismaSession.summary ?? null, // New field
     transcriptContent: null, // Not available in Session model

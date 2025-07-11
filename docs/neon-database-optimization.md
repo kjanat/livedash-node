@@ -6,7 +6,7 @@ This document provides specific recommendations for optimizing database connecti
 
 From your logs, we can see:
 
-```
+```bash
 Can't reach database server at `ep-tiny-math-a2zsshve-pooler.eu-central-1.aws.neon.tech:5432`
 [NODE-CRON] [WARN] missed execution at Sun Jun 29 2025 12:00:00 GMT+0200! Possible blocking IO or high CPU
 ```
@@ -15,21 +15,21 @@ Can't reach database server at `ep-tiny-math-a2zsshve-pooler.eu-central-1.aws.ne
 
 ### 1. Neon Connection Limits
 
-- **Free Tier**: 20 concurrent connections
-- **Pro Tier**: 100 concurrent connections
-- **Multiple schedulers** can quickly exhaust connections
+-   **Free Tier**: 20 concurrent connections
+-   **Pro Tier**: 100 concurrent connections
+-   **Multiple schedulers** can quickly exhaust connections
 
 ### 2. Connection Pooling Issues
 
-- Each scheduler was creating separate PrismaClient instances
-- No connection reuse between operations
-- No retry logic for temporary failures
+-   Each scheduler was creating separate PrismaClient instances
+-   No connection reuse between operations
+-   No retry logic for temporary failures
 
 ### 3. Neon-Specific Challenges
 
-- **Auto-pause**: Databases pause after inactivity
-- **Cold starts**: First connection after pause takes longer
-- **Regional latency**: eu-central-1 may have variable latency
+-   **Auto-pause**: Databases pause after inactivity
+-   **Cold starts**: First connection after pause takes longer
+-   **Regional latency**: eu-central-1 may have variable latency
 
 ## Solutions Implemented
 
@@ -100,15 +100,15 @@ SESSION_PROCESSING_INTERVAL="0 */2 * * *"  # Every 2 hours instead of 1
 
 ```bash
 # Check connection health
-curl -H "Authorization: Bearer your-token" \
+curl -H "Authorization: Bearer YOUR_API_TOKEN" \
      http://localhost:3000/api/admin/database-health
 ```
 
 ### 2. Neon Dashboard Monitoring
 
-- Monitor "Active connections" in Neon dashboard
-- Check for connection spikes during scheduler runs
-- Review query performance and slow queries
+-   Monitor "Active connections" in Neon dashboard
+-   Check for connection spikes during scheduler runs
+-   Review query performance and slow queries
 
 ### 3. Application Logs
 
@@ -158,44 +158,44 @@ const prisma = new PrismaClient({
 
 **Causes:**
 
-- Neon database auto-paused
-- Connection limit exceeded
-- Network issues
+-   Neon database auto-paused
+-   Connection limit exceeded
+-   Network issues
 
 **Solutions:**
 
-1. Enable enhanced pooling: `USE_ENHANCED_POOLING=true`
-2. Reduce connection limit: `DATABASE_CONNECTION_LIMIT=15`
-3. Implement retry logic (already done)
-4. Check Neon dashboard for database status
+1.  Enable enhanced pooling: `USE_ENHANCED_POOLING=true`
+2.  Reduce connection limit: `DATABASE_CONNECTION_LIMIT=15`
+3.  Implement retry logic (already done)
+4.  Check Neon dashboard for database status
 
 ### "Connection terminated"
 
 **Causes:**
 
-- Idle connection timeout
-- Neon maintenance
-- Long-running transactions
+-   Idle connection timeout
+-   Neon maintenance
+-   Long-running transactions
 
 **Solutions:**
 
-1. Increase pool timeout: `DATABASE_POOL_TIMEOUT=30`
-2. Add connection cycling
-3. Break large operations into smaller batches
+1.  Increase pool timeout: `DATABASE_POOL_TIMEOUT=30`
+2.  Add connection cycling
+3.  Break large operations into smaller batches
 
 ### "Missed cron execution"
 
 **Causes:**
 
-- Blocking database operations
-- Scheduler overlap
-- High CPU usage
+-   Blocking database operations
+-   Scheduler overlap
+-   High CPU usage
 
 **Solutions:**
 
-1. Reduce scheduler frequency
-2. Add concurrency limits
-3. Monitor scheduler execution time
+1.  Reduce scheduler frequency
+2.  Add concurrency limits
+3.  Monitor scheduler execution time
 
 ## Recommended Production Settings
 
@@ -223,17 +223,17 @@ SESSION_PROCESSING_INTERVAL="0 */2 * * *"
 
 ## Next Steps
 
-1. **Immediate**: Apply the new environment variables
-2. **Short-term**: Monitor connection usage via health endpoint
-3. **Long-term**: Consider upgrading to Neon Pro for more connections
-4. **Optional**: Implement read replicas for analytics queries
+1.  **Immediate**: Apply the new environment variables
+2.  **Short-term**: Monitor connection usage via health endpoint
+3.  **Long-term**: Consider upgrading to Neon Pro for more connections
+4.  **Optional**: Implement read replicas for analytics queries
 
 ## Monitoring Checklist
 
-- [ ] Check Neon dashboard for connection spikes
-- [ ] Monitor scheduler execution times
-- [ ] Review error logs for connection patterns
-- [ ] Test health endpoint regularly
-- [ ] Set up alerts for connection failures
+-   [ ] Check Neon dashboard for connection spikes
+-   [ ] Monitor scheduler execution times
+-   [ ] Review error logs for connection patterns
+-   [ ] Test health endpoint regularly
+-   [ ] Set up alerts for connection failures
 
 With these optimizations, your Neon database connections should be much more stable and efficient!

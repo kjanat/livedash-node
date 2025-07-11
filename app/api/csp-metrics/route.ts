@@ -1,12 +1,19 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { cspMonitoring } from "@/lib/csp-monitoring";
-import { rateLimiter } from "@/lib/rateLimiter";
+import { extractClientIP, rateLimiter } from "@/lib/rateLimiter";
 
 export async function GET(request: NextRequest) {
   try {
+    // Authentication check for security metrics endpoint
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user || !session.user.isPlatformUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     // Rate limiting for metrics endpoint
-    const ip =
-      request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    const ip = extractClientIP(request);
     const rateLimitResult = await rateLimiter.check(
       `csp-metrics:${ip}`,
       30, // 30 requests
@@ -102,9 +109,11 @@ export async function OPTIONS() {
   return new NextResponse(null, {
     status: 200,
     headers: {
-      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Origin":
+        process.env.ALLOWED_ORIGINS || "https://livedash.notso.ai",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Credentials": "true",
     },
   });
 }
