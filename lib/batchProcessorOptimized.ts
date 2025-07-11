@@ -122,7 +122,7 @@ export async function getPendingBatchRequestsOptimized(
     }
   );
 
-  return requests as any; // Type assertion since we're only including essential data
+  return requests;
 }
 
 /**
@@ -168,7 +168,7 @@ export async function getPendingBatchRequestsForAllCompanies(): Promise<
     if (!requestsByCompany.has(companyId)) {
       requestsByCompany.set(companyId, []);
     }
-    requestsByCompany.get(companyId)?.push(request as any);
+    requestsByCompany.get(companyId)?.push(request);
   }
 
   const duration = Date.now() - startTime;
@@ -190,7 +190,7 @@ export async function getPendingBatchRequestsForAllCompanies(): Promise<
  * Optimized batch status checking for all companies
  */
 export async function getInProgressBatchesForAllCompanies(): Promise<
-  Map<string, any[]>
+  Map<string, unknown[]>
 > {
   const startTime = Date.now();
   const companies = await companyCache.getActiveCompanies();
@@ -221,7 +221,7 @@ export async function getInProgressBatchesForAllCompanies(): Promise<
   });
 
   // Group by company
-  const batchesByCompany = new Map<string, any[]>();
+  const batchesByCompany = new Map<string, unknown[]>();
   for (const batch of allBatches) {
     if (!batchesByCompany.has(batch.companyId)) {
       batchesByCompany.set(batch.companyId, []);
@@ -248,7 +248,7 @@ export async function getInProgressBatchesForAllCompanies(): Promise<
  * Optimized completed batch processing for all companies
  */
 export async function getCompletedBatchesForAllCompanies(): Promise<
-  Map<string, any[]>
+  Map<string, unknown[]>
 > {
   const startTime = Date.now();
   const companies = await companyCache.getActiveCompanies();
@@ -283,7 +283,7 @@ export async function getCompletedBatchesForAllCompanies(): Promise<
   });
 
   // Group by company
-  const batchesByCompany = new Map<string, any[]>();
+  const batchesByCompany = new Map<string, unknown[]>();
   for (const batch of allBatches) {
     if (!batchesByCompany.has(batch.companyId)) {
       batchesByCompany.set(batch.companyId, []);
@@ -349,9 +349,10 @@ export async function getFailedRequestsForAllCompanies(
       requestsByCompany.set(companyId, []);
     }
 
-    const companyRequests = requestsByCompany.get(companyId)!;
+    const companyRequests = requestsByCompany.get(companyId);
+    if (!companyRequests) continue;
     if (companyRequests.length < maxPerCompany) {
-      companyRequests.push(request as any);
+      companyRequests.push(request);
     }
   }
 
@@ -412,7 +413,13 @@ export async function getOldestPendingRequestOptimized(
  */
 export async function getBatchProcessingStatsOptimized(
   companyId?: string
-): Promise<any> {
+): Promise<{
+  totalBatches: number;
+  pendingRequests: number;
+  inProgressBatches: number;
+  completedBatches: number;
+  failedRequests: number;
+}> {
   const startTime = Date.now();
 
   const whereClause = companyId ? { companyId } : {};

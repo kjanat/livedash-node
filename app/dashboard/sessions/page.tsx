@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
+import type { z } from "zod";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,8 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCategory } from "@/lib/format-enums";
 import { trpc } from "@/lib/trpc-client";
-import { sessionFilterSchema } from "@/lib/validation";
-import type { z } from "zod";
+import type { sessionFilterSchema } from "@/lib/validation";
 import type { ChatSession } from "../../../lib/types";
 
 interface FilterOptions {
@@ -97,13 +97,13 @@ function FilterSection({
         <CardHeader>
           <div className="space-y-4">
             <div className="relative">
-              <Label htmlFor="search-sessions" className="sr-only">
+              <Label htmlFor={searchId} className="sr-only">
                 Search sessions
               </Label>
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="search-sessions"
+                  id={searchId}
                   type="text"
                   placeholder="Search sessions..."
                   value={searchTerm}
@@ -179,9 +179,9 @@ function FilterSection({
                 </div>
 
                 <div>
-                  <Label htmlFor="start-date">Start Date</Label>
+                  <Label htmlFor={startDateId}>Start Date</Label>
                   <Input
-                    id="start-date"
+                    id={startDateId}
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
@@ -190,9 +190,9 @@ function FilterSection({
                 </div>
 
                 <div>
-                  <Label htmlFor="end-date">End Date</Label>
+                  <Label htmlFor={endDateId}>End Date</Label>
                   <Input
-                    id="end-date"
+                    id={endDateId}
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
@@ -201,9 +201,9 @@ function FilterSection({
                 </div>
 
                 <div>
-                  <Label htmlFor="sort-by">Sort By</Label>
+                  <Label htmlFor={sortById}>Sort By</Label>
                   <select
-                    id="sort-by"
+                    id={sortById}
                     value={sortKey}
                     onChange={(e) => setSortKey(e.target.value)}
                     className="w-full mt-1 p-2 border border-gray-300 rounded-md"
@@ -489,7 +489,9 @@ export default function SessionsPage() {
   } = trpc.dashboard.getSessions.useQuery(
     {
       search: debouncedSearchTerm || undefined,
-      category: selectedCategory ? selectedCategory as z.infer<typeof sessionFilterSchema>["category"] : undefined,
+      category: selectedCategory
+        ? (selectedCategory as z.infer<typeof sessionFilterSchema>["category"])
+        : undefined,
       // language: selectedLanguage || undefined, // Not supported in schema yet
       startDate: startDate || undefined,
       endDate: endDate || undefined,

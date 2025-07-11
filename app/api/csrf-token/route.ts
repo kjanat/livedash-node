@@ -5,7 +5,6 @@
  * It generates a new token and sets it as an HTTP-only cookie.
  */
 
-import type { NextRequest } from "next/server";
 import { generateCSRFTokenResponse } from "../../../middleware/csrfProtection";
 
 /**

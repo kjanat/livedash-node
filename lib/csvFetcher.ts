@@ -4,6 +4,44 @@
 import { parse } from "csv-parse/sync";
 import fetch from "node-fetch";
 
+/**
+ * Parse integer from string with null fallback
+ */
+function parseInteger(value: string | undefined): number | null {
+  return value ? Number.parseInt(value, 10) || null : null;
+}
+
+/**
+ * Parse float from string with null fallback
+ */
+function parseFloatValue(value: string | undefined): number | null {
+  return value ? Number.parseFloat(value) || null : null;
+}
+
+/**
+ * Map a CSV row to SessionImport object
+ */
+function mapCsvRowToSessionImport(row: string[]): RawSessionImport {
+  return {
+    externalSessionId: row[0] || "",
+    startTimeRaw: row[1] || "",
+    endTimeRaw: row[2] || "",
+    ipAddress: row[3] || null,
+    countryCode: row[4] || null,
+    language: row[5] || null,
+    messagesSent: parseInteger(row[6]),
+    sentimentRaw: row[7] || null,
+    escalatedRaw: row[8] || null,
+    forwardedHrRaw: row[9] || null,
+    fullTranscriptUrl: row[10] || null,
+    avgResponseTimeSeconds: parseFloatValue(row[11]),
+    tokens: parseInteger(row[12]),
+    tokensEur: parseFloatValue(row[13]),
+    category: row[14] || null,
+    initialMessage: row[15] || null,
+  };
+}
+
 // Raw CSV data interface matching SessionImport schema
 interface RawSessionImport {
   externalSessionId: string;
@@ -62,22 +100,5 @@ export async function fetchAndParseCsv(
   });
 
   // Map CSV columns by position to SessionImport fields
-  return records.map((row) => ({
-    externalSessionId: row[0] || "",
-    startTimeRaw: row[1] || "",
-    endTimeRaw: row[2] || "",
-    ipAddress: row[3] || null,
-    countryCode: row[4] || null,
-    language: row[5] || null,
-    messagesSent: row[6] ? Number.parseInt(row[6], 10) || null : null,
-    sentimentRaw: row[7] || null,
-    escalatedRaw: row[8] || null,
-    forwardedHrRaw: row[9] || null,
-    fullTranscriptUrl: row[10] || null,
-    avgResponseTimeSeconds: row[11] ? Number.parseFloat(row[11]) || null : null,
-    tokens: row[12] ? Number.parseInt(row[12], 10) || null : null,
-    tokensEur: row[13] ? Number.parseFloat(row[13]) || null : null,
-    category: row[14] || null,
-    initialMessage: row[15] || null,
-  }));
+  return records.map(mapCsvRowToSessionImport);
 }

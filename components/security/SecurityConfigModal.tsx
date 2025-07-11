@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -57,6 +57,19 @@ export function SecurityConfigModal({
   const [config, setConfig] = useState<SecurityConfig | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // Generate unique IDs for form elements
+  const failedLoginsPerMinuteId = useId();
+  const failedLoginsPerHourId = useId();
+  const rateLimitViolationsPerMinuteId = useId();
+  const cspViolationsPerMinuteId = useId();
+  const adminActionsPerHourId = useId();
+  const suspiciousIPThresholdId = useId();
+  const alertingEnabledId = useId();
+  const suppressDuplicateMinutesId = useId();
+  const escalationTimeoutMinutesId = useId();
+  const alertRetentionDaysId = useId();
+  const metricsRetentionDaysId = useId();
 
   const loadConfig = useCallback(async () => {
     try {
@@ -207,11 +220,11 @@ export function SecurityConfigModal({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="failedLoginsPerMinute">
+                    <Label htmlFor={failedLoginsPerMinuteId}>
                       Failed Logins per Minute
                     </Label>
                     <Input
-                      id="failedLoginsPerMinute"
+                      id={failedLoginsPerMinuteId}
                       type="number"
                       min="1"
                       max="100"
@@ -226,11 +239,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="failedLoginsPerHour">
+                    <Label htmlFor={failedLoginsPerHourId}>
                       Failed Logins per Hour
                     </Label>
                     <Input
-                      id="failedLoginsPerHour"
+                      id={failedLoginsPerHourId}
                       type="number"
                       min="1"
                       max="1000"
@@ -245,11 +258,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="rateLimitViolationsPerMinute">
+                    <Label htmlFor={rateLimitViolationsPerMinuteId}>
                       Rate Limit Violations per Minute
                     </Label>
                     <Input
-                      id="rateLimitViolationsPerMinute"
+                      id={rateLimitViolationsPerMinuteId}
                       type="number"
                       min="1"
                       max="100"
@@ -264,11 +277,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="cspViolationsPerMinute">
+                    <Label htmlFor={cspViolationsPerMinuteId}>
                       CSP Violations per Minute
                     </Label>
                     <Input
-                      id="cspViolationsPerMinute"
+                      id={cspViolationsPerMinuteId}
                       type="number"
                       min="1"
                       max="100"
@@ -283,11 +296,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="adminActionsPerHour">
+                    <Label htmlFor={adminActionsPerHourId}>
                       Admin Actions per Hour
                     </Label>
                     <Input
-                      id="adminActionsPerHour"
+                      id={adminActionsPerHourId}
                       type="number"
                       min="1"
                       max="100"
@@ -302,11 +315,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="suspiciousIPThreshold">
+                    <Label htmlFor={suspiciousIPThresholdId}>
                       Suspicious IP Threshold
                     </Label>
                     <Input
-                      id="suspiciousIPThreshold"
+                      id={suspiciousIPThresholdId}
                       type="number"
                       min="1"
                       max="100"
@@ -335,13 +348,13 @@ export function SecurityConfigModal({
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="alerting-enabled"
+                    id={alertingEnabledId}
                     checked={config.alerting.enabled}
                     onCheckedChange={(checked) =>
                       updateAlerting("enabled", checked)
                     }
                   />
-                  <Label htmlFor="alerting-enabled">
+                  <Label htmlFor={alertingEnabledId}>
                     Enable Security Alerting
                   </Label>
                 </div>
@@ -370,11 +383,11 @@ export function SecurityConfigModal({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="suppressDuplicateMinutes">
+                    <Label htmlFor={suppressDuplicateMinutesId}>
                       Suppress Duplicates (minutes)
                     </Label>
                     <Input
-                      id="suppressDuplicateMinutes"
+                      id={suppressDuplicateMinutesId}
                       type="number"
                       min="1"
                       max="1440"
@@ -389,11 +402,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="escalationTimeoutMinutes">
+                    <Label htmlFor={escalationTimeoutMinutesId}>
                       Escalation Timeout (minutes)
                     </Label>
                     <Input
-                      id="escalationTimeoutMinutes"
+                      id={escalationTimeoutMinutesId}
                       type="number"
                       min="5"
                       max="1440"
@@ -422,11 +435,11 @@ export function SecurityConfigModal({
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="alertRetentionDays">
+                    <Label htmlFor={alertRetentionDaysId}>
                       Alert Retention (days)
                     </Label>
                     <Input
-                      id="alertRetentionDays"
+                      id={alertRetentionDaysId}
                       type="number"
                       min="1"
                       max="3650"
@@ -441,11 +454,11 @@ export function SecurityConfigModal({
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="metricsRetentionDays">
+                    <Label htmlFor={metricsRetentionDaysId}>
                       Metrics Retention (days)
                     </Label>
                     <Input
-                      id="metricsRetentionDays"
+                      id={metricsRetentionDaysId}
                       type="number"
                       min="1"
                       max="3650"

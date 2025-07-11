@@ -157,8 +157,11 @@ export function TRPCDemo() {
             </div>
           ) : (
             <div className="space-y-2">
-              {topQuestions?.map((item, index) => (
-                <div key={index} className="flex justify-between items-center">
+              {topQuestions?.map((item) => (
+                <div
+                  key={item.question}
+                  className="flex justify-between items-center"
+                >
                   <span className="text-sm">{item.question}</span>
                   <Badge>{item.count}</Badge>
                 </div>
@@ -223,8 +226,12 @@ export function TRPCDemo() {
                   </p>
                   {session.questions && session.questions.length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {session.questions.slice(0, 3).map((question, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
+                      {session.questions.slice(0, 3).map((question) => (
+                        <Badge
+                          key={question}
+                          variant="outline"
+                          className="text-xs"
+                        >
                           {question.length > 50
                             ? `${question.slice(0, 50)}...`
                             : question}

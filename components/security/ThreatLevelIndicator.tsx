@@ -70,7 +70,16 @@ export function ThreatLevelIndicator({
 
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <Badge variant={config.color as "default" | "secondary" | "destructive" | "outline"} className={classes.badge}>
+          <Badge
+            variant={
+              config.color as
+                | "default"
+                | "secondary"
+                | "destructive"
+                | "outline"
+            }
+            className={classes.badge}
+          >
             {config.text}
           </Badge>
           {score !== undefined && (

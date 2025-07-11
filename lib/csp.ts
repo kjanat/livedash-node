@@ -175,6 +175,155 @@ export function createCSPMiddleware(config: CSPConfig = {}) {
 }
 
 /**
+ * Helper function to check unsafe directives
+ */
+function checkUnsafeDirectives(
+  csp: string,
+  strictMode: boolean,
+  warnings: string[],
+  errors: string[],
+  recommendations: string[]
+): number {
+  let scorePenalty = 0;
+
+  if (csp.includes("'unsafe-inline'") && !csp.includes("'nonce-")) {
+    warnings.push("Using 'unsafe-inline' without nonce is less secure");
+    scorePenalty += 15;
+    recommendations.push(
+      "Implement nonce-based CSP for inline scripts and styles"
+    );
+  }
+
+  if (csp.includes("'unsafe-eval'")) {
+    if (strictMode) {
+      errors.push("'unsafe-eval' is not allowed in strict mode");
+      scorePenalty += 25;
+    } else {
+      warnings.push("'unsafe-eval' allows dangerous code execution");
+      scorePenalty += 10;
+    }
+  }
+
+  return scorePenalty;
+}
+
+/**
+ * Helper function to check wildcard usage
+ */
+function checkWildcardUsage(
+  csp: string,
+  errors: string[],
+  recommendations: string[]
+): number {
+  const hasProblematicWildcards =
+    csp.includes(" *") ||
+    csp.includes("*://") ||
+    (csp.includes("*") && !csp.includes("*.") && !csp.includes("wss: ws:"));
+
+  if (hasProblematicWildcards) {
+    errors.push("Wildcard (*) sources are not recommended");
+    recommendations.push("Replace wildcards with specific trusted domains");
+    return 30;
+  }
+
+  return 0;
+}
+
+/**
+ * Helper function to check security features
+ */
+function checkSecurityFeatures(
+  csp: string,
+  warnings: string[],
+  recommendations: string[]
+): number {
+  let scorePenalty = 0;
+
+  if (
+    csp.includes("data:") &&
+    !csp.includes("img-src") &&
+    !csp.includes("font-src")
+  ) {
+    warnings.push("data: URIs should be limited to specific directives");
+    scorePenalty += 5;
+  }
+
+  if (!csp.includes("upgrade-insecure-requests")) {
+    warnings.push("Missing HTTPS upgrade directive");
+    scorePenalty += 10;
+    recommendations.push("Add 'upgrade-insecure-requests' directive");
+  }
+
+  if (!csp.includes("frame-ancestors")) {
+    warnings.push("Missing frame-ancestors directive");
+    scorePenalty += 15;
+    recommendations.push(
+      "Add 'frame-ancestors 'none'' to prevent clickjacking"
+    );
+  }
+
+  return scorePenalty;
+}
+
+/**
+ * Helper function to check required directives
+ */
+function checkRequiredDirectives(csp: string, errors: string[]): number {
+  const requiredDirectives = [
+    "default-src",
+    "script-src",
+    "style-src",
+    "object-src",
+    "base-uri",
+    "form-action",
+  ];
+
+  let scorePenalty = 0;
+  for (const directive of requiredDirectives) {
+    if (!csp.includes(directive)) {
+      errors.push(`Missing required directive: ${directive}`);
+      scorePenalty += 20;
+    }
+  }
+
+  return scorePenalty;
+}
+
+/**
+ * Helper function to check additional features
+ */
+function checkAdditionalFeatures(
+  csp: string,
+  strictMode: boolean,
+  warnings: string[],
+  recommendations: string[]
+): number {
+  let scorePenalty = 0;
+
+  if (csp.includes("'nonce-") && !csp.includes("'strict-dynamic'")) {
+    recommendations.push(
+      "Consider adding 'strict-dynamic' for better nonce-based security"
+    );
+  }
+
+  if (!csp.includes("report-uri") && !csp.includes("report-to")) {
+    warnings.push("Missing CSP violation reporting");
+    scorePenalty += 5;
+    recommendations.push("Add CSP violation reporting for monitoring");
+  }
+
+  if (strictMode) {
+    if (csp.includes("https:") && !csp.includes("connect-src")) {
+      warnings.push("Broad HTTPS allowlist detected in strict mode");
+      scorePenalty += 10;
+      recommendations.push("Replace 'https:' with specific trusted domains");
+    }
+  }
+
+  return scorePenalty;
+}
+
+/**
  * Enhanced CSP validation with security best practices
  */
 export function validateCSP(
@@ -194,101 +343,22 @@ export function validateCSP(
 
   let securityScore = 100;
 
-  // Check for unsafe directives
-  if (csp.includes("'unsafe-inline'") && !csp.includes("'nonce-")) {
-    warnings.push("Using 'unsafe-inline' without nonce is less secure");
-    securityScore -= 15;
-    recommendations.push(
-      "Implement nonce-based CSP for inline scripts and styles"
-    );
-  }
-
-  if (csp.includes("'unsafe-eval'")) {
-    if (strictMode) {
-      errors.push("'unsafe-eval' is not allowed in strict mode");
-      securityScore -= 25;
-    } else {
-      warnings.push("'unsafe-eval' allows dangerous code execution");
-      securityScore -= 10;
-    }
-  }
-
-  // Check for overly permissive directives (but exclude font wildcards and subdomain wildcards)
-  const hasProblematicWildcards =
-    csp.includes(" *") ||
-    csp.includes("*://") ||
-    (csp.includes("*") && !csp.includes("*.") && !csp.includes("wss: ws:"));
-
-  if (hasProblematicWildcards) {
-    errors.push("Wildcard (*) sources are not recommended");
-    securityScore -= 30;
-    recommendations.push("Replace wildcards with specific trusted domains");
-  }
-
-  if (
-    csp.includes("data:") &&
-    !csp.includes("img-src") &&
-    !csp.includes("font-src")
-  ) {
-    warnings.push("data: URIs should be limited to specific directives");
-    securityScore -= 5;
-  }
-
-  // Check for HTTPS upgrade
-  if (!csp.includes("upgrade-insecure-requests")) {
-    warnings.push("Missing HTTPS upgrade directive");
-    securityScore -= 10;
-    recommendations.push("Add 'upgrade-insecure-requests' directive");
-  }
-
-  // Check for frame protection
-  if (!csp.includes("frame-ancestors")) {
-    warnings.push("Missing frame-ancestors directive");
-    securityScore -= 15;
-    recommendations.push(
-      "Add 'frame-ancestors 'none'' to prevent clickjacking"
-    );
-  }
-
-  // Check required directives
-  const requiredDirectives = [
-    "default-src",
-    "script-src",
-    "style-src",
-    "object-src",
-    "base-uri",
-    "form-action",
-  ];
-
-  for (const directive of requiredDirectives) {
-    if (!csp.includes(directive)) {
-      errors.push(`Missing required directive: ${directive}`);
-      securityScore -= 20;
-    }
-  }
-
-  // Check for modern CSP features
-  if (csp.includes("'nonce-") && !csp.includes("'strict-dynamic'")) {
-    recommendations.push(
-      "Consider adding 'strict-dynamic' for better nonce-based security"
-    );
-  }
-
-  // Check reporting setup
-  if (!csp.includes("report-uri") && !csp.includes("report-to")) {
-    warnings.push("Missing CSP violation reporting");
-    securityScore -= 5;
-    recommendations.push("Add CSP violation reporting for monitoring");
-  }
-
-  // Strict mode additional checks
-  if (strictMode) {
-    if (csp.includes("https:") && !csp.includes("connect-src")) {
-      warnings.push("Broad HTTPS allowlist detected in strict mode");
-      securityScore -= 10;
-      recommendations.push("Replace 'https:' with specific trusted domains");
-    }
-  }
+  securityScore -= checkUnsafeDirectives(
+    csp,
+    strictMode,
+    warnings,
+    errors,
+    recommendations
+  );
+  securityScore -= checkWildcardUsage(csp, errors, recommendations);
+  securityScore -= checkSecurityFeatures(csp, warnings, recommendations);
+  securityScore -= checkRequiredDirectives(csp, errors);
+  securityScore -= checkAdditionalFeatures(
+    csp,
+    strictMode,
+    warnings,
+    recommendations
+  );
 
   return {
     isValid: errors.length === 0,

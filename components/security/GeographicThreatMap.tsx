@@ -149,7 +149,13 @@ export function GeographicThreatMap({
                           {getCountryName(countryCode)}
                         </span>
                         <Badge
-                          variant={threat.color as "default" | "secondary" | "destructive" | "outline"}
+                          variant={
+                            threat.color as
+                              | "default"
+                              | "secondary"
+                              | "destructive"
+                              | "outline"
+                          }
                           className="text-xs"
                         >
                           {threat.level}

@@ -149,7 +149,12 @@ export const adminRouter = router({
         });
       }
 
-      const updateData: any = {};
+      const updateData: {
+        email?: string;
+        name?: string;
+        password?: string;
+        isAdmin?: boolean;
+      } = {};
 
       if (updates.email) {
         // Check if new email is already taken
@@ -274,7 +279,13 @@ export const adminRouter = router({
   updateCompanySettings: adminProcedure
     .input(companySettingsSchema)
     .mutation(async ({ input, ctx }) => {
-      const updateData: any = {
+      const updateData: {
+        name: string;
+        csvUrl: string;
+        csvUsername?: string | null;
+        csvPassword?: string | null;
+        maxUsers?: number;
+      } = {
         name: input.name,
         csvUrl: input.csvUrl,
       };

@@ -8,6 +8,46 @@ export interface TranscriptFetchResult {
 }
 
 /**
+ * Helper function to prepare request headers
+ */
+function prepareRequestHeaders(
+  username?: string,
+  password?: string
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "User-Agent": "LiveDash-Transcript-Fetcher/1.0",
+  };
+
+  if (username && password) {
+    const authHeader = `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+    headers.Authorization = authHeader;
+  }
+
+  return headers;
+}
+
+/**
+ * Helper function to handle network errors
+ */
+function handleNetworkError(error: unknown): TranscriptFetchResult {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  if (errorMessage.includes("ENOTFOUND")) {
+    return { success: false, error: "Domain not found" };
+  }
+
+  if (errorMessage.includes("ECONNREFUSED")) {
+    return { success: false, error: "Connection refused" };
+  }
+
+  if (errorMessage.includes("timeout")) {
+    return { success: false, error: "Request timeout" };
+  }
+
+  return { success: false, error: errorMessage };
+}
+
+/**
  * Fetch transcript content from a URL
  * @param url The transcript URL
  * @param username Optional username for authentication
@@ -21,29 +61,14 @@ export async function fetchTranscriptContent(
 ): Promise<TranscriptFetchResult> {
   try {
     if (!url || !url.trim()) {
-      return {
-        success: false,
-        error: "No transcript URL provided",
-      };
+      return { success: false, error: "No transcript URL provided" };
     }
 
-    // Prepare authentication header if credentials provided
-    const authHeader =
-      username && password
-        ? `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`
-        : undefined;
-
-    const headers: Record<string, string> = {
-      "User-Agent": "LiveDash-Transcript-Fetcher/1.0",
-    };
-
-    if (authHeader) {
-      headers.Authorization = authHeader;
-    }
+    const headers = prepareRequestHeaders(username, password);
 
     // Fetch the transcript with timeout
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const response = await fetch(url, {
       method: "GET",
@@ -63,45 +88,12 @@ export async function fetchTranscriptContent(
     const content = await response.text();
 
     if (!content || content.trim().length === 0) {
-      return {
-        success: false,
-        error: "Empty transcript content",
-      };
+      return { success: false, error: "Empty transcript content" };
     }
 
-    return {
-      success: true,
-      content: content.trim(),
-    };
+    return { success: true, content: content.trim() };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
-    // Handle common network errors
-    if (errorMessage.includes("ENOTFOUND")) {
-      return {
-        success: false,
-        error: "Domain not found",
-      };
-    }
-
-    if (errorMessage.includes("ECONNREFUSED")) {
-      return {
-        success: false,
-        error: "Connection refused",
-      };
-    }
-
-    if (errorMessage.includes("timeout")) {
-      return {
-        success: false,
-        error: "Request timeout",
-      };
-    }
-
-    return {
-      success: false,
-      error: errorMessage,
-    };
+    return handleNetworkError(error);
   }
 }
 

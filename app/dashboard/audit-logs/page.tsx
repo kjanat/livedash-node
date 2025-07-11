@@ -2,7 +2,7 @@
 
 import { formatDistanceToNow } from "date-fns";
 import { useSession } from "next-auth/react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { Badge } from "../../../components/ui/badge";
 import { Button } from "../../../components/ui/button";
@@ -108,6 +108,11 @@ const severityColors: Record<string, string> = {
 
 export default function AuditLogsPage() {
   const { data: session } = useSession();
+  const eventTypeId = useId();
+  const outcomeId = useId();
+  const severityId = useId();
+  const startDateId = useId();
+  const endDateId = useId();
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -194,8 +199,8 @@ export default function AuditLogsPage() {
       <div className="container mx-auto py-8">
         <Alert>
           <AlertDescription>
-            You don&apos;t have permission to view audit logs. Only administrators
-            can access this page.
+            You don&apos;t have permission to view audit logs. Only
+            administrators can access this page.
           </AlertDescription>
         </Alert>
       </div>
@@ -219,14 +224,16 @@ export default function AuditLogsPage() {
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div>
-              <label className="text-sm font-medium">Event Type</label>
+              <label htmlFor={eventTypeId} className="text-sm font-medium">
+                Event Type
+              </label>
               <Select
                 value={filters.eventType}
                 onValueChange={(value) =>
                   handleFilterChange("eventType", value)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger id={eventTypeId}>
                   <SelectValue placeholder="All event types" />
                 </SelectTrigger>
                 <SelectContent>
@@ -241,12 +248,14 @@ export default function AuditLogsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Outcome</label>
+              <label htmlFor={outcomeId} className="text-sm font-medium">
+                Outcome
+              </label>
               <Select
                 value={filters.outcome}
                 onValueChange={(value) => handleFilterChange("outcome", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id={outcomeId}>
                   <SelectValue placeholder="All outcomes" />
                 </SelectTrigger>
                 <SelectContent>
@@ -261,12 +270,14 @@ export default function AuditLogsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Severity</label>
+              <label htmlFor={severityId} className="text-sm font-medium">
+                Severity
+              </label>
               <Select
                 value={filters.severity}
                 onValueChange={(value) => handleFilterChange("severity", value)}
               >
-                <SelectTrigger>
+                <SelectTrigger id={severityId}>
                   <SelectValue placeholder="All severities" />
                 </SelectTrigger>
                 <SelectContent>
@@ -281,8 +292,11 @@ export default function AuditLogsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">Start Date</label>
+              <label htmlFor={startDateId} className="text-sm font-medium">
+                Start Date
+              </label>
               <Input
+                id={startDateId}
                 type="datetime-local"
                 value={filters.startDate}
                 onChange={(e) =>
@@ -292,8 +306,11 @@ export default function AuditLogsPage() {
             </div>
 
             <div>
-              <label className="text-sm font-medium">End Date</label>
+              <label htmlFor={endDateId} className="text-sm font-medium">
+                End Date
+              </label>
               <Input
+                id={endDateId}
                 type="datetime-local"
                 value={filters.endDate}
                 onChange={(e) => handleFilterChange("endDate", e.target.value)}
@@ -442,14 +459,14 @@ export default function AuditLogsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-medium">Timestamp:</label>
+                  <span className="font-medium">Timestamp:</span>
                   <p className="font-mono text-sm">
                     {new Date(selectedLog.timestamp).toLocaleString()}
                   </p>
                 </div>
 
                 <div>
-                  <label className="font-medium">Event Type:</label>
+                  <span className="font-medium">Event Type:</span>
                   <p>
                     {eventTypeLabels[selectedLog.eventType] ||
                       selectedLog.eventType}
@@ -457,26 +474,26 @@ export default function AuditLogsPage() {
                 </div>
 
                 <div>
-                  <label className="font-medium">Action:</label>
+                  <span className="font-medium">Action:</span>
                   <p>{selectedLog.action}</p>
                 </div>
 
                 <div>
-                  <label className="font-medium">Outcome:</label>
+                  <span className="font-medium">Outcome:</span>
                   <Badge className={outcomeColors[selectedLog.outcome]}>
                     {selectedLog.outcome}
                   </Badge>
                 </div>
 
                 <div>
-                  <label className="font-medium">Severity:</label>
+                  <span className="font-medium">Severity:</span>
                   <Badge className={severityColors[selectedLog.severity]}>
                     {selectedLog.severity}
                   </Badge>
                 </div>
 
                 <div>
-                  <label className="font-medium">IP Address:</label>
+                  <span className="font-medium">IP Address:</span>
                   <p className="font-mono text-sm">
                     {selectedLog.ipAddress || "N/A"}
                   </p>
@@ -484,7 +501,7 @@ export default function AuditLogsPage() {
 
                 {selectedLog.user && (
                   <div>
-                    <label className="font-medium">User:</label>
+                    <span className="font-medium">User:</span>
                     <p>
                       {selectedLog.user.email} ({selectedLog.user.role})
                     </p>
@@ -493,7 +510,7 @@ export default function AuditLogsPage() {
 
                 {selectedLog.platformUser && (
                   <div>
-                    <label className="font-medium">Platform User:</label>
+                    <span className="font-medium">Platform User:</span>
                     <p>
                       {selectedLog.platformUser.email} (
                       {selectedLog.platformUser.role})
@@ -503,21 +520,21 @@ export default function AuditLogsPage() {
 
                 {selectedLog.country && (
                   <div>
-                    <label className="font-medium">Country:</label>
+                    <span className="font-medium">Country:</span>
                     <p>{selectedLog.country}</p>
                   </div>
                 )}
 
                 {selectedLog.sessionId && (
                   <div>
-                    <label className="font-medium">Session ID:</label>
+                    <span className="font-medium">Session ID:</span>
                     <p className="font-mono text-sm">{selectedLog.sessionId}</p>
                   </div>
                 )}
 
                 {selectedLog.requestId && (
                   <div>
-                    <label className="font-medium">Request ID:</label>
+                    <span className="font-medium">Request ID:</span>
                     <p className="font-mono text-sm">{selectedLog.requestId}</p>
                   </div>
                 )}
@@ -525,7 +542,7 @@ export default function AuditLogsPage() {
 
               {selectedLog.errorMessage && (
                 <div className="mt-4">
-                  <label className="font-medium">Error Message:</label>
+                  <span className="font-medium">Error Message:</span>
                   <p className="text-red-600 bg-red-50 p-2 rounded text-sm">
                     {selectedLog.errorMessage}
                   </p>
@@ -534,14 +551,14 @@ export default function AuditLogsPage() {
 
               {selectedLog.userAgent && (
                 <div className="mt-4">
-                  <label className="font-medium">User Agent:</label>
+                  <span className="font-medium">User Agent:</span>
                   <p className="text-sm break-all">{selectedLog.userAgent}</p>
                 </div>
               )}
 
               {selectedLog.metadata && (
                 <div className="mt-4">
-                  <label className="font-medium">Metadata:</label>
+                  <span className="font-medium">Metadata:</span>
                   <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto max-h-40">
                     {JSON.stringify(selectedLog.metadata, null, 2)}
                   </pre>

@@ -19,7 +19,7 @@ export interface CSPAlert {
   severity: "low" | "medium" | "high" | "critical";
   type: "violation" | "bypass_attempt" | "policy_change" | "threshold_exceeded";
   message: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 }
 
 export class CSPMonitoringService {

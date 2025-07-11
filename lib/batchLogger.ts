@@ -48,7 +48,7 @@ export interface BatchLogContext {
   statusAfter?: AIBatchRequestStatus | AIRequestStatus;
   errorCode?: string;
   circuitBreakerState?: "OPEN" | "CLOSED" | "HALF_OPEN";
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BatchMetrics {
@@ -429,7 +429,20 @@ class BatchLoggerService {
     );
   }
 
-  private logToConsole(logEntry: any): void {
+  private logToConsole(logEntry: {
+    timestamp: string;
+    level: BatchLogLevel;
+    operation: BatchOperation;
+    message: string;
+    context: BatchLogContext;
+    error?: {
+      name: string;
+      message: string;
+      stack?: string;
+      cause?: string;
+    };
+    operationId: string;
+  }): void {
     const color = this.LOG_COLORS[logEntry.level as BatchLogLevel] || "";
     const prefix = `${color}[BATCH-${logEntry.level}]${this.RESET_COLOR}`;
 
@@ -444,7 +457,20 @@ class BatchLoggerService {
     }
   }
 
-  private logToStructured(logEntry: any): void {
+  private logToStructured(logEntry: {
+    timestamp: string;
+    level: BatchLogLevel;
+    operation: BatchOperation;
+    message: string;
+    context: BatchLogContext;
+    error?: {
+      name: string;
+      message: string;
+      stack?: string;
+      cause?: string;
+    };
+    operationId: string;
+  }): void {
     // In production, this would write to structured logging service
     // (e.g., Winston, Pino, or cloud logging service)
     if (process.env.NODE_ENV === "production") {
@@ -548,7 +574,12 @@ class BatchLoggerService {
     };
   }
 
-  private sanitizeContext(context: BatchLogContext): any {
+  private sanitizeContext(context: BatchLogContext): Omit<
+    BatchLogContext,
+    "metadata"
+  > & {
+    metadata?: Record<string, unknown>;
+  } {
     // Remove sensitive information from context before logging
     const sanitized = { ...context };
     delete sanitized.metadata?.apiKey;
@@ -556,7 +587,12 @@ class BatchLoggerService {
     return sanitized;
   }
 
-  private formatError(error: Error): any {
+  private formatError(error: Error): {
+    name: string;
+    message: string;
+    stack?: string;
+    cause?: string;
+  } {
     return {
       name: error.name,
       message: error.message,
@@ -565,7 +601,7 @@ class BatchLoggerService {
     };
   }
 
-  private formatContextForConsole(context: any): string {
+  private formatContextForConsole(context: BatchLogContext): string {
     const important = {
       operation: context.operation,
       batchId: context.batchId,
@@ -598,12 +634,12 @@ setInterval(
 ); // Every hour
 
 // Helper functions for common logging patterns
-export const logBatchOperation = async (
+export const logBatchOperation = async <T>(
   operation: BatchOperation,
   operationId: string,
-  fn: () => Promise<any>,
+  fn: () => Promise<T>,
   context: Partial<BatchLogContext> = {}
-): Promise<any> => {
+): Promise<T> => {
   batchLogger.startOperation(operationId);
 
   try {

@@ -8,6 +8,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
+import { useId } from "react";
 import { useCSRFForm } from "../../lib/hooks/useCSRF";
 
 interface CSRFProtectedFormProps {
@@ -82,6 +83,11 @@ export function CSRFProtectedForm({
  * Example usage component showing how to use CSRF protected forms
  */
 export function ExampleCSRFForm() {
+  // Generate unique IDs for form elements
+  const nameId = useId();
+  const emailId = useId();
+  const messageId = useId();
+
   const handleCustomSubmit = async (formData: FormData) => {
     // Custom form submission logic
     const data = Object.fromEntries(formData.entries());
@@ -104,14 +110,14 @@ export function ExampleCSRFForm() {
       >
         <div>
           <label
-            htmlFor="name"
+            htmlFor={nameId}
             className="block text-sm font-medium text-gray-700"
           >
             Name
           </label>
           <input
             type="text"
-            id="name"
+            id={nameId}
             name="name"
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -120,14 +126,14 @@ export function ExampleCSRFForm() {
 
         <div>
           <label
-            htmlFor="email"
+            htmlFor={emailId}
             className="block text-sm font-medium text-gray-700"
           >
             Email
           </label>
           <input
             type="email"
-            id="email"
+            id={emailId}
             name="email"
             required
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
@@ -136,13 +142,13 @@ export function ExampleCSRFForm() {
 
         <div>
           <label
-            htmlFor="message"
+            htmlFor={messageId}
             className="block text-sm font-medium text-gray-700"
           >
             Message
           </label>
           <textarea
-            id="message"
+            id={messageId}
             name="message"
             rows={4}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"

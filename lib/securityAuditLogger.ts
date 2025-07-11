@@ -11,7 +11,7 @@ export interface AuditLogContext {
   userAgent?: string;
   ipAddress?: string;
   country?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface AuditLogEntry {
@@ -393,7 +393,7 @@ export const securityAuditLogger = new SecurityAuditLogger();
 
 export async function createAuditContext(
   request?: NextRequest,
-  session?: any,
+  session?: { user?: { id?: string; email?: string } },
   additionalContext?: Partial<AuditLogContext>
 ): Promise<AuditLogContext> {
   const context: AuditLogContext = {
@@ -419,9 +419,9 @@ export async function createAuditContext(
 }
 
 export function createAuditMetadata(
-  data: Record<string, any>
-): Record<string, any> {
-  const sanitized: Record<string, any> = {};
+  data: Record<string, unknown>
+): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(data)) {
     if (

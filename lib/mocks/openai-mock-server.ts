@@ -66,7 +66,7 @@ class OpenAIMockServer {
   /**
    * Log mock requests for debugging
    */
-  private logRequest(endpoint: string, data: any): void {
+  private logRequest(endpoint: string, data: unknown): void {
     if (this.config.logRequests) {
       console.log(`[OpenAI Mock] ${endpoint}:`, JSON.stringify(data, null, 2));
     }
@@ -260,7 +260,14 @@ class OpenAIMockServer {
     }
 
     // Generate mock batch results
-    const results: any = [];
+    const results: Array<{
+      id: string;
+      custom_id: string;
+      response: {
+        status_code: number;
+        body: unknown;
+      };
+    }> = [];
     for (let i = 0; i < batch.request_counts.total; i++) {
       const response = MOCK_RESPONSE_GENERATORS.sentiment(`Sample text ${i}`);
       results.push({
@@ -359,16 +366,16 @@ export const openAIMock = new OpenAIMockServer();
  * Drop-in replacement for OpenAI client that uses mocks when enabled
  */
 export class MockOpenAIClient {
-  private realClient: any;
+  private realClient: unknown;
 
-  constructor(realClient: any) {
+  constructor(realClient: unknown) {
     this.realClient = realClient;
   }
 
   get chat() {
     return {
       completions: {
-        create: async (params: any) => {
+        create: async (params: unknown) => {
           if (openAIMock.isEnabled()) {
             return openAIMock.mockChatCompletion(params);
           }
@@ -380,7 +387,7 @@ export class MockOpenAIClient {
 
   get batches() {
     return {
-      create: async (params: any) => {
+      create: async (params: unknown) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockCreateBatch(params);
         }
@@ -397,7 +404,7 @@ export class MockOpenAIClient {
 
   get files() {
     return {
-      create: async (params: any) => {
+      create: async (params: unknown) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockUploadFile(params);
         }

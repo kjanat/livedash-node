@@ -98,15 +98,16 @@ export function useCSRFFetch() {
     async (url: string, options: RequestInit = {}): Promise<Response> => {
       // Ensure we have a token for state-changing requests
       const method = options.method || "GET";
+      let modifiedOptions = options;
       if (["POST", "PUT", "DELETE", "PATCH"].includes(method.toUpperCase())) {
         const currentToken = token || (await getToken());
         if (currentToken) {
-          options = CSRFClient.addTokenToFetch(options);
+          modifiedOptions = CSRFClient.addTokenToFetch(options);
         }
       }
 
       return fetch(url, {
-        ...options,
+        ...modifiedOptions,
         credentials: "include", // Ensure cookies are sent
       });
     },
@@ -164,8 +165,9 @@ export function useCSRFForm() {
     ): Promise<Response> => {
       // Ensure we have a token
       const currentToken = token || (await getToken());
+      let modifiedData = data;
       if (currentToken) {
-        data = CSRFClient.addTokenToObject(data);
+        modifiedData = CSRFClient.addTokenToObject(data);
       }
 
       return fetch(url, {
@@ -174,7 +176,7 @@ export function useCSRFForm() {
           "Content-Type": "application/json",
           ...options.headers,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(modifiedData),
         credentials: "include",
         ...options,
       });

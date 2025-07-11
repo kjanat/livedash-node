@@ -2,7 +2,7 @@
 
 import { ArrowLeft, Key, Shield, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -62,6 +62,13 @@ export default function PlatformSettings() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Generate unique IDs for form elements
+  const nameId = useId();
+  const emailId = useId();
+  const currentPasswordId = useId();
+  const newPasswordId = useId();
+  const confirmPasswordId = useId();
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
@@ -223,9 +230,9 @@ export default function PlatformSettings() {
               <CardContent>
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div>
-                    <Label htmlFor="name">Name</Label>
+                    <Label htmlFor={nameId}>Name</Label>
                     <Input
-                      id="name"
+                      id={nameId}
                       value={profileData.name}
                       onChange={(e) =>
                         setProfileData({ ...profileData, name: e.target.value })
@@ -234,9 +241,9 @@ export default function PlatformSettings() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor={emailId}>Email</Label>
                     <Input
-                      id="email"
+                      id={emailId}
                       type="email"
                       value={profileData.email}
                       disabled
@@ -273,9 +280,9 @@ export default function PlatformSettings() {
               <CardContent>
                 <form onSubmit={handlePasswordChange} className="space-y-4">
                   <div>
-                    <Label htmlFor="current-password">Current Password</Label>
+                    <Label htmlFor={currentPasswordId}>Current Password</Label>
                     <Input
-                      id="current-password"
+                      id={currentPasswordId}
                       type="password"
                       value={passwordData.currentPassword}
                       onChange={(e) =>
@@ -288,9 +295,9 @@ export default function PlatformSettings() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="new-password">New Password</Label>
+                    <Label htmlFor={newPasswordId}>New Password</Label>
                     <Input
-                      id="new-password"
+                      id={newPasswordId}
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) =>
@@ -306,11 +313,11 @@ export default function PlatformSettings() {
                     </p>
                   </div>
                   <div>
-                    <Label htmlFor="confirm-password">
+                    <Label htmlFor={confirmPasswordId}>
                       Confirm New Password
                     </Label>
                     <Input
-                      id="confirm-password"
+                      id={confirmPasswordId}
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) =>

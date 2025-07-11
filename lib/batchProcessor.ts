@@ -50,6 +50,12 @@ class CircuitBreaker {
   private lastFailureTime = 0;
   private isOpen = false;
 
+  reset(): void {
+    this.failures = 0;
+    this.isOpen = false;
+    this.lastFailureTime = 0;
+  }
+
   async execute<T>(operation: () => Promise<T>): Promise<T> {
     if (this.isOpen) {
       const now = Date.now();
@@ -160,6 +166,56 @@ const batchStatusCircuitBreaker = new CircuitBreaker();
 const fileDownloadCircuitBreaker = new CircuitBreaker();
 
 /**
+ * Check if an error should prevent retries
+ */
+function shouldNotRetry(error: Error): boolean {
+  return (
+    error instanceof NonRetryableError ||
+    error instanceof CircuitBreakerOpenError ||
+    !isErrorRetryable(error)
+  );
+}
+
+/**
+ * Calculate exponential backoff delay
+ */
+function calculateRetryDelay(attempt: number): number {
+  return Math.min(
+    BATCH_CONFIG.BASE_RETRY_DELAY *
+      BATCH_CONFIG.EXPONENTIAL_BACKOFF_MULTIPLIER ** attempt,
+    BATCH_CONFIG.MAX_RETRY_DELAY
+  );
+}
+
+/**
+ * Handle retry attempt logging and delay
+ */
+async function handleRetryAttempt(
+  operationName: string,
+  attempt: number,
+  maxRetries: number,
+  error: Error
+): Promise<void> {
+  const delay = calculateRetryDelay(attempt);
+
+  await batchLogger.logRetry(
+    BatchOperation.RETRY_OPERATION,
+    operationName,
+    attempt + 1,
+    maxRetries + 1,
+    delay,
+    error
+  );
+
+  console.warn(
+    `${operationName} failed on attempt ${attempt + 1}, retrying in ${delay}ms:`,
+    error.message
+  );
+
+  await sleep(delay);
+}
+
+/**
  * Retry utility with exponential backoff
  */
 async function retryWithBackoff<T>(
@@ -179,20 +235,8 @@ async function retryWithBackoff<T>(
     } catch (error) {
       lastError = error as Error;
 
-      // Don't retry non-retryable errors
-      if (
-        error instanceof NonRetryableError ||
-        error instanceof CircuitBreakerOpenError
-      ) {
-        throw error;
-      }
-
-      // Check if error is retryable based on type
-      const isRetryable = isErrorRetryable(error as Error);
-      if (!isRetryable) {
-        throw new NonRetryableError(
-          `Non-retryable error in ${operationName}: ${(error as Error).message}`
-        );
+      if (shouldNotRetry(lastError)) {
+        throw lastError;
       }
 
       if (attempt === maxRetries) {
@@ -202,31 +246,11 @@ async function retryWithBackoff<T>(
         );
       }
 
-      const delay = Math.min(
-        BATCH_CONFIG.BASE_RETRY_DELAY *
-          BATCH_CONFIG.EXPONENTIAL_BACKOFF_MULTIPLIER ** attempt,
-        BATCH_CONFIG.MAX_RETRY_DELAY
-      );
-
-      await batchLogger.logRetry(
-        BatchOperation.RETRY_OPERATION,
-        operationName,
-        attempt + 1,
-        maxRetries + 1,
-        delay,
-        error as Error
-      );
-
-      console.warn(
-        `${operationName} failed on attempt ${attempt + 1}, retrying in ${delay}ms:`,
-        (error as Error).message
-      );
-
-      await sleep(delay);
+      await handleRetryAttempt(operationName, attempt, maxRetries, lastError);
     }
   }
 
-  throw lastError!;
+  throw lastError || new Error("Operation failed after retries");
 }
 
 /**
@@ -379,7 +403,7 @@ interface OpenAIBatchResponse {
 export async function getPendingBatchRequests(
   companyId: string,
   limit: number = BATCH_CONFIG.MAX_REQUESTS_PER_BATCH
-): Promise<AIProcessingRequest[]> {
+): Promise<AIProcessingRequestWithSession[]> {
   return prisma.aIProcessingRequest.findMany({
     where: {
       session: {
@@ -420,9 +444,20 @@ export async function getPendingBatchRequests(
 /**
  * Create a new batch request and upload to OpenAI
  */
+type AIProcessingRequestWithSession = AIProcessingRequest & {
+  session: {
+    messages: Array<{
+      id: string;
+      order: number;
+      role: string;
+      content: string;
+    }>;
+  };
+};
+
 export async function createBatchRequest(
   companyId: string,
-  requests: AIProcessingRequest[]
+  requests: AIProcessingRequestWithSession[]
 ): Promise<string> {
   if (requests.length === 0) {
     throw new Error("Cannot create batch with no requests");
@@ -462,7 +497,7 @@ export async function createBatchRequest(
           {
             role: "user",
             content: formatMessagesForProcessing(
-              (request as any).session?.messages || []
+              request.session?.messages || []
             ),
           },
         ],
@@ -1237,7 +1272,20 @@ export async function retryFailedRequests(
 /**
  * Process an individual request using the regular OpenAI API (fallback)
  */
-async function processIndividualRequest(request: any): Promise<any> {
+async function processIndividualRequest(request: {
+  id: string;
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  temperature?: number;
+  max_tokens?: number;
+}): Promise<{
+  usage: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  choices: Array<{ message: { content: string } }>;
+}> {
   if (env.OPENAI_MOCK_MODE) {
     console.log(`[OpenAI Mock] Processing individual request ${request.id}`);
     return {
@@ -1316,17 +1364,10 @@ export function getCircuitBreakerStatus() {
  * Reset circuit breakers (for manual recovery)
  */
 export function resetCircuitBreakers(): void {
-  // Reset circuit breaker internal state by creating new instances
-  const resetCircuitBreaker = (breaker: CircuitBreaker) => {
-    (breaker as any).failures = 0;
-    (breaker as any).isOpen = false;
-    (breaker as any).lastFailureTime = 0;
-  };
-
-  resetCircuitBreaker(fileUploadCircuitBreaker);
-  resetCircuitBreaker(batchCreationCircuitBreaker);
-  resetCircuitBreaker(batchStatusCircuitBreaker);
-  resetCircuitBreaker(fileDownloadCircuitBreaker);
+  fileUploadCircuitBreaker.reset();
+  batchCreationCircuitBreaker.reset();
+  batchStatusCircuitBreaker.reset();
+  fileDownloadCircuitBreaker.reset();
 
   console.log("All circuit breakers have been reset");
 }

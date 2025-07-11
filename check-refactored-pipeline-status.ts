@@ -94,7 +94,6 @@ function displayReadyForAI(
   });
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main orchestration function - complexity is appropriate for its scope
 async function checkRefactoredPipelineStatus() {
   try {
     console.log("=== REFACTORED PIPELINE STATUS ===\n");

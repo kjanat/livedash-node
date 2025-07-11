@@ -186,37 +186,37 @@ async function executeWithTracking<T>(
 /**
  * Unified interface for batch processing operations
  */
-export class IntegratedBatchProcessor {
+export const IntegratedBatchProcessor = {
   /**
    * Get pending batch requests with automatic optimization
    */
-  static async getPendingBatchRequests(companyId: string, limit?: number) {
+  getPendingBatchRequests: async (companyId: string, limit?: number) => {
     return executeWithTracking(
       () =>
         OptimizedProcessor.getPendingBatchRequestsOptimized(companyId, limit),
       () => OriginalProcessor.getPendingBatchRequests(companyId, limit),
       "getPendingBatchRequests"
     );
-  }
+  },
 
   /**
    * Get batch processing statistics with optimization
    */
-  static async getBatchProcessingStats(companyId?: string) {
+  getBatchProcessingStats: async (companyId?: string) => {
     return executeWithTracking(
       () => OptimizedProcessor.getBatchProcessingStatsOptimized(companyId),
       () => OriginalProcessor.getBatchProcessingStats(companyId || ""),
       "getBatchProcessingStats"
     );
-  }
+  },
 
   /**
    * Check if we should create a batch for a company
    */
-  static async shouldCreateBatch(
+  shouldCreateBatch: async (
     companyId: string,
     pendingCount: number
-  ): Promise<boolean> {
+  ): Promise<boolean> => {
     if (performanceTracker.shouldUseOptimized()) {
       // Always create if we have enough requests
       if (pendingCount >= 10) {
@@ -238,34 +238,34 @@ export class IntegratedBatchProcessor {
     }
     // Use original implementation logic
     return false; // Simplified fallback
-  }
+  },
 
   /**
    * Start the appropriate scheduler based on configuration
    */
-  static startScheduler(): void {
+  startScheduler: (): void => {
     if (OPTIMIZATION_CONFIG.ENABLE_QUERY_OPTIMIZATION) {
       OptimizedScheduler.startOptimizedBatchScheduler();
     } else {
       OriginalScheduler.startBatchScheduler();
     }
-  }
+  },
 
   /**
    * Stop the appropriate scheduler
    */
-  static stopScheduler(): void {
+  stopScheduler: (): void => {
     if (OPTIMIZATION_CONFIG.ENABLE_QUERY_OPTIMIZATION) {
       OptimizedScheduler.stopOptimizedBatchScheduler();
     } else {
       OriginalScheduler.stopBatchScheduler();
     }
-  }
+  },
 
   /**
    * Get scheduler status with optimization info
    */
-  static getSchedulerStatus() {
+  getSchedulerStatus: () => {
     const baseStatus = OPTIMIZATION_CONFIG.ENABLE_QUERY_OPTIMIZATION
       ? OptimizedScheduler.getOptimizedBatchSchedulerStatus()
       : OriginalScheduler.getBatchSchedulerStatus();
@@ -278,37 +278,37 @@ export class IntegratedBatchProcessor {
         performance: performanceTracker.getStats(),
       },
     };
-  }
+  },
 
   /**
    * Force invalidate caches (useful for testing or manual intervention)
    */
-  static invalidateCaches(): void {
+  invalidateCaches: (): void => {
     if (OPTIMIZATION_CONFIG.ENABLE_QUERY_OPTIMIZATION) {
       OptimizedProcessor.invalidateCompanyCache();
     }
-  }
+  },
 
   /**
    * Get cache statistics
    */
-  static getCacheStats() {
+  getCacheStats: () => {
     if (OPTIMIZATION_CONFIG.ENABLE_QUERY_OPTIMIZATION) {
       return OptimizedProcessor.getCompanyCacheStats();
     }
     return null;
-  }
+  },
 
   /**
    * Reset performance tracking (useful for testing)
    */
-  static resetPerformanceTracking(): void {
+  resetPerformanceTracking: (): void => {
     performanceTracker.metrics = {
       optimized: { totalTime: 0, operationCount: 0, errorCount: 0 },
       original: { totalTime: 0, operationCount: 0, errorCount: 0 },
     };
-  }
-}
+  },
+};
 
 /**
  * Export unified functions that can be used as drop-in replacements

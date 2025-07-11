@@ -6,6 +6,30 @@ import {
   securityAuditLogger,
 } from "./securityAuditLogger";
 
+type AuditSeverity = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "INFO";
+
+interface PolicyResult {
+  policyName: string;
+  processed: number;
+  deleted: number;
+  archived: number;
+  errors: string[];
+}
+
+interface WhereClause {
+  timestamp: { lt: Date };
+  severity?: { in: AuditSeverity[] };
+  eventType?: { in: SecurityEventType[] };
+  companyId?: string;
+}
+
+interface RetentionResults {
+  totalProcessed: number;
+  totalDeleted: number;
+  totalArchived: number;
+  policyResults: PolicyResult[];
+}
+
 export interface RetentionPolicy {
   name: string;
   maxAgeDays: number;
@@ -65,32 +89,7 @@ export class AuditLogRetentionManager {
     this.isDryRun = isDryRun;
   }
 
-  async executeRetentionPolicies(): Promise<{
-    totalProcessed: number;
-    totalDeleted: number;
-    totalArchived: number;
-    policyResults: Array<{
-      policyName: string;
-      processed: number;
-      deleted: number;
-      archived: number;
-      errors: string[];
-    }>;
-  }> {
-    const results = {
-      totalProcessed: 0,
-      totalDeleted: 0,
-      totalArchived: 0,
-      policyResults: [] as Array<{
-        policyName: string;
-        processed: number;
-        deleted: number;
-        archived: number;
-        errors: string[];
-      }>,
-    };
-
-    // Log retention policy execution start
+  private async logRetentionStart(): Promise<void> {
     await securityAuditLogger.log({
       eventType: SecurityEventType.SYSTEM_CONFIG,
       action: this.isDryRun
@@ -109,34 +108,135 @@ export class AuditLogRetentionManager {
         }),
       },
     });
+  }
+
+  private buildWhereClause(
+    policy: RetentionPolicy,
+    cutoffDate: Date
+  ): WhereClause {
+    const whereClause: WhereClause = {
+      timestamp: { lt: cutoffDate },
+    };
+
+    if (policy.severityFilter && policy.severityFilter.length > 0) {
+      whereClause.severity = { in: policy.severityFilter };
+    }
+
+    if (policy.eventTypeFilter && policy.eventTypeFilter.length > 0) {
+      whereClause.eventType = { in: policy.eventTypeFilter };
+    }
+
+    return whereClause;
+  }
+
+  private async processDryRun(
+    policy: RetentionPolicy,
+    logsToProcess: number,
+    policyResult: PolicyResult
+  ): Promise<void> {
+    console.log(
+      `DRY RUN: Would process ${logsToProcess} logs for policy "${policy.name}"`
+    );
+    if (policy.archiveBeforeDelete) {
+      policyResult.archived = logsToProcess;
+    } else {
+      policyResult.deleted = logsToProcess;
+    }
+  }
+
+  private async processActualRetention(
+    policy: RetentionPolicy,
+    logsToProcess: number,
+    cutoffDate: Date,
+    whereClause: WhereClause,
+    policyResult: PolicyResult
+  ): Promise<void> {
+    if (policy.archiveBeforeDelete) {
+      await securityAuditLogger.log({
+        eventType: SecurityEventType.DATA_PRIVACY,
+        action: "audit_logs_archived",
+        outcome: AuditOutcome.SUCCESS,
+        context: {
+          metadata: createAuditMetadata({
+            policyName: policy.name,
+            logsArchived: logsToProcess,
+            cutoffDate: cutoffDate.toISOString(),
+          }),
+        },
+      });
+
+      policyResult.archived = logsToProcess;
+      console.log(`Policy "${policy.name}": Archived ${logsToProcess} logs`);
+    }
+
+    const deleteResult = await prisma.securityAuditLog.deleteMany({
+      where: whereClause,
+    });
+
+    policyResult.deleted = deleteResult.count;
+    console.log(`Policy "${policy.name}": Deleted ${deleteResult.count} logs`);
+
+    await securityAuditLogger.log({
+      eventType: SecurityEventType.DATA_PRIVACY,
+      action: "audit_logs_deleted",
+      outcome: AuditOutcome.SUCCESS,
+      context: {
+        metadata: createAuditMetadata({
+          policyName: policy.name,
+          logsDeleted: deleteResult.count,
+          cutoffDate: cutoffDate.toISOString(),
+          wasArchived: policy.archiveBeforeDelete,
+        }),
+      },
+    });
+  }
+
+  private async logRetentionCompletion(
+    results: RetentionResults
+  ): Promise<void> {
+    await securityAuditLogger.log({
+      eventType: SecurityEventType.SYSTEM_CONFIG,
+      action: this.isDryRun
+        ? "audit_log_retention_dry_run_completed"
+        : "audit_log_retention_completed",
+      outcome: AuditOutcome.SUCCESS,
+      context: {
+        metadata: createAuditMetadata({
+          totalProcessed: results.totalProcessed,
+          totalDeleted: results.totalDeleted,
+          totalArchived: results.totalArchived,
+          policiesExecuted: this.policies.length,
+          isDryRun: this.isDryRun,
+          results: results.policyResults,
+        }),
+      },
+    });
+  }
+
+  async executeRetentionPolicies(): Promise<RetentionResults> {
+    const results: RetentionResults = {
+      totalProcessed: 0,
+      totalDeleted: 0,
+      totalArchived: 0,
+      policyResults: [],
+    };
+
+    await this.logRetentionStart();
 
     for (const policy of this.policies) {
-      const policyResult = {
+      const policyResult: PolicyResult = {
         policyName: policy.name,
         processed: 0,
         deleted: 0,
         archived: 0,
-        errors: [] as string[],
+        errors: [],
       };
 
       try {
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - policy.maxAgeDays);
+        const whereClause = this.buildWhereClause(policy, cutoffDate);
 
-        // Build where clause based on policy filters
-        const whereClause: any = {
-          timestamp: { lt: cutoffDate },
-        };
-
-        if (policy.severityFilter && policy.severityFilter.length > 0) {
-          whereClause.severity = { in: policy.severityFilter };
-        }
-
-        if (policy.eventTypeFilter && policy.eventTypeFilter.length > 0) {
-          whereClause.eventType = { in: policy.eventTypeFilter };
-        }
-
-        // Count logs to be processed
         const logsToProcess = await prisma.securityAuditLog.count({
           where: whereClause,
         });
@@ -155,68 +255,21 @@ export class AuditLogRetentionManager {
         );
 
         if (this.isDryRun) {
-          console.log(
-            `DRY RUN: Would process ${logsToProcess} logs for policy "${policy.name}"`
-          );
-          if (policy.archiveBeforeDelete) {
-            policyResult.archived = logsToProcess;
-          } else {
-            policyResult.deleted = logsToProcess;
-          }
+          await this.processDryRun(policy, logsToProcess, policyResult);
         } else {
-          if (policy.archiveBeforeDelete) {
-            // In a real implementation, you would export/archive these logs
-            // For now, we'll just log the archival action
-            await securityAuditLogger.log({
-              eventType: SecurityEventType.DATA_PRIVACY,
-              action: "audit_logs_archived",
-              outcome: AuditOutcome.SUCCESS,
-              context: {
-                metadata: createAuditMetadata({
-                  policyName: policy.name,
-                  logsArchived: logsToProcess,
-                  cutoffDate: cutoffDate.toISOString(),
-                }),
-              },
-            });
-
-            policyResult.archived = logsToProcess;
-            console.log(
-              `Policy "${policy.name}": Archived ${logsToProcess} logs`
-            );
-          }
-
-          // Delete the logs
-          const deleteResult = await prisma.securityAuditLog.deleteMany({
-            where: whereClause,
-          });
-
-          policyResult.deleted = deleteResult.count;
-          console.log(
-            `Policy "${policy.name}": Deleted ${deleteResult.count} logs`
+          await this.processActualRetention(
+            policy,
+            logsToProcess,
+            cutoffDate,
+            whereClause,
+            policyResult
           );
-
-          // Log deletion action
-          await securityAuditLogger.log({
-            eventType: SecurityEventType.DATA_PRIVACY,
-            action: "audit_logs_deleted",
-            outcome: AuditOutcome.SUCCESS,
-            context: {
-              metadata: createAuditMetadata({
-                policyName: policy.name,
-                logsDeleted: deleteResult.count,
-                cutoffDate: cutoffDate.toISOString(),
-                wasArchived: policy.archiveBeforeDelete,
-              }),
-            },
-          });
         }
       } catch (error) {
         const errorMessage = `Error processing policy "${policy.name}": ${error}`;
         policyResult.errors.push(errorMessage);
         console.error(errorMessage);
 
-        // Log retention policy error
         await securityAuditLogger.log({
           eventType: SecurityEventType.SYSTEM_CONFIG,
           action: "audit_log_retention_policy_error",
@@ -237,25 +290,7 @@ export class AuditLogRetentionManager {
       results.totalArchived += policyResult.archived;
     }
 
-    // Log retention policy execution completion
-    await securityAuditLogger.log({
-      eventType: SecurityEventType.SYSTEM_CONFIG,
-      action: this.isDryRun
-        ? "audit_log_retention_dry_run_completed"
-        : "audit_log_retention_completed",
-      outcome: AuditOutcome.SUCCESS,
-      context: {
-        metadata: createAuditMetadata({
-          totalProcessed: results.totalProcessed,
-          totalDeleted: results.totalDeleted,
-          totalArchived: results.totalArchived,
-          policiesExecuted: this.policies.length,
-          isDryRun: this.isDryRun,
-          results: results.policyResults,
-        }),
-      },
-    });
-
+    await this.logRetentionCompletion(results);
     return results;
   }
 
@@ -348,6 +383,55 @@ export class AuditLogRetentionManager {
     };
   }
 
+  private validatePolicyStructure(
+    policy: RetentionPolicy,
+    errors: string[]
+  ): void {
+    if (!policy.name || policy.name.trim() === "") {
+      errors.push("Policy must have a non-empty name");
+    }
+
+    if (!policy.maxAgeDays || policy.maxAgeDays <= 0) {
+      errors.push(
+        `Policy "${policy.name}": maxAgeDays must be a positive number`
+      );
+    }
+  }
+
+  private validatePolicyFilters(
+    policy: RetentionPolicy,
+    warnings: string[]
+  ): void {
+    if (policy.severityFilter && policy.eventTypeFilter) {
+      warnings.push(
+        `Policy "${policy.name}": Has both severity and event type filters, ensure this is intentional`
+      );
+    }
+
+    if (!policy.severityFilter && !policy.eventTypeFilter) {
+      warnings.push(
+        `Policy "${policy.name}": No filters specified, will apply to all logs`
+      );
+    }
+  }
+
+  private validateRetentionPeriods(
+    policy: RetentionPolicy,
+    warnings: string[]
+  ): void {
+    if (policy.maxAgeDays < 30) {
+      warnings.push(
+        `Policy "${policy.name}": Very short retention period (${policy.maxAgeDays} days)`
+      );
+    }
+
+    if (policy.maxAgeDays > 1095 && !policy.archiveBeforeDelete) {
+      warnings.push(
+        `Policy "${policy.name}": Long retention period without archiving may impact performance`
+      );
+    }
+  }
+
   async validateRetentionPolicies(): Promise<{
     valid: boolean;
     errors: string[];
@@ -357,46 +441,11 @@ export class AuditLogRetentionManager {
     const warnings: string[] = [];
 
     for (const policy of this.policies) {
-      // Validate policy structure
-      if (!policy.name || policy.name.trim() === "") {
-        errors.push("Policy must have a non-empty name");
-      }
-
-      if (!policy.maxAgeDays || policy.maxAgeDays <= 0) {
-        errors.push(
-          `Policy "${policy.name}": maxAgeDays must be a positive number`
-        );
-      }
-
-      // Validate filters
-      if (policy.severityFilter && policy.eventTypeFilter) {
-        warnings.push(
-          `Policy "${policy.name}": Has both severity and event type filters, ensure this is intentional`
-        );
-      }
-
-      if (!policy.severityFilter && !policy.eventTypeFilter) {
-        warnings.push(
-          `Policy "${policy.name}": No filters specified, will apply to all logs`
-        );
-      }
-
-      // Warn about very short retention periods
-      if (policy.maxAgeDays < 30) {
-        warnings.push(
-          `Policy "${policy.name}": Very short retention period (${policy.maxAgeDays} days)`
-        );
-      }
-
-      // Warn about very long retention periods without archiving
-      if (policy.maxAgeDays > 1095 && !policy.archiveBeforeDelete) {
-        warnings.push(
-          `Policy "${policy.name}": Long retention period without archiving may impact performance`
-        );
-      }
+      this.validatePolicyStructure(policy, errors);
+      this.validatePolicyFilters(policy, warnings);
+      this.validateRetentionPeriods(policy, warnings);
     }
 
-    // Check for overlapping policies that might conflict
     const overlaps = this.findPolicyOverlaps();
     if (overlaps.length > 0) {
       warnings.push(

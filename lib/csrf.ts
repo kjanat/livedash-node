@@ -101,11 +101,11 @@ export async function getCSRFTokenFromCookies(): Promise<string | null> {
 /**
  * Server-side utilities for API routes
  */
-export class CSRFProtection {
+export const CSRFProtection = {
   /**
    * Generate and set CSRF token in response
    */
-  static generateTokenResponse(): {
+  generateTokenResponse(): {
     token: string;
     cookie: {
       name: string;
@@ -132,12 +132,12 @@ export class CSRFProtection {
         },
       },
     };
-  }
+  },
 
   /**
    * Validate CSRF token from request
    */
-  static async validateRequest(request: NextRequest): Promise<{
+  async validateRequest(request: NextRequest): Promise<{
     valid: boolean;
     error?: string;
   }> {
@@ -148,7 +148,7 @@ export class CSRFProtection {
       }
 
       // Get token from request
-      const requestToken = await CSRFProtection.getTokenFromRequest(request);
+      const requestToken = await this.getTokenFromRequest(request);
       if (!requestToken) {
         return {
           valid: false,
@@ -188,14 +188,12 @@ export class CSRFProtection {
         error: `CSRF validation error: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
-  }
+  },
 
   /**
    * Extract token from request (handles different content types)
    */
-  private static async getTokenFromRequest(
-    request: NextRequest
-  ): Promise<string | null> {
+  async getTokenFromRequest(request: NextRequest): Promise<string | null> {
     // Check header first
     const headerToken = request.headers.get(CSRF_CONFIG.headerName);
     if (headerToken) {
@@ -223,8 +221,8 @@ export class CSRFProtection {
     }
 
     return null;
-  }
-}
+  },
+};
 
 /**
  * Client-side utilities

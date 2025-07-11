@@ -16,7 +16,7 @@ export interface SecurityAlert {
   description: string;
   eventType: SecurityEventType;
   context: AuditLogContext;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   acknowledged: boolean;
   acknowledgedBy?: string;
   acknowledgedAt?: Date;
@@ -131,7 +131,7 @@ class SecurityMonitoringService {
     outcome: AuditOutcome,
     context: AuditLogContext,
     severity: AuditSeverity = AuditSeverity.INFO,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<void> {
     // Add event to buffer for analysis
     this.eventBuffer.push({
@@ -377,7 +377,10 @@ class SecurityMonitoringService {
   /**
    * Deep merge helper function for config updates
    */
-  private deepMerge(target: any, source: any): any {
+  private deepMerge(
+    target: Record<string, unknown>,
+    source: Record<string, unknown>
+  ): Record<string, unknown> {
     const result = { ...target };
 
     for (const key in source) {
@@ -474,7 +477,7 @@ class SecurityMonitoringService {
     eventType: SecurityEventType,
     outcome: AuditOutcome,
     context: AuditLogContext,
-    metadata?: Record<string, any>
+    metadata?: Record<string, unknown>
   ): Promise<Array<Omit<SecurityAlert, "id" | "timestamp" | "acknowledged">>> {
     const threats: Array<
       Omit<SecurityAlert, "id" | "timestamp" | "acknowledged">
@@ -707,12 +710,19 @@ class SecurityMonitoringService {
   }
 
   private async calculateUserRiskScores(
-    events: any[]
+    events: Array<{
+      userId?: string;
+      user?: { email: string };
+      eventType: SecurityEventType;
+      outcome: AuditOutcome;
+      severity: AuditSeverity;
+      country?: string;
+    }>
   ): Promise<Array<{ userId: string; email: string; riskScore: number }>> {
     const userEvents = events.filter((e) => e.userId);
     const userScores = new Map<
       string,
-      { email: string; score: number; events: any[] }
+      { email: string; score: number; events: typeof events }
     >();
 
     for (const event of userEvents) {
@@ -937,7 +947,7 @@ export async function enhancedSecurityLog(
   context: AuditLogContext,
   severity: AuditSeverity = AuditSeverity.INFO,
   errorMessage?: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   // Log to audit system
   await securityAuditLogger.log({

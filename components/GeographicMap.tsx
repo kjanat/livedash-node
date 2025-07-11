@@ -104,37 +104,43 @@ export default function GeographicMap({
   /**
    * Get coordinates for a country code
    */
-  function getCountryCoordinates(
-    code: string,
-    countryCoordinates: Record<string, [number, number]>
-  ): [number, number] | undefined {
-    // Try custom coordinates first (allows overrides)
-    let coords: [number, number] | undefined = countryCoordinates[code];
+  const getCountryCoordinates = useCallback(
+    (
+      code: string,
+      countryCoordinates: Record<string, [number, number]>
+    ): [number, number] | undefined => {
+      // Try custom coordinates first (allows overrides)
+      let coords: [number, number] | undefined = countryCoordinates[code];
 
-    if (!coords) {
-      // Automatically get coordinates from country-coder library
-      coords = getCoordinatesFromCountryCoder(code);
-    }
+      if (!coords) {
+        // Automatically get coordinates from country-coder library
+        coords = getCoordinatesFromCountryCoder(code);
+      }
 
-    return coords;
-  }
+      return coords;
+    },
+    []
+  );
 
   /**
    * Process a single country entry into CountryData
    */
-  const processCountryEntry = useCallback((
-    code: string,
-    count: number,
-    countryCoordinates: Record<string, [number, number]>
-  ): CountryData | null => {
-    const coordinates = getCountryCoordinates(code, countryCoordinates);
+  const processCountryEntry = useCallback(
+    (
+      code: string,
+      count: number,
+      countryCoordinates: Record<string, [number, number]>
+    ): CountryData | null => {
+      const coordinates = getCountryCoordinates(code, countryCoordinates);
 
-    if (coordinates) {
-      return { code, count, coordinates };
-    }
+      if (coordinates) {
+        return { code, count, coordinates };
+      }
 
-    return null; // Skip if no coordinates found
-  }, []);
+      return null; // Skip if no coordinates found
+    },
+    [getCountryCoordinates]
+  );
 
   /**
    * Process all countries data into CountryData array

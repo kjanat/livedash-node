@@ -227,7 +227,11 @@ export const authRouter = router({
   updateProfile: csrfProtectedAuthProcedure
     .input(userUpdateSchema)
     .mutation(async ({ input, ctx }) => {
-      const updateData: any = {};
+      const updateData: {
+        email?: string;
+        name?: string;
+        password?: string;
+      } = {};
 
       if (input.email) {
         // Check if new email is already taken

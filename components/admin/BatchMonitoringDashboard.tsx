@@ -2,12 +2,12 @@
 
 import {
   Activity,
-  AlertCircle,
   AlertTriangle,
   CheckCircle,
   Clock,
   Download,
   RefreshCw,
+  Shield,
   TrendingUp,
   XCircle,
   Zap,
@@ -48,6 +48,21 @@ interface CircuitBreakerStatus {
   lastFailureTime: number;
 }
 
+interface SchedulerConfig {
+  enabled: boolean;
+  intervals: {
+    batchCreation: number;
+    statusCheck: number;
+    resultProcessing: number;
+    retryFailures: number;
+  };
+  thresholds: {
+    maxRetries: number;
+    circuitBreakerThreshold: number;
+    batchSize: number;
+  };
+}
+
 interface SchedulerStatus {
   isRunning: boolean;
   createBatchesRunning: boolean;
@@ -58,7 +73,7 @@ interface SchedulerStatus {
   consecutiveErrors: number;
   lastErrorTime: Date | null;
   circuitBreakers: Record<string, CircuitBreakerStatus>;
-  config: any;
+  config: SchedulerConfig;
 }
 
 interface MonitoringData {
@@ -72,6 +87,107 @@ interface MonitoringData {
     pausedDueToErrors: boolean;
     consecutiveErrors: number;
   };
+}
+
+function HealthStatusIcon({ status }: { status: string }) {
+  if (status === "healthy")
+    return <CheckCircle className="h-5 w-5 text-green-500" />;
+  if (status === "warning")
+    return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+  if (status === "critical")
+    return <XCircle className="h-5 w-5 text-red-500" />;
+  return null;
+}
+
+function SystemHealthCard({
+  health,
+  schedulerStatus,
+}: {
+  health: { status: string; message: string };
+  schedulerStatus: {
+    csvImport?: boolean;
+    processing?: boolean;
+    batch?: boolean;
+  };
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          System Health
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center gap-2 mb-4">
+          <HealthStatusIcon status={health.status} />
+          <span className="font-medium text-sm">{health.message}</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex justify-between text-sm">
+            <span>CSV Import Scheduler:</span>
+            <Badge
+              variant={schedulerStatus?.csvImport ? "default" : "secondary"}
+            >
+              {schedulerStatus?.csvImport ? "Running" : "Stopped"}
+            </Badge>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Processing Scheduler:</span>
+            <Badge
+              variant={schedulerStatus?.processing ? "default" : "secondary"}
+            >
+              {schedulerStatus?.processing ? "Running" : "Stopped"}
+            </Badge>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Batch Scheduler:</span>
+            <Badge variant={schedulerStatus?.batch ? "default" : "secondary"}>
+              {schedulerStatus?.batch ? "Running" : "Stopped"}
+            </Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CircuitBreakerCard({
+  circuitBreakerStatus,
+}: {
+  circuitBreakerStatus: Record<string, string> | null;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Shield className="h-5 w-5" />
+          Circuit Breakers
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {circuitBreakerStatus &&
+        Object.keys(circuitBreakerStatus).length > 0 ? (
+          <div className="space-y-2">
+            {Object.entries(circuitBreakerStatus).map(([key, status]) => (
+              <div key={key} className="flex justify-between text-sm">
+                <span>{key}:</span>
+                <Badge
+                  variant={status === "CLOSED" ? "default" : "destructive"}
+                >
+                  {status as string}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No circuit breakers configured
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function BatchMonitoringDashboard() {
@@ -291,85 +407,8 @@ export default function BatchMonitoringDashboard() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              System Health
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2 mb-4">
-              {health.status === "healthy" && (
-                <CheckCircle className="h-5 w-5 text-green-500" />
-              )}
-              {health.status === "warning" && (
-                <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              )}
-              {health.status === "critical" && (
-                <XCircle className="h-5 w-5 text-red-500" />
-              )}
-              {health.status === "unknown" && (
-                <AlertCircle className="h-5 w-5 text-gray-500" />
-              )}
-              <Badge
-                variant={
-                  health.status === "healthy" ? "default" : "destructive"
-                }
-              >
-                {health.message}
-              </Badge>
-            </div>
-
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Scheduler Running:</span>
-                <Badge
-                  variant={
-                    schedulerStatus.isRunning ? "default" : "destructive"
-                  }
-                >
-                  {schedulerStatus.isRunning ? "Yes" : "No"}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Paused:</span>
-                <Badge
-                  variant={schedulerStatus.isPaused ? "destructive" : "default"}
-                >
-                  {schedulerStatus.isPaused ? "Yes" : "No"}
-                </Badge>
-              </div>
-              <div className="flex justify-between">
-                <span>Consecutive Errors:</span>
-                <span>{schedulerStatus.consecutiveErrors}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Zap className="h-5 w-5" />
-              Circuit Breakers
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {Object.entries(circuitBreakerStatus).map(([name, status]) => (
-                <div key={name} className="flex justify-between items-center">
-                  <span className="text-sm capitalize">
-                    {name.replace(/([A-Z])/g, " $1").trim()}
-                  </span>
-                  <Badge variant={status.isOpen ? "destructive" : "default"}>
-                    {status.isOpen ? "Open" : "Closed"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <SystemHealthCard health={health} schedulerStatus={schedulerStatus} />
+        <CircuitBreakerCard circuitBreakerStatus={circuitBreakerStatus} />
       </div>
     );
   };

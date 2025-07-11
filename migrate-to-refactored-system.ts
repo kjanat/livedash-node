@@ -3,6 +3,28 @@ import { ProcessingStatusManager } from "./lib/processingStatusManager";
 
 const prisma = new PrismaClient();
 
+interface MigrationSessionImport {
+  rawTranscriptContent?: string;
+  externalSessionId?: string;
+}
+
+interface MigrationMessage {
+  id: string;
+  role: string;
+  content: string;
+  timestamp?: Date;
+  order: number;
+}
+
+interface MigrationSession {
+  id: string;
+  summary?: string;
+  sentiment?: string;
+  category?: string;
+  language?: string;
+  import?: MigrationSessionImport;
+}
+
 /**
  * Migrates CSV import stage for a session
  */
@@ -25,7 +47,7 @@ async function migrateCsvImportStage(
  */
 async function migrateTranscriptFetchStage(
   sessionId: string,
-  sessionImport: any,
+  sessionImport: MigrationSessionImport,
   externalSessionId?: string
 ) {
   if (sessionImport?.rawTranscriptContent) {
@@ -53,8 +75,8 @@ async function migrateTranscriptFetchStage(
  */
 async function migrateSessionCreationStage(
   sessionId: string,
-  messages: any[],
-  sessionImport: any,
+  messages: MigrationMessage[],
+  sessionImport: MigrationSessionImport,
   externalSessionId?: string
 ) {
   if (messages.length > 0) {
@@ -82,7 +104,7 @@ async function migrateSessionCreationStage(
 /**
  * Checks if session has AI analysis data
  */
-function hasAIAnalysisData(session: any): boolean {
+function hasAIAnalysisData(session: MigrationSession): boolean {
   return !!(
     session.summary ||
     session.sentiment ||
@@ -96,8 +118,8 @@ function hasAIAnalysisData(session: any): boolean {
  */
 async function migrateAIAnalysisStage(
   sessionId: string,
-  session: any,
-  messages: any[],
+  session: MigrationSession,
+  messages: MigrationMessage[],
   externalSessionId?: string
 ) {
   const hasAIAnalysis = hasAIAnalysisData(session);
@@ -126,7 +148,7 @@ async function migrateAIAnalysisStage(
  */
 async function migrateQuestionExtractionStage(
   sessionId: string,
-  sessionQuestions: any[],
+  sessionQuestions: { question: { content: string } }[],
   hasAIAnalysis: boolean,
   externalSessionId?: string
 ) {
@@ -147,7 +169,7 @@ async function migrateQuestionExtractionStage(
 /**
  * Migrates a single session to the refactored processing system
  */
-async function migrateSession(session: any) {
+async function migrateSession(session: MigrationSession) {
   const externalSessionId = session.import?.externalSessionId;
   console.log(`Migrating session ${externalSessionId || session.id}...`);
 
@@ -209,7 +231,6 @@ async function displayFinalStatus() {
   }
 }
 
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Main orchestration function - complexity is needed for migration coordination
 async function migrateToRefactoredSystem() {
   try {
     console.log("=== MIGRATING TO REFACTORED PROCESSING SYSTEM ===\n");
