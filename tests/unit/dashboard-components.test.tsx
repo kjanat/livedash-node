@@ -77,38 +77,48 @@ describe("Dashboard Components", () => {
 
     it("should render chart with questions data", () => {
       render(<TopQuestionsChart data={mockQuestions} />);
-      
+
       expect(screen.getByTestId("card")).toBeInTheDocument();
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Top 5 Asked Questions");
-      expect(screen.getByText("How do I reset my password?")).toBeInTheDocument();
+      expect(screen.getByTestId("card-title")).toHaveTextContent(
+        "Top 5 Asked Questions"
+      );
+      expect(
+        screen.getByText("How do I reset my password?")
+      ).toBeInTheDocument();
     });
 
     it("should render with custom title", () => {
       render(<TopQuestionsChart data={mockQuestions} title="Custom Title" />);
-      
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Custom Title");
+
+      expect(screen.getByTestId("card-title")).toHaveTextContent(
+        "Custom Title"
+      );
     });
 
     it("should handle empty questions data", () => {
       render(<TopQuestionsChart data={[]} />);
-      
+
       expect(screen.getByTestId("card")).toBeInTheDocument();
-      expect(screen.getByTestId("card-title")).toHaveTextContent("Top 5 Asked Questions");
-      expect(screen.getByText("No questions data available")).toBeInTheDocument();
+      expect(screen.getByTestId("card-title")).toHaveTextContent(
+        "Top 5 Asked Questions"
+      );
+      expect(
+        screen.getByText("No questions data available")
+      ).toBeInTheDocument();
     });
 
     it("should display question counts as badges", () => {
       render(<TopQuestionsChart data={mockQuestions} />);
-      
+
       expect(screen.getByText("25")).toBeInTheDocument();
       expect(screen.getByText("20")).toBeInTheDocument();
     });
 
     it("should show all questions with progress bars", () => {
       render(<TopQuestionsChart data={mockQuestions} />);
-      
+
       // All questions should be rendered
-      mockQuestions.forEach(question => {
+      mockQuestions.forEach((question) => {
         expect(screen.getByText(question.question)).toBeInTheDocument();
         expect(screen.getByText(question.count.toString())).toBeInTheDocument();
       });
@@ -116,7 +126,7 @@ describe("Dashboard Components", () => {
 
     it("should calculate and display total questions", () => {
       render(<TopQuestionsChart data={mockQuestions} />);
-      
+
       const totalQuestions = mockQuestions.reduce((sum, q) => sum + q.count, 0);
       expect(screen.getByText(totalQuestions.toString())).toBeInTheDocument();
       expect(screen.getByText("Total questions analyzed")).toBeInTheDocument();
@@ -133,71 +143,75 @@ Assistant: Let me help you with that. Can you tell me what error message you're 
 
     it("should render transcript content", () => {
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent={mockTranscriptContent}
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
+
       expect(screen.getByText("Session Transcript")).toBeInTheDocument();
-      expect(screen.getByText(/Hello, I need help with my account/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Hello, I need help with my account/)
+      ).toBeInTheDocument();
     });
 
     it("should handle empty transcript content", () => {
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent=""
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
-      expect(screen.getByText("No transcript content available.")).toBeInTheDocument();
+
+      expect(
+        screen.getByText("No transcript content available.")
+      ).toBeInTheDocument();
     });
 
     it("should render without transcript URL", () => {
-      render(
-        <TranscriptViewer 
-          transcriptContent={mockTranscriptContent}
-        />
-      );
-      
+      render(<TranscriptViewer transcriptContent={mockTranscriptContent} />);
+
       // Should still render content
       expect(screen.getByText("Session Transcript")).toBeInTheDocument();
-      expect(screen.getByText(/Hello, I need help with my account/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Hello, I need help with my account/)
+      ).toBeInTheDocument();
     });
 
     it("should toggle between formatted and raw view", () => {
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent={mockTranscriptContent}
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
+
       // Find the raw text toggle button
       const rawToggleButton = screen.getByText("Raw Text");
       expect(rawToggleButton).toBeInTheDocument();
-      
+
       // Click to show raw view
       fireEvent.click(rawToggleButton);
-      
+
       // Should now show "Formatted" button and raw content
       expect(screen.getByText("Formatted")).toBeInTheDocument();
     });
 
     it("should handle malformed transcript content gracefully", () => {
       const malformedContent = "This is not a properly formatted transcript";
-      
+
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent={malformedContent}
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
+
       // Should show "No transcript content available" in formatted view for malformed content
-      expect(screen.getByText("No transcript content available.")).toBeInTheDocument();
-      
+      expect(
+        screen.getByText("No transcript content available.")
+      ).toBeInTheDocument();
+
       // But should show the raw content when toggled to raw view
       const rawToggleButton = screen.getByText("Raw Text");
       fireEvent.click(rawToggleButton);
@@ -206,25 +220,27 @@ Assistant: Let me help you with that. Can you tell me what error message you're 
 
     it("should parse and display conversation messages", () => {
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent={mockTranscriptContent}
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
+
       // Check for message content
-      expect(screen.getByText(/Hello, I need help with my account/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Hello, I need help with my account/)
+      ).toBeInTheDocument();
       expect(screen.getByText(/I'd be happy to help you/)).toBeInTheDocument();
     });
 
     it("should display transcript URL link when provided", () => {
       render(
-        <TranscriptViewer 
+        <TranscriptViewer
           transcriptContent={mockTranscriptContent}
           transcriptUrl={mockTranscriptUrl}
         />
       );
-      
+
       const link = screen.getByText("View Full Raw");
       expect(link).toBeInTheDocument();
       expect(link.closest("a")).toHaveAttribute("href", mockTranscriptUrl);

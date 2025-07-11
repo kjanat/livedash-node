@@ -15,9 +15,12 @@ const loginRateLimiter = new InMemoryRateLimiter({
  */
 export function authRateLimitMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Only apply to NextAuth signin endpoint
-  if (pathname.startsWith("/api/auth/signin") || pathname.startsWith("/api/auth/callback/credentials")) {
+  if (
+    pathname.startsWith("/api/auth/signin") ||
+    pathname.startsWith("/api/auth/callback/credentials")
+  ) {
     const ip = extractClientIP(request);
     const rateLimitResult = loginRateLimiter.checkRateLimit(ip);
 
@@ -27,10 +30,12 @@ export function authRateLimitMiddleware(request: NextRequest) {
           success: false,
           error: "Too many login attempts. Please try again later.",
         },
-        { 
+        {
           status: 429,
           headers: {
-            "Retry-After": String(Math.ceil((rateLimitResult.resetTime! - Date.now()) / 1000)),
+            "Retry-After": String(
+              Math.ceil((rateLimitResult.resetTime! - Date.now()) / 1000)
+            ),
           },
         }
       );

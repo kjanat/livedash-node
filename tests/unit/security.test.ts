@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { InMemoryRateLimiter, extractClientIP } from "../../lib/rateLimiter";
-import { validateInput, registerSchema, loginSchema, forgotPasswordSchema } from "../../lib/validation";
+import {
+  validateInput,
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+} from "../../lib/validation";
 import { z } from "zod";
 
 // Import password schema directly from validation file
@@ -63,7 +68,7 @@ describe("Security Tests", () => {
       expect(rateLimiter.checkRateLimit("test-ip").allowed).toBe(false);
 
       // Wait for window to expire
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       // Should be allowed again
       expect(rateLimiter.checkRateLimit("test-ip").allowed).toBe(true);
@@ -89,7 +94,7 @@ describe("Security Tests", () => {
       }
 
       // Wait for entries to expire
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       // Force cleanup by checking rate limit
       rateLimiter.checkRateLimit("cleanup-trigger");
@@ -157,13 +162,13 @@ describe("Security Tests", () => {
         const weakPasswords = [
           "short", // Too short
           "nouppercase123!", // No uppercase
-          "NOLOWERCASE123!", // No lowercase  
+          "NOLOWERCASE123!", // No lowercase
           "NoNumbers!@#", // No numbers
           "NoSpecialChars123", // No special chars
           "password123!", // Common password pattern
         ];
 
-        weakPasswords.forEach(password => {
+        weakPasswords.forEach((password) => {
           const result = validateInput(passwordSchema, password);
           expect(result.success).toBe(false);
         });
@@ -176,7 +181,7 @@ describe("Security Tests", () => {
           "MyS3cur3P@ssword!",
         ];
 
-        strongPasswords.forEach(password => {
+        strongPasswords.forEach((password) => {
           const result = validateInput(passwordSchema, password);
           expect(result.success).toBe(true);
         });

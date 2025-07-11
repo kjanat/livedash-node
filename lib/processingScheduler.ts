@@ -1,15 +1,17 @@
 // Enhanced session processing scheduler with AI cost tracking and question management
 
 import {
+  type AIProcessingRequest,
+  AIRequestStatus,
   ProcessingStage,
   type SentimentCategory,
   type SessionCategory,
-  AIRequestStatus,
-  type AIProcessingRequest,
 } from "@prisma/client";
 import cron from "node-cron";
 import fetch from "node-fetch";
 import { withRetry } from "./database-retry";
+import { env } from "./env";
+import { openAIMock } from "./mocks/openai-mock-server";
 import { prisma } from "./prisma";
 import {
   completeStage,
@@ -330,15 +332,17 @@ async function calculateEndTime(
 }
 
 /**
- * Processes a session transcript using OpenAI API
+ * Processes a session transcript using OpenAI API (real or mock)
  */
 async function processTranscriptWithOpenAI(
   sessionId: string,
   transcript: string,
   companyId: string
 ): Promise<ProcessedData> {
-  if (!OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY environment variable is not set");
+  if (!OPENAI_API_KEY && !env.OPENAI_MOCK_MODE) {
+    throw new Error(
+      "OPENAI_API_KEY environment variable is not set (or enable OPENAI_MOCK_MODE for development)"
+    );
   }
 
   // Get company's AI model
@@ -373,36 +377,48 @@ async function processTranscriptWithOpenAI(
   `;
 
   try {
-    const response = await fetch(OPENAI_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: aiModel, // Use company's configured AI model
-        messages: [
-          {
-            role: "system",
-            content: systemMessage,
-          },
-          {
-            role: "user",
-            content: transcript,
-          },
-        ],
-        temperature: 0.3, // Lower temperature for more consistent results
-        response_format: { type: "json_object" },
-      }),
-    });
+    let openaiResponse: OpenAIResponse;
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+    const requestParams = {
+      model: aiModel, // Use company's configured AI model
+      messages: [
+        {
+          role: "system",
+          content: systemMessage,
+        },
+        {
+          role: "user",
+          content: transcript,
+        },
+      ],
+      temperature: 0.3, // Lower temperature for more consistent results
+      response_format: { type: "json_object" },
+    };
+
+    if (env.OPENAI_MOCK_MODE) {
+      // Use mock OpenAI API for cost-safe development/testing
+      console.log(
+        `[OpenAI Mock] Processing session ${sessionId} with mock API`
+      );
+      openaiResponse = await openAIMock.mockChatCompletion(requestParams);
+    } else {
+      // Use real OpenAI API
+      const response = await fetch(OPENAI_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify(requestParams),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+      }
+
+      openaiResponse = (await response.json()) as OpenAIResponse;
     }
-
-    const openaiResponse: OpenAIResponse =
-      (await response.json()) as OpenAIResponse;
 
     // Record the AI processing request for cost tracking
     await recordAIProcessingRequest(
@@ -825,7 +841,9 @@ export function startProcessingScheduler(): void {
 /**
  * Create batch requests for sessions needing AI processing
  */
-async function createBatchRequestsForSessions(batchSize: number | null = null): Promise<void> {
+async function createBatchRequestsForSessions(
+  batchSize: number | null = null
+): Promise<void> {
   // Get sessions that need AI processing using the new status system
   const sessionsNeedingAI = await getSessionsNeedingProcessing(
     ProcessingStage.AI_ANALYSIS,
@@ -903,7 +921,10 @@ async function createBatchRequestsForSessions(batchSize: number | null = null): 
 
       batchRequests.push(processingRequest);
     } catch (error) {
-      console.error(`Failed to create batch request for session ${session.id}:`, error);
+      console.error(
+        `Failed to create batch request for session ${session.id}:`,
+        error
+      );
       await failStage(
         session.id,
         ProcessingStage.AI_ANALYSIS,

@@ -262,11 +262,14 @@ describe("Authentication API Routes", () => {
         resetTime: Date.now() + 60000,
       });
 
-      vi.mocked(InMemoryRateLimiter).mockImplementation(() => ({
-        checkRateLimit: mockCheckRateLimit,
-        cleanup: vi.fn(),
-        destroy: vi.fn(),
-      } as any));
+      vi.mocked(InMemoryRateLimiter).mockImplementation(
+        () =>
+          ({
+            checkRateLimit: mockCheckRateLimit,
+            cleanup: vi.fn(),
+            destroy: vi.fn(),
+          }) as any
+      );
 
       const request = new NextRequest("http://localhost:3000/api/register", {
         method: "POST",

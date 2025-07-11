@@ -2,11 +2,11 @@
 import { createServer } from "node:http";
 import { parse } from "node:url";
 import next from "next";
+import { startBatchScheduler } from "./lib/batchScheduler.js";
 import { getSchedulerConfig, logEnvConfig, validateEnv } from "./lib/env.js";
 import { startImportProcessingScheduler } from "./lib/importProcessor.js";
 import { startProcessingScheduler } from "./lib/processingScheduler.js";
 import { startCsvImportScheduler } from "./lib/scheduler.js";
-import { startBatchScheduler } from "./lib/batchScheduler.js";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";

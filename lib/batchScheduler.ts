@@ -9,11 +9,11 @@
 
 import cron, { type ScheduledTask } from "node-cron";
 import {
-  getPendingBatchRequests,
-  createBatchRequest,
   checkBatchStatuses,
+  createBatchRequest,
+  getBatchProcessingStats,
+  getPendingBatchRequests,
   processCompletedBatches,
-  getBatchProcessingStats
 } from "./batchProcessor";
 import { prisma } from "./prisma";
 import { getSchedulerConfig } from "./schedulerConfig";
@@ -157,17 +157,24 @@ async function createBatchesForCompany(companyId: string): Promise<void> {
     }
 
     // Check if we should create a batch
-    const shouldCreateBatch = await shouldCreateBatchForCompany(companyId, pendingRequests.length);
+    const shouldCreateBatch = await shouldCreateBatchForCompany(
+      companyId,
+      pendingRequests.length
+    );
 
     if (!shouldCreateBatch) {
       return; // Wait for more requests or more time
     }
 
-    console.log(`Creating batch for company ${companyId} with ${pendingRequests.length} requests`);
+    console.log(
+      `Creating batch for company ${companyId} with ${pendingRequests.length} requests`
+    );
 
     const batchId = await createBatchRequest(companyId, pendingRequests);
 
-    console.log(`Successfully created batch ${batchId} for company ${companyId}`);
+    console.log(
+      `Successfully created batch ${batchId} for company ${companyId}`
+    );
   } catch (error) {
     console.error(`Failed to create batch for company ${companyId}:`, error);
   }
@@ -176,7 +183,10 @@ async function createBatchesForCompany(companyId: string): Promise<void> {
 /**
  * Determine if a batch should be created for a company
  */
-async function shouldCreateBatchForCompany(companyId: string, pendingCount: number): Promise<boolean> {
+async function shouldCreateBatchForCompany(
+  companyId: string,
+  pendingCount: number
+): Promise<boolean> {
   // Always create if we have enough requests
   if (pendingCount >= SCHEDULER_CONFIG.MIN_BATCH_SIZE) {
     return true;

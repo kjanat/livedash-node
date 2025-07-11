@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       await sendEmail({
         to: email,
         subject: "Password Reset",
-        text: `Reset your password: ${resetUrl}`
+        text: `Reset your password: ${resetUrl}`,
       });
     }
 

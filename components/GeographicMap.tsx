@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "leaflet/dist/leaflet.css";
 import * as countryCoder from "@rapideditor/country-coder";
 
@@ -22,7 +22,9 @@ interface GeographicMapProps {
  * Get coordinates for a country using the country-coder library
  * This automatically extracts coordinates from the country geometry
  */
-function getCoordinatesFromCountryCoder(countryCode: string): [number, number] | undefined {
+function getCoordinatesFromCountryCoder(
+  countryCode: string
+): [number, number] | undefined {
   try {
     const feature = countryCoder.feature(countryCode);
     if (!feature?.geometry) {
@@ -35,7 +37,10 @@ function getCoordinatesFromCountryCoder(countryCode: string): [number, number] |
       return [lat, lon]; // Leaflet expects [lat, lon]
     }
 
-    if (feature.geometry.type === "Polygon" && feature.geometry.coordinates?.[0]?.[0]) {
+    if (
+      feature.geometry.type === "Polygon" &&
+      feature.geometry.coordinates?.[0]?.[0]
+    ) {
       // For polygons, calculate centroid from the first ring
       const coordinates = feature.geometry.coordinates[0];
       let lat = 0;
@@ -47,7 +52,10 @@ function getCoordinatesFromCountryCoder(countryCode: string): [number, number] |
       return [lat / coordinates.length, lon / coordinates.length];
     }
 
-    if (feature.geometry.type === "MultiPolygon" && feature.geometry.coordinates?.[0]?.[0]?.[0]) {
+    if (
+      feature.geometry.type === "MultiPolygon" &&
+      feature.geometry.coordinates?.[0]?.[0]?.[0]
+    ) {
       // For multipolygons, use the first polygon's first ring for centroid
       const coordinates = feature.geometry.coordinates[0][0];
       let lat = 0;
@@ -61,7 +69,10 @@ function getCoordinatesFromCountryCoder(countryCode: string): [number, number] |
 
     return undefined;
   } catch (error) {
-    console.warn(`Failed to get coordinates for country ${countryCode}:`, error);
+    console.warn(
+      `Failed to get coordinates for country ${countryCode}:`,
+      error
+    );
     return undefined;
   }
 }
@@ -89,7 +100,6 @@ export default function GeographicMap({
   useEffect(() => {
     setIsClient(true);
   }, []);
-
 
   /**
    * Get coordinates for a country code
@@ -129,22 +139,25 @@ export default function GeographicMap({
   /**
    * Process all countries data into CountryData array
    */
-  const processCountriesData = useCallback((
-    countries: Record<string, number>,
-    countryCoordinates: Record<string, [number, number]>
-  ): CountryData[] => {
-    const data = Object.entries(countries || {})
-      .map(([code, count]) =>
-        processCountryEntry(code, count, countryCoordinates)
-      )
-      .filter((item): item is CountryData => item !== null);
+  const processCountriesData = useCallback(
+    (
+      countries: Record<string, number>,
+      countryCoordinates: Record<string, [number, number]>
+    ): CountryData[] => {
+      const data = Object.entries(countries || {})
+        .map(([code, count]) =>
+          processCountryEntry(code, count, countryCoordinates)
+        )
+        .filter((item): item is CountryData => item !== null);
 
-    console.log(
-      `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
-    );
+      console.log(
+        `Found ${data.length} countries with coordinates out of ${Object.keys(countries).length} total countries`
+      );
 
-    return data;
-  }, []);
+      return data;
+    },
+    []
+  );
 
   // Process country data when client is ready and dependencies change
   useEffect(() => {

@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { parseTranscriptToMessages } from "../../lib/transcriptParser";
 
 describe("Transcript Parser", () => {
-  const startTime = new Date('2024-01-01T10:00:00Z');
-  const endTime = new Date('2024-01-01T10:30:00Z');
+  const startTime = new Date("2024-01-01T10:00:00Z");
+  const endTime = new Date("2024-01-01T10:30:00Z");
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -22,7 +22,9 @@ describe("Transcript Parser", () => {
       expect(result.success).toBe(true);
       expect(result.messages).toHaveLength(3);
       expect(result.messages![0].role).toBe("User");
-      expect(result.messages![0].content).toBe("Hello, I need help with my account");
+      expect(result.messages![0].content).toBe(
+        "Hello, I need help with my account"
+      );
       expect(result.messages![1].role).toBe("Assistant");
       expect(result.messages![2].role).toBe("User");
       expect(result.messages![2].content).toBe("I can't log in to my account");
@@ -42,7 +44,9 @@ User: I need support with my order
       expect(result.messages![0].role).toBe("User");
       expect(result.messages![0].content).toBe("Hello there");
       expect(result.messages![1].role).toBe("Assistant");
-      expect(result.messages![1].content).toBe("Hello! How can I help you today?");
+      expect(result.messages![1].content).toBe(
+        "Hello! How can I help you today?"
+      );
       expect(result.messages![2].role).toBe("User");
       expect(result.messages![2].content).toBe("I need support with my order");
     });
@@ -124,15 +128,17 @@ User: Third
     it("should handle empty content", () => {
       expect(parseTranscriptToMessages("", startTime, endTime)).toEqual({
         success: false,
-        error: "Empty transcript content"
+        error: "Empty transcript content",
       });
-      expect(parseTranscriptToMessages("   \n\n   ", startTime, endTime)).toEqual({
+      expect(
+        parseTranscriptToMessages("   \n\n   ", startTime, endTime)
+      ).toEqual({
         success: false,
-        error: "Empty transcript content"
+        error: "Empty transcript content",
       });
       expect(parseTranscriptToMessages("\t\r\n", startTime, endTime)).toEqual({
         success: false,
-        error: "Empty transcript content"
+        error: "Empty transcript content",
       });
     });
 

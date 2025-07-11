@@ -68,7 +68,9 @@ export async function sendEmail(
 function getEmailConfig(): EmailConfig & { isConfigured: boolean } {
   const config = {
     smtpHost: process.env.SMTP_HOST,
-    smtpPort: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT) : 587,
+    smtpPort: process.env.SMTP_PORT
+      ? Number.parseInt(process.env.SMTP_PORT)
+      : 587,
     smtpUser: process.env.SMTP_USER,
     smtpPassword: process.env.SMTP_PASSWORD,
     fromEmail: process.env.FROM_EMAIL || "noreply@livedash.app",

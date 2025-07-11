@@ -10,8 +10,14 @@
  * - Improved error handling and retry mechanisms
  */
 
+import {
+  AIBatchRequestStatus,
+  type AIProcessingRequest,
+  AIRequestStatus,
+} from "@prisma/client";
+import { env } from "./env";
+import { openAIMock } from "./mocks/openai-mock-server";
 import { prisma } from "./prisma";
-import { AIBatchRequestStatus, AIRequestStatus, type AIProcessingRequest } from "@prisma/client";
 
 /**
  * Configuration for batch processing
@@ -61,7 +67,15 @@ interface OpenAIBatchResponse {
   };
   input_file_id: string;
   completion_window: string;
-  status: "validating" | "failed" | "in_progress" | "finalizing" | "completed" | "expired" | "cancelling" | "cancelled";
+  status:
+    | "validating"
+    | "failed"
+    | "in_progress"
+    | "finalizing"
+    | "completed"
+    | "expired"
+    | "cancelling"
+    | "cancelled";
   output_file_id?: string;
   error_file_id?: string;
   created_at: number;
@@ -109,18 +123,20 @@ export async function getPendingBatchRequests(
     orderBy: {
       requestedAt: "asc",
     },
-  }) as Promise<(AIProcessingRequest & {
-    session: {
-      id: string;
-      companyId: string;
-      messages: Array<{
+  }) as Promise<
+    (AIProcessingRequest & {
+      session: {
         id: string;
-        role: string;
-        content: string;
-        order: number;
-      }>;
-    } | null;
-  })[]>;
+        companyId: string;
+        messages: Array<{
+          id: string;
+          role: string;
+          content: string;
+          order: number;
+        }>;
+      } | null;
+    })[]
+  >;
 }
 
 /**
@@ -135,7 +151,9 @@ export async function createBatchRequest(
   }
 
   if (requests.length > BATCH_CONFIG.MAX_REQUESTS_PER_BATCH) {
-    throw new Error(`Batch size ${requests.length} exceeds maximum of ${BATCH_CONFIG.MAX_REQUESTS_PER_BATCH}`);
+    throw new Error(
+      `Batch size ${requests.length} exceeds maximum of ${BATCH_CONFIG.MAX_REQUESTS_PER_BATCH}`
+    );
   }
 
   // Create batch requests in OpenAI format
@@ -152,7 +170,9 @@ export async function createBatchRequest(
         },
         {
           role: "user",
-          content: formatMessagesForProcessing((request as any).session?.messages || []),
+          content: formatMessagesForProcessing(
+            (request as any).session?.messages || []
+          ),
         },
       ],
       temperature: 0.1,
@@ -230,7 +250,9 @@ export async function checkBatchStatuses(companyId: string): Promise<void> {
 /**
  * Process completed batches and extract results
  */
-export async function processCompletedBatches(companyId: string): Promise<void> {
+export async function processCompletedBatches(
+  companyId: string
+): Promise<void> {
   const completedBatches = await prisma.aIBatchRequest.findMany({
     where: {
       companyId,
@@ -262,17 +284,31 @@ export async function processCompletedBatches(companyId: string): Promise<void> 
 }
 
 /**
- * Helper function to upload file content to OpenAI
+ * Helper function to upload file content to OpenAI (real or mock)
  */
 async function uploadFileToOpenAI(content: string): Promise<{ id: string }> {
+  if (env.OPENAI_MOCK_MODE) {
+    console.log(
+      `[OpenAI Mock] Uploading batch file with ${content.split("\n").length} requests`
+    );
+    return openAIMock.mockUploadFile({
+      file: content,
+      purpose: "batch",
+    });
+  }
+
   const formData = new FormData();
-  formData.append("file", new Blob([content], { type: "application/jsonl" }), "batch_requests.jsonl");
+  formData.append(
+    "file",
+    new Blob([content], { type: "application/jsonl" }),
+    "batch_requests.jsonl"
+  );
   formData.append("purpose", "batch");
 
   const response = await fetch("https://api.openai.com/v1/files", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     },
     body: formData,
   });
@@ -285,13 +321,24 @@ async function uploadFileToOpenAI(content: string): Promise<{ id: string }> {
 }
 
 /**
- * Helper function to create a batch request on OpenAI
+ * Helper function to create a batch request on OpenAI (real or mock)
  */
-async function createOpenAIBatch(inputFileId: string): Promise<OpenAIBatchResponse> {
+async function createOpenAIBatch(
+  inputFileId: string
+): Promise<OpenAIBatchResponse> {
+  if (env.OPENAI_MOCK_MODE) {
+    console.log(`[OpenAI Mock] Creating batch with input file ${inputFileId}`);
+    return openAIMock.mockCreateBatch({
+      input_file_id: inputFileId,
+      endpoint: "/v1/chat/completions",
+      completion_window: "24h",
+    });
+  }
+
   const response = await fetch("https://api.openai.com/v1/batches", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -309,13 +356,20 @@ async function createOpenAIBatch(inputFileId: string): Promise<OpenAIBatchRespon
 }
 
 /**
- * Helper function to get batch status from OpenAI
+ * Helper function to get batch status from OpenAI (real or mock)
  */
-async function getOpenAIBatchStatus(batchId: string): Promise<OpenAIBatchResponse> {
+async function getOpenAIBatchStatus(
+  batchId: string
+): Promise<OpenAIBatchResponse> {
+  if (env.OPENAI_MOCK_MODE) {
+    console.log(`[OpenAI Mock] Getting batch status for ${batchId}`);
+    return openAIMock.mockGetBatch(batchId);
+  }
+
   const response = await fetch(`https://api.openai.com/v1/batches/${batchId}`, {
     method: "GET",
     headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
     },
   });
 
@@ -329,7 +383,10 @@ async function getOpenAIBatchStatus(batchId: string): Promise<OpenAIBatchRespons
 /**
  * Update batch status in our database based on OpenAI response
  */
-async function updateBatchStatus(batchId: string, openAIResponse: OpenAIBatchResponse): Promise<void> {
+async function updateBatchStatus(
+  batchId: string,
+  openAIResponse: OpenAIBatchResponse
+): Promise<void> {
   const statusMapping: Record<string, AIBatchRequestStatus> = {
     validating: AIBatchRequestStatus.VALIDATING,
     failed: AIBatchRequestStatus.FAILED,
@@ -340,7 +397,8 @@ async function updateBatchStatus(batchId: string, openAIResponse: OpenAIBatchRes
     cancelled: AIBatchRequestStatus.CANCELLED,
   };
 
-  const ourStatus = statusMapping[openAIResponse.status] || AIBatchRequestStatus.FAILED;
+  const ourStatus =
+    statusMapping[openAIResponse.status] || AIBatchRequestStatus.FAILED;
 
   await prisma.aIBatchRequest.update({
     where: { id: batchId },
@@ -348,7 +406,9 @@ async function updateBatchStatus(batchId: string, openAIResponse: OpenAIBatchRes
       status: ourStatus,
       outputFileId: openAIResponse.output_file_id,
       errorFileId: openAIResponse.error_file_id,
-      completedAt: openAIResponse.completed_at ? new Date(openAIResponse.completed_at * 1000) : null,
+      completedAt: openAIResponse.completed_at
+        ? new Date(openAIResponse.completed_at * 1000)
+        : null,
     },
   });
 }
@@ -369,7 +429,7 @@ async function processBatchResults(batch: {
   const results = await downloadOpenAIFile(batch.outputFileId);
 
   // Parse JSONL results
-  const resultLines = results.split("\n").filter(line => line.trim());
+  const resultLines = results.split("\n").filter((line) => line.trim());
 
   for (const line of resultLines) {
     try {
@@ -378,10 +438,16 @@ async function processBatchResults(batch: {
 
       if (result.response?.body?.choices?.[0]?.message?.content) {
         // Process successful result
-        await updateProcessingRequestWithResult(requestId, result.response.body);
+        await updateProcessingRequestWithResult(
+          requestId,
+          result.response.body
+        );
       } else {
         // Handle error result
-        await markProcessingRequestAsFailed(requestId, result.error?.message || "Unknown error");
+        await markProcessingRequestAsFailed(
+          requestId,
+          result.error?.message || "Unknown error"
+        );
       }
     } catch (error) {
       console.error("Failed to process batch result line:", error);
@@ -399,15 +465,23 @@ async function processBatchResults(batch: {
 }
 
 /**
- * Download file content from OpenAI
+ * Download file content from OpenAI (real or mock)
  */
 async function downloadOpenAIFile(fileId: string): Promise<string> {
-  const response = await fetch(`https://api.openai.com/v1/files/${fileId}/content`, {
-    method: "GET",
-    headers: {
-      "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-  });
+  if (env.OPENAI_MOCK_MODE) {
+    console.log(`[OpenAI Mock] Downloading file content for ${fileId}`);
+    return openAIMock.mockGetFileContent(fileId);
+  }
+
+  const response = await fetch(
+    `https://api.openai.com/v1/files/${fileId}/content`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to download file: ${response.statusText}`);
@@ -419,18 +493,21 @@ async function downloadOpenAIFile(fileId: string): Promise<string> {
 /**
  * Update processing request with successful AI result
  */
-async function updateProcessingRequestWithResult(requestId: string, aiResponse: {
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-  choices: Array<{
-    message: {
-      content: string;
+async function updateProcessingRequestWithResult(
+  requestId: string,
+  aiResponse: {
+    usage: {
+      prompt_tokens: number;
+      completion_tokens: number;
+      total_tokens: number;
     };
-  }>;
-}): Promise<void> {
+    choices: Array<{
+      message: {
+        content: string;
+      };
+    }>;
+  }
+): Promise<void> {
   const usage = aiResponse.usage;
   const content = aiResponse.choices[0].message.content;
 
@@ -469,14 +546,20 @@ async function updateProcessingRequestWithResult(requestId: string, aiResponse: 
     }
   } catch (error) {
     console.error(`Failed to parse AI result for request ${requestId}:`, error);
-    await markProcessingRequestAsFailed(requestId, "Failed to parse AI response");
+    await markProcessingRequestAsFailed(
+      requestId,
+      "Failed to parse AI response"
+    );
   }
 }
 
 /**
  * Mark processing request as failed
  */
-async function markProcessingRequestAsFailed(requestId: string, errorMessage: string): Promise<void> {
+async function markProcessingRequestAsFailed(
+  requestId: string,
+  errorMessage: string
+): Promise<void> {
   await prisma.aIProcessingRequest.update({
     where: { id: requestId },
     data: {
@@ -493,9 +576,12 @@ async function markProcessingRequestAsFailed(requestId: string, errorMessage: st
  */
 function getSystemPromptForProcessingType(processingType: string): string {
   const prompts = {
-    sentiment_analysis: "Analyze the sentiment of this conversation and respond with JSON containing: {\"sentiment\": \"POSITIVE|NEUTRAL|NEGATIVE\"}",
-    categorization: "Categorize this conversation and respond with JSON containing: {\"category\": \"CATEGORY_NAME\"}",
-    summary: "Summarize this conversation and respond with JSON containing: {\"summary\": \"Brief summary\"}",
+    sentiment_analysis:
+      'Analyze the sentiment of this conversation and respond with JSON containing: {"sentiment": "POSITIVE|NEUTRAL|NEGATIVE"}',
+    categorization:
+      'Categorize this conversation and respond with JSON containing: {"category": "CATEGORY_NAME"}',
+    summary:
+      'Summarize this conversation and respond with JSON containing: {"summary": "Brief summary"}',
     full_analysis: `Analyze this conversation for sentiment, category, and provide a summary. Respond with JSON:
 {
   "sentiment": "POSITIVE|NEUTRAL|NEGATIVE",
@@ -505,19 +591,21 @@ function getSystemPromptForProcessingType(processingType: string): string {
 }`,
   };
 
-  return prompts[processingType as keyof typeof prompts] || prompts.full_analysis;
+  return (
+    prompts[processingType as keyof typeof prompts] || prompts.full_analysis
+  );
 }
 
 /**
  * Format session messages for AI processing
  */
-function formatMessagesForProcessing(messages: Array<{
-  role: string;
-  content: string;
-}>): string {
-  return messages
-    .map((msg) => `${msg.role}: ${msg.content}`)
-    .join("\n");
+function formatMessagesForProcessing(
+  messages: Array<{
+    role: string;
+    content: string;
+  }>
+): string {
+  return messages.map((msg) => `${msg.role}: ${msg.content}`).join("\n");
 }
 
 /**
@@ -538,10 +626,13 @@ export async function getBatchProcessingStats(companyId: string) {
   });
 
   return {
-    batchStats: stats.reduce((acc, stat) => {
-      acc[stat.status] = stat._count;
-      return acc;
-    }, {} as Record<string, number>),
+    batchStats: stats.reduce(
+      (acc, stat) => {
+        acc[stat.status] = stat._count;
+        return acc;
+      },
+      {} as Record<string, number>
+    ),
     pendingRequests,
   };
 }

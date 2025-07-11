@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { PrismaClient } from "@prisma/client";
-import { processUnprocessedSessions, getAIProcessingCosts } from "../../lib/processingScheduler";
+import {
+  processUnprocessedSessions,
+  getAIProcessingCosts,
+} from "../../lib/processingScheduler";
 
 vi.mock("../../lib/prisma", () => ({
   prisma: {
@@ -85,7 +88,9 @@ describe("Processing Scheduler", () => {
 
     it("should handle errors gracefully", async () => {
       const { prisma } = await import("../../lib/prisma");
-      vi.mocked(prisma.session.findMany).mockRejectedValue(new Error("Database error"));
+      vi.mocked(prisma.session.findMany).mockRejectedValue(
+        new Error("Database error")
+      );
 
       await expect(processUnprocessedSessions(1)).resolves.not.toThrow();
     });
@@ -95,7 +100,7 @@ describe("Processing Scheduler", () => {
     it("should calculate processing costs correctly", async () => {
       const mockAggregation = {
         _sum: {
-          totalCostEur: 10.50,
+          totalCostEur: 10.5,
           promptTokens: 1000,
           completionTokens: 500,
           totalTokens: 1500,
@@ -106,12 +111,14 @@ describe("Processing Scheduler", () => {
       };
 
       const { prisma } = await import("../../lib/prisma");
-      vi.mocked(prisma.aIProcessingRequest.aggregate).mockResolvedValue(mockAggregation);
+      vi.mocked(prisma.aIProcessingRequest.aggregate).mockResolvedValue(
+        mockAggregation
+      );
 
       const result = await getAIProcessingCosts();
 
       expect(result).toEqual({
-        totalCostEur: 10.50,
+        totalCostEur: 10.5,
         totalRequests: 25,
         totalPromptTokens: 1000,
         totalCompletionTokens: 500,
@@ -133,7 +140,9 @@ describe("Processing Scheduler", () => {
       };
 
       const { prisma } = await import("../../lib/prisma");
-      vi.mocked(prisma.aIProcessingRequest.aggregate).mockResolvedValue(mockAggregation);
+      vi.mocked(prisma.aIProcessingRequest.aggregate).mockResolvedValue(
+        mockAggregation
+      );
 
       const result = await getAIProcessingCosts();
 

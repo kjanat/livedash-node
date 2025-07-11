@@ -13,13 +13,14 @@ import {
   Search,
 } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCategory } from "@/lib/format-enums";
+import { trpc } from "@/lib/trpc-client";
 import type { ChatSession } from "../../../lib/types";
 
 interface FilterOptions {
@@ -426,7 +427,6 @@ function Pagination({
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -465,72 +465,60 @@ export default function SessionsPage() {
     return () => clearTimeout(timerId);
   }, [searchTerm]);
 
-  const fetchFilterOptions = useCallback(async () => {
-    try {
-      const response = await fetch("/api/dashboard/session-filter-options");
-      if (!response.ok) {
-        throw new Error("Failed to fetch filter options");
-      }
-      const data = await response.json();
-      setFilterOptions(data);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load filter options"
-      );
-    }
+  // TODO: Implement getSessionFilterOptions in tRPC dashboard router
+  // For now, we'll set default filter options
+  useEffect(() => {
+    setFilterOptions({
+      categories: [
+        "SCHEDULE_HOURS",
+        "LEAVE_VACATION",
+        "SICK_LEAVE_RECOVERY",
+        "SALARY_COMPENSATION",
+      ],
+      languages: ["en", "nl", "de", "fr", "es"],
+    });
   }, []);
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const params = new URLSearchParams();
-      if (debouncedSearchTerm) params.append("searchTerm", debouncedSearchTerm);
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (selectedLanguage) params.append("language", selectedLanguage);
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      if (sortKey) params.append("sortKey", sortKey);
-      if (sortOrder) params.append("sortOrder", sortOrder);
-      params.append("page", currentPage.toString());
-      params.append("pageSize", pageSize.toString());
-
-      const response = await fetch(
-        `/api/dashboard/sessions?${params.toString()}`
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to fetch sessions: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setSessions(data.sessions || []);
-      setTotalPages(Math.ceil((data.totalSessions || 0) / pageSize));
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "An unknown error occurred"
-      );
-      setSessions([]);
-    } finally {
-      setLoading(false);
+  // tRPC query for sessions
+  const {
+    data: sessionsData,
+    isLoading,
+    error: sessionsError,
+  } = trpc.dashboard.getSessions.useQuery(
+    {
+      search: debouncedSearchTerm || undefined,
+      category: (selectedCategory as any) || undefined,
+      // language: selectedLanguage || undefined, // Not supported in schema yet
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      // sortKey: sortKey || undefined, // Not supported in schema yet
+      // sortOrder: sortOrder || undefined, // Not supported in schema yet
+      page: currentPage,
+      limit: pageSize,
+    },
+    {
+      // Enable the query by default
+      enabled: true,
     }
-  }, [
-    debouncedSearchTerm,
-    selectedCategory,
-    selectedLanguage,
-    startDate,
-    endDate,
-    sortKey,
-    sortOrder,
-    currentPage,
-    pageSize,
-  ]);
+  );
+
+  // Update state when data changes
+  useEffect(() => {
+    if (sessionsData) {
+      setSessions((sessionsData.sessions as any) || []);
+      setTotalPages(sessionsData.pagination.totalPages);
+      setError(null);
+    }
+  }, [sessionsData]);
 
   useEffect(() => {
-    fetchSessions();
-  }, [fetchSessions]);
+    if (sessionsError) {
+      setError(sessionsError.message || "An unknown error occurred");
+      setSessions([]);
+    }
+  }, [sessionsError]);
 
-  useEffect(() => {
-    fetchFilterOptions();
-  }, [fetchFilterOptions]);
+  // tRPC queries handle data fetching automatically
 
   return (
     <div className="space-y-6">
@@ -576,7 +564,7 @@ export default function SessionsPage() {
 
       <SessionList
         sessions={sessions}
-        loading={loading}
+        loading={isLoading}
         error={error}
         resultsHeadingId={resultsHeadingId}
       />

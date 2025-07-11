@@ -71,8 +71,7 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
               : "No timestamp"}
           </span>
           <span>
-            Last message:{" "}
-            {(() => {
+            Last message: {(() => {
               const lastMessage = messages[messages.length - 1];
               return lastMessage.timestamp
                 ? new Date(lastMessage.timestamp).toLocaleString()

@@ -156,13 +156,13 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 
 - **Rate Limiting**: In-memory rate limiting for all authentication endpoints
   - Login: 5 attempts per 15 minutes
-  - Registration: 3 attempts per hour  
+  - Registration: 3 attempts per hour
   - Password Reset: 5 attempts per 15 minutes
 - **Input Validation**: Comprehensive Zod schemas for all user inputs
   - Strong password requirements (12+ chars, uppercase, lowercase, numbers, special chars)
   - Email normalization and validation
   - XSS and SQL injection prevention
-- **Session Security**: 
+- **Session Security**:
   - JWT tokens with 24-hour expiration
   - HttpOnly, Secure, SameSite cookies
   - Company status verification on login

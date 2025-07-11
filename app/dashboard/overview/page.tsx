@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatEnumValue } from "@/lib/format-enums";
+import { trpc } from "@/lib/trpc-client";
 import ModernBarChart from "../../../components/charts/bar-chart";
 import ModernDonutChart from "../../../components/charts/donut-chart";
 import ModernLineChart from "../../../components/charts/line-chart";
@@ -470,7 +471,6 @@ function DashboardContent() {
   const router = useRouter();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
   const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
@@ -478,33 +478,57 @@ function DashboardContent() {
   const dataHelpers = useDashboardData(metrics);
 
   // Function to fetch metrics with optional date range
-  const fetchMetrics = useCallback(
-    async (startDate?: string, endDate?: string, isInitial = false) => {
-      setLoading(true);
-      try {
-        let url = "/api/dashboard/metrics";
-        if (startDate && endDate) {
-          url += `?startDate=${startDate}&endDate=${endDate}`;
-        }
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        setMetrics(data.metrics);
-        setCompany(data.company);
-
-        // Set initial load flag
-        if (isInitial) {
-          setIsInitialLoad(false);
-        }
-      } catch (error) {
-        console.error("Error fetching metrics:", error);
-      } finally {
-        setLoading(false);
-      }
+  // tRPC query for dashboard metrics
+  const {
+    data: overviewData,
+    isLoading: isLoadingMetrics,
+    refetch: refetchMetrics,
+    error: metricsError,
+  } = trpc.dashboard.getOverview.useQuery(
+    {
+      // Add date range parameters when implemented
+      // startDate: dateRange?.startDate,
+      // endDate: dateRange?.endDate,
     },
-    []
+    {
+      enabled: status === "authenticated",
+    }
   );
+
+  // Update state when data changes
+  useEffect(() => {
+    if (overviewData) {
+      // Map overview data to metrics format expected by the component
+      const mappedMetrics = {
+        totalSessions: overviewData.totalSessions,
+        avgMessagesSent: overviewData.avgMessagesSent,
+        sentimentDistribution: overviewData.sentimentDistribution,
+        categoryDistribution: overviewData.categoryDistribution,
+      };
+      setMetrics(mappedMetrics as any); // Type assertion for compatibility
+
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    }
+  }, [overviewData, isInitialLoad]);
+
+  useEffect(() => {
+    if (metricsError) {
+      console.error("Error fetching metrics:", metricsError);
+    }
+  }, [metricsError]);
+
+  // Admin refresh sessions mutation
+  const refreshSessionsMutation = trpc.admin.refreshSessions.useMutation({
+    onSuccess: () => {
+      // Refetch metrics after successful refresh
+      refetchMetrics();
+    },
+    onError: (error) => {
+      alert(`Failed to refresh sessions: ${error.message}`);
+    },
+  });
 
   useEffect(() => {
     // Redirect if not authenticated
@@ -512,38 +536,15 @@ function DashboardContent() {
       router.push("/login");
       return;
     }
-
-    // Fetch metrics and company on mount if authenticated
-    if (status === "authenticated" && isInitialLoad) {
-      fetchMetrics(undefined, undefined, true);
-    }
-  }, [status, router, isInitialLoad, fetchMetrics]);
+    // tRPC queries handle data fetching automatically
+  }, [status, router]);
 
   async function handleRefresh() {
     if (isAuditor) return;
+
+    setRefreshing(true);
     try {
-      setRefreshing(true);
-
-      if (!company?.id) {
-        setRefreshing(false);
-        alert("Cannot refresh: Company ID is missing");
-        return;
-      }
-
-      const res = await fetch("/api/admin/refresh-sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId: company.id }),
-      });
-
-      if (res.ok) {
-        const metricsRes = await fetch("/api/dashboard/metrics");
-        const data = await metricsRes.json();
-        setMetrics(data.metrics);
-      } else {
-        const errorData = await res.json();
-        alert(`Failed to refresh sessions: ${errorData.error}`);
-      }
+      await refreshSessionsMutation.mutateAsync();
     } finally {
       setRefreshing(false);
     }
@@ -553,7 +554,19 @@ function DashboardContent() {
   const loadingState = DashboardLoadingStates({ status });
   if (loadingState) return loadingState;
 
-  if (loading || !metrics || !company) {
+  // Show loading state while data is being fetched
+  if (isLoadingMetrics && !metrics) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!metrics || !company) {
     return <DashboardSkeleton />;
   }
 

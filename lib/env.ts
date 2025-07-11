@@ -81,6 +81,7 @@ export const env = {
 
   // OpenAI
   OPENAI_API_KEY: parseEnvValue(process.env.OPENAI_API_KEY) || "",
+  OPENAI_MOCK_MODE: parseEnvValue(process.env.OPENAI_MOCK_MODE) === "true",
 
   // Scheduler Configuration
   SCHEDULER_ENABLED: parseEnvValue(process.env.SCHEDULER_ENABLED) === "true",
@@ -135,8 +136,14 @@ export function validateEnv(): { valid: boolean; errors: string[] } {
     errors.push("NEXTAUTH_SECRET is required");
   }
 
-  if (!env.OPENAI_API_KEY && env.NODE_ENV === "production") {
-    errors.push("OPENAI_API_KEY is required in production");
+  if (
+    !env.OPENAI_API_KEY &&
+    env.NODE_ENV === "production" &&
+    !env.OPENAI_MOCK_MODE
+  ) {
+    errors.push(
+      "OPENAI_API_KEY is required in production (unless OPENAI_MOCK_MODE is enabled)"
+    );
   }
 
   return {
@@ -174,6 +181,7 @@ export function logEnvConfig(): void {
   console.log(`  NODE_ENV: ${env.NODE_ENV}`);
   console.log(`  NEXTAUTH_URL: ${env.NEXTAUTH_URL}`);
   console.log(`  SCHEDULER_ENABLED: ${env.SCHEDULER_ENABLED}`);
+  console.log(`  OPENAI_MOCK_MODE: ${env.OPENAI_MOCK_MODE}`);
   console.log(`  PORT: ${env.PORT}`);
 
   if (env.SCHEDULER_ENABLED) {
