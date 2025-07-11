@@ -166,7 +166,7 @@ export const authRouter = router({
       }
 
       // Generate cryptographically secure reset token
-      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetToken = crypto.randomBytes(32).toString("hex");
       const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
       await ctx.prisma.user.update({

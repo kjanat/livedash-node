@@ -71,7 +71,10 @@ export class DeploymentOrchestrator {
     this.startTime = Date.now();
 
     try {
-      migrationLogger.startPhase("DEPLOYMENT", `Starting deployment with options: ${JSON.stringify(this.options)}`);
+      migrationLogger.startPhase(
+        "DEPLOYMENT",
+        `Starting deployment with options: ${JSON.stringify(this.options)}`
+      );
 
       // Pre-deployment phase
       if (!this.options.skipPreChecks) {
@@ -97,7 +100,7 @@ export class DeploymentOrchestrator {
       migrationLogger.info("DEPLOYMENT", "Deployment completed successfully", {
         totalDuration,
         downtime,
-        phases: this.executedPhases.length
+        phases: this.executedPhases.length,
       });
 
       return {
@@ -107,10 +110,10 @@ export class DeploymentOrchestrator {
         downtime,
         backupPath,
       };
-
     } catch (error) {
       const totalDuration = Date.now() - this.startTime;
-      const downtime = this.downtimeEnd > 0 ? this.downtimeEnd - this.downtimeStart : 0;
+      const downtime =
+        this.downtimeEnd > 0 ? this.downtimeEnd - this.downtimeStart : 0;
 
       migrationLogger.error("DEPLOYMENT", "Deployment failed", error as Error);
 
@@ -119,7 +122,11 @@ export class DeploymentOrchestrator {
         try {
           await this.performRollback();
         } catch (rollbackError) {
-          migrationLogger.error("ROLLBACK", "Rollback failed", rollbackError as Error);
+          migrationLogger.error(
+            "ROLLBACK",
+            "Rollback failed",
+            rollbackError as Error
+          );
         }
       }
 
@@ -149,7 +156,9 @@ export class DeploymentOrchestrator {
           const result = await envMigration.migrateEnvironment();
 
           if (!result.success) {
-            throw new Error(`Environment migration failed: ${result.errors.join(', ')}`);
+            throw new Error(
+              `Environment migration failed: ${result.errors.join(", ")}`
+            );
           }
         },
       },
@@ -191,7 +200,9 @@ export class DeploymentOrchestrator {
 
           const downtime = this.downtimeEnd - this.downtimeStart;
           if (downtime > this.options.maxDowntime) {
-            throw new Error(`Downtime exceeded maximum allowed: ${downtime}ms > ${this.options.maxDowntime}ms`);
+            throw new Error(
+              `Downtime exceeded maximum allowed: ${downtime}ms > ${this.options.maxDowntime}ms`
+            );
           }
         },
       },
@@ -243,17 +254,25 @@ export class DeploymentOrchestrator {
   }
 
   private async runPreDeploymentChecks(): Promise<void> {
-    migrationLogger.startStep("PRE_CHECKS", "Running pre-deployment validation");
+    migrationLogger.startStep(
+      "PRE_CHECKS",
+      "Running pre-deployment validation"
+    );
 
     const checker = new PreDeploymentChecker();
     const result = await checker.runAllChecks();
 
     if (!result.success) {
-      throw new Error(`Pre-deployment checks failed with ${result.criticalFailures} critical failures`);
+      throw new Error(
+        `Pre-deployment checks failed with ${result.criticalFailures} critical failures`
+      );
     }
 
     if (result.warningCount > 0) {
-      migrationLogger.warn("PRE_CHECKS", `Proceeding with ${result.warningCount} warnings`);
+      migrationLogger.warn(
+        "PRE_CHECKS",
+        `Proceeding with ${result.warningCount} warnings`
+      );
     }
 
     migrationLogger.completeStep("PRE_CHECKS");
@@ -280,11 +299,14 @@ export class DeploymentOrchestrator {
 
   private async executePhase(phase: DeploymentPhase): Promise<void> {
     try {
-      migrationLogger.startStep(phase.name.replace(/\s+/g, '_').toUpperCase(), phase.description);
+      migrationLogger.startStep(
+        phase.name.replace(/\s+/g, "_").toUpperCase(),
+        phase.description
+      );
 
       if (this.options.dryRun) {
         migrationLogger.info("DRY_RUN", `Would execute: ${phase.name}`);
-        await new Promise(resolve => setTimeout(resolve, 100)); // Simulate execution time
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate execution time
       } else {
         await phase.execute();
       }
@@ -297,15 +319,23 @@ export class DeploymentOrchestrator {
         }
       }
 
-      migrationLogger.completeStep(phase.name.replace(/\s+/g, '_').toUpperCase());
-
+      migrationLogger.completeStep(
+        phase.name.replace(/\s+/g, "_").toUpperCase()
+      );
     } catch (error) {
-      migrationLogger.failStep(phase.name.replace(/\s+/g, '_').toUpperCase(), error as Error);
+      migrationLogger.failStep(
+        phase.name.replace(/\s+/g, "_").toUpperCase(),
+        error as Error
+      );
 
       if (phase.critical) {
         throw error;
       } else {
-        migrationLogger.warn("PHASE", `Non-critical phase failed: ${phase.name}`, { error: (error as Error).message });
+        migrationLogger.warn(
+          "PHASE",
+          `Non-critical phase failed: ${phase.name}`,
+          { error: (error as Error).message }
+        );
       }
     }
   }
@@ -322,8 +352,10 @@ export class DeploymentOrchestrator {
         encoding: "utf8",
       });
 
-      migrationLogger.info("DB_MIGRATION", "Database migrations completed successfully");
-
+      migrationLogger.info(
+        "DB_MIGRATION",
+        "Database migrations completed successfully"
+      );
     } catch (error) {
       throw new Error(`Database migration failed: ${(error as Error).message}`);
     }
@@ -335,8 +367,10 @@ export class DeploymentOrchestrator {
     try {
       // This would typically involve running specific rollback migrations
       // For now, we'll log the intent
-      migrationLogger.warn("DB_ROLLBACK", "Database rollback would be performed here");
-
+      migrationLogger.warn(
+        "DB_ROLLBACK",
+        "Database rollback would be performed here"
+      );
     } catch (error) {
       throw new Error(`Database rollback failed: ${(error as Error).message}`);
     }
@@ -354,8 +388,10 @@ export class DeploymentOrchestrator {
         encoding: "utf8",
       });
 
-      migrationLogger.info("CODE_DEPLOY", "Application build completed successfully");
-
+      migrationLogger.info(
+        "CODE_DEPLOY",
+        "Application build completed successfully"
+      );
     } catch (error) {
       throw new Error(`Code deployment failed: ${(error as Error).message}`);
     }
@@ -366,7 +402,7 @@ export class DeploymentOrchestrator {
 
     // In a real deployment, this would restart the actual services
     // For development, we'll simulate the restart
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     migrationLogger.info("SERVICE_RESTART", "Services restarted successfully");
   }
@@ -389,20 +425,29 @@ export class DeploymentOrchestrator {
       const response = await fetch(`${baseUrl}/api/trpc/auth.getSession`);
 
       return response.status === 200 || response.status === 401; // 401 is OK for auth endpoint
-
     } catch (error) {
-      migrationLogger.error("TRPC_TEST", "tRPC endpoint test failed", error as Error);
+      migrationLogger.error(
+        "TRPC_TEST",
+        "tRPC endpoint test failed",
+        error as Error
+      );
       return false;
     }
   }
 
   private async activateBatchProcessing(): Promise<void> {
-    migrationLogger.info("BATCH_ACTIVATION", "Activating batch processing system");
+    migrationLogger.info(
+      "BATCH_ACTIVATION",
+      "Activating batch processing system"
+    );
 
     // Set environment variable to enable batch processing
     process.env.BATCH_PROCESSING_ENABLED = "true";
 
-    migrationLogger.info("BATCH_ACTIVATION", "Batch processing system activated");
+    migrationLogger.info(
+      "BATCH_ACTIVATION",
+      "Batch processing system activated"
+    );
   }
 
   private async testBatchProcessing(): Promise<boolean> {
@@ -412,28 +457,42 @@ export class DeploymentOrchestrator {
       // Test that batch processing components can be imported
       const { BatchProcessor } = await import("../../lib/batchProcessor");
       return BatchProcessor !== undefined;
-
     } catch (error) {
-      migrationLogger.error("BATCH_TEST", "Batch processing test failed", error as Error);
+      migrationLogger.error(
+        "BATCH_TEST",
+        "Batch processing test failed",
+        error as Error
+      );
       return false;
     }
   }
 
   private async runPostDeploymentValidation(): Promise<void> {
-    migrationLogger.info("POST_VALIDATION", "Running post-deployment validation");
+    migrationLogger.info(
+      "POST_VALIDATION",
+      "Running post-deployment validation"
+    );
 
     const healthChecker = new HealthChecker();
     const result = await healthChecker.runHealthChecks();
 
     if (!result.success) {
-      throw new Error(`Post-deployment validation failed: ${result.errors.join(', ')}`);
+      throw new Error(
+        `Post-deployment validation failed: ${result.errors.join(", ")}`
+      );
     }
 
-    migrationLogger.info("POST_VALIDATION", "Post-deployment validation passed");
+    migrationLogger.info(
+      "POST_VALIDATION",
+      "Post-deployment validation passed"
+    );
   }
 
   private async performProgressiveRollout(): Promise<void> {
-    migrationLogger.info("PROGRESSIVE_ROLLOUT", "Starting progressive feature rollout");
+    migrationLogger.info(
+      "PROGRESSIVE_ROLLOUT",
+      "Starting progressive feature rollout"
+    );
 
     // This would implement a gradual rollout strategy
     // For now, we'll just enable all features
@@ -444,20 +503,26 @@ export class DeploymentOrchestrator {
     ];
 
     for (const step of rolloutSteps) {
-      migrationLogger.info("PROGRESSIVE_ROLLOUT", `Enabling ${step.feature} at ${step.percentage}%`);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      migrationLogger.info(
+        "PROGRESSIVE_ROLLOUT",
+        `Enabling ${step.feature} at ${step.percentage}%`
+      );
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
 
-    migrationLogger.info("PROGRESSIVE_ROLLOUT", "Progressive rollout completed");
+    migrationLogger.info(
+      "PROGRESSIVE_ROLLOUT",
+      "Progressive rollout completed"
+    );
   }
 
   private async performRollback(): Promise<void> {
     migrationLogger.warn("ROLLBACK", "Starting deployment rollback");
 
     // Rollback executed phases in reverse order
-    const rollbackPhases = this.phases.filter(p =>
-      this.executedPhases.includes(p.name) && p.rollback
-    ).reverse();
+    const rollbackPhases = this.phases
+      .filter((p) => this.executedPhases.includes(p.name) && p.rollback)
+      .reverse();
 
     for (const phase of rollbackPhases) {
       try {
@@ -466,9 +531,12 @@ export class DeploymentOrchestrator {
         if (phase.rollback) {
           await phase.rollback();
         }
-
       } catch (error) {
-        migrationLogger.error("ROLLBACK", `Rollback failed for ${phase.name}`, error as Error);
+        migrationLogger.error(
+          "ROLLBACK",
+          `Rollback failed for ${phase.name}`,
+          error as Error
+        );
       }
     }
 
@@ -483,7 +551,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const options: Partial<DeploymentOptions> = {};
 
   // Parse command line arguments
-  args.forEach(arg => {
+  args.forEach((arg) => {
     switch (arg) {
       case "--dry-run":
         options.dryRun = true;
@@ -505,10 +573,11 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const orchestrator = new DeploymentOrchestrator(options);
 
-  orchestrator.deploy()
+  orchestrator
+    .deploy()
     .then((result) => {
-      console.log('\n=== DEPLOYMENT RESULTS ===');
-      console.log(`Success: ${result.success ? '✅' : '❌'}`);
+      console.log("\n=== DEPLOYMENT RESULTS ===");
+      console.log(`Success: ${result.success ? "✅" : "❌"}`);
       console.log(`Total Duration: ${result.totalDuration}ms`);
       console.log(`Downtime: ${result.downtime}ms`);
       console.log(`Completed Phases: ${result.completedPhases.length}`);
@@ -525,27 +594,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         console.error(`Error: ${result.error.message}`);
       }
 
-      console.log('\nCompleted Phases:');
-      result.completedPhases.forEach(phase => console.log(`  ✅ ${phase}`));
+      console.log("\nCompleted Phases:");
+      result.completedPhases.forEach((phase) => console.log(`  ✅ ${phase}`));
 
       if (result.success) {
-        console.log('\n🎉 DEPLOYMENT SUCCESSFUL!');
-        console.log('\nNext Steps:');
-        console.log('1. Monitor application logs for any issues');
-        console.log('2. Run post-deployment tests: pnpm migration:test');
-        console.log('3. Verify new features are working correctly');
+        console.log("\n🎉 DEPLOYMENT SUCCESSFUL!");
+        console.log("\nNext Steps:");
+        console.log("1. Monitor application logs for any issues");
+        console.log("2. Run post-deployment tests: pnpm migration:test");
+        console.log("3. Verify new features are working correctly");
       } else {
-        console.log('\n💥 DEPLOYMENT FAILED!');
-        console.log('\nNext Steps:');
-        console.log('1. Check logs for error details');
-        console.log('2. Fix identified issues');
-        console.log('3. Re-run deployment');
+        console.log("\n💥 DEPLOYMENT FAILED!");
+        console.log("\nNext Steps:");
+        console.log("1. Check logs for error details");
+        console.log("2. Fix identified issues");
+        console.log("3. Re-run deployment");
       }
 
       process.exit(result.success ? 0 : 1);
     })
     .catch((error) => {
-      console.error('Deployment orchestration failed:', error);
+      console.error("Deployment orchestration failed:", error);
       process.exit(1);
     });
 }

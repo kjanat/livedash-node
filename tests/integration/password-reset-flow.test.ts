@@ -108,9 +108,15 @@ describe("Password Reset Flow Integration", () => {
       };
 
       // Generate multiple tokens
-      await authRouter.createCaller(ctx).forgotPassword({ email: "test@example.com" });
-      await authRouter.createCaller(ctx).forgotPassword({ email: "test@example.com" });
-      await authRouter.createCaller(ctx).forgotPassword({ email: "test@example.com" });
+      await authRouter
+        .createCaller(ctx)
+        .forgotPassword({ email: "test@example.com" });
+      await authRouter
+        .createCaller(ctx)
+        .forgotPassword({ email: "test@example.com" });
+      await authRouter
+        .createCaller(ctx)
+        .forgotPassword({ email: "test@example.com" });
 
       expect(capturedTokens).toHaveLength(3);
       expect(capturedTokens[0]).not.toBe(capturedTokens[1]);
@@ -118,7 +124,7 @@ describe("Password Reset Flow Integration", () => {
       expect(capturedTokens[0]).not.toBe(capturedTokens[2]);
 
       // All tokens should be properly formatted
-      capturedTokens.forEach(token => {
+      capturedTokens.forEach((token) => {
         expect(token).toHaveLength(64);
         expect(token).toMatch(/^[0-9a-f]{64}$/);
       });
@@ -131,7 +137,7 @@ describe("Password Reset Flow Integration", () => {
       const { authRouter } = await import("../../server/routers/auth");
       const { prisma } = await import("../../lib/prisma");
 
-      const secureToken = crypto.randomBytes(32).toString('hex');
+      const secureToken = crypto.randomBytes(32).toString("hex");
       const futureDate = new Date(Date.now() + 3600000);
 
       const userWithResetToken = {
@@ -146,7 +152,9 @@ describe("Password Reset Flow Integration", () => {
         updatedAt: new Date(),
       };
 
-      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(userWithResetToken);
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(
+        userWithResetToken
+      );
       vi.mocked(prisma.user.update).mockResolvedValueOnce({
         ...userWithResetToken,
         password: "new-hashed-password",
@@ -159,12 +167,10 @@ describe("Password Reset Flow Integration", () => {
         session: null,
       };
 
-      const result = await authRouter
-        .createCaller(ctx)
-        .resetPassword({
-          token: secureToken,
-          password: "NewSecurePassword123!",
-        });
+      const result = await authRouter.createCaller(ctx).resetPassword({
+        token: secureToken,
+        password: "NewSecurePassword123!",
+      });
 
       expect(result.message).toBe("Password reset successfully");
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
@@ -212,7 +218,7 @@ describe("Password Reset Flow Integration", () => {
     it("should demonstrate improvement over weak Math.random() tokens", () => {
       // Generate tokens using both methods
       const secureTokens = Array.from({ length: 100 }, () =>
-        crypto.randomBytes(32).toString('hex')
+        crypto.randomBytes(32).toString("hex")
       );
 
       const weakTokens = Array.from({ length: 100 }, () =>
@@ -220,8 +226,11 @@ describe("Password Reset Flow Integration", () => {
       );
 
       // Secure tokens should be longer
-      const avgSecureLength = secureTokens.reduce((sum, t) => sum + t.length, 0) / secureTokens.length;
-      const avgWeakLength = weakTokens.reduce((sum, t) => sum + t.length, 0) / weakTokens.length;
+      const avgSecureLength =
+        secureTokens.reduce((sum, t) => sum + t.length, 0) /
+        secureTokens.length;
+      const avgWeakLength =
+        weakTokens.reduce((sum, t) => sum + t.length, 0) / weakTokens.length;
 
       expect(avgSecureLength).toBeGreaterThan(avgWeakLength * 4);
 
@@ -230,7 +239,7 @@ describe("Password Reset Flow Integration", () => {
 
       // Weak tokens might have collisions with enough samples
       // but more importantly, they're predictable
-      secureTokens.forEach(token => {
+      secureTokens.forEach((token) => {
         expect(token).toMatch(/^[0-9a-f]{64}$/);
       });
     });

@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Start processing (this will run asynchronously)
-    const _startTime = Date.now();
 
     // Note: We're calling the function but not awaiting it to avoid timeout
     // The processing will continue in the background

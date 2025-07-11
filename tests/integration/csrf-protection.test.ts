@@ -7,7 +7,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { createMocks } from "node-mocks-http";
 import type { NextRequest } from "next/server";
-import { csrfProtectionMiddleware, csrfTokenMiddleware } from "../../middleware/csrfProtection";
+import {
+  csrfProtectionMiddleware,
+  csrfTokenMiddleware,
+} from "../../middleware/csrfProtection";
 import { generateCSRFToken } from "../../lib/csrf";
 
 describe("CSRF Protection Integration", () => {

@@ -78,6 +78,49 @@ export class InMemoryRateLimiter {
   }
 
   /**
+   * Check rate limit with custom parameters
+   */
+  async check(
+    key: string,
+    maxAttempts: number,
+    windowMs: number
+  ): Promise<{
+    success: boolean;
+    remaining: number;
+  }> {
+    const now = Date.now();
+    let attempt = this.attempts.get(key);
+
+    if (!attempt || now > attempt.resetTime) {
+      // Initialize or reset the attempt
+      attempt = {
+        count: 1,
+        resetTime: now + windowMs,
+      };
+      this.attempts.set(key, attempt);
+      return {
+        success: true,
+        remaining: maxAttempts - 1,
+      };
+    }
+
+    if (attempt.count >= maxAttempts) {
+      return {
+        success: false,
+        remaining: 0,
+      };
+    }
+
+    attempt.count++;
+    this.attempts.set(key, attempt);
+
+    return {
+      success: true,
+      remaining: maxAttempts - attempt.count,
+    };
+  }
+
+  /**
    * Clean up resources
    */
   destroy(): void {
@@ -86,6 +129,16 @@ export class InMemoryRateLimiter {
     }
   }
 }
+
+/**
+ * Default rate limiter instance for general use
+ */
+export const rateLimiter = new InMemoryRateLimiter({
+  maxAttempts: 100,
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  maxEntries: 10000,
+  cleanupIntervalMs: 5 * 60 * 1000, // 5 minutes
+});
 
 /**
  * Extract client IP address from request headers

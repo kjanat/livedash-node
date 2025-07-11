@@ -19,11 +19,13 @@ describe("Security Headers Configuration", () => {
       expect(headers.length).toBeGreaterThan(0);
 
       // Find the main security headers configuration
-      const securityConfig = headers.find(h => h.source === "/(.*)" && h.headers.length > 1);
+      const securityConfig = headers.find(
+        (h) => h.source === "/(.*)" && h.headers.length > 1
+      );
       expect(securityConfig).toBeDefined();
 
       if (securityConfig) {
-        const headerNames = securityConfig.headers.map(h => h.key);
+        const headerNames = securityConfig.headers.map((h) => h.key);
 
         // Check required security headers are present
         expect(headerNames).toContain("X-Content-Type-Options");
@@ -40,15 +42,21 @@ describe("Security Headers Configuration", () => {
       const nextConfig = await import("../../next.config.js");
       const headers = await nextConfig.default.headers();
 
-      const securityConfig = headers.find(h => h.source === "/(.*)" && h.headers.length > 1);
+      const securityConfig = headers.find(
+        (h) => h.source === "/(.*)" && h.headers.length > 1
+      );
 
       if (securityConfig) {
-        const headerMap = new Map(securityConfig.headers.map(h => [h.key, h.value]));
+        const headerMap = new Map(
+          securityConfig.headers.map((h) => [h.key, h.value])
+        );
 
         expect(headerMap.get("X-Content-Type-Options")).toBe("nosniff");
         expect(headerMap.get("X-Frame-Options")).toBe("DENY");
         expect(headerMap.get("X-XSS-Protection")).toBe("1; mode=block");
-        expect(headerMap.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+        expect(headerMap.get("Referrer-Policy")).toBe(
+          "strict-origin-when-cross-origin"
+        );
         expect(headerMap.get("X-DNS-Prefetch-Control")).toBe("off");
 
         // CSP should contain essential directives
@@ -73,21 +81,25 @@ describe("Security Headers Configuration", () => {
       process.env.NODE_ENV = "production";
 
       const prodHeaders = await nextConfig.default.headers();
-      const hstsConfig = prodHeaders.find(h =>
-        h.headers.some(header => header.key === "Strict-Transport-Security")
+      const hstsConfig = prodHeaders.find((h) =>
+        h.headers.some((header) => header.key === "Strict-Transport-Security")
       );
 
       if (hstsConfig) {
-        const hstsHeader = hstsConfig.headers.find(h => h.key === "Strict-Transport-Security");
-        expect(hstsHeader?.value).toBe("max-age=31536000; includeSubDomains; preload");
+        const hstsHeader = hstsConfig.headers.find(
+          (h) => h.key === "Strict-Transport-Security"
+        );
+        expect(hstsHeader?.value).toBe(
+          "max-age=31536000; includeSubDomains; preload"
+        );
       }
 
       // Test development environment
       process.env.NODE_ENV = "development";
 
       const devHeaders = await nextConfig.default.headers();
-      const devHstsConfig = devHeaders.find(h =>
-        h.headers.some(header => header.key === "Strict-Transport-Security")
+      const devHstsConfig = devHeaders.find((h) =>
+        h.headers.some((header) => header.key === "Strict-Transport-Security")
       );
 
       // In development, HSTS header array should be empty
@@ -105,8 +117,12 @@ describe("Security Headers Configuration", () => {
       const nextConfig = await import("../../next.config.js");
       const headers = await nextConfig.default.headers();
 
-      const securityConfig = headers.find(h => h.source === "/(.*)" && h.headers.length > 1);
-      const cspHeader = securityConfig?.headers.find(h => h.key === "Content-Security-Policy");
+      const securityConfig = headers.find(
+        (h) => h.source === "/(.*)" && h.headers.length > 1
+      );
+      const cspHeader = securityConfig?.headers.find(
+        (h) => h.key === "Content-Security-Policy"
+      );
 
       expect(cspHeader).toBeDefined();
 
@@ -122,7 +138,9 @@ describe("Security Headers Configuration", () => {
         expect(csp).toContain("upgrade-insecure-requests");
 
         // Next.js compatibility directives
-        expect(csp).toContain("script-src 'self' 'unsafe-eval' 'unsafe-inline'");
+        expect(csp).toContain(
+          "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
+        );
         expect(csp).toContain("style-src 'self' 'unsafe-inline'");
         expect(csp).toContain("img-src 'self' data: https:");
         expect(csp).toContain("font-src 'self' data:");
@@ -136,8 +154,12 @@ describe("Security Headers Configuration", () => {
       const nextConfig = await import("../../next.config.js");
       const headers = await nextConfig.default.headers();
 
-      const securityConfig = headers.find(h => h.source === "/(.*)" && h.headers.length > 1);
-      const permissionsHeader = securityConfig?.headers.find(h => h.key === "Permissions-Policy");
+      const securityConfig = headers.find(
+        (h) => h.source === "/(.*)" && h.headers.length > 1
+      );
+      const permissionsHeader = securityConfig?.headers.find(
+        (h) => h.key === "Permissions-Policy"
+      );
 
       expect(permissionsHeader).toBeDefined();
 

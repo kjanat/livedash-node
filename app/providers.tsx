@@ -2,9 +2,9 @@
 
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
+import { CSRFProvider } from "@/components/providers/CSRFProvider";
 import { TRPCProvider } from "@/components/providers/TRPCProvider";
 import { ThemeProvider } from "@/components/theme-provider";
-import { CSRFProvider } from "@/components/providers/CSRFProvider";
 
 export function Providers({ children }: { children: ReactNode }) {
   // Including error handling and refetch interval for better user experience

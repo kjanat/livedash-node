@@ -39,21 +39,39 @@ export class HealthChecker {
     const checks: HealthCheckResult[] = [];
 
     try {
-      migrationLogger.startStep("HEALTH_CHECKS", "Running comprehensive health checks");
+      migrationLogger.startStep(
+        "HEALTH_CHECKS",
+        "Running comprehensive health checks"
+      );
 
       // Define all health checks
       const healthChecks = [
-        { name: "Database Connection", fn: () => this.checkDatabaseConnection() },
+        {
+          name: "Database Connection",
+          fn: () => this.checkDatabaseConnection(),
+        },
         { name: "Database Schema", fn: () => this.checkDatabaseSchema() },
         { name: "tRPC Endpoints", fn: () => this.checkTRPCEndpoints() },
-        { name: "Batch Processing System", fn: () => this.checkBatchProcessingSystem() },
+        {
+          name: "Batch Processing System",
+          fn: () => this.checkBatchProcessingSystem(),
+        },
         { name: "OpenAI API Access", fn: () => this.checkOpenAIAccess() },
-        { name: "Environment Configuration", fn: () => this.checkEnvironmentConfiguration() },
+        {
+          name: "Environment Configuration",
+          fn: () => this.checkEnvironmentConfiguration(),
+        },
         { name: "File System Access", fn: () => this.checkFileSystemAccess() },
         { name: "Memory Usage", fn: () => this.checkMemoryUsage() },
         { name: "CPU Usage", fn: () => this.checkCPUUsage() },
-        { name: "Application Performance", fn: () => this.checkApplicationPerformance() },
-        { name: "Security Configuration", fn: () => this.checkSecurityConfiguration() },
+        {
+          name: "Application Performance",
+          fn: () => this.checkApplicationPerformance(),
+        },
+        {
+          name: "Security Configuration",
+          fn: () => this.checkSecurityConfiguration(),
+        },
         { name: "Logging System", fn: () => this.checkLoggingSystem() },
       ];
 
@@ -64,8 +82,10 @@ export class HealthChecker {
       }
 
       const totalDuration = Date.now() - startTime;
-      const failedChecks = checks.filter(c => !c.success).length;
-      const score = Math.round(((checks.length - failedChecks) / checks.length) * 100);
+      const failedChecks = checks.filter((c) => !c.success).length;
+      const score = Math.round(
+        ((checks.length - failedChecks) / checks.length) * 100
+      );
 
       const result: SystemHealthResult = {
         success: failedChecks === 0,
@@ -78,13 +98,19 @@ export class HealthChecker {
       if (result.success) {
         migrationLogger.completeStep("HEALTH_CHECKS");
       } else {
-        migrationLogger.failStep("HEALTH_CHECKS", new Error(`${failedChecks} health checks failed`));
+        migrationLogger.failStep(
+          "HEALTH_CHECKS",
+          new Error(`${failedChecks} health checks failed`)
+        );
       }
 
       return result;
-
     } catch (error) {
-      migrationLogger.error("HEALTH_CHECKS", "Health check system failed", error as Error);
+      migrationLogger.error(
+        "HEALTH_CHECKS",
+        "Health check system failed",
+        error as Error
+      );
       throw error;
     } finally {
       await this.prisma.$disconnect();
@@ -93,7 +119,11 @@ export class HealthChecker {
 
   private async runSingleHealthCheck(
     name: string,
-    checkFn: () => Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }>
+    checkFn: () => Promise<{
+      success: boolean;
+      details?: Record<string, unknown>;
+      error?: Error;
+    }>
   ): Promise<HealthCheckResult> {
     const startTime = Date.now();
 
@@ -112,16 +142,26 @@ export class HealthChecker {
       };
 
       if (result.success) {
-        migrationLogger.debug("HEALTH_CHECK", `✅ ${name} passed`, { duration, details: result.details });
+        migrationLogger.debug("HEALTH_CHECK", `✅ ${name} passed`, {
+          duration,
+          details: result.details,
+        });
       } else {
-        migrationLogger.warn("HEALTH_CHECK", `❌ ${name} failed`, { duration, error: result.error?.message });
+        migrationLogger.warn("HEALTH_CHECK", `❌ ${name} failed`, {
+          duration,
+          error: result.error?.message,
+        });
       }
 
       return healthResult;
-
     } catch (error) {
       const duration = Date.now() - startTime;
-      migrationLogger.error("HEALTH_CHECK", `💥 ${name} crashed`, error as Error, { duration });
+      migrationLogger.error(
+        "HEALTH_CHECK",
+        `💥 ${name} crashed`,
+        error as Error,
+        { duration }
+      );
 
       return {
         name,
@@ -132,7 +172,11 @@ export class HealthChecker {
     }
   }
 
-  private async checkDatabaseConnection(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkDatabaseConnection(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const startTime = Date.now();
       await this.prisma.$queryRaw`SELECT 1`;
@@ -149,19 +193,22 @@ export class HealthChecker {
         success: connectionTests.length === 3,
         details: {
           queryTime,
-          connectionPoolTest: "passed"
-        }
+          connectionPoolTest: "passed",
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkDatabaseSchema(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkDatabaseSchema(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Check critical tables
       const tableChecks = await Promise.allSettled([
@@ -172,35 +219,40 @@ export class HealthChecker {
         this.prisma.aIProcessingRequest.findFirst(),
       ]);
 
-      const failedTables = tableChecks.filter(result => result.status === 'rejected').length;
+      const failedTables = tableChecks.filter(
+        (result) => result.status === "rejected"
+      ).length;
 
       // Check for critical indexes
-      const indexCheck = await this.prisma.$queryRaw<{count: string}[]>`
+      const indexCheck = await this.prisma.$queryRaw<{ count: string }[]>`
         SELECT COUNT(*) as count
         FROM pg_indexes 
         WHERE tablename IN ('Session', 'AIProcessingRequest', 'AIBatchRequest')
       `;
 
-      const indexCount = parseInt(indexCheck[0]?.count || '0');
+      const indexCount = parseInt(indexCheck[0]?.count || "0");
 
       return {
         success: failedTables === 0,
         details: {
           accessibleTables: tableChecks.length - failedTables,
           totalTables: tableChecks.length,
-          indexes: indexCount
-        }
+          indexes: indexCount,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkTRPCEndpoints(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkTRPCEndpoints(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
@@ -224,8 +276,11 @@ export class HealthChecker {
       );
 
       const successfulEndpoints = results.filter(
-        result => result.status === 'fulfilled' &&
-        (result.value.status === 200 || result.value.status === 401 || result.value.status === 403)
+        (result) =>
+          result.status === "fulfilled" &&
+          (result.value.status === 200 ||
+            result.value.status === 401 ||
+            result.value.status === 403)
       ).length;
 
       return {
@@ -233,28 +288,32 @@ export class HealthChecker {
         details: {
           testedEndpoints: endpoints.length,
           successfulEndpoints,
-          endpoints: results.map(r =>
-            r.status === 'fulfilled' ? r.value : { error: r.reason.message }
-          )
-        }
+          endpoints: results.map((r) =>
+            r.status === "fulfilled" ? r.value : { error: r.reason.message }
+          ),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkBatchProcessingSystem(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkBatchProcessingSystem(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Check batch processing components
       const batchEnabled = process.env.BATCH_PROCESSING_ENABLED === "true";
 
       // Test database components
       const batchRequestsCount = await this.prisma.aIBatchRequest.count();
-      const processingRequestsCount = await this.prisma.aIProcessingRequest.count();
+      const processingRequestsCount =
+        await this.prisma.aIProcessingRequest.count();
 
       // Check if batch processor can be imported
       let batchProcessorAvailable = false;
@@ -267,7 +326,7 @@ export class HealthChecker {
 
       // Check batch status distribution
       const batchStatuses = await this.prisma.aIBatchRequest.groupBy({
-        by: ['status'],
+        by: ["status"],
         _count: { status: true },
       });
 
@@ -279,20 +338,23 @@ export class HealthChecker {
           batchRequests: batchRequestsCount,
           processingRequests: processingRequestsCount,
           statusDistribution: Object.fromEntries(
-            batchStatuses.map(s => [s.status, s._count.status])
-          )
-        }
+            batchStatuses.map((s) => [s.status, s._count.status])
+          ),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkOpenAIAccess(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkOpenAIAccess(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const apiKey = process.env.OPENAI_API_KEY;
       const mockMode = process.env.OPENAI_MOCK_MODE === "true";
@@ -300,21 +362,21 @@ export class HealthChecker {
       if (mockMode) {
         return {
           success: true,
-          details: { mode: "mock", available: true }
+          details: { mode: "mock", available: true },
         };
       }
 
       if (!apiKey) {
         return {
           success: false,
-          error: new Error("OPENAI_API_KEY not configured")
+          error: new Error("OPENAI_API_KEY not configured"),
         };
       }
 
       // Test API with a simple request
       const response = await fetch("https://api.openai.com/v1/models", {
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
@@ -326,35 +388,36 @@ export class HealthChecker {
           mode: "live",
           available: response.ok,
           status: response.status,
-          responseTime: responseTime
-        }
+          responseTime: responseTime,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkEnvironmentConfiguration(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkEnvironmentConfiguration(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
-      const requiredVars = [
-        "DATABASE_URL",
-        "NEXTAUTH_SECRET",
-        "NEXTAUTH_URL"
-      ];
+      const requiredVars = ["DATABASE_URL", "NEXTAUTH_SECRET", "NEXTAUTH_URL"];
 
-      const missingVars = requiredVars.filter(varName => !process.env[varName]);
+      const missingVars = requiredVars.filter(
+        (varName) => !process.env[varName]
+      );
 
       const newVars = [
         "BATCH_PROCESSING_ENABLED",
         "TRPC_ENDPOINT_URL",
-        "BATCH_CREATE_INTERVAL"
+        "BATCH_CREATE_INTERVAL",
       ];
 
-      const missingNewVars = newVars.filter(varName => !process.env[varName]);
+      const missingNewVars = newVars.filter((varName) => !process.env[varName]);
 
       return {
         success: missingVars.length === 0,
@@ -364,19 +427,22 @@ export class HealthChecker {
           newVarsPresent: newVars.length - missingNewVars.length,
           totalNewVars: newVars.length,
           missingRequired: missingVars,
-          missingNew: missingNewVars
-        }
+          missingNew: missingNewVars,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkFileSystemAccess(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkFileSystemAccess(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
@@ -392,7 +458,9 @@ export class HealthChecker {
       } catch (error) {
         return {
           success: false,
-          error: new Error(`Cannot write to logs directory: ${(error as Error).message}`)
+          error: new Error(
+            `Cannot write to logs directory: ${(error as Error).message}`
+          ),
         };
       }
 
@@ -402,7 +470,7 @@ export class HealthChecker {
       } catch (error) {
         return {
           success: false,
-          error: new Error("Cannot access package.json")
+          error: new Error("Cannot access package.json"),
         };
       }
 
@@ -410,19 +478,22 @@ export class HealthChecker {
         success: true,
         details: {
           logsWritable: true,
-          packageJsonReadable: true
-        }
+          packageJsonReadable: true,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkMemoryUsage(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkMemoryUsage(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const memUsage = process.memoryUsage();
       const usedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
@@ -439,19 +510,22 @@ export class HealthChecker {
           heapUsed: usedMB,
           heapTotal: totalMB,
           external: externalMB,
-          usagePercent: Math.round(usagePercent)
-        }
+          usagePercent: Math.round(usagePercent),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkCPUUsage(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkCPUUsage(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const cpuUsage = process.cpuUsage();
       const userTime = cpuUsage.user / 1000; // Convert to milliseconds
@@ -459,7 +533,7 @@ export class HealthChecker {
 
       // Simple CPU health check - process should be responsive
       const startTime = Date.now();
-      await new Promise(resolve => setTimeout(resolve, 10));
+      await new Promise((resolve) => setTimeout(resolve, 10));
       const responseTime = Date.now() - startTime;
 
       return {
@@ -467,19 +541,22 @@ export class HealthChecker {
         details: {
           userTime,
           systemTime,
-          responseTime
-        }
+          responseTime,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkApplicationPerformance(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkApplicationPerformance(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test database query performance
       const dbStartTime = Date.now();
@@ -502,19 +579,22 @@ export class HealthChecker {
         details: {
           simpleQueryTime: dbQueryTime,
           complexQueryTime: complexQueryTime,
-          performanceGood: dbQueryTime < 100 && complexQueryTime < 500
-        }
+          performanceGood: dbQueryTime < 100 && complexQueryTime < 500,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkSecurityConfiguration(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkSecurityConfiguration(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const securityIssues: string[] = [];
 
@@ -542,19 +622,22 @@ export class HealthChecker {
         details: {
           securityIssues,
           hasSecret: !!secret,
-          rateLimitConfigured: !!process.env.RATE_LIMIT_WINDOW_MS
-        }
+          rateLimitConfigured: !!process.env.RATE_LIMIT_WINDOW_MS,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async checkLoggingSystem(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async checkLoggingSystem(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test if logging works
       const testMessage = `Health check test ${Date.now()}`;
@@ -571,14 +654,13 @@ export class HealthChecker {
         success: logsDirExists,
         details: {
           logsDirExists,
-          testMessageLogged: true
-        }
+          testMessageLogged: true,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
@@ -590,26 +672,31 @@ export class HealthChecker {
     const report = `
 # System Health Report
 
-**Overall Status**: ${result.success ? '✅ Healthy' : '❌ Unhealthy'}
+**Overall Status**: ${result.success ? "✅ Healthy" : "❌ Unhealthy"}
 **Health Score**: ${result.score}/100
 **Total Duration**: ${result.totalDuration}ms
 **Failed Checks**: ${result.failedChecks}/${result.checks.length}
 
 ## Health Check Results
 
-${result.checks.map(check => `
+${result.checks
+  .map(
+    (check) => `
 ### ${check.name}
-- **Status**: ${check.success ? '✅ Pass' : '❌ Fail'}
+- **Status**: ${check.success ? "✅ Pass" : "❌ Fail"}
 - **Duration**: ${check.duration}ms
-${check.details ? `- **Details**: ${JSON.stringify(check.details, null, 2)}` : ''}
-${check.error ? `- **Error**: ${check.error.message}` : ''}
-`).join('')}
+${check.details ? `- **Details**: ${JSON.stringify(check.details, null, 2)}` : ""}
+${check.error ? `- **Error**: ${check.error.message}` : ""}
+`
+  )
+  .join("")}
 
 ## Summary
 
-${result.success ?
-  '🎉 All health checks passed! The system is operating normally.' :
-  `⚠️ ${result.failedChecks} health check(s) failed. Please review and address the issues above.`
+${
+  result.success
+    ? "🎉 All health checks passed! The system is operating normally."
+    : `⚠️ ${result.failedChecks} health check(s) failed. Please review and address the issues above.`
 }
 
 ---
@@ -626,17 +713,22 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const generateReport = process.argv.includes("--report");
 
-  healthChecker.runHealthChecks()
+  healthChecker
+    .runHealthChecks()
     .then((result) => {
-      console.log('\n=== SYSTEM HEALTH CHECK RESULTS ===');
-      console.log(`Overall Health: ${result.success ? '✅ Healthy' : '❌ Unhealthy'}`);
+      console.log("\n=== SYSTEM HEALTH CHECK RESULTS ===");
+      console.log(
+        `Overall Health: ${result.success ? "✅ Healthy" : "❌ Unhealthy"}`
+      );
       console.log(`Health Score: ${result.score}/100`);
       console.log(`Total Duration: ${result.totalDuration}ms`);
-      console.log(`Failed Checks: ${result.failedChecks}/${result.checks.length}`);
+      console.log(
+        `Failed Checks: ${result.failedChecks}/${result.checks.length}`
+      );
 
-      console.log('\n=== INDIVIDUAL CHECKS ===');
+      console.log("\n=== INDIVIDUAL CHECKS ===");
       for (const check of result.checks) {
-        const status = check.success ? '✅' : '❌';
+        const status = check.success ? "✅" : "❌";
         console.log(`${status} ${check.name} (${check.duration}ms)`);
 
         if (check.details) {
@@ -659,7 +751,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(result.success ? 0 : 1);
     })
     .catch((error) => {
-      console.error('Health checks failed:', error);
+      console.error("Health checks failed:", error);
       process.exit(1);
     });
 }

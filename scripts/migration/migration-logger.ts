@@ -92,8 +92,8 @@ Working Directory: ${process.cwd()}
     // Console output with colors
     const colors = {
       [LogLevel.DEBUG]: "\x1b[36m", // Cyan
-      [LogLevel.INFO]: "\x1b[32m",  // Green
-      [LogLevel.WARN]: "\x1b[33m",  // Yellow
+      [LogLevel.INFO]: "\x1b[32m", // Green
+      [LogLevel.WARN]: "\x1b[33m", // Yellow
       [LogLevel.ERROR]: "\x1b[31m", // Red
       [LogLevel.CRITICAL]: "\x1b[35m", // Magenta
     };
@@ -121,24 +121,50 @@ Working Directory: ${process.cwd()}
     appendFileSync(this.logFile, logLine);
   }
 
-  debug(category: string, message: string, data?: Record<string, unknown>): void {
+  debug(
+    category: string,
+    message: string,
+    data?: Record<string, unknown>
+  ): void {
     this.writeLog(this.createLogEntry(LogLevel.DEBUG, category, message, data));
   }
 
-  info(category: string, message: string, data?: Record<string, unknown>): void {
+  info(
+    category: string,
+    message: string,
+    data?: Record<string, unknown>
+  ): void {
     this.writeLog(this.createLogEntry(LogLevel.INFO, category, message, data));
   }
 
-  warn(category: string, message: string, data?: Record<string, unknown>): void {
+  warn(
+    category: string,
+    message: string,
+    data?: Record<string, unknown>
+  ): void {
     this.writeLog(this.createLogEntry(LogLevel.WARN, category, message, data));
   }
 
-  error(category: string, message: string, error?: Error, data?: Record<string, unknown>): void {
-    this.writeLog(this.createLogEntry(LogLevel.ERROR, category, message, data, error));
+  error(
+    category: string,
+    message: string,
+    error?: Error,
+    data?: Record<string, unknown>
+  ): void {
+    this.writeLog(
+      this.createLogEntry(LogLevel.ERROR, category, message, data, error)
+    );
   }
 
-  critical(category: string, message: string, error?: Error, data?: Record<string, unknown>): void {
-    this.writeLog(this.createLogEntry(LogLevel.CRITICAL, category, message, data, error));
+  critical(
+    category: string,
+    message: string,
+    error?: Error,
+    data?: Record<string, unknown>
+  ): void {
+    this.writeLog(
+      this.createLogEntry(LogLevel.CRITICAL, category, message, data, error)
+    );
   }
 
   /**
@@ -159,7 +185,9 @@ Working Directory: ${process.cwd()}
       return result;
     } catch (error) {
       const duration = Date.now() - startTime;
-      this.error(category, `Failed ${operationName}`, error as Error, { duration });
+      this.error(category, `Failed ${operationName}`, error as Error, {
+        duration,
+      });
       throw error;
     }
   }
@@ -167,21 +195,35 @@ Working Directory: ${process.cwd()}
   /**
    * Create a progress tracker for long-running operations
    */
-  createProgressTracker(category: string, total: number, operationName: string) {
+  createProgressTracker(
+    category: string,
+    total: number,
+    operationName: string
+  ) {
     let completed = 0;
 
     return {
       increment: (count: number = 1) => {
         completed += count;
         const percentage = Math.round((completed / total) * 100);
-        this.info(category, `${operationName} progress: ${completed}/${total} (${percentage}%)`);
+        this.info(
+          category,
+          `${operationName} progress: ${completed}/${total} (${percentage}%)`
+        );
       },
       complete: () => {
-        this.info(category, `${operationName} completed: ${completed}/${total}`);
+        this.info(
+          category,
+          `${operationName} completed: ${completed}/${total}`
+        );
       },
       fail: (error: Error) => {
-        this.error(category, `${operationName} failed at ${completed}/${total}`, error);
-      }
+        this.error(
+          category,
+          `${operationName} failed at ${completed}/${total}`,
+          error
+        );
+      },
     };
   }
 
@@ -204,7 +246,9 @@ Working Directory: ${process.cwd()}
    * Log migration phase transitions
    */
   startPhase(phaseName: string, description?: string): void {
-    this.info("MIGRATION_PHASE", `📋 Starting Phase: ${phaseName}`, { description });
+    this.info("MIGRATION_PHASE", `📋 Starting Phase: ${phaseName}`, {
+      description,
+    });
   }
 
   completePhase(phaseName: string): void {

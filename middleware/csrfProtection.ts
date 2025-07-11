@@ -68,7 +68,10 @@ export async function csrfProtectionMiddleware(
   const validation = await CSRFProtection.validateRequest(request);
 
   if (!validation.valid) {
-    console.warn(`CSRF validation failed for ${method} ${pathname}:`, validation.error);
+    console.warn(
+      `CSRF validation failed for ${method} ${pathname}:`,
+      validation.error
+    );
 
     return NextResponse.json(
       {
@@ -100,11 +103,7 @@ export function generateCSRFTokenResponse(): NextResponse {
   });
 
   // Set the CSRF token cookie
-  response.cookies.set(
-    cookie.name,
-    cookie.value,
-    cookie.options
-  );
+  response.cookies.set(cookie.name, cookie.value, cookie.options);
 
   return response;
 }

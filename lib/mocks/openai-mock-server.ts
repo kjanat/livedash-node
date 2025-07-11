@@ -150,7 +150,7 @@ class OpenAIMockServer {
     } else {
       // Use simple response generators for other types
       const detectedType = this.extractProcessingType(
-        systemMessage + " " + userMessage
+        `${systemMessage} ${userMessage}`
       );
       response = MOCK_RESPONSE_GENERATORS[detectedType](userMessage);
       processingType = detectedType;

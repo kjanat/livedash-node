@@ -346,7 +346,9 @@ session4,user4,en,US,192.168.1.4,positive,5,2024-01-15T10:00:00Z,2024-01-15T10:3
   describe("Batch Import Performance", () => {
     it("should handle large CSV files efficiently", async () => {
       // Generate large CSV with 1000 rows
-      const largeCSVRows = ["sessionId,userId,language,country,ipAddress,sentiment,messagesSent,startTime,endTime,escalated,forwardedHr,summary"];
+      const largeCSVRows = [
+        "sessionId,userId,language,country,ipAddress,sentiment,messagesSent,startTime,endTime,escalated,forwardedHr,summary",
+      ];
 
       for (let i = 0; i < 1000; i++) {
         largeCSVRows.push(

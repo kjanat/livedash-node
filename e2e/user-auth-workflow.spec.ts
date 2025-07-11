@@ -47,7 +47,7 @@ async function fillLoginForm(page: Page, email: string, password: string) {
 
 async function waitForDashboard(page: Page) {
   await expect(page).toHaveURL(/\/dashboard/);
-  await expect(page.locator('h1')).toContainText('Dashboard');
+  await expect(page.locator("h1")).toContainText("Dashboard");
 }
 
 test.describe("User Authentication Workflow", () => {
@@ -57,7 +57,9 @@ test.describe("User Authentication Workflow", () => {
   });
 
   test.describe("Company Registration Flow", () => {
-    test("should allow new company registration with admin user", async ({ page }) => {
+    test("should allow new company registration with admin user", async ({
+      page,
+    }) => {
       // Navigate to registration page
       await page.click('[data-testid="register-link"]');
       await expect(page).toHaveURL(/\/register/);
@@ -70,9 +72,9 @@ test.describe("User Authentication Workflow", () => {
 
       // Should redirect to login page with success message
       await expect(page).toHaveURL(/\/login/);
-      await expect(page.locator('[data-testid="success-message"]')).toContainText(
-        "Registration successful"
-      );
+      await expect(
+        page.locator('[data-testid="success-message"]')
+      ).toContainText("Registration successful");
     });
 
     test("should validate registration form fields", async ({ page }) => {
@@ -82,15 +84,15 @@ test.describe("User Authentication Workflow", () => {
       await page.click('[data-testid="register-button"]');
 
       // Should show validation errors
-      await expect(page.locator('[data-testid="company-name-error"]')).toContainText(
-        "Company name is required"
-      );
-      await expect(page.locator('[data-testid="admin-email-error"]')).toContainText(
-        "Email is required"
-      );
-      await expect(page.locator('[data-testid="admin-password-error"]')).toContainText(
-        "Password must be at least 12 characters"
-      );
+      await expect(
+        page.locator('[data-testid="company-name-error"]')
+      ).toContainText("Company name is required");
+      await expect(
+        page.locator('[data-testid="admin-email-error"]')
+      ).toContainText("Email is required");
+      await expect(
+        page.locator('[data-testid="admin-password-error"]')
+      ).toContainText("Password must be at least 12 characters");
     });
 
     test("should enforce password strength requirements", async ({ page }) => {
@@ -100,15 +102,17 @@ test.describe("User Authentication Workflow", () => {
       await page.fill('[data-testid="admin-password"]', "weakpass");
       await page.blur('[data-testid="admin-password"]');
 
-      await expect(page.locator('[data-testid="admin-password-error"]')).toContainText(
-        "Password must contain at least one uppercase letter"
-      );
+      await expect(
+        page.locator('[data-testid="admin-password-error"]')
+      ).toContainText("Password must contain at least one uppercase letter");
 
       // Test strong password
       await page.fill('[data-testid="admin-password"]', "StrongPassword123!");
       await page.blur('[data-testid="admin-password"]');
 
-      await expect(page.locator('[data-testid="admin-password-error"]')).toHaveCount(0);
+      await expect(
+        page.locator('[data-testid="admin-password-error"]')
+      ).toHaveCount(0);
     });
   });
 
@@ -119,9 +123,15 @@ test.describe("User Authentication Workflow", () => {
       await page.goto("http://localhost:3000/login");
     });
 
-    test("should allow successful login with valid credentials", async ({ page }) => {
+    test("should allow successful login with valid credentials", async ({
+      page,
+    }) => {
       // Fill login form
-      await fillLoginForm(page, testCompany.adminEmail, testCompany.adminPassword);
+      await fillLoginForm(
+        page,
+        testCompany.adminEmail,
+        testCompany.adminPassword
+      );
 
       // Submit login
       await page.click('[data-testid="login-button"]');
@@ -159,9 +169,9 @@ test.describe("User Authentication Workflow", () => {
       await expect(page.locator('[data-testid="email-error"]')).toContainText(
         "Email is required"
       );
-      await expect(page.locator('[data-testid="password-error"]')).toContainText(
-        "Password is required"
-      );
+      await expect(
+        page.locator('[data-testid="password-error"]')
+      ).toContainText("Password is required");
     });
 
     test("should handle rate limiting", async ({ page }) => {
@@ -183,19 +193,29 @@ test.describe("User Authentication Workflow", () => {
     test.beforeEach(async ({ page }) => {
       // Login before each test
       await page.goto("http://localhost:3000/login");
-      await fillLoginForm(page, testCompany.adminEmail, testCompany.adminPassword);
+      await fillLoginForm(
+        page,
+        testCompany.adminEmail,
+        testCompany.adminPassword
+      );
       await page.click('[data-testid="login-button"]');
       await waitForDashboard(page);
     });
 
     test("should display dashboard overview correctly", async ({ page }) => {
       // Check main dashboard elements
-      await expect(page.locator('h1')).toContainText('Dashboard Overview');
+      await expect(page.locator("h1")).toContainText("Dashboard Overview");
 
       // Check metric cards
-      await expect(page.locator('[data-testid="total-sessions-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="avg-sentiment-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="escalation-rate-card"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="total-sessions-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="avg-sentiment-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="escalation-rate-card"]')
+      ).toBeVisible();
 
       // Check navigation sidebar
       await expect(page.locator('[data-testid="nav-overview"]')).toBeVisible();
@@ -207,17 +227,17 @@ test.describe("User Authentication Workflow", () => {
       // Navigate to Sessions
       await page.click('[data-testid="nav-sessions"]');
       await expect(page).toHaveURL(/\/dashboard\/sessions/);
-      await expect(page.locator('h1')).toContainText('Sessions');
+      await expect(page.locator("h1")).toContainText("Sessions");
 
       // Navigate to Users
       await page.click('[data-testid="nav-users"]');
       await expect(page).toHaveURL(/\/dashboard\/users/);
-      await expect(page.locator('h1')).toContainText('Users');
+      await expect(page.locator("h1")).toContainText("Users");
 
       // Navigate back to Overview
       await page.click('[data-testid="nav-overview"]');
       await expect(page).toHaveURL(/\/dashboard\/overview/);
-      await expect(page.locator('h1')).toContainText('Dashboard Overview');
+      await expect(page.locator("h1")).toContainText("Dashboard Overview");
     });
 
     test("should handle unauthorized access attempts", async ({ page }) => {
@@ -225,10 +245,14 @@ test.describe("User Authentication Workflow", () => {
       await page.goto("http://localhost:3000/dashboard/users");
 
       // If user is not admin, should show appropriate message or redirect
-      const isAdmin = await page.locator('[data-testid="admin-panel"]').isVisible();
+      const isAdmin = await page
+        .locator('[data-testid="admin-panel"]')
+        .isVisible();
 
       if (!isAdmin) {
-        await expect(page.locator('[data-testid="access-denied"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="access-denied"]')
+        ).toBeVisible();
       }
     });
   });
@@ -237,7 +261,11 @@ test.describe("User Authentication Workflow", () => {
     test.beforeEach(async ({ page }) => {
       // Login before each test
       await page.goto("http://localhost:3000/login");
-      await fillLoginForm(page, testCompany.adminEmail, testCompany.adminPassword);
+      await fillLoginForm(
+        page,
+        testCompany.adminEmail,
+        testCompany.adminPassword
+      );
       await page.click('[data-testid="login-button"]');
       await waitForDashboard(page);
     });
@@ -290,7 +318,11 @@ test.describe("User Authentication Workflow", () => {
     test.beforeEach(async ({ page }) => {
       // Login before each test
       await page.goto("http://localhost:3000/login");
-      await fillLoginForm(page, testCompany.adminEmail, testCompany.adminPassword);
+      await fillLoginForm(
+        page,
+        testCompany.adminEmail,
+        testCompany.adminPassword
+      );
       await page.click('[data-testid="login-button"]');
       await waitForDashboard(page);
     });
@@ -306,9 +338,9 @@ test.describe("User Authentication Workflow", () => {
       await expect(page).toHaveURL(/\/login/);
 
       // Should show logout success message
-      await expect(page.locator('[data-testid="success-message"]')).toContainText(
-        "Logged out successfully"
-      );
+      await expect(
+        page.locator('[data-testid="success-message"]')
+      ).toContainText("Logged out successfully");
 
       // Try to access protected page
       await page.goto("http://localhost:3000/dashboard");
@@ -319,7 +351,9 @@ test.describe("User Authentication Workflow", () => {
 
     test("should clear session data on logout", async ({ page }) => {
       // Check that session data exists
-      const sessionBefore = await page.evaluate(() => localStorage.getItem("session"));
+      const sessionBefore = await page.evaluate(() =>
+        localStorage.getItem("session")
+      );
       expect(sessionBefore).toBeTruthy();
 
       // Logout
@@ -327,7 +361,9 @@ test.describe("User Authentication Workflow", () => {
       await page.click('[data-testid="logout-button"]');
 
       // Check that session data is cleared
-      const sessionAfter = await page.evaluate(() => localStorage.getItem("session"));
+      const sessionAfter = await page.evaluate(() =>
+        localStorage.getItem("session")
+      );
       expect(sessionAfter).toBeFalsy();
     });
   });
@@ -345,9 +381,9 @@ test.describe("User Authentication Workflow", () => {
       await page.click('[data-testid="reset-button"]');
 
       // Should show success message
-      await expect(page.locator('[data-testid="success-message"]')).toContainText(
-        "Password reset email sent"
-      );
+      await expect(
+        page.locator('[data-testid="success-message"]')
+      ).toContainText("Password reset email sent");
     });
 
     test("should validate email format in password reset", async ({ page }) => {
@@ -371,7 +407,11 @@ test.describe("User Authentication Workflow", () => {
 
       // Test login flow on mobile
       await page.goto("http://localhost:3000/login");
-      await fillLoginForm(page, testCompany.adminEmail, testCompany.adminPassword);
+      await fillLoginForm(
+        page,
+        testCompany.adminEmail,
+        testCompany.adminPassword
+      );
       await page.click('[data-testid="login-button"]');
 
       // Should work on mobile
@@ -420,10 +460,9 @@ test.describe("User Authentication Workflow", () => {
         "aria-label",
         "Password"
       );
-      await expect(page.locator('[data-testid="login-button"]')).toHaveAttribute(
-        "role",
-        "button"
-      );
+      await expect(
+        page.locator('[data-testid="login-button"]')
+      ).toHaveAttribute("role", "button");
     });
   });
 });

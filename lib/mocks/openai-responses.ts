@@ -204,7 +204,7 @@ export function generateSessionAnalysisResponse(
   const sentences = text.split(/[.!?]+/).filter((s) => s.trim().length > 0);
   let summary = sentences[0]?.trim() || text.substring(0, 100);
   if (summary.length > 150) {
-    summary = summary.substring(0, 147) + "...";
+    summary = `${summary.substring(0, 147)}...`;
   }
   if (summary.length < 10) {
     summary = "User inquiry regarding company policies";
@@ -360,7 +360,7 @@ export function generateSummaryResponse(text: string): MockChatCompletion {
   let summary = sentences[0]?.trim() || text.substring(0, 100);
 
   if (summary.length > 150) {
-    summary = summary.substring(0, 147) + "...";
+    summary = `${summary.substring(0, 147)}...`;
   }
 
   const promptTokens = Math.ceil(text.length / 4);

@@ -12,14 +12,14 @@ describe("Password Reset Token Security", () => {
 
   describe("Token Generation Security Properties", () => {
     it("should generate tokens with 64 characters (32 bytes as hex)", () => {
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString("hex");
       expect(token).toHaveLength(64);
     });
 
     it("should generate unique tokens on each call", () => {
-      const token1 = crypto.randomBytes(32).toString('hex');
-      const token2 = crypto.randomBytes(32).toString('hex');
-      const token3 = crypto.randomBytes(32).toString('hex');
+      const token1 = crypto.randomBytes(32).toString("hex");
+      const token2 = crypto.randomBytes(32).toString("hex");
+      const token3 = crypto.randomBytes(32).toString("hex");
 
       expect(token1).not.toBe(token2);
       expect(token2).not.toBe(token3);
@@ -32,7 +32,7 @@ describe("Password Reset Token Security", () => {
 
       // Generate multiple tokens to check for patterns
       for (let i = 0; i < numTokens; i++) {
-        const token = crypto.randomBytes(32).toString('hex');
+        const token = crypto.randomBytes(32).toString("hex");
         tokens.add(token);
       }
 
@@ -41,7 +41,7 @@ describe("Password Reset Token Security", () => {
     });
 
     it("should generate tokens with hex characters only", () => {
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString("hex");
       const hexPattern = /^[0-9a-f]+$/;
       expect(token).toMatch(hexPattern);
     });
@@ -49,7 +49,7 @@ describe("Password Reset Token Security", () => {
     it("should have sufficient entropy to prevent brute force attacks", () => {
       // 32 bytes = 256 bits of entropy
       // This provides 2^256 possible combinations
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = crypto.randomBytes(32).toString("hex");
 
       // Verify we have the expected length for 256-bit security
       expect(token).toHaveLength(64);
@@ -66,7 +66,7 @@ describe("Password Reset Token Security", () => {
 
     it("should be significantly more secure than Math.random() approach", () => {
       // Generate tokens using both methods for comparison
-      const secureToken = crypto.randomBytes(32).toString('hex');
+      const secureToken = crypto.randomBytes(32).toString("hex");
       const weakToken = Math.random().toString(36).substring(2, 15);
 
       // Secure token should be much longer
@@ -88,7 +88,7 @@ describe("Password Reset Token Security", () => {
 
       // Generate many tokens to test collision resistance
       for (let i = 0; i < iterations; i++) {
-        const token = crypto.randomBytes(32).toString('hex');
+        const token = crypto.randomBytes(32).toString("hex");
         expect(tokens.has(token)).toBe(false); // No collisions
         tokens.add(token);
       }
@@ -103,7 +103,7 @@ describe("Password Reset Token Security", () => {
 
       // Generate 1000 tokens
       for (let i = 0; i < 1000; i++) {
-        crypto.randomBytes(32).toString('hex');
+        crypto.randomBytes(32).toString("hex");
       }
 
       const endTime = Date.now();
@@ -117,7 +117,7 @@ describe("Password Reset Token Security", () => {
   describe("Token Format Validation", () => {
     it("should always produce lowercase hex", () => {
       for (let i = 0; i < 10; i++) {
-        const token = crypto.randomBytes(32).toString('hex');
+        const token = crypto.randomBytes(32).toString("hex");
         expect(token).toBe(token.toLowerCase());
         expect(token).toMatch(/^[0-9a-f]{64}$/);
       }
@@ -127,15 +127,15 @@ describe("Password Reset Token Security", () => {
       const tokens = [];
 
       for (let i = 0; i < 100; i++) {
-        tokens.push(crypto.randomBytes(32).toString('hex'));
+        tokens.push(crypto.randomBytes(32).toString("hex"));
       }
 
       // Check that tokens don't all start with same character
-      const firstChars = new Set(tokens.map(t => t[0]));
+      const firstChars = new Set(tokens.map((t) => t[0]));
       expect(firstChars.size).toBeGreaterThan(1);
 
       // Check that we don't have obvious patterns like all starting with '0'
-      const zeroStart = tokens.filter(t => t.startsWith('0')).length;
+      const zeroStart = tokens.filter((t) => t.startsWith("0")).length;
       expect(zeroStart).toBeLessThan(tokens.length * 0.8); // Should be roughly 1/16
     });
   });

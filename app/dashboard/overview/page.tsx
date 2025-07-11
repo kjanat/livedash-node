@@ -470,7 +470,7 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
+  const [company, _setCompany] = useState<Company | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
@@ -499,13 +499,20 @@ function DashboardContent() {
   useEffect(() => {
     if (overviewData) {
       // Map overview data to metrics format expected by the component
-      const mappedMetrics = {
+      const mappedMetrics: Partial<MetricsResult> = {
         totalSessions: overviewData.totalSessions,
-        avgMessagesSent: overviewData.avgMessagesSent,
+        avgSessionsPerDay: 0, // Will be computed properly later
+        avgSessionLength: null,
+        days: { data: [], labels: [] },
+        languages: { data: [], labels: [] },
+        categories: { data: [], labels: [] },
+        countries: { data: [], labels: [] },
+        belowThresholdCount: 0,
+        // Map the available data
         sentimentDistribution: overviewData.sentimentDistribution,
         categoryDistribution: overviewData.categoryDistribution,
       };
-      setMetrics(mappedMetrics as any); // Type assertion for compatibility
+      setMetrics(mappedMetrics as MetricsResult);
 
       if (isInitialLoad) {
         setIsInitialLoad(false);

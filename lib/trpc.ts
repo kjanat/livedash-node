@@ -13,9 +13,9 @@ import { getServerSession } from "next-auth/next";
 import superjson from "superjson";
 import type { z } from "zod";
 import { authOptions } from "./auth";
+import { CSRFProtection } from "./csrf";
 import { prisma } from "./prisma";
 import { validateInput } from "./validation";
-import { CSRFProtection } from "./csrf";
 
 /**
  * Create context for tRPC requests
@@ -169,7 +169,7 @@ const enforceCSRFProtection = t.middleware(async ({ ctx, next }) => {
     method: request.method,
     headers: request.headers,
     body: request.body,
-  }) as any;
+  }) as unknown as NextRequest;
 
   // Validate CSRF token
   const validation = await CSRFProtection.validateRequest(nextRequest);
@@ -198,7 +198,12 @@ export const rateLimitedProcedure = publicProcedure.use(
 /**
  * CSRF-protected procedures for state-changing operations
  */
-export const csrfProtectedProcedure = publicProcedure.use(enforceCSRFProtection);
-export const csrfProtectedAuthProcedure = csrfProtectedProcedure.use(enforceUserIsAuthed);
-export const csrfProtectedCompanyProcedure = csrfProtectedProcedure.use(enforceCompanyAccess);
-export const csrfProtectedAdminProcedure = csrfProtectedProcedure.use(enforceAdminAccess);
+export const csrfProtectedProcedure = publicProcedure.use(
+  enforceCSRFProtection
+);
+export const csrfProtectedAuthProcedure =
+  csrfProtectedProcedure.use(enforceUserIsAuthed);
+export const csrfProtectedCompanyProcedure =
+  csrfProtectedProcedure.use(enforceCompanyAccess);
+export const csrfProtectedAdminProcedure =
+  csrfProtectedProcedure.use(enforceAdminAccess);

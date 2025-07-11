@@ -1,0 +1,706 @@
+check-refactocheck-refactored-pipeline-status.ts:97:1 suppressions/unused ━━━━━━━━━━━━━━━━━━red-pipeline-status.ts:97:1 suppressions/unused ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━
+
+   ! S ! Suppressuppression coion commentmment has n has no effo effect. Rect. Removeemove the s the suppreuppression ossion or make r make sure yosure you are suppressing the correct rule.
+  
+u are suppressing the correct rule.
+  
+        95 │ }
+    96 │ 
+  > 97 95 │ }
+    96 │ 
+  > 97 │ // b│ // biome-iome-ignore ignore lint/compllint/complexity/exity/noExcesnoExcessiveCognitiveComplexity: Main orsiveCognitiveComplexity: Main orchestrchestrationation func function tion - comp- complexitylexity is a is appropppropriateriate for for its  its scopescope
+    
+       │    │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    98 │ as  98 │ async fync functiounction checkRefan checkRefactoredctoredPipelineStatus() {
+    99 │   tryPipelineStatus() {
+    99 │   try {
+  
+ {
+  
+
+a
+app/api/pp/api/adminadmin/audit/audit-logs-logs/route/route.ts.ts::12:23 12:23 lint/colint/complexity/nomplexity/noExcessiExcessiveCognitivveCognitiveCompleeComplexity xity ━━━━━━━━━━━━━━━━━━
+
+  × Ex━━
+
+  × Excessive cocessive complexitmplexity of 17y of 17 detected  detected (max: 15)(max: 15).
+  
+.
+  
+       10 │ } 10 │ } from  from "../../"../../../../li../../lib/secub/securityAuditrityAuditLogger"Logger";
+    ;
+    11 │ 
+ 11 │ 
+  > 12 │ e > 12 │ export axport async function GET(request: Nextsync function GET(request: NextRequesRequest) {
+t) {
+       │       │                                     ^         ^^^
+    ^^
+    13 │   13 │   try {
+   try {
+    14 │  14 │     con    const sessiost session = awn = await getSait getServerSeerverSession(autssion(authOptiohOptions);
+  
+ns);
+  
+  i Please  i Please refac refactor this ftor this function unction to reducto reduce its ce its complexiomplexity score fty score from 17 rom 17 to the maxto the max allowe allowed complexd complexity 15.
+ity 15.
+  
+
+ap  
+
+app/api/admip/api/admin/securn/security-monitity-monitoring/thoring/threat-anreat-analysis/ralysis/route.tsoute.ts:1:1 as:1:1 assist/source/organizeImports  FIXABLsist/source/organizeImports  FIXABLE  E  ━━━━━━━━━━━━━━━━━━
+
+  × T━━
+
+  × The imporhe imports and ts and exports arexports are not se not sorted.
+  
+  > 1 │ import orted.
+  
+  > 1 │ import { type{ type NextR NextRequestequest, NextResp, NextResponse }onse } from  from "next/ser"next/server";
+ver";
+      │ ^      │ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    2 ^
+    2 │ impo│ import { getrt { getServerSServerSessionession } from  } from "next-"next-auth";
+ auth";
+    3 │    3 │ import import { z } f{ z } from "zorom "zod";
+  
+d";
+  
+  i Sa  i Safe fix: Orfe fix: Organize Iganize Imports (Bmports (Biome)
+  iome)
+  
+
+      8       8   8 │     securityAuditLogger,
+      8 │     securityAuditLogger,
+      9     9   9 │   }9 │   } from  from "@/lib/sec"@/lib/securityAurityAuditLoggeuditLogger";
+  r";
+     10     │ - imp   10     │ - impoort·{rt·{·secur·securityMonitoityMonitoring,·ring,·type·SecurityMetrics,·type·Aletype·SecurityMetrics,·type·AlertTypertType·}·fro·}·from·"@/lib/sm·"@/lib/securiecurityMonittyMonitoring";
+oring";
+               10 │    10 │ + impo+ import·{·typrt·{·type·Alere·AlertType,·type·SecurityMetrics,·setType,·type·SecurityMetrics,·securitycurityMonitoMonitoring·}ring·}·from·"@/l·from·"@/lib/secib/securityMonurityMonitorinitoring";
+     g";
+     11  11 11  11 │   
+   │   
+     12    12  12 │   const threatAnalysisSchema = z.o12 │   const threatAnalysisSchema = z.object(bject({
+  {
+  
+
+app/ap
+
+app/api/admii/admin/securn/security-monitoity-monitoring/thring/threat-anareat-analysis/rlysis/route.ts foute.ts format ormat ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━━━━━━━━━━━
+
+  × Formatter woul  × Formatter would have printed the following content:
+  
+d have printed the following content:
+  
+      8   8 │         8   8 │     securityAuditLogger,
+      9   9 │   } fr  securityAuditLogger,
+      9   9 │   } from "@/om "@/lib/selib/securitcurityAudiyAuditLoggtLogger";
+er";
+     1     10     │ -0     │ - impor import·{·set·{·securityMocurityMonitornitoring,·typing,·type·Sece·SecurityMeturityMetrics,·rics,·type·Altype·AlertTypertType·}·fe·}·from·"@rom·"@/lib/s/lib/securityMoecurityMonitoringnitoring";
+   ";
+         10       10 │ + im│ + import·{
+port·{
+                11 │ +   11 │ + ··secu··securityMonirityMonitoringtoring,
+     ,
+         12     12 │ + ··ty│ + ··type·Secpe·SecurityMeurityMetrics,
+ trics,
+               13 │   13 │ + ··ty+ ··type·Alertpe·AlertType,
+Type,
+                14 │ +  14 │ + }·from· }·from·"@/lib"@/lib/securit/securityMonityMonitoring";
+oring";
+     11      11  15 │  15 │   
+     12  16 │   c  
+     12  16 │   const tonst threatAhreatAnalysisScnalysisSchema = z.hema = z.objectobject({
+ ({
+  
+
+ 
+
+app/aapp/api/csrf-tpi/csrf-token/rooken/route.ts:ute.ts:8:13 8:13 lint/corrlint/correctnessectness/noUnus/noUnusedImportedImports  FIXs  FIXABLABLE  ━━━━━━━━━━━E  ━━━━━━━━━━━━━━━━
+
+  × This import is unused.
+  
+  ━━━━━
+
+  × This import is unused.
+  
+     6 │   6 │  */
+   */
+     7     7 │ 
+   > 8│ 
+   > 8 │ imp │ import tyort type { NextRequest } from "nextpe { NextRequest } from "next/serve/server";
+   r";
+       │         │                   ^^^^^^^^^^^^^^^
+     9 │ imp  ^^^^^^^^^^^^^^^
+     9 │ import {ort { genera generateCSRFToteCSRFTokenRespkenResponse onse } from "} from "../../../../../middleware/csrfProtection"../middleware/csrfProtection";
+    ;
+    10 │ 
+ 10 │ 
+  
+  i U 
+  i Unused imponused imports mirts might be thght be the resule result of an it of an incomplncomplete reete refactorifactoring.
+  
+  ng.
+  
+  i Unsafei Unsafe fix: R fix: Remove themove the unusee unused impord imports.
+  
+ts.
+  
+     1    │ -     1    │ - /**
+     2    │ - ·*·CSRF·Token·AP /**
+     2    │ - ·*·CSRF·Token·API·EndpI·Endpoint
+ oint
+     3        3    │ - ·*│ - ·*
+     4 
+     4    │ - ·*·This·endpoint·pro   │ - ·*·This·endpoint·provides·CSvides·CSRF·tokRF·tokens·toens·to·clients·clients·for·s·for·secure·ecure·form·submissions.
+     5    │form·submissions.
+     5    │ - ·*· - ·*·It·genIt·generates·a·erates·a·new·tokennew·token·and·set·and·sets·it·as·it·as·an·HTs·an·HTTP-only·TP-only·cookiecookie.
+     .
+     6    │ - 6    │ - ·*/
+  ·*/
+     7       7    │ - 
+ │ - 
+     8     8    │ -    │ - import·import·type·{·Ntype·{·NextReqextRequest·}·uest·}·from·"nexfrom·"next/servt/server";
+  er";
+        1      1 │ + /* │ + /**
+       *
+        2 │ + 2 │ + ·*·C ·*·CSRF·ToSRF·Token·API·ken·API·EndpoiEndpoint
+    nt
+        3 │     3 │ + ·*
+ + ·*
+        4       4 │ + ·*· │ + ·*·This·eThis·endpoint·ndpoint·providprovides·CSRFes·CSRF·token·tokens·to·cls·to·clients·ients·for·secufor·secure·forre·form·submim·submissionsssions.
+      .
+        5 │   5 │ + ·*·It·+ ·*·It·generagenerates·a·tes·a·new·toknew·token·anden·and·sets·it·sets·it·as·a·as·an·HTTP-on·HTTP-only·cooknly·cookie.
+  ie.
+        6      6 │ + ·*/ │ + ·*/
+     
+        7 │ +   7 │ + 
+     
+     9  8 │  9  8 │   impo  import { gert { generatenerateCSRFTokeCSRFTokenResponResponse } from "../../../middleware/csrfProtecnse } from "../../../middleware/csrfProtection";
+  tion";
+    10    10  9 │   
+  9 │   
+  
+
+app/
+
+app/api/dashbapi/dashboard/moard/metrics/roetrics/route.tsute.ts::109:63109:63 lint/co lint/complexitmplexity/noExcesy/noExcessiveCogsiveCognitiveConitiveComplexity mplexity ━━━━━━━━━━━━━━━━━━━━
+
+  ×
+
+  × Excessi Excessive compve complexity oflexity of 18 det 18 detected (maected (max: 15).x: 15).
+  
+
+  
+      108 │   108 │   // Con  // Convert Pvert Prisma serisma sessionsssions to Chat to ChatSessioSession[] typen[] type for s for sessionMeessionMetrics
+trics
+  > 109   > 109 │   co│   const chatnst chatSessioSessions: Chans: ChatSessiotSession[] = prn[] = prismaSeismaSessions.ssions.map((ps)map((ps) => {
+  => {
+               │     │                                                                                                                        ^^^
+  ^^^
+    110 │   110 │     /     // Get qu/ Get questionestions for ts for this sehis session ossion or empty r empty array
+array
+    111     111 │     │     const qconst questionuestions = ques = questionsBystionsBySessioSession[ps.idn[ps.id] || [] || [];
+  
+];
+  
+  i Pl  i Please refease refactor tactor this functhis function to ion to reduce ireduce its complets complexity sxity score frcore from 18 tom 18 to the maxo the max allowe allowed compled complexity 15xity 15.
+  
+
+a.
+  
+
+app/apipp/api/dashb/dashboard/seoard/session-fssion-filter-opilter-options/rtions/route.toute.ts:1:s:1:10 lin10 lint/correctt/correctness/nness/noUnusedImoUnusedImports ports  FIXABLE FIXABLE  ━━━  ━━━━━━━━━━━━━━━━━
+
+  × 
+
+  × SeveraSeveral of thesl of these impoe imports are rts are unused.unused.
+  
+ 
+  
+  > 1 │ i > 1 │ import mport { type { type NextReNextRequest, Nquest, NextResextResponse } ponse } from "nfrom "next/seext/server";
+ rver";
+      │      │                  ^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^
+   ^^^^
+    2 │ imp 2 │ import { ort { getServegetServerSessirSession } froon } from "nextm "next-auth/n-auth/next";
+ ext";
+    3 │    3 │ import import { auth{ authOptions Options } fro} from "../.m "../../../.././../../lib/aulib/auth";
+th";
+  
+  i   
+  i Unused imUnused imports miports might be tght be the reshe result of an inult of an incomplete refactoring.
+  
+  i Unsafe fix: Remocomplete refactoring.
+  
+  i Unsafe fix: Remove the ve the unusedunused imports imports.
+  
+.
+  
+    1 │     1 │ import·{·type·NextRequest,·NextResimport·{·type·NextRequest,·NextResponse·ponse·}·from}·from·"next/s·"next/server";
+erver";
+      │       │                   --------------------------------    ----                                                 
+
+app/api/dashboard/session/[id]/               
+
+app/api/dashboard/session/[id]/route.troute.tss:5:23:5:23 lint/ lint/complexitycomplexity/noExc/noExcessiveCogessiveCognitivenitiveComplexity ━━━━━━━━━━
+
+  × EComplexity ━━━━━━━━━━
+
+  × Excessivxcessive comple complexity exity of 19 deteof 19 detected (cted (max: 15).max: 15).
+  
+
+  
+       3 │ impo 3 │ import tyrt type { Chape { ChatSesstSession } ion } from ".from "../../../../../../.././../../lib/typelib/types";
+   s";
+    4 │ 
+ 4 │ 
+  > 5 │   > 5 │ export export async async functionfunction GET(
+  GET(
+      │       │                                     ^       ^^^
+   ^^
+    6 │    6 │   _request_request: Next: NextRequestRequest,
+    ,
+    7 │   { 7 │   { params params }: { p}: { params: arams: Promise<Promise<{ id: { id: strinstring }> }
+g }> }
+  
+  i Please refactor this function to reduce its complexity score from 19   
+  i Please refactor this function to reduce its complexity score from 19 to the max to the max allowedallowed complexi complexity 15.
+  
+
+app/dashboard/audit-logs/paty 15.
+  
+
+app/dashboard/audit-logs/page.tsxge.tsx:3:1 as:3:1 assist/source/organizeImports  FIXABLE  sist/source/organizeImports  FIXABLE  ━━━━━━━━━━━━━━━━━━━━
+
+  × The imports and exports a━━━━━━━━
+
+  × The imports and exports are not sorre not sorted.
+  ted.
+  
+
+    1 │     1 │ "use client";
+    2 │ 
+  > 3 │ impo"use client";
+    2 │ 
+  > 3 │ import { frt { formatDormatDistanistanceToNow } fceToNow } from "drom "date-fate-fns";
+ ns";
+      │     │ ^^^^^^^ ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^
+    4     4 │ impo│ import { usrt { useSessieSession } fron } from "neom "next-auth/xt-auth/react";react";
+    5 │ 
+    5 │ imporimport { useEt { useEffect,ffect, useSta useState, usete, useCallbackCallback } fro } from "react";m "react";
+  
+  i
+  
+  i Safe f Safe fix: Organizeix: Organize Impor Imports (Biomets (Biome)
+  
+)
+  
+            3   3 │   import { formatDistanceT3   3 │   import { formatDistanceToNow } oNow } from "from "date-fns"date-fns";
+      4;
+      4   4 │    4 │   impor  import { useSt { useSessioession } fron } from "nexm "next-auth/t-auth/react";react";
+      5
+      5     │ -     │ - impo import·{·urt·{·useEffecseEffect,·useState,·useCallback·}·ft,·useState,·useCallback·}·from·"react";
+          5 │ + improm·"react";
+          5 │ + import·{·ort·{·useCaluseCallback,lback,·useEffe·useEffect,·usct,·useState·eState·}·from}·from·"react";·"react";
+    
+      6   6 │  6   6 │   imp   import { Alort { Alert, ert, AlertDeAlertDescriptioscription } fn } from "..rom "../../..//../../componencomponents/uits/ui/alert"/alert";
+      ;
+      7   7 7   7 │   imp│   import { Bort { Badge } fadge } from "../rom "../../../../../componecomponents/ui/bnts/ui/badge";
+adge";
+  
+  
+
+
+app/app/dashboardashboard/audit-d/audit-logs/pagelogs/page.tsx.tsx:222:15:222:15 lint/a11y/noLab lint/a11y/noLabelWitelWithoutConhoutControl trol ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━━━
+
+  × A 
+  × A form laform label mustbel must be assoc be associated wiated with an inith an input.
+  
+put.
+  
+    22    220 │           <div className="g0 │           <div className="grid grrid grid-colid-cols-1 md:gs-1 md:grid-colsrid-cols-2 lg:gr-2 lg:grid-colsid-cols-3 gap--3 gap-4">
+  4">
+    221   221 │      │                   <div>
+ <div>
+  > 22  > 222 │     2 │                    <     <labellabel class className="Name="text-sm text-sm font-mefont-medium">dium">Event TyEvent Type</lpe</label>
+  abel>
+        │       │                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ^^^^
+    223 │   223 │                            <Selec <Select
+    t
+    224 │   224 │                               value={value={filterfilters.eventTys.eventType}
+  
+ pe}
+  
+  i Consid i Consider addinger adding a `for` o a `for` or `htmlFor` attribute to the label element r `htmlFor` attribute to the label element or moving tor moving the input elemhe input element to insent to inside the laide the label element.bel element.
+  
+
+ap
+  
+
+app/dashbop/dashboard/audiard/audit-logs/page.tsxt-logs/page.tsx:244:15:244:15 lint/a11y/noLabelWithoutControl lint/a11y/noLabelWithoutControl ━ ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × A form label must be associated wi━━━━━━━━━━━
+
+  × A form label must be associated with an inputh an input.
+  
+t.
+  
+    243    243 │             <div>
+  > 244 │    │             <div>
+  > 244 │                           <label cl<label classNamassName="text-e="text-sm font-sm font-mediummedium">Outcom">Outcome</labee</label>
+     l>
+        │     │                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    245
+    245 │       │                      <Sel  <Select
+    ect
+    246 │   246 │                             valu  value={filte={filters.ouers.outcome}tcome}
+  
+  i
+  
+  i Conside Consider addinr adding a `forg a `for` or `htmlFor` attribute to the label elem` or `htmlFor` attribute to the label element or ent or movingmoving the in the input elemeput element to insnt to inside theide the label e label element.
+lement.
+  
+
+ap  
+
+app/dashboap/dashboard/audird/audit-logs/pt-logs/page.tsage.tsxx:264:15:264:15 lint/a11y/noLabelWithoutControl  lint/a11y/noLabelWithoutControl ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × ━━
+
+  × A form laA form label mubel must be ast be associatessociated withd with an inpu an input.
+  
+t.
+  
+    263     263 │             <div>
+  > 264 │    │             <div>
+  > 264 │                     <     <label label classNameclassName="text-s="text-sm fontm font-mediu-medium">Severm">Severity</laity</label>
+   bel>
+        │     │                       ^       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ^^^
+    265 │   265 │                           <Select
+    266 │               <Select
+    266 │                 valu  value={file={filters.sters.severity}everity}
+  
+  
+  
+  i Consii Consider adding der adding a `for`a `for` or `ht or `htmlFor` atmlFor` attribute tribute to the labto the label eleel element or mment or moving toving the inputhe input element element to insid to inside the le the label element.
+  
+
+app/dashboard/audit-logs/page.tsxabel element.
+  
+
+app/dashboard/audit-logs/page.tsx:284:15:284:15 lint/a11y/noLabelWithoutControl  lint/a11y/noLabelWithoutControl ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × A 
+
+  × A form lform label must babel must be assoe associated wiciated with an th an input.
+ input.
+  
+ 
+    283    283 │             <div>
+  > 284 │    │             <div>
+  > 284 │                           <labe<label classNal className="texme="text-sm font-sm font-mediumt-medium">Star">Start Date</t Date</label>
+label>
+              │       │                       ^^^^^^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ^^^
+    285 │   285 │                            <Inpu <Input
+    286t
+    286 │     │                        t      type="datype="datetime-etime-local"
+local"
+  
+  i  
+  i Consid Consider addiner adding a `for` g a `for` or `htmlFor `htmlFor` attor` attribute tribute to the labo the label eleel element orment or moving  moving the inputthe input elemen element to insit to inside the lde the label elabel element.
+ement.
+  
+
+ap  
+
+app/dashp/dashboard/sboard/sessionessions/[id]/s/[id]/page.tsxpage.tsx:26:25 li:26:25 lint/complexity/noExcessiveCognitiveComplexity nt/complexity/noExcessiveCognitiveComplexity ━━━━━━━━━━━━━━━━
+
+  × ━━━━
+
+  × ExcessExcessive comive complexity of 19 detected (max: 15).
+  plexity of 19 detected (max: 15).
+  
+
+    24 │     24 │ import type { ChatSession } from ".import type { ChatSession } from "../../../../../../lib/t./../lib/types";
+ ypes";
+    25 │   25 │ 
+  > 2 
+  > 26 │ expo6 │ export defrt default funault function Sction SessionVessionViewPagiewPage() {
+e() {
+       │       │                                                ^  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    27 │   const params = useParams();
+    28 │
+    27 │   const params = useParams();
+    28 │   con   const roust router = uter = useRouter(); // Initialize useRouter(); // Initialize useRouter
+seRouter
+  
+  
+   i  i PleaPlease rese refactor tfactor this funhis function ction to redto reduce ituce its comps complexity score lexity score from 19 from 19 to the mato the max allowx allowed complexed complexity 15.
+  
+ity 15.
+  
+
+
+app/papp/platformlatform/settings//settings/page.tsxpage.tsx:227:21 lint/:227:21 lint/nursery/useUniqueElementIds ━━━━━━━━━━nursery/useUniqueElementIds ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+━━━━━
+
+
+  ×   × id atid attribute should tribute should not benot be a sta a static string tic string literaliteral. Generl. Generate unate unique IDs ique IDs using using useId().useId().
+  
+
+  
+    225 │       225 │                   <div>
+    226 │                     <div>
+    226 │                                 <L    <Label habel htmlFor="namtmlFor="name">Name">Name</Labele</Label>
+  >>
+  > 227 │   227 │                                        <Input
+ <Input
+              │       │                                   ^^^^^^ ^^^^^^
+  > 228
+  > 228 │     │                       id="name                   id="name"
+    "
+         .     ...
+  >..
+  > 233 │     233 │                                     pl     placeholaceholder="Youder="Your namer name"
+  > 23"
+  > 234 │     4 │                                /     />
+     >
+        │       │                                    ^^
+     ^^
+    235 │  235 │                                 </d    </div>
+    iv>
+    236 │ 236 │                                 <div    <div>
+  
+>
+  
+  i I  i In Reacn React, if yt, if you hardcoou hardcode IDsde IDs and use  and use the compothe component munent multiple tltiple times, it imes, it can lecan lead to dupad to duplicate Ilicate IDs in the DOM. Instead, generate unique IDs using useIDs in the DOM. Instead, generate unique IDs using useId().
+ d().
+  
+
+a 
+
+app/platforpp/platform/settings/m/settings/page.tsx:238:21 lint/page.tsx:238:21 lint/nursery/usenursery/useUniqueEleUniqueElementIds mentIds ━━━━━━━━━━━━━━━━━━━━━
+
+  × id attri━━━━━━━━━━━━━━━━━━━━━
+
+  × id attribute shobute should not be uld not be a static string literal. Generate uniqa static string literal. Generate unique IDs usiue IDs using useId().
+  
+    236 │ng useId().
+  
+    236 │                                     <div>
+   <div>
+    237 │  237 │                     <Label                      <Label htmlFohtmlFor="emar="email">Emil">Email</Labeail</Label>
+  > 23l>
+  > 238 │   8 │                                   <In    <Input
+   put
+        │       │                                   ^     ^^^^^^
+ ^^^^^
+  > 239 │ > 239 │                                            id="  id="email"
+email"
+                 ...
+  ...
+  > 243 │ > 243 │                                           clas   className="bsName="bg-grayg-gray-50"
+  -50"
+  > 244 │ > 244 │                                        />
+   />
+              │      │                                   ^^
+     ^^
+    245 │  245 │                           <p className="tex             <p className="text-sm tt-sm text-muext-muted-foregted-foregroundround mt-1">
+ mt-1">
+    24    246 │     6 │                                     Em    Email cannoail cannot be ct be changehanged
+  
+ d
+  
+  i In  i In React, ifReact, if you h you hardcode Iardcode IDs andDs and use the  use the componecomponent multnt multiple timiple times, it es, it can lead can lead to duplito duplicate IDs cate IDs in the DOin the DOM. InstM. Instead, generate unique IDs using useead, generate unique IDs using useId().
+Id().
+  
+
+a  
+
+app/platforpp/platform/sem/settings/page.tsxttings/page.tsx:277:277:21 li:21 lint/nurserynt/nursery/useUni/useUniqueElemqueElementIds entIds ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ ━
+
+  × id at × id attributetribute shoul should not bd not be a statie a static string c string literalliteral. Genera. Generate uniqte unique IDs usue IDs using useing useId().
+ Id().
+  
+ 
+    275 │            275 │                   <div>
+    276 │                     <div>
+    276 │                           <     <Label htmlLabel htmlFor="curFor="current-prent-password">assword">Current Current PasswoPassword</Laberd</Label>
+  > 2l>
+  > 277 │  77 │                                   <I     <Input
+ nput
+        │       │                                          ^^^^^^^^^^^^
+  > 2
+  > 278 │  78 │                              id="current-password"
+                   id="current-password"
+         ..    ...
+  > .
+  > 287 │ 287 │                                            requi required
+  > 288 │                  red
+  > 288 │                     />
+   />
+              │         │                              ^^
+    289 │                 ^^
+    289 │                         </div </div>
+    290 >
+    290 │     │                                <div <div>
+  >
+  
+  i 
+  i In React,In React, if you h if you hardcodardcode IDs ae IDs and use nd use the compthe component mulonent multiple tiple times,times, it can it can lead to  lead to duplicateduplicate IDs in the IDs in the DOM. In DOM. Instead, gestead, generate unnerate unique Iique IDs using Ds using useId(useId().
+  
+
+).
+  
+
+app/plapp/platform/atform/settings/settings/page.tspage.tsxx:292:292:21 lint/nursery/useUniqueElemen:21 lint/nursery/useUniqueElementIds tIds ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  × id attribute should no━━━━━
+
+  × id attribute should not be a t be a static static string listring literal. Genteral. Generate unierate unique IDs uque IDs using ussing useId().
+ eId().
+  
+ 
+    290 │     290 │                   <div>
+    291 │                     <div>
+    291 │                                  <La     <Label htbel htmlFor="nmlFor="new-pasew-password">sword">New PassNew Password</word</Label>
+  > 292 │              Label>
+  > 292 │                            <Input<Input
+        │
+        │                                         ^^^^^^
+ ^^^^^^
+  > 29  > 293 │     3 │                                     id    id="new-pa="new-passwordssword"
+     "
+         ...    ...
+  > 302
+  > 302 │     │                                    re      requiredquired
+  > 303 
+  > 303 │     │                                   />
+     />
+        │       │                                    ^^    ^^
+    304
+    304 │       │                                  <p cl  <p classNamassName="texte="text-sm tex-sm text-mutedt-muted-foreg-foreground mround mt-1">
+ t-1">
+    305 │   305 │                                           Mus   Must be att be at least least 12 char 12 charactersacters long
+  long
+  
+  i  
+  i In ReactIn React, if you, if you hardco hardcode IDs ade IDs and use nd use the compothe component mulnent multiple ttiple times, itimes, it can lead can lead to du to duplicate Iplicate IDs in Ds in the DOM. the DOM. Instead, Instead, generatgenerate uniquee unique IDs us IDs using useIding useId().
+  ().
+  
+
+app/
+
+app/platform/platform/settinsettings/page.tgs/page.tsxsx:312:21:312:21 lint/nursery/useUniqueElementIds  lint/nursery/useUniqueElementIds ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+━━━━━━
+
+  × i  × id attribd attribute shouute should not ld not be a statbe a static striic string literng literal. General. Generate uniquate unique IDs ue IDs using usesing useId().
+ Id().
+  
+    310 │                       Confirm N 
+    310 │                       Confirm New Pasew Password
+sword
+    311 │    311 │                                        </Labe  </Label>
+  >l>
+  > 312 │   312 │                                   <     <Input
+  Input
+              │       │                               ^^    ^^^^^^
+  ^^^^
+  > 313 │ > 313 │                                          id="c   id="confirmonfirm-passwo-password"
+   rd"
+         ..      ...
+  > .
+  > 322 │                       322 │                       requirrequired
+  >ed
+  > 323 │  323 │                                   />
+      />
+                │     │                                     ^^
+    32^^
+    324 │                   </div>
+    34 │                   </div>
+    325 │  25 │                                  <Butto  <Button typen type="submit="submit" disa" disabled={isLoading}>
+  
+  i In React, if you hardbled={isLoading}>
+  
+  i In React, if you hardcode IDs and use the code IDs and use the componencomponent multit multiple timple times, it can es, it can lead tolead to duplicate IDs in the DOM. I duplicate IDs in the DOM. Instead,nstead, genera generate uniqte unique IDs ue IDs using useIusing useId().
+ d().
+  
+
+ 
+
+componentcomponents/Geogrs/GeographicMap.aphicMap.tsxtsx::125:3125:31 lint1 lint/correctn/correctness/useess/useExhaustivExhaustiveDependeDependencies  encies  FIXABLE  FIXABLE  ━━━━━━━━━━━━━━━━━━━━
+
+ 
+
+  × This  × This hook dhook does not soes not specify pecify its depeits dependency ndency on getCoon getCountryCountryCoordinateordinates.
+  
+s.
+  
+    123    123 │    * Process a single countr │    * Process a single country entryy entry into  into CountrCountryData
+ yData
+    124 │     124 │    */
+    */
+  > 125 │   const processCountry> 125 │   const processCountryEntry Entry = useCa= useCallback((
+llback((
+              │        │                                                        ^^^^^^^^^^^^^^^^
+ ^^^^^^
+    126   126 │     c │     code: sode: string,
+ tring,
+    127 │   127 │     c     count:ount: numbe number,
+  
+r,
+  
+  i T  i This depenhis dependency is dency is being usebeing used hered here, but is , but is not spnot specified iecified in the hon the hook dependok dependency lisency list.
+  
+t.
+  
+    128 │    128 │     countryCoordinates: Reco     countryCoordinates: Record<strird<string, [numbeng, [number, number, number]>
+  r]>
+    129 │   129 │   ): C  ): CountryData | null => {
+  > 1ountryData | null => {
+  > 130 │  30 │     con   const coordist coordinates = gnates = getCounetCountryCootryCoordinatesrdinates(code,(code, country countryCoordinaCoordinates);
+tes);
+                │        │                                       ^^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  ^^^^
+    131 │  131 │ 
+    13 
+    132 │     i2 │     if (cof (coordinateordinates) {
+ s) {
+  
+  i E 
+  i Either iither include itnclude it or rem or remove the dove the dependenependency arraycy array.
+  
+  i.
+  
+  i Unsaf Unsafe fix: Ade fix: Add the misd the missing desing dependencypendency to the l to the list.
+  ist.
+  
+
+    137 │     137 │ ··},·[getCountryCoordinates]);
+   ··},·[getCountryCoordinates]);
+        │      │            +++++ ++++++++++++++++++++++++++++++++++++   
++   
+
+
+check check ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+
+  ×   × Some eSome errors wrrors were emitere emitted whited while runle running chening checks.
+  
+cks.
+  
+
+

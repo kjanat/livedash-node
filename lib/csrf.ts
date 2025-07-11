@@ -148,7 +148,7 @@ export class CSRFProtection {
       }
 
       // Get token from request
-      const requestToken = await this.getTokenFromRequest(request);
+      const requestToken = await CSRFProtection.getTokenFromRequest(request);
       if (!requestToken) {
         return {
           valid: false,
@@ -193,7 +193,9 @@ export class CSRFProtection {
   /**
    * Extract token from request (handles different content types)
    */
-  private static async getTokenFromRequest(request: NextRequest): Promise<string | null> {
+  private static async getTokenFromRequest(
+    request: NextRequest
+  ): Promise<string | null> {
     // Check header first
     const headerToken = request.headers.get(CSRF_CONFIG.headerName);
     if (headerToken) {
@@ -207,7 +209,11 @@ export class CSRFProtection {
       if (contentType?.includes("application/json")) {
         const body = await request.clone().json();
         return body.csrfToken || body.csrf_token || null;
-      } else if (contentType?.includes("multipart/form-data") || contentType?.includes("application/x-www-form-urlencoded")) {
+      }
+      if (
+        contentType?.includes("multipart/form-data") ||
+        contentType?.includes("application/x-www-form-urlencoded")
+      ) {
         const formData = await request.clone().formData();
         return formData.get("csrf_token") as string | null;
       }
@@ -270,7 +276,9 @@ export const CSRFClient = {
   /**
    * Add CSRF token to object (for JSON requests)
    */
-  addTokenToObject<T extends Record<string, unknown>>(obj: T): T & { csrfToken: string } {
+  addTokenToObject<T extends Record<string, unknown>>(
+    obj: T
+  ): T & { csrfToken: string } {
     const token = this.getToken();
     return {
       ...obj,

@@ -42,7 +42,8 @@ export function useCSRF() {
         throw new Error("Invalid response from CSRF endpoint");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch CSRF token";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch CSRF token";
       setError(errorMessage);
       console.error("CSRF token fetch error:", errorMessage);
     } finally {

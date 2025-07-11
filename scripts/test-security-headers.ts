@@ -100,7 +100,9 @@ async function testSecurityHeaders(url: string): Promise<void> {
       method: "HEAD", // Use HEAD to avoid downloading the full response body
     });
 
-    console.log(`📊 Response Status: ${response.status} ${response.statusText}\n`);
+    console.log(
+      `📊 Response Status: ${response.status} ${response.statusText}\n`
+    );
 
     let criticalMissing = 0;
     let warningCount = 0;
@@ -151,7 +153,9 @@ async function testSecurityHeaders(url: string): Promise<void> {
       }
 
       if (cspIssues > 0) {
-        console.log(`   ⚠️  ${cspIssues} CSP directive(s) missing or incorrect\n`);
+        console.log(
+          `   ⚠️  ${cspIssues} CSP directive(s) missing or incorrect\n`
+        );
         warningCount += cspIssues;
       } else {
         console.log(`   ✅ All CSP directives present\n`);
@@ -187,36 +191,49 @@ async function testSecurityHeaders(url: string): Promise<void> {
 
     if (isHttps && !hsts) {
       console.log("⚠️  WARNING: HTTPS site missing HSTS header");
-      console.log("   Consider adding Strict-Transport-Security for production\n");
+      console.log(
+        "   Consider adding Strict-Transport-Security for production\n"
+      );
       warningCount++;
     } else if (hsts && !isHttps) {
-      console.log("ℹ️  INFO: HSTS header present on HTTP site (will be ignored by browsers)\n");
+      console.log(
+        "ℹ️  INFO: HSTS header present on HTTP site (will be ignored by browsers)\n"
+      );
     }
 
     // Summary
-    console.log("=" .repeat(60));
+    console.log("=".repeat(60));
     console.log("📋 SECURITY HEADERS SUMMARY");
-    console.log("=" .repeat(60));
+    console.log("=".repeat(60));
 
     if (criticalMissing === 0 && warningCount === 0) {
-      console.log("🎉 EXCELLENT: All security headers are properly configured!");
+      console.log(
+        "🎉 EXCELLENT: All security headers are properly configured!"
+      );
     } else if (criticalMissing === 0) {
       console.log(`✅ GOOD: No critical issues found`);
-      console.log(`⚠️  ${warningCount} warning(s) - consider addressing these for optimal security`);
+      console.log(
+        `⚠️  ${warningCount} warning(s) - consider addressing these for optimal security`
+      );
     } else {
       console.log(`❌ ISSUES FOUND:`);
       console.log(`   Critical: ${criticalMissing}`);
       console.log(`   Warnings: ${warningCount}`);
-      console.log(`\n🔧 Please address critical issues before deploying to production`);
+      console.log(
+        `\n🔧 Please address critical issues before deploying to production`
+      );
     }
 
     // Additional recommendations
     console.log("\n💡 ADDITIONAL RECOMMENDATIONS:");
-    console.log("• Regularly test headers with online tools like securityheaders.com");
+    console.log(
+      "• Regularly test headers with online tools like securityheaders.com"
+    );
     console.log("• Monitor CSP violations in production to fine-tune policies");
-    console.log("• Consider implementing HSTS preloading for production domains");
+    console.log(
+      "• Consider implementing HSTS preloading for production domains"
+    );
     console.log("• Review and update security headers based on new threats");
-
   } catch (error) {
     console.error(`❌ Error testing headers: ${error}`);
     process.exit(1);
@@ -228,7 +245,7 @@ async function main() {
   const url = process.argv[2] || "http://localhost:3000";
 
   console.log("🛡️  Security Headers Testing Tool");
-  console.log("=" .repeat(60));
+  console.log("=".repeat(60));
 
   await testSecurityHeaders(url);
 }

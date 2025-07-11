@@ -25,6 +25,9 @@ model PlatformUser {
   name      String           @db.VarChar(255)
   createdAt DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt DateTime         @updatedAt @db.Timestamptz(6)
+  
+  /// Relations
+  auditLogs SecurityAuditLog[]
 
   @@index([email])
 }
@@ -56,6 +59,7 @@ model Company {
   imports         SessionImport[]
   users           User[]           @relation("CompanyUsers")
   aiBatchRequests AIBatchRequest[]
+  auditLogs       SecurityAuditLog[]
 
   @@index([name])
   @@index([status])
@@ -88,6 +92,7 @@ model User {
   /// Email of the user who invited this user (for audit trail)
   invitedBy        String?   @db.VarChar(255)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
+  auditLogs        SecurityAuditLog[]
 
   @@index([companyId])
   @@index([email])
@@ -314,6 +319,9 @@ model AIProcessingRequest {
   @@index([model])
   @@index([success, requestedAt])
   @@index([processingStatus]) // Add this index for efficient querying
+  @@index([processingStatus, requestedAt]) // Optimize time-based status queries
+  @@index([batchId]) // Optimize batch-related queries
+  @@index([processingStatus, batchId]) // Composite index for batch status filtering
 }
 
 /// *
@@ -496,4 +504,113 @@ enum AIRequestStatus {
   PROCESSING_COMPLETE
   /// Processing failed
   PROCESSING_FAILED
+}
+
+/// *
+/// * SECURITY AUDIT LOG (comprehensive security event tracking)
+/// * Tracks all security-critical events for compliance and incident investigation
+/// * Immutable records with structured metadata for analysis
+model SecurityAuditLog {
+  id              String             @id @default(uuid())
+  /// Event category for filtering and analysis
+  eventType       SecurityEventType
+  /// High-level action description
+  action          String             @db.VarChar(255)
+  /// Detailed event outcome (success, failure, blocked)
+  outcome         AuditOutcome
+  /// User who performed the action (if authenticated)
+  userId          String?
+  /// Company context for multi-tenant filtering
+  companyId       String?
+  /// Platform user who performed the action (for admin events)
+  platformUserId  String?
+  /// Client IP address for geographic analysis
+  ipAddress       String?            @db.Inet
+  /// User agent string for device/browser analysis
+  userAgent       String?
+  /// ISO 3166-1 alpha-3 country code derived from IP
+  country         String?            @db.VarChar(3)
+  /// Structured metadata with additional context
+  metadata        Json?
+  /// Error message if action failed
+  errorMessage    String?
+  /// Severity level for alerting and prioritization
+  severity        AuditSeverity      @default(INFO)
+  /// Session ID for correlation with user sessions
+  sessionId       String?            @db.VarChar(255)
+  /// Request ID for tracing across system boundaries
+  requestId       String?            @db.VarChar(255)
+  /// Immutable timestamp for chronological ordering
+  timestamp       DateTime           @default(now()) @db.Timestamptz(6)
+  
+  /// Relations
+  user            User?              @relation(fields: [userId], references: [id])
+  company         Company?           @relation(fields: [companyId], references: [id])
+  platformUser    PlatformUser?      @relation(fields: [platformUserId], references: [id])
+
+  @@index([eventType, timestamp])
+  @@index([companyId, eventType, timestamp])
+  @@index([userId, timestamp])
+  @@index([platformUserId, timestamp])
+  @@index([outcome, severity, timestamp])
+  @@index([ipAddress, timestamp])
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([requestId])
+}
+
+/// Security event categories for audit logging
+enum SecurityEventType {
+  /// Authentication events (login, logout, password changes)
+  AUTHENTICATION
+  /// Authorization events (permission checks, access denied)
+  AUTHORIZATION
+  /// User management events (create, update, delete, invite)
+  USER_MANAGEMENT
+  /// Company management events (create, suspend, settings changes)
+  COMPANY_MANAGEMENT
+  /// Rate limiting and abuse prevention
+  RATE_LIMITING
+  /// CSRF protection violations
+  CSRF_PROTECTION
+  /// Security header violations
+  SECURITY_HEADERS
+  /// Password reset flows
+  PASSWORD_RESET
+  /// Platform admin activities
+  PLATFORM_ADMIN
+  /// Data export and privacy events
+  DATA_PRIVACY
+  /// System configuration changes
+  SYSTEM_CONFIG
+  /// API security events
+  API_SECURITY
+}
+
+/// Outcome classification for audit events
+enum AuditOutcome {
+  /// Action completed successfully
+  SUCCESS
+  /// Action failed due to user error or invalid input
+  FAILURE
+  /// Action was blocked by security controls
+  BLOCKED
+  /// Action triggered rate limiting
+  RATE_LIMITED
+  /// Action was suspicious but not blocked
+  SUSPICIOUS
+}
+
+/// Severity levels for audit events
+enum AuditSeverity {
+  /// Informational events for compliance tracking
+  INFO
+  /// Low-impact security events
+  LOW
+  /// Medium-impact security events requiring attention
+  MEDIUM
+  /// High-impact security events requiring immediate attention
+  HIGH
+  /// Critical security events requiring urgent response
+  CRITICAL
 }

@@ -122,11 +122,11 @@ export default function GeographicMap({
   /**
    * Process a single country entry into CountryData
    */
-  function processCountryEntry(
+  const processCountryEntry = useCallback((
     code: string,
     count: number,
     countryCoordinates: Record<string, [number, number]>
-  ): CountryData | null {
+  ): CountryData | null => {
     const coordinates = getCountryCoordinates(code, countryCoordinates);
 
     if (coordinates) {
@@ -134,7 +134,7 @@ export default function GeographicMap({
     }
 
     return null; // Skip if no coordinates found
-  }
+  }, []);
 
   /**
    * Process all countries data into CountryData array
@@ -156,7 +156,7 @@ export default function GeographicMap({
 
       return data;
     },
-    []
+    [processCountryEntry]
   );
 
   // Process country data when client is ready and dependencies change

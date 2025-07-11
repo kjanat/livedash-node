@@ -40,7 +40,8 @@ export class TRPCEndpointTester {
   private timeout: number;
 
   constructor(baseUrl?: string, timeout: number = 30000) {
-    this.baseUrl = baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
+    this.baseUrl =
+      baseUrl || process.env.NEXTAUTH_URL || "http://localhost:3000";
     this.timeout = timeout;
   }
 
@@ -52,7 +53,10 @@ export class TRPCEndpointTester {
     const tests: TestResult[] = [];
 
     try {
-      migrationLogger.startStep("TRPC_TESTS", "Running tRPC endpoint validation tests");
+      migrationLogger.startStep(
+        "TRPC_TESTS",
+        "Running tRPC endpoint validation tests"
+      );
 
       // Define test suite
       const endpointTests: EndpointTest[] = [
@@ -86,8 +90,8 @@ export class TRPCEndpointTester {
             json: {
               page: 1,
               pageSize: 10,
-              filters: {}
-            }
+              filters: {},
+            },
           },
           expectedStatuses: [200, 401, 403],
           timeout: 10000,
@@ -155,9 +159,12 @@ export class TRPCEndpointTester {
       }
 
       const totalDuration = Date.now() - startTime;
-      const passedTests = tests.filter(t => t.success).length;
-      const failedTests = tests.filter(t => !t.success).length;
-      const criticalFailures = tests.filter(t => !t.success && endpointTests.find(et => et.name === t.name)?.critical).length;
+      const passedTests = tests.filter((t) => t.success).length;
+      const failedTests = tests.filter((t) => !t.success).length;
+      const criticalFailures = tests.filter(
+        (t) =>
+          !t.success && endpointTests.find((et) => et.name === t.name)?.critical
+      ).length;
 
       const result: TRPCTestResult = {
         success: criticalFailures === 0,
@@ -171,13 +178,19 @@ export class TRPCEndpointTester {
       if (result.success) {
         migrationLogger.completeStep("TRPC_TESTS");
       } else {
-        migrationLogger.failStep("TRPC_TESTS", new Error(`${criticalFailures} critical tRPC tests failed`));
+        migrationLogger.failStep(
+          "TRPC_TESTS",
+          new Error(`${criticalFailures} critical tRPC tests failed`)
+        );
       }
 
       return result;
-
     } catch (error) {
-      migrationLogger.error("TRPC_TESTS", "tRPC test suite failed", error as Error);
+      migrationLogger.error(
+        "TRPC_TESTS",
+        "tRPC test suite failed",
+        error as Error
+      );
       throw error;
     }
   }
@@ -226,22 +239,26 @@ export class TRPCEndpointTester {
       if (success) {
         migrationLogger.debug("TRPC_TEST", `✅ ${test.name} passed`, {
           status: response.status,
-          duration
+          duration,
         });
       } else {
         migrationLogger.warn("TRPC_TEST", `❌ ${test.name} failed`, {
           status: response.status,
           expected: test.expectedStatuses,
-          duration
+          duration,
         });
       }
 
       return result;
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
-      migrationLogger.error("TRPC_TEST", `💥 ${test.name} crashed`, error as Error, { duration });
+      migrationLogger.error(
+        "TRPC_TEST",
+        `💥 ${test.name} crashed`,
+        error as Error,
+        { duration }
+      );
 
       return {
         name: test.name,
@@ -296,7 +313,8 @@ export class TRPCEndpointTester {
       const responseData = await response.json();
 
       // Batch requests should return an array of responses
-      const success = response.ok && Array.isArray(responseData) && responseData.length === 2;
+      const success =
+        response.ok && Array.isArray(responseData) && responseData.length === 2;
 
       return {
         name: "tRPC Batch Requests",
@@ -305,7 +323,6 @@ export class TRPCEndpointTester {
         duration,
         response: responseData,
       };
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -367,7 +384,6 @@ export class TRPCEndpointTester {
               error: new Error("WebSocket connection failed"),
             });
           };
-
         } catch (error) {
           resolve({
             name: "tRPC Subscriptions",
@@ -378,7 +394,6 @@ export class TRPCEndpointTester {
           });
         }
       });
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
@@ -399,7 +414,7 @@ export class TRPCEndpointTester {
     const report = `
 # tRPC Endpoint Test Report
 
-**Overall Status**: ${result.success ? '✅ All Critical Tests Passed' : '❌ Critical Tests Failed'}
+**Overall Status**: ${result.success ? "✅ All Critical Tests Passed" : "❌ Critical Tests Failed"}
 **Total Duration**: ${result.totalDuration}ms
 **Passed Tests**: ${result.passedTests}/${result.tests.length}
 **Failed Tests**: ${result.failedTests}/${result.tests.length}
@@ -407,29 +422,41 @@ export class TRPCEndpointTester {
 
 ## Test Results
 
-${result.tests.map(test => `
+${result.tests
+  .map(
+    (test) => `
 ### ${test.name}
-- **Status**: ${test.success ? '✅ Pass' : '❌ Fail'}
+- **Status**: ${test.success ? "✅ Pass" : "❌ Fail"}
 - **HTTP Status**: ${test.status}
 - **Duration**: ${test.duration}ms
-${test.error ? `- **Error**: ${test.error.message}` : ''}
-${test.response && typeof test.response === 'object' ? `- **Response**: \`\`\`json\n${JSON.stringify(test.response, null, 2)}\n\`\`\`` : ''}
-`).join('')}
+${test.error ? `- **Error**: ${test.error.message}` : ""}
+${test.response && typeof test.response === "object" ? `- **Response**: \`\`\`json\n${JSON.stringify(test.response, null, 2)}\n\`\`\`` : ""}
+`
+  )
+  .join("")}
 
 ## Summary
 
-${result.success ?
-  '🎉 All critical tRPC endpoints are working correctly!' :
-  `⚠️ ${result.criticalFailures} critical endpoint(s) failed. Please review and fix the issues above.`
+${
+  result.success
+    ? "🎉 All critical tRPC endpoints are working correctly!"
+    : `⚠️ ${result.criticalFailures} critical endpoint(s) failed. Please review and fix the issues above.`
 }
 
 ## Recommendations
 
-${result.failedTests > 0 ? `
+${
+  result.failedTests > 0
+    ? `
 ### Failed Tests Analysis
-${result.tests.filter(t => !t.success).map(test => `
+${result.tests
+  .filter((t) => !t.success)
+  .map(
+    (test) => `
 - **${test.name}**: ${test.error?.message || `HTTP ${test.status}`}
-`).join('')}
+`
+  )
+  .join("")}
 
 ### Next Steps
 1. Check server logs for detailed error information
@@ -437,13 +464,15 @@ ${result.tests.filter(t => !t.success).map(test => `
 3. Ensure all required dependencies are installed
 4. Validate environment configuration
 5. Test endpoints manually if needed
-` : `
+`
+    : `
 ### Optimization Opportunities
 1. Monitor response times for performance optimization
 2. Consider implementing caching for frequently accessed endpoints
 3. Add monitoring and alerting for endpoint health
 4. Implement rate limiting if not already in place
-`}
+`
+}
 
 ---
 *Generated at ${new Date().toISOString()}*
@@ -492,17 +521,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   runTests()
     .then((result) => {
-      console.log('\n=== tRPC ENDPOINT TEST RESULTS ===');
-      console.log(`Overall Success: ${result.success ? '✅' : '❌'}`);
+      console.log("\n=== tRPC ENDPOINT TEST RESULTS ===");
+      console.log(`Overall Success: ${result.success ? "✅" : "❌"}`);
       console.log(`Total Duration: ${result.totalDuration}ms`);
       console.log(`Passed Tests: ${result.passedTests}/${result.tests.length}`);
       console.log(`Failed Tests: ${result.failedTests}/${result.tests.length}`);
       console.log(`Critical Failures: ${result.criticalFailures}`);
 
-      console.log('\n=== INDIVIDUAL TEST RESULTS ===');
+      console.log("\n=== INDIVIDUAL TEST RESULTS ===");
       for (const test of result.tests) {
-        const status = test.success ? '✅' : '❌';
-        console.log(`${status} ${test.name} (HTTP ${test.status}, ${test.duration}ms)`);
+        const status = test.success ? "✅" : "❌";
+        console.log(
+          `${status} ${test.name} (HTTP ${test.status}, ${test.duration}ms)`
+        );
 
         if (test.error) {
           console.log(`  Error: ${test.error.message}`);
@@ -520,7 +551,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(result.success ? 0 : 1);
     })
     .catch((error) => {
-      console.error('tRPC endpoint tests failed:', error);
+      console.error("tRPC endpoint tests failed:", error);
       process.exit(1);
     });
 }

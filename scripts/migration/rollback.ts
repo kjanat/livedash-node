@@ -78,7 +78,7 @@ export class RollbackManager {
       migrationLogger.completePhase("ROLLBACK");
       migrationLogger.info("ROLLBACK", "Rollback completed successfully", {
         totalDuration,
-        steps: this.completedSteps.length
+        steps: this.completedSteps.length,
       });
 
       return {
@@ -86,7 +86,6 @@ export class RollbackManager {
         completedSteps: this.completedSteps,
         totalDuration,
       };
-
     } catch (error) {
       const totalDuration = Date.now() - startTime;
 
@@ -105,7 +104,10 @@ export class RollbackManager {
    * Create rollback snapshot before deployment
    */
   async createRollbackSnapshot(): Promise<string> {
-    migrationLogger.startStep("ROLLBACK_SNAPSHOT", "Creating rollback snapshot");
+    migrationLogger.startStep(
+      "ROLLBACK_SNAPSHOT",
+      "Creating rollback snapshot"
+    );
 
     try {
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
@@ -127,10 +129,11 @@ export class RollbackManager {
       await this.saveDeploymentState(snapshotDir);
 
       migrationLogger.completeStep("ROLLBACK_SNAPSHOT");
-      migrationLogger.info("ROLLBACK_SNAPSHOT", "Rollback snapshot created", { snapshotDir });
+      migrationLogger.info("ROLLBACK_SNAPSHOT", "Rollback snapshot created", {
+        snapshotDir,
+      });
 
       return snapshotDir;
-
     } catch (error) {
       migrationLogger.failStep("ROLLBACK_SNAPSHOT", error as Error);
       throw error;
@@ -194,7 +197,10 @@ export class RollbackManager {
           if (this.options.rollbackEnvironment) {
             await this.rollbackEnvironment();
           } else {
-            migrationLogger.info("ENV_ROLLBACK", "Environment rollback skipped");
+            migrationLogger.info(
+              "ENV_ROLLBACK",
+              "Environment rollback skipped"
+            );
           }
         },
       },
@@ -230,11 +236,14 @@ export class RollbackManager {
 
   private async executeRollbackStep(step: RollbackStep): Promise<void> {
     try {
-      migrationLogger.startStep(step.name.replace(/\s+/g, '_').toUpperCase(), step.description);
+      migrationLogger.startStep(
+        step.name.replace(/\s+/g, "_").toUpperCase(),
+        step.description
+      );
 
       if (this.options.dryRun) {
         migrationLogger.info("DRY_RUN", `Would execute rollback: ${step.name}`);
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, 100));
       } else {
         await step.execute();
       }
@@ -243,51 +252,66 @@ export class RollbackManager {
       if (step.verify && !this.options.dryRun) {
         const verified = await step.verify();
         if (!verified) {
-          throw new Error(`Verification failed for rollback step: ${step.name}`);
+          throw new Error(
+            `Verification failed for rollback step: ${step.name}`
+          );
         }
       }
 
-      migrationLogger.completeStep(step.name.replace(/\s+/g, '_').toUpperCase());
-
+      migrationLogger.completeStep(
+        step.name.replace(/\s+/g, "_").toUpperCase()
+      );
     } catch (error) {
-      migrationLogger.failStep(step.name.replace(/\s+/g, '_').toUpperCase(), error as Error);
+      migrationLogger.failStep(
+        step.name.replace(/\s+/g, "_").toUpperCase(),
+        error as Error
+      );
 
       if (step.critical) {
         throw error;
       } else {
-        migrationLogger.warn("ROLLBACK_STEP", `Non-critical rollback step failed: ${step.name}`, {
-          error: (error as Error).message
-        });
+        migrationLogger.warn(
+          "ROLLBACK_STEP",
+          `Non-critical rollback step failed: ${step.name}`,
+          {
+            error: (error as Error).message,
+          }
+        );
       }
     }
   }
 
   private async confirmRollback(): Promise<void> {
-    console.log('\n⚠️  ROLLBACK CONFIRMATION REQUIRED ⚠️');
-    console.log('This will restore the system to a previous state.');
-    console.log('The following actions will be performed:');
+    console.log("\n⚠️  ROLLBACK CONFIRMATION REQUIRED ⚠️");
+    console.log("This will restore the system to a previous state.");
+    console.log("The following actions will be performed:");
 
     if (this.options.rollbackDatabase) {
-      console.log('  - Restore database from backup');
+      console.log("  - Restore database from backup");
     }
     if (this.options.rollbackCode) {
-      console.log('  - Restore application code to previous version');
+      console.log("  - Restore application code to previous version");
     }
     if (this.options.rollbackEnvironment) {
-      console.log('  - Restore environment configuration');
+      console.log("  - Restore environment configuration");
     }
 
-    console.log('\nThis operation cannot be easily undone.');
+    console.log("\nThis operation cannot be easily undone.");
 
     // In a real implementation, you would prompt for user input
     // For automation purposes, we'll check for a confirmation flag
     if (!process.env.ROLLBACK_CONFIRMED) {
-      throw new Error('Rollback not confirmed. Set ROLLBACK_CONFIRMED=true to proceed.');
+      throw new Error(
+        "Rollback not confirmed. Set ROLLBACK_CONFIRMED=true to proceed."
+      );
     }
   }
 
   private async validateRollbackPrerequisites(): Promise<void> {
-    migrationLogger.info("ROLLBACK_VALIDATION", "Validating rollback prerequisites");
+    migrationLogger.info(
+      "ROLLBACK_VALIDATION",
+      "Validating rollback prerequisites"
+    );
 
     // Check if backup exists
     if (this.options.rollbackDatabase && this.options.backupPath) {
@@ -301,7 +325,9 @@ export class RollbackManager {
       try {
         execSync("pg_restore --version", { stdio: "ignore" });
       } catch (error) {
-        throw new Error("pg_restore not found - database rollback not possible");
+        throw new Error(
+          "pg_restore not found - database rollback not possible"
+        );
       }
     }
 
@@ -314,7 +340,10 @@ export class RollbackManager {
       }
     }
 
-    migrationLogger.info("ROLLBACK_VALIDATION", "Prerequisites validated successfully");
+    migrationLogger.info(
+      "ROLLBACK_VALIDATION",
+      "Prerequisites validated successfully"
+    );
   }
 
   private async stopServices(): Promise<void> {
@@ -322,18 +351,24 @@ export class RollbackManager {
 
     // In a real deployment, this would stop the actual services
     // For this implementation, we'll simulate service stopping
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     migrationLogger.info("SERVICE_STOP", "Services stopped successfully");
   }
 
   private async rollbackDatabase(): Promise<void> {
     if (!this.options.backupPath) {
-      migrationLogger.warn("DB_ROLLBACK", "No backup path specified, skipping database rollback");
+      migrationLogger.warn(
+        "DB_ROLLBACK",
+        "No backup path specified, skipping database rollback"
+      );
       return;
     }
 
-    migrationLogger.info("DB_ROLLBACK", `Restoring database from backup: ${this.options.backupPath}`);
+    migrationLogger.info(
+      "DB_ROLLBACK",
+      `Restoring database from backup: ${this.options.backupPath}`
+    );
 
     try {
       // Parse database URL
@@ -345,19 +380,26 @@ export class RollbackManager {
       const parsed = new URL(dbUrl);
 
       // Drop existing connections
-      migrationLogger.info("DB_ROLLBACK", "Terminating existing database connections");
+      migrationLogger.info(
+        "DB_ROLLBACK",
+        "Terminating existing database connections"
+      );
 
       // Restore from backup
       const restoreCommand = [
         "pg_restore",
-        "-h", parsed.hostname,
-        "-p", parsed.port || "5432",
-        "-U", parsed.username,
-        "-d", parsed.pathname.slice(1),
+        "-h",
+        parsed.hostname,
+        "-p",
+        parsed.port || "5432",
+        "-U",
+        parsed.username,
+        "-d",
+        parsed.pathname.slice(1),
         "--clean",
         "--if-exists",
         "--verbose",
-        this.options.backupPath
+        this.options.backupPath,
       ].join(" ");
 
       migrationLogger.debug("DB_ROLLBACK", `Executing: ${restoreCommand}`);
@@ -370,8 +412,10 @@ export class RollbackManager {
         stdio: "pipe",
       });
 
-      migrationLogger.info("DB_ROLLBACK", "Database rollback completed successfully");
-
+      migrationLogger.info(
+        "DB_ROLLBACK",
+        "Database rollback completed successfully"
+      );
     } catch (error) {
       throw new Error(`Database rollback failed: ${(error as Error).message}`);
     }
@@ -393,12 +437,19 @@ export class RollbackManager {
         return true;
       } catch (error) {
         await prisma.$disconnect();
-        migrationLogger.error("DB_VERIFY", "Database verification failed", error as Error);
+        migrationLogger.error(
+          "DB_VERIFY",
+          "Database verification failed",
+          error as Error
+        );
         return false;
       }
-
     } catch (error) {
-      migrationLogger.error("DB_VERIFY", "Database verification error", error as Error);
+      migrationLogger.error(
+        "DB_VERIFY",
+        "Database verification error",
+        error as Error
+      );
       return false;
     }
   }
@@ -409,55 +460,73 @@ export class RollbackManager {
     try {
       // Get the previous commit (this is a simplified approach)
       const previousCommit = execSync("git rev-parse HEAD~1", {
-        encoding: "utf8"
+        encoding: "utf8",
       }).trim();
 
-      migrationLogger.info("CODE_ROLLBACK", `Rolling back to commit: ${previousCommit}`);
+      migrationLogger.info(
+        "CODE_ROLLBACK",
+        `Rolling back to commit: ${previousCommit}`
+      );
 
       // Reset to previous commit
       execSync(`git reset --hard ${previousCommit}`, { stdio: "pipe" });
 
-      migrationLogger.info("CODE_ROLLBACK", "Code rollback completed successfully");
-
+      migrationLogger.info(
+        "CODE_ROLLBACK",
+        "Code rollback completed successfully"
+      );
     } catch (error) {
       throw new Error(`Code rollback failed: ${(error as Error).message}`);
     }
   }
 
   private async rollbackEnvironment(): Promise<void> {
-    migrationLogger.info("ENV_ROLLBACK", "Rolling back environment configuration");
+    migrationLogger.info(
+      "ENV_ROLLBACK",
+      "Rolling back environment configuration"
+    );
 
     try {
       // Look for environment backup
       const backupFiles = [
         ".env.local.backup",
         ".env.backup",
-        ".env.production.backup"
+        ".env.production.backup",
       ];
 
       let restored = false;
 
       for (const backupFile of backupFiles) {
         const backupPath = join(process.cwd(), backupFile);
-        const targetPath = backupPath.replace('.backup', '');
+        const targetPath = backupPath.replace(".backup", "");
 
         if (existsSync(backupPath)) {
           const backupContent = readFileSync(backupPath, "utf8");
           writeFileSync(targetPath, backupContent);
 
-          migrationLogger.info("ENV_ROLLBACK", `Restored ${targetPath} from ${backupFile}`);
+          migrationLogger.info(
+            "ENV_ROLLBACK",
+            `Restored ${targetPath} from ${backupFile}`
+          );
           restored = true;
         }
       }
 
       if (!restored) {
-        migrationLogger.warn("ENV_ROLLBACK", "No environment backup found to restore");
+        migrationLogger.warn(
+          "ENV_ROLLBACK",
+          "No environment backup found to restore"
+        );
       } else {
-        migrationLogger.info("ENV_ROLLBACK", "Environment rollback completed successfully");
+        migrationLogger.info(
+          "ENV_ROLLBACK",
+          "Environment rollback completed successfully"
+        );
       }
-
     } catch (error) {
-      throw new Error(`Environment rollback failed: ${(error as Error).message}`);
+      throw new Error(
+        `Environment rollback failed: ${(error as Error).message}`
+      );
     }
   }
 
@@ -472,24 +541,34 @@ export class RollbackManager {
       if (existsSync(packageLockBackup)) {
         const backupContent = readFileSync(packageLockBackup, "utf8");
         writeFileSync(packageLock, backupContent);
-        migrationLogger.info("DEPS_RESTORE", "Restored package-lock.json from backup");
+        migrationLogger.info(
+          "DEPS_RESTORE",
+          "Restored package-lock.json from backup"
+        );
       }
 
       // Reinstall dependencies
       execSync("npm ci", { stdio: "pipe" });
 
-      migrationLogger.info("DEPS_RESTORE", "Dependencies restored successfully");
-
+      migrationLogger.info(
+        "DEPS_RESTORE",
+        "Dependencies restored successfully"
+      );
     } catch (error) {
-      throw new Error(`Dependencies restoration failed: ${(error as Error).message}`);
+      throw new Error(
+        `Dependencies restoration failed: ${(error as Error).message}`
+      );
     }
   }
 
   private async restartServices(): Promise<void> {
-    migrationLogger.info("SERVICE_RESTART", "Restarting services after rollback");
+    migrationLogger.info(
+      "SERVICE_RESTART",
+      "Restarting services after rollback"
+    );
 
     // In a real deployment, this would restart the actual services
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     migrationLogger.info("SERVICE_RESTART", "Services restarted successfully");
   }
@@ -508,10 +587,14 @@ export class RollbackManager {
       // Test basic application functionality
       // This would typically involve checking key endpoints or services
 
-      migrationLogger.info("ROLLBACK_VERIFY", "Rollback verification successful");
-
+      migrationLogger.info(
+        "ROLLBACK_VERIFY",
+        "Rollback verification successful"
+      );
     } catch (error) {
-      throw new Error(`Rollback verification failed: ${(error as Error).message}`);
+      throw new Error(
+        `Rollback verification failed: ${(error as Error).message}`
+      );
     }
   }
 
@@ -532,7 +615,11 @@ export class RollbackManager {
   private async savePackageSnapshot(snapshotDir: string): Promise<void> {
     const fs = await import("node:fs/promises");
 
-    const packageFiles = ["package.json", "package-lock.json", "pnpm-lock.yaml"];
+    const packageFiles = [
+      "package.json",
+      "package-lock.json",
+      "pnpm-lock.yaml",
+    ];
 
     for (const packageFile of packageFiles) {
       const packagePath = join(process.cwd(), packageFile);
@@ -547,7 +634,9 @@ export class RollbackManager {
     try {
       const gitInfo = {
         commit: execSync("git rev-parse HEAD", { encoding: "utf8" }).trim(),
-        branch: execSync("git rev-parse --abbrev-ref HEAD", { encoding: "utf8" }).trim(),
+        branch: execSync("git rev-parse --abbrev-ref HEAD", {
+          encoding: "utf8",
+        }).trim(),
         status: execSync("git status --porcelain", { encoding: "utf8" }).trim(),
         remotes: execSync("git remote -v", { encoding: "utf8" }).trim(),
       };
@@ -557,10 +646,9 @@ export class RollbackManager {
         join(snapshotDir, "git-info.json"),
         JSON.stringify(gitInfo, null, 2)
       );
-
     } catch (error) {
       migrationLogger.warn("GIT_SNAPSHOT", "Failed to save git snapshot", {
-        error: (error as Error).message
+        error: (error as Error).message,
       });
     }
   }
@@ -617,29 +705,31 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   if (command === "snapshot") {
     const rollbackManager = new RollbackManager();
-    rollbackManager.createRollbackSnapshot()
+    rollbackManager
+      .createRollbackSnapshot()
       .then((snapshotDir) => {
-        console.log('\n=== ROLLBACK SNAPSHOT CREATED ===');
+        console.log("\n=== ROLLBACK SNAPSHOT CREATED ===");
         console.log(`Snapshot Directory: ${snapshotDir}`);
-        console.log('\nThe snapshot contains:');
-        console.log('  - Environment configuration');
-        console.log('  - Package dependencies');
-        console.log('  - Git information');
-        console.log('  - Deployment state');
-        console.log('\nUse this snapshot for rollback if needed.');
+        console.log("\nThe snapshot contains:");
+        console.log("  - Environment configuration");
+        console.log("  - Package dependencies");
+        console.log("  - Git information");
+        console.log("  - Deployment state");
+        console.log("\nUse this snapshot for rollback if needed.");
         process.exit(0);
       })
       .catch((error) => {
-        console.error('Snapshot creation failed:', error);
+        console.error("Snapshot creation failed:", error);
         process.exit(1);
       });
   } else {
     const rollbackManager = new RollbackManager(options);
 
-    rollbackManager.rollback()
+    rollbackManager
+      .rollback()
       .then((result) => {
-        console.log('\n=== ROLLBACK RESULTS ===');
-        console.log(`Success: ${result.success ? '✅' : '❌'}`);
+        console.log("\n=== ROLLBACK RESULTS ===");
+        console.log(`Success: ${result.success ? "✅" : "❌"}`);
         console.log(`Total Duration: ${result.totalDuration}ms`);
         console.log(`Completed Steps: ${result.completedSteps.length}`);
 
@@ -651,27 +741,27 @@ if (import.meta.url === `file://${process.argv[1]}`) {
           console.error(`Error: ${result.error.message}`);
         }
 
-        console.log('\nCompleted Steps:');
-        result.completedSteps.forEach(step => console.log(`  ✅ ${step}`));
+        console.log("\nCompleted Steps:");
+        result.completedSteps.forEach((step) => console.log(`  ✅ ${step}`));
 
         if (result.success) {
-          console.log('\n🎉 ROLLBACK SUCCESSFUL!');
-          console.log('\nNext Steps:');
-          console.log('1. Verify system functionality');
-          console.log('2. Monitor logs for any issues');
-          console.log('3. Investigate root cause of deployment failure');
+          console.log("\n🎉 ROLLBACK SUCCESSFUL!");
+          console.log("\nNext Steps:");
+          console.log("1. Verify system functionality");
+          console.log("2. Monitor logs for any issues");
+          console.log("3. Investigate root cause of deployment failure");
         } else {
-          console.log('\n💥 ROLLBACK FAILED!');
-          console.log('\nNext Steps:');
-          console.log('1. Check logs for error details');
-          console.log('2. Manual intervention may be required');
-          console.log('3. Contact system administrators');
+          console.log("\n💥 ROLLBACK FAILED!");
+          console.log("\nNext Steps:");
+          console.log("1. Check logs for error details");
+          console.log("2. Manual intervention may be required");
+          console.log("3. Contact system administrators");
         }
 
         process.exit(result.success ? 0 : 1);
       })
       .catch((error) => {
-        console.error('Rollback failed:', error);
+        console.error("Rollback failed:", error);
         process.exit(1);
       });
   }

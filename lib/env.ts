@@ -80,7 +80,10 @@ export const env = {
   NODE_ENV: parseEnvValue(process.env.NODE_ENV) || "development",
 
   // CSRF Protection
-  CSRF_SECRET: parseEnvValue(process.env.CSRF_SECRET) || parseEnvValue(process.env.NEXTAUTH_SECRET) || "fallback-csrf-secret",
+  CSRF_SECRET:
+    parseEnvValue(process.env.CSRF_SECRET) ||
+    parseEnvValue(process.env.NEXTAUTH_SECRET) ||
+    "fallback-csrf-secret",
 
   // OpenAI
   OPENAI_API_KEY: parseEnvValue(process.env.OPENAI_API_KEY) || "",

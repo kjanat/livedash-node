@@ -14,10 +14,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { processSessionImports } from "@/lib/importProcessor";
 import { processUnprocessedSessions } from "@/lib/processingScheduler";
-import { createBatchJob, checkBatchStatuses, processCompletedBatches } from "@/lib/batchProcessor";
+import {
+  createBatchJob,
+  checkBatchStatuses,
+  processCompletedBatches,
+} from "@/lib/batchProcessor";
 import { transcriptFetcher } from "@/lib/transcriptFetcher";
 import { parseTranscriptMessages } from "@/lib/transcriptParser";
-import type { Company, SessionImport, Session, User, AIBatchRequest } from "@prisma/client";
+import type {
+  Company,
+  SessionImport,
+  Session,
+  User,
+  AIBatchRequest,
+} from "@prisma/client";
 
 // Mock external dependencies
 vi.mock("@/lib/transcriptFetcher");
@@ -127,7 +137,8 @@ Chat ended at 10:15 AM
       });
       expect(session?.messages[1]).toMatchObject({
         role: "Assistant",
-        content: "Hi! I'd be happy to help you with your vacation request. How many days are you planning to take off?",
+        content:
+          "Hi! I'd be happy to help you with your vacation request. How many days are you planning to take off?",
         order: 1,
       });
 
@@ -174,7 +185,9 @@ Chat ended at 10:15 AM
       });
 
       // Mock transcript fetching to throw error
-      vi.mocked(transcriptFetcher).mockRejectedValueOnce(new Error("Network error"));
+      vi.mocked(transcriptFetcher).mockRejectedValueOnce(
+        new Error("Network error")
+      );
 
       await processSessionImports(testCompany.id);
 
@@ -207,7 +220,11 @@ Chat ended at 10:15 AM
           messages: {
             create: [
               { role: "User", content: "I need 10 days of vacation", order: 0 },
-              { role: "Assistant", content: "I'll help you with that", order: 1 },
+              {
+                role: "Assistant",
+                content: "I'll help you with that",
+                order: 1,
+              },
             ],
           },
         },
@@ -277,7 +294,9 @@ Chat ended at 10:15 AM
 
       // Mock OpenAI batch status check
       const openai = await import("openai");
-      vi.mocked(openai.default.prototype.batches.retrieve).mockResolvedValueOnce({
+      vi.mocked(
+        openai.default.prototype.batches.retrieve
+      ).mockResolvedValueOnce({
         id: "batch_xyz789",
         status: "completed",
         output_file_id: "file-output",
@@ -323,19 +342,21 @@ Chat ended at 10:15 AM
           response: {
             status_code: 200,
             body: {
-              choices: [{
-                message: {
-                  content: JSON.stringify({
-                    sentiment: "POSITIVE",
-                    category: "LEAVE_VACATION",
-                    summary: "User requesting 10 days vacation",
-                    questions: [
-                      "How do I access the HR portal?",
-                      "When should my vacation end?"
-                    ],
-                  }),
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      sentiment: "POSITIVE",
+                      category: "LEAVE_VACATION",
+                      summary: "User requesting 10 days vacation",
+                      questions: [
+                        "How do I access the HR portal?",
+                        "When should my vacation end?",
+                      ],
+                    }),
+                  },
                 },
-              }],
+              ],
               usage: {
                 prompt_tokens: 100,
                 completion_tokens: 50,
@@ -344,7 +365,9 @@ Chat ended at 10:15 AM
             },
           },
         },
-      ].map(r => JSON.stringify(r)).join("\n");
+      ]
+        .map((r) => JSON.stringify(r))
+        .join("\n");
 
       // Mock OpenAI file content retrieval
       const openai = await import("openai");
@@ -372,7 +395,9 @@ Chat ended at 10:15 AM
       expect(updatedSession?.sessionQuestions).toHaveLength(2);
 
       // Verify questions were extracted
-      const questions = updatedSession?.sessionQuestions.map(sq => sq.question.content);
+      const questions = updatedSession?.sessionQuestions.map(
+        (sq) => sq.question.content
+      );
       expect(questions).toContain("How do I access the HR portal?");
       expect(questions).toContain("When should my vacation end?");
 
@@ -503,28 +528,36 @@ Chat ended at 10:15 AM
       });
 
       // Step 5: Process batch results
-      const mockResults = [{
-        custom_id: session!.id,
-        response: {
-          status_code: 200,
-          body: {
-            choices: [{
-              message: {
-                content: JSON.stringify({
-                  sentiment: "POSITIVE",
-                  category: "LEAVE_VACATION",
-                  summary: "User successfully requested vacation time",
-                  questions: ["How do I access the HR portal?"],
-                }),
+      const mockResults = [
+        {
+          custom_id: session!.id,
+          response: {
+            status_code: 200,
+            body: {
+              choices: [
+                {
+                  message: {
+                    content: JSON.stringify({
+                      sentiment: "POSITIVE",
+                      category: "LEAVE_VACATION",
+                      summary: "User successfully requested vacation time",
+                      questions: ["How do I access the HR portal?"],
+                    }),
+                  },
+                },
+              ],
+              usage: {
+                prompt_tokens: 200,
+                completion_tokens: 100,
+                total_tokens: 300,
               },
-            }],
-            usage: { prompt_tokens: 200, completion_tokens: 100, total_tokens: 300 },
+            },
           },
         },
-      }];
+      ];
 
       vi.mocked(openai.default.prototype.files.content).mockResolvedValueOnce({
-        text: async () => mockResults.map(r => JSON.stringify(r)).join("\n"),
+        text: async () => mockResults.map((r) => JSON.stringify(r)).join("\n"),
       } as any);
 
       await processCompletedBatches(testCompany.id);
@@ -541,7 +574,9 @@ Chat ended at 10:15 AM
 
       expect(finalSession?.sentiment).toBe("POSITIVE");
       expect(finalSession?.category).toBe("LEAVE_VACATION");
-      expect(finalSession?.summary).toBe("User successfully requested vacation time");
+      expect(finalSession?.summary).toBe(
+        "User successfully requested vacation time"
+      );
       expect(finalSession?.sessionQuestions).toHaveLength(1);
       expect(finalSession?.aiProcessingRequests).toHaveLength(1);
       expect(finalSession?.aiProcessingRequests[0].success).toBe(true);

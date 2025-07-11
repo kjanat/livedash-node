@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 
 type Api = {
-  fire: (options?: ConfettiOptions) => void;
+  fire: (_options?: ConfettiOptions) => void;
 };
 
 type Props = React.ComponentPropsWithRef<"canvas"> & {

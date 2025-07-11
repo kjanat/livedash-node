@@ -18,7 +18,15 @@ import { useToast } from "@/hooks/use-toast";
 
 // Platform session hook - same as in dashboard
 function usePlatformSession() {
-  const [session, setSession] = useState<any>(null);
+  const [session, setSession] = useState<{
+    user: {
+      id: string;
+      email: string;
+      name?: string;
+      role: string;
+      companyId?: string;
+    };
+  } | null>(null);
   const [status, setStatus] = useState<
     "loading" | "authenticated" | "unauthenticated"
   >("loading");
@@ -89,7 +97,7 @@ export default function PlatformSettings() {
         title: "Profile Updated",
         description: "Your profile has been updated successfully.",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",
@@ -134,7 +142,7 @@ export default function PlatformSettings() {
         newPassword: "",
         confirmPassword: "",
       });
-    } catch (error) {
+    } catch (_error) {
       toast({
         title: "Error",
         description: "Failed to change password. Please try again.",

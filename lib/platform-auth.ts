@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
+import {
+  AuditOutcome,
+  createAuditMetadata,
+  securityAuditLogger,
+} from "./securityAuditLogger";
 
 // Define the shape of the JWT token for platform users
 declare module "next-auth/jwt" {
@@ -47,6 +52,17 @@ export const platformAuthOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          await securityAuditLogger.logPlatformAdmin(
+            "platform_login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              metadata: createAuditMetadata({
+                error: "missing_credentials",
+                email: credentials?.email ? "[REDACTED]" : "missing",
+              }),
+            },
+            "Missing email or password for platform login"
+          );
           return null;
         }
 
@@ -54,13 +70,55 @@ export const platformAuthOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!platformUser) return null;
+        if (!platformUser) {
+          await securityAuditLogger.logPlatformAdmin(
+            "platform_login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              metadata: createAuditMetadata({
+                error: "user_not_found",
+                email: "[REDACTED]",
+              }),
+            },
+            "Platform user not found"
+          );
+          return null;
+        }
 
         const valid = await bcrypt.compare(
           credentials.password,
           platformUser.password
         );
-        if (!valid) return null;
+
+        if (!valid) {
+          await securityAuditLogger.logPlatformAdmin(
+            "platform_login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              platformUserId: platformUser.id,
+              metadata: createAuditMetadata({
+                error: "invalid_password",
+                email: "[REDACTED]",
+                role: platformUser.role,
+              }),
+            },
+            "Invalid password for platform login"
+          );
+          return null;
+        }
+
+        // Log successful platform authentication
+        await securityAuditLogger.logPlatformAdmin(
+          "platform_login_success",
+          AuditOutcome.SUCCESS,
+          {
+            platformUserId: platformUser.id,
+            metadata: createAuditMetadata({
+              role: platformUser.role,
+              name: platformUser.name,
+            }),
+          }
+        );
 
         return {
           id: platformUser.id,

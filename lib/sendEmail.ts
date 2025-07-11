@@ -47,7 +47,7 @@ export async function sendEmail(
       console.log("📧 [DEV] Email would be sent:", {
         to: options.to,
         subject: options.subject,
-        text: options.text?.substring(0, 100) + "...",
+        text: `${options.text?.substring(0, 100)}...`,
       });
       return { success: true };
     }

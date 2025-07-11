@@ -2,6 +2,11 @@ import crypto from "node:crypto";
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { extractClientIP, InMemoryRateLimiter } from "../../../lib/rateLimiter";
+import {
+  AuditOutcome,
+  createAuditMetadata,
+  securityAuditLogger,
+} from "../../../lib/securityAuditLogger";
 import { sendEmail } from "../../../lib/sendEmail";
 import { forgotPasswordSchema, validateInput } from "../../../lib/validation";
 
@@ -17,9 +22,25 @@ export async function POST(request: NextRequest) {
   try {
     // Rate limiting check using shared utility
     const ip = extractClientIP(request);
+    const userAgent = request.headers.get("user-agent") || undefined;
     const rateLimitResult = passwordResetLimiter.checkRateLimit(ip);
 
     if (!rateLimitResult.allowed) {
+      await securityAuditLogger.logPasswordReset(
+        "password_reset_rate_limited",
+        AuditOutcome.RATE_LIMITED,
+        {
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            resetTime: rateLimitResult.resetTime,
+            maxAttempts: 5,
+            windowMs: 15 * 60 * 1000,
+          }),
+        },
+        "Password reset rate limit exceeded"
+      );
+
       return NextResponse.json(
         {
           success: false,
@@ -34,6 +55,19 @@ export async function POST(request: NextRequest) {
     // Validate input
     const validation = validateInput(forgotPasswordSchema, body);
     if (!validation.success) {
+      await securityAuditLogger.logPasswordReset(
+        "password_reset_invalid_input",
+        AuditOutcome.FAILURE,
+        {
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            error: "invalid_email_format",
+          }),
+        },
+        "Invalid email format in password reset request"
+      );
+
       return NextResponse.json(
         {
           success: false,
@@ -65,11 +99,55 @@ export async function POST(request: NextRequest) {
         subject: "Password Reset",
         text: `Reset your password: ${resetUrl}`,
       });
+
+      await securityAuditLogger.logPasswordReset(
+        "password_reset_email_sent",
+        AuditOutcome.SUCCESS,
+        {
+          userId: user.id,
+          companyId: user.companyId,
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            email: "[REDACTED]",
+            tokenExpiry: expiry.toISOString(),
+          }),
+        },
+        "Password reset email sent successfully"
+      );
+    } else {
+      // Log attempt for non-existent user
+      await securityAuditLogger.logPasswordReset(
+        "password_reset_user_not_found",
+        AuditOutcome.FAILURE,
+        {
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            email: "[REDACTED]",
+          }),
+        },
+        "Password reset attempt for non-existent user"
+      );
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     console.error("Forgot password error:", error);
+
+    await securityAuditLogger.logPasswordReset(
+      "password_reset_server_error",
+      AuditOutcome.FAILURE,
+      {
+        ipAddress: extractClientIP(request),
+        userAgent: request.headers.get("user-agent") || undefined,
+        metadata: createAuditMetadata({
+          error: "server_error",
+        }),
+      },
+      `Server error in password reset: ${error}`
+    );
+
     return NextResponse.json(
       {
         success: false,

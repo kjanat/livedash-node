@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   Settings,
+  Shield,
   User,
   Users,
 } from "lucide-react";
@@ -234,7 +235,7 @@ export default function PlatformDashboard() {
             description: (
               <div className="space-y-3">
                 <p className="font-medium">
-                  Company "{companyName}" has been created.
+                  Company &quot;{companyName}&quot; has been created.
                 </p>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between bg-muted p-2 rounded">
@@ -366,6 +367,15 @@ export default function PlatformDashboard() {
               </p>
             </div>
             <div className="flex gap-4 items-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => router.push("/platform/security")}
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Security Monitoring
+              </Button>
+
               <ThemeToggle />
 
               {/* Search Filter */}
@@ -491,7 +501,7 @@ export default function PlatformDashboard() {
               <div className="flex items-center gap-2">
                 {searchTerm && (
                   <Badge variant="outline" className="text-xs">
-                    Search: "{searchTerm}"
+                    Search: &quot;{searchTerm}&quot;
                   </Badge>
                 )}
                 <Dialog open={showAddCompany} onOpenChange={setShowAddCompany}>
@@ -693,7 +703,7 @@ export default function PlatformDashboard() {
                 <div className="text-center py-8 text-muted-foreground">
                   {searchTerm ? (
                     <div className="space-y-2">
-                      <p>No companies match "{searchTerm}".</p>
+                      <p>No companies match &quot;{searchTerm}&quot;.</p>
                       <Button
                         variant="link"
                         onClick={() => setSearchTerm("")}

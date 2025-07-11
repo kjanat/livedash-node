@@ -35,6 +35,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `pnpm test:vitest:coverage` - Run Vitest with coverage report
 - `pnpm test:coverage` - Run all tests with coverage
 
+**Security Testing:**
+
+- `pnpm test:security` - Run security-specific tests
+- `pnpm test:security-headers` - Test HTTP security headers implementation
+- `pnpm test:csp` - Test CSP implementation and nonce generation
+- `pnpm test:csp:validate` - Validate CSP implementation with security scoring
+- `pnpm test:csp:full` - Comprehensive CSP test suite
+
+**Migration & Deployment:**
+
+- `pnpm migration:backup` - Create database backup
+- `pnpm migration:validate-db` - Validate database schema and integrity
+- `pnpm migration:validate-env` - Validate environment configuration
+- `pnpm migration:pre-check` - Run pre-deployment validation checks
+- `pnpm migration:health-check` - Run system health checks
+- `pnpm migration:deploy` - Execute full deployment process
+- `pnpm migration:rollback` - Rollback failed migration
+
 **Markdown:**
 
 - `pnpm lint:md` - Lint Markdown files
@@ -154,15 +172,30 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
 
 **Security Features:**
 
-- **Rate Limiting**: In-memory rate limiting for all authentication endpoints
-  - Login: 5 attempts per 15 minutes
-  - Registration: 3 attempts per hour
-  - Password Reset: 5 attempts per 15 minutes
-- **Input Validation**: Comprehensive Zod schemas for all user inputs
-  - Strong password requirements (12+ chars, uppercase, lowercase, numbers, special chars)
-  - Email normalization and validation
-  - XSS and SQL injection prevention
+- **Comprehensive CSRF Protection**: Multi-layer CSRF protection with automatic token management
+  - Middleware-level protection for all state-changing endpoints
+  - tRPC integration with CSRF-protected procedures
+  - Client-side hooks and components for seamless integration
+  - HTTP-only cookies with SameSite protection
+- **Enhanced Content Security Policy (CSP)**: 
+  - Nonce-based script execution for maximum XSS protection
+  - Environment-specific policies (strict production, permissive development)
+  - Real-time violation reporting and bypass detection
+  - Automated policy optimization recommendations
+- **Security Monitoring & Audit System**:
+  - Real-time threat detection and alerting
+  - Comprehensive security audit logging with retention management
+  - Geographic anomaly detection and IP threat analysis
+  - Security scoring and automated incident response
+- **Advanced Rate Limiting**: In-memory rate limiting system
+  - Authentication endpoints: Login (5/15min), Registration (3/hour), Password Reset (5/15min)
+  - CSP reporting: 10 reports per minute per IP
+  - Admin endpoints: Configurable thresholds
+- **Input Validation & Security Headers**: 
+  - Comprehensive Zod schemas for all user inputs with XSS/injection prevention
+  - HTTP security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Permissions Policy)
+  - Strong password requirements and email validation
 - **Session Security**:
-  - JWT tokens with 24-hour expiration
-  - HttpOnly, Secure, SameSite cookies
-  - Company status verification on login
+  - JWT tokens with 24-hour expiration and secure cookie settings
+  - HttpOnly, Secure, SameSite cookies with proper CSP integration
+  - Company isolation and multi-tenant security

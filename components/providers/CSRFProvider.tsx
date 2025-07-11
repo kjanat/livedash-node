@@ -7,7 +7,8 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import type React from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { CSRFClient } from "../../lib/csrf";
 
 interface CSRFContextType {
@@ -15,9 +16,11 @@ interface CSRFContextType {
   loading: boolean;
   error: string | null;
   refreshToken: () => Promise<void>;
-  addTokenToFetch: (options: RequestInit) => RequestInit;
-  addTokenToFormData: (formData: FormData) => FormData;
-  addTokenToObject: <T extends Record<string, unknown>>(obj: T) => T & { csrfToken: string };
+  addTokenToFetch: (_options: RequestInit) => RequestInit;
+  addTokenToFormData: (_formData: FormData) => FormData;
+  addTokenToObject: <T extends Record<string, unknown>>(
+    _obj: T
+  ) => T & { csrfToken: string };
 }
 
 const CSRFContext = createContext<CSRFContextType | undefined>(undefined);
@@ -37,7 +40,7 @@ export function CSRFProvider({ children }: CSRFProviderProps) {
   /**
    * Fetch CSRF token from server
    */
-  const fetchToken = async () => {
+  const fetchToken = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -68,13 +71,14 @@ export function CSRFProvider({ children }: CSRFProviderProps) {
         throw new Error("Invalid response from CSRF endpoint");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch CSRF token";
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to fetch CSRF token";
       setError(errorMessage);
       console.error("CSRF token fetch error:", errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   /**
    * Refresh token manually
@@ -88,7 +92,7 @@ export function CSRFProvider({ children }: CSRFProviderProps) {
    */
   useEffect(() => {
     fetchToken();
-  }, []);
+  }, [fetchToken]);
 
   /**
    * Monitor token changes in cookies
@@ -118,9 +122,7 @@ export function CSRFProvider({ children }: CSRFProviderProps) {
   };
 
   return (
-    <CSRFContext.Provider value={contextValue}>
-      {children}
-    </CSRFContext.Provider>
+    <CSRFContext.Provider value={contextValue}>{children}</CSRFContext.Provider>
   );
 }
 

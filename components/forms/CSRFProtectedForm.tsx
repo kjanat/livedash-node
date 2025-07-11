@@ -7,14 +7,14 @@
 
 "use client";
 
-import React, { FormEvent, ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import { useCSRFForm } from "../../lib/hooks/useCSRF";
 
 interface CSRFProtectedFormProps {
   children: ReactNode;
   action: string;
   method?: "POST" | "PUT" | "DELETE" | "PATCH";
-  onSubmit?: (formData: FormData) => Promise<void> | void;
+  onSubmit?: (_formData: FormData) => Promise<void> | void;
   className?: string;
   encType?: string;
 }
@@ -71,13 +71,7 @@ export function CSRFProtectedForm({
       encType={encType}
     >
       {/* Hidden CSRF token field for non-JS fallback */}
-      {token && (
-        <input
-          type="hidden"
-          name="csrf_token"
-          value={token}
-        />
-      )}
+      {token && <input type="hidden" name="csrf_token" value={token} />}
 
       {children}
     </form>
@@ -99,7 +93,9 @@ export function ExampleCSRFForm() {
 
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-xl font-semibold mb-4">CSRF Protected Form Example</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        CSRF Protected Form Example
+      </h2>
 
       <CSRFProtectedForm
         action="/api/example-endpoint"
@@ -107,7 +103,10 @@ export function ExampleCSRFForm() {
         className="space-y-4"
       >
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-700"
+          >
             Name
           </label>
           <input
@@ -120,7 +119,10 @@ export function ExampleCSRFForm() {
         </div>
 
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Email
           </label>
           <input
@@ -133,7 +135,10 @@ export function ExampleCSRFForm() {
         </div>
 
         <div>
-          <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="message"
+            className="block text-sm font-medium text-gray-700"
+          >
             Message
           </label>
           <textarea

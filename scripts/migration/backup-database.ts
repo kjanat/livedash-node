@@ -90,13 +90,12 @@ export class DatabaseBackup {
       migrationLogger.info("DATABASE_BACKUP", "Backup completed successfully", {
         path: finalPath,
         sizeBytes: stats.size,
-        sizeMB: Math.round(stats.size / 1024 / 1024 * 100) / 100,
+        sizeMB: Math.round((stats.size / 1024 / 1024) * 100) / 100,
         duration,
         checksum: checksumMD5,
       });
 
       return result;
-
     } catch (error) {
       const duration = Date.now() - startTime;
       migrationLogger.failStep("DATABASE_BACKUP", error as Error);
@@ -136,13 +135,15 @@ export class DatabaseBackup {
   /**
    * List existing backups with metadata
    */
-  async listBackups(backupDir?: string): Promise<Array<{
-    filename: string;
-    path: string;
-    size: number;
-    created: Date;
-    type: string;
-  }>> {
+  async listBackups(backupDir?: string): Promise<
+    Array<{
+      filename: string;
+      path: string;
+      size: number;
+      created: Date;
+      type: string;
+    }>
+  > {
     const dir = backupDir || this.defaultOptions.outputDir;
 
     if (!existsSync(dir)) {
@@ -150,11 +151,13 @@ export class DatabaseBackup {
     }
 
     try {
-      const files = await import("node:fs/promises").then(fs => fs.readdir(dir));
+      const files = await import("node:fs/promises").then((fs) =>
+        fs.readdir(dir)
+      );
       const backups = [];
 
       for (const file of files) {
-        if (file.endsWith('.sql') || file.endsWith('.sql.gz')) {
+        if (file.endsWith(".sql") || file.endsWith(".sql.gz")) {
           const fullPath = join(dir, file);
           const stats = statSync(fullPath);
 
@@ -174,9 +177,10 @@ export class DatabaseBackup {
       }
 
       return backups.sort((a, b) => b.created.getTime() - a.created.getTime());
-
     } catch (error) {
-      migrationLogger.warn("BACKUP_LIST", "Failed to list backups", { error: (error as Error).message });
+      migrationLogger.warn("BACKUP_LIST", "Failed to list backups", {
+        error: (error as Error).message,
+      });
       return [];
     }
   }
@@ -216,11 +220,16 @@ export class DatabaseBackup {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const args = [
-        "-h", dbConfig.host,
-        "-p", dbConfig.port,
-        "-U", dbConfig.username,
-        "-d", dbConfig.database,
-        "-f", outputPath,
+        "-h",
+        dbConfig.host,
+        "-p",
+        dbConfig.port,
+        "-U",
+        dbConfig.username,
+        "-d",
+        dbConfig.database,
+        "-f",
+        outputPath,
         "--verbose",
       ];
 
@@ -234,15 +243,17 @@ export class DatabaseBackup {
 
       // Additional options for better backup quality
       args.push(
-        "--create",              // Include CREATE DATABASE
-        "--clean",               // Include DROP statements
-        "--if-exists",          // Use IF EXISTS
-        "--disable-triggers",    // Disable triggers during restore
-        "--no-owner",           // Don't output ownership commands
-        "--no-privileges"       // Don't output privilege commands
+        "--create", // Include CREATE DATABASE
+        "--clean", // Include DROP statements
+        "--if-exists", // Use IF EXISTS
+        "--disable-triggers", // Disable triggers during restore
+        "--no-owner", // Don't output ownership commands
+        "--no-privileges" // Don't output privilege commands
       );
 
-      migrationLogger.debug("PG_DUMP", "Starting pg_dump", { args: args.filter(arg => arg !== dbConfig.password) });
+      migrationLogger.debug("PG_DUMP", "Starting pg_dump", {
+        args: args.filter((arg) => arg !== dbConfig.password),
+      });
 
       const process = spawn("pg_dump", args, {
         env: {
@@ -278,7 +289,10 @@ export class DatabaseBackup {
     });
   }
 
-  private async compressBackup(sourcePath: string, targetPath: string): Promise<void> {
+  private async compressBackup(
+    sourcePath: string,
+    targetPath: string
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
       const fs = require("node:fs");
       const readStream = fs.createReadStream(sourcePath);
@@ -291,7 +305,10 @@ export class DatabaseBackup {
         .on("finish", () => {
           // Remove uncompressed file
           fs.unlinkSync(sourcePath);
-          migrationLogger.debug("COMPRESSION", `Compressed backup: ${targetPath}`);
+          migrationLogger.debug(
+            "COMPRESSION",
+            `Compressed backup: ${targetPath}`
+          );
           resolve();
         })
         .on("error", reject);
@@ -311,14 +328,18 @@ export class DatabaseBackup {
         stream.on("data", (data) => hash.update(data));
         stream.on("end", () => {
           const checksum = hash.digest("hex");
-          migrationLogger.debug("BACKUP_VERIFICATION", `Backup checksum: ${checksum}`);
+          migrationLogger.debug(
+            "BACKUP_VERIFICATION",
+            `Backup checksum: ${checksum}`
+          );
           resolve(checksum);
         });
         stream.on("error", reject);
       });
-
     } catch (error) {
-      migrationLogger.warn("BACKUP_VERIFICATION", "Failed to verify backup", { error: (error as Error).message });
+      migrationLogger.warn("BACKUP_VERIFICATION", "Failed to verify backup", {
+        error: (error as Error).message,
+      });
       throw error;
     }
   }
@@ -326,28 +347,44 @@ export class DatabaseBackup {
   /**
    * Clean up old backups, keeping only the specified number
    */
-  async cleanupOldBackups(keepCount: number = 5, backupDir?: string): Promise<void> {
+  async cleanupOldBackups(
+    keepCount: number = 5,
+    backupDir?: string
+  ): Promise<void> {
     const dir = backupDir || this.defaultOptions.outputDir;
     const backups = await this.listBackups(dir);
 
     if (backups.length <= keepCount) {
-      migrationLogger.info("BACKUP_CLEANUP", `No cleanup needed. Found ${backups.length} backups, keeping ${keepCount}`);
+      migrationLogger.info(
+        "BACKUP_CLEANUP",
+        `No cleanup needed. Found ${backups.length} backups, keeping ${keepCount}`
+      );
       return;
     }
 
     const toDelete = backups.slice(keepCount);
-    migrationLogger.info("BACKUP_CLEANUP", `Cleaning up ${toDelete.length} old backups`);
+    migrationLogger.info(
+      "BACKUP_CLEANUP",
+      `Cleaning up ${toDelete.length} old backups`
+    );
 
     const fs = await import("node:fs/promises");
 
     for (const backup of toDelete) {
       try {
         await fs.unlink(backup.path);
-        migrationLogger.debug("BACKUP_CLEANUP", `Deleted old backup: ${backup.filename}`);
+        migrationLogger.debug(
+          "BACKUP_CLEANUP",
+          `Deleted old backup: ${backup.filename}`
+        );
       } catch (error) {
-        migrationLogger.warn("BACKUP_CLEANUP", `Failed to delete backup: ${backup.filename}`, {
-          error: (error as Error).message
-        });
+        migrationLogger.warn(
+          "BACKUP_CLEANUP",
+          `Failed to delete backup: ${backup.filename}`,
+          {
+            error: (error as Error).message,
+          }
+        );
       }
     }
   }
@@ -372,13 +409,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
       case "list":
         const backups = await backup.listBackups();
-        console.log('\n=== DATABASE BACKUPS ===');
+        console.log("\n=== DATABASE BACKUPS ===");
         if (backups.length === 0) {
-          console.log('No backups found.');
+          console.log("No backups found.");
         } else {
-          backups.forEach(b => {
-            const sizeMB = Math.round(b.size / 1024 / 1024 * 100) / 100;
-            console.log(`${b.filename} (${b.type}, ${sizeMB}MB, ${b.created.toISOString()})`);
+          backups.forEach((b) => {
+            const sizeMB = Math.round((b.size / 1024 / 1024) * 100) / 100;
+            console.log(
+              `${b.filename} (${b.type}, ${sizeMB}MB, ${b.created.toISOString()})`
+            );
           });
         }
         return { success: true, backupPath: "", size: 0, duration: 0 };
@@ -410,11 +449,13 @@ Examples:
   runCommand()
     .then((result) => {
       if (command !== "list" && command !== "cleanup") {
-        console.log('\n=== BACKUP RESULTS ===');
-        console.log(`Success: ${result.success ? '✅' : '❌'}`);
+        console.log("\n=== BACKUP RESULTS ===");
+        console.log(`Success: ${result.success ? "✅" : "❌"}`);
         if (result.success) {
           console.log(`Path: ${result.backupPath}`);
-          console.log(`Size: ${Math.round(result.size / 1024 / 1024 * 100) / 100} MB`);
+          console.log(
+            `Size: ${Math.round((result.size / 1024 / 1024) * 100) / 100} MB`
+          );
           console.log(`Duration: ${result.duration}ms`);
           if (result.checksumMD5) {
             console.log(`Checksum: ${result.checksumMD5}`);
@@ -427,7 +468,7 @@ Examples:
       process.exit(result.success ? 0 : 1);
     })
     .catch((error) => {
-      console.error('Backup failed:', error);
+      console.error("Backup failed:", error);
       process.exit(1);
     });
 }

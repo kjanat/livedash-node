@@ -10,7 +10,11 @@ import { migrationLogger } from "./migration-logger";
 
 interface BatchTest {
   name: string;
-  testFn: () => Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }>;
+  testFn: () => Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }>;
   critical: boolean;
   timeout: number;
 }
@@ -47,7 +51,10 @@ export class BatchProcessingTester {
     const tests: BatchTestResult[] = [];
 
     try {
-      migrationLogger.startStep("BATCH_TESTS", "Running batch processing system validation tests");
+      migrationLogger.startStep(
+        "BATCH_TESTS",
+        "Running batch processing system validation tests"
+      );
 
       // Define test suite
       const batchTests: BatchTest[] = [
@@ -120,9 +127,12 @@ export class BatchProcessingTester {
       }
 
       const totalDuration = Date.now() - startTime;
-      const passedTests = tests.filter(t => t.success).length;
-      const failedTests = tests.filter(t => !t.success).length;
-      const criticalFailures = tests.filter(t => !t.success && batchTests.find(bt => bt.name === t.name)?.critical).length;
+      const passedTests = tests.filter((t) => t.success).length;
+      const failedTests = tests.filter((t) => !t.success).length;
+      const criticalFailures = tests.filter(
+        (t) =>
+          !t.success && batchTests.find((bt) => bt.name === t.name)?.critical
+      ).length;
 
       const result: BatchSystemTestResult = {
         success: criticalFailures === 0,
@@ -136,13 +146,19 @@ export class BatchProcessingTester {
       if (result.success) {
         migrationLogger.completeStep("BATCH_TESTS");
       } else {
-        migrationLogger.failStep("BATCH_TESTS", new Error(`${criticalFailures} critical batch tests failed`));
+        migrationLogger.failStep(
+          "BATCH_TESTS",
+          new Error(`${criticalFailures} critical batch tests failed`)
+        );
       }
 
       return result;
-
     } catch (error) {
-      migrationLogger.error("BATCH_TESTS", "Batch processing test suite failed", error as Error);
+      migrationLogger.error(
+        "BATCH_TESTS",
+        "Batch processing test suite failed",
+        error as Error
+      );
       throw error;
     } finally {
       await this.prisma.$disconnect();
@@ -160,10 +176,7 @@ export class BatchProcessingTester {
         setTimeout(() => reject(new Error("Test timeout")), test.timeout);
       });
 
-      const testResult = await Promise.race([
-        test.testFn(),
-        timeoutPromise
-      ]);
+      const testResult = await Promise.race([test.testFn(), timeoutPromise]);
 
       const duration = Date.now() - startTime;
 
@@ -178,21 +191,25 @@ export class BatchProcessingTester {
       if (testResult.success) {
         migrationLogger.debug("BATCH_TEST", `✅ ${test.name} passed`, {
           duration,
-          details: testResult.details
+          details: testResult.details,
         });
       } else {
         migrationLogger.warn("BATCH_TEST", `❌ ${test.name} failed`, {
           duration,
-          error: testResult.error?.message
+          error: testResult.error?.message,
         });
       }
 
       return result;
-
     } catch (error) {
       const duration = Date.now() - startTime;
 
-      migrationLogger.error("BATCH_TEST", `💥 ${test.name} crashed`, error as Error, { duration });
+      migrationLogger.error(
+        "BATCH_TEST",
+        `💥 ${test.name} crashed`,
+        error as Error,
+        { duration }
+      );
 
       return {
         name: test.name,
@@ -203,81 +220,107 @@ export class BatchProcessingTester {
     }
   }
 
-  private async testDatabaseSchema(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testDatabaseSchema(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Check if AIBatchRequest table exists and has correct columns
-      const batchRequestTableCheck = await this.prisma.$queryRaw<{count: string}[]>`
+      const batchRequestTableCheck = await this.prisma.$queryRaw<
+        { count: string }[]
+      >`
         SELECT COUNT(*) as count
         FROM information_schema.tables
         WHERE table_name = 'AIBatchRequest'
       `;
 
-      if (parseInt(batchRequestTableCheck[0]?.count || '0') === 0) {
+      if (parseInt(batchRequestTableCheck[0]?.count || "0") === 0) {
         return {
           success: false,
-          error: new Error("AIBatchRequest table not found")
+          error: new Error("AIBatchRequest table not found"),
         };
       }
 
       // Check required columns
       const requiredColumns = [
-        'openaiBatchId', 'inputFileId', 'outputFileId', 'status', 'companyId'
+        "openaiBatchId",
+        "inputFileId",
+        "outputFileId",
+        "status",
+        "companyId",
       ];
 
       const columnChecks = await Promise.all(
         requiredColumns.map(async (column) => {
-          const result = await this.prisma.$queryRawUnsafe(`
+          const result = (await this.prisma.$queryRawUnsafe(`
             SELECT COUNT(*) as count
             FROM information_schema.columns
             WHERE table_name = 'AIBatchRequest' AND column_name = '${column}'
-          `) as {count: string}[];
-          return { column, exists: parseInt(result[0]?.count || '0') > 0 };
+          `)) as { count: string }[];
+          return { column, exists: parseInt(result[0]?.count || "0") > 0 };
         })
       );
 
-      const missingColumns = columnChecks.filter(c => !c.exists).map(c => c.column);
+      const missingColumns = columnChecks
+        .filter((c) => !c.exists)
+        .map((c) => c.column);
 
       // Check AIProcessingRequest has batch fields
-      const processingRequestBatchFields = await this.prisma.$queryRawUnsafe(`
+      const processingRequestBatchFields = (await this.prisma.$queryRawUnsafe(`
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = 'AIProcessingRequest' 
         AND column_name IN ('processingStatus', 'batchId')
-      `) as {column_name: string}[];
+      `)) as { column_name: string }[];
 
-      const hasProcessingStatus = processingRequestBatchFields.some(c => c.column_name === 'processingStatus');
-      const hasBatchId = processingRequestBatchFields.some(c => c.column_name === 'batchId');
+      const hasProcessingStatus = processingRequestBatchFields.some(
+        (c) => c.column_name === "processingStatus"
+      );
+      const hasBatchId = processingRequestBatchFields.some(
+        (c) => c.column_name === "batchId"
+      );
 
       return {
-        success: missingColumns.length === 0 && hasProcessingStatus && hasBatchId,
+        success:
+          missingColumns.length === 0 && hasProcessingStatus && hasBatchId,
         details: {
           missingColumns,
           hasProcessingStatus,
           hasBatchId,
-          requiredColumnsPresent: requiredColumns.length - missingColumns.length
+          requiredColumnsPresent:
+            requiredColumns.length - missingColumns.length,
         },
-        error: missingColumns.length > 0 || !hasProcessingStatus || !hasBatchId
-          ? new Error(`Schema validation failed: missing ${missingColumns.join(', ')}${!hasProcessingStatus ? ', processingStatus' : ''}${!hasBatchId ? ', batchId' : ''}`)
-          : undefined
+        error:
+          missingColumns.length > 0 || !hasProcessingStatus || !hasBatchId
+            ? new Error(
+                `Schema validation failed: missing ${missingColumns.join(", ")}${!hasProcessingStatus ? ", processingStatus" : ""}${!hasBatchId ? ", batchId" : ""}`
+              )
+            : undefined,
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testBatchProcessorImport(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testBatchProcessorImport(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test if batch processor can be imported
       const batchProcessor = await import("../../lib/batchProcessor");
 
       // Check if key functions/classes exist
-      const hasBatchConfig = 'BATCH_CONFIG' in batchProcessor;
-      const hasCreateBatch = typeof batchProcessor.createBatchFromRequests === 'function';
-      const hasProcessBatch = typeof batchProcessor.processBatchResults === 'function';
+      const hasBatchConfig = "BATCH_CONFIG" in batchProcessor;
+      const hasCreateBatch =
+        typeof batchProcessor.createBatchFromRequests === "function";
+      const hasProcessBatch =
+        typeof batchProcessor.processBatchResults === "function";
 
       return {
         success: hasBatchConfig || hasCreateBatch || hasProcessBatch, // At least one should exist
@@ -286,79 +329,85 @@ export class BatchProcessingTester {
           hasBatchConfig,
           hasCreateBatch,
           hasProcessBatch,
-          exportedItems: Object.keys(batchProcessor)
-        }
+          exportedItems: Object.keys(batchProcessor),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: error as Error,
         details: {
           batchProcessorImported: false,
-          importError: (error as Error).message
-        }
+          importError: (error as Error).message,
+        },
       };
     }
   }
 
-  private async testBatchRequestCreation(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testBatchRequestCreation(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Create a test batch request
       const testBatchRequest = await this.prisma.aIBatchRequest.create({
         data: {
-          companyId: 'test-company-' + Date.now(),
-          openaiBatchId: 'test-batch-' + Date.now(),
-          inputFileId: 'test-input-' + Date.now(),
-          status: 'PENDING',
-        }
+          companyId: "test-company-" + Date.now(),
+          openaiBatchId: "test-batch-" + Date.now(),
+          inputFileId: "test-input-" + Date.now(),
+          status: "PENDING",
+        },
       });
 
       // Verify it was created correctly
       const retrievedBatch = await this.prisma.aIBatchRequest.findUnique({
-        where: { id: testBatchRequest.id }
+        where: { id: testBatchRequest.id },
       });
 
       // Clean up test data
       await this.prisma.aIBatchRequest.delete({
-        where: { id: testBatchRequest.id }
+        where: { id: testBatchRequest.id },
       });
 
       return {
-        success: !!retrievedBatch && retrievedBatch.status === 'PENDING',
+        success: !!retrievedBatch && retrievedBatch.status === "PENDING",
         details: {
           batchRequestCreated: !!testBatchRequest,
           batchRequestRetrieved: !!retrievedBatch,
-          statusCorrect: retrievedBatch?.status === 'PENDING',
-          testBatchId: testBatchRequest.id
-        }
+          statusCorrect: retrievedBatch?.status === "PENDING",
+          testBatchId: testBatchRequest.id,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testProcessingRequestManagement(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testProcessingRequestManagement(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Count existing processing requests
       const initialCount = await this.prisma.aIProcessingRequest.count();
 
       // Check processing status distribution
       const statusDistribution = await this.prisma.aIProcessingRequest.groupBy({
-        by: ['processingStatus'],
+        by: ["processingStatus"],
         _count: { processingStatus: true },
       });
 
       // Check if we can query requests ready for batching
       const readyForBatching = await this.prisma.aIProcessingRequest.findMany({
         where: {
-          processingStatus: 'PENDING_BATCHING'
+          processingStatus: "PENDING_BATCHING",
         },
-        take: 5
+        take: 5,
       });
 
       return {
@@ -366,40 +415,46 @@ export class BatchProcessingTester {
         details: {
           totalProcessingRequests: initialCount,
           statusDistribution: Object.fromEntries(
-            statusDistribution.map(s => [s.processingStatus, s._count.processingStatus])
+            statusDistribution.map((s) => [
+              s.processingStatus,
+              s._count.processingStatus,
+            ])
           ),
           readyForBatchingCount: readyForBatching.length,
-          canQueryByStatus: true
-        }
+          canQueryByStatus: true,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testBatchStatusTransitions(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testBatchStatusTransitions(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test that we can update batch status through all states
       const testBatchRequest = await this.prisma.aIBatchRequest.create({
         data: {
-          companyId: 'test-company-' + Date.now(),
-          openaiBatchId: 'test-status-batch-' + Date.now(),
-          inputFileId: 'test-status-input-' + Date.now(),
-          status: 'PENDING',
-        }
+          companyId: "test-company-" + Date.now(),
+          openaiBatchId: "test-status-batch-" + Date.now(),
+          inputFileId: "test-status-input-" + Date.now(),
+          status: "PENDING",
+        },
       });
 
       const statusTransitions = [
-        'UPLOADING',
-        'VALIDATING',
-        'IN_PROGRESS',
-        'FINALIZING',
-        'COMPLETED',
-        'PROCESSED'
+        "UPLOADING",
+        "VALIDATING",
+        "IN_PROGRESS",
+        "FINALIZING",
+        "COMPLETED",
+        "PROCESSED",
       ] as const;
 
       const transitionResults: boolean[] = [];
@@ -408,7 +463,7 @@ export class BatchProcessingTester {
         try {
           await this.prisma.aIBatchRequest.update({
             where: { id: testBatchRequest.id },
-            data: { status }
+            data: { status },
           });
           transitionResults.push(true);
         } catch (error) {
@@ -418,10 +473,10 @@ export class BatchProcessingTester {
 
       // Clean up test data
       await this.prisma.aIBatchRequest.delete({
-        where: { id: testBatchRequest.id }
+        where: { id: testBatchRequest.id },
       });
 
-      const successfulTransitions = transitionResults.filter(r => r).length;
+      const successfulTransitions = transitionResults.filter((r) => r).length;
 
       return {
         success: successfulTransitions === statusTransitions.length,
@@ -430,30 +485,38 @@ export class BatchProcessingTester {
           successfulTransitions,
           failedTransitions: statusTransitions.length - successfulTransitions,
           transitionResults: Object.fromEntries(
-            statusTransitions.map((status, index) => [status, transitionResults[index]])
-          )
-        }
+            statusTransitions.map((status, index) => [
+              status,
+              transitionResults[index],
+            ])
+          ),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testBatchScheduling(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testBatchScheduling(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test if batch scheduler can be imported
       const batchScheduler = await import("../../lib/batchScheduler");
 
       // Check if scheduling functions exist
-      const hasScheduler = typeof batchScheduler.startBatchScheduler === 'function';
-      const hasProcessor = typeof batchScheduler.processPendingBatches === 'function';
+      const hasScheduler =
+        typeof batchScheduler.startBatchScheduler === "function";
+      const hasProcessor =
+        typeof batchScheduler.processPendingBatches === "function";
 
       // Check environment variables for scheduling
-      const batchEnabled = process.env.BATCH_PROCESSING_ENABLED === 'true';
+      const batchEnabled = process.env.BATCH_PROCESSING_ENABLED === "true";
       const hasIntervals = !!(
         process.env.BATCH_CREATE_INTERVAL &&
         process.env.BATCH_STATUS_CHECK_INTERVAL &&
@@ -468,35 +531,38 @@ export class BatchProcessingTester {
           hasProcessor,
           batchEnabled,
           hasIntervals,
-          exportedItems: Object.keys(batchScheduler)
-        }
+          exportedItems: Object.keys(batchScheduler),
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: error as Error,
         details: {
           batchSchedulerImported: false,
-          importError: (error as Error).message
-        }
+          importError: (error as Error).message,
+        },
       };
     }
   }
 
-  private async testOpenAIIntegration(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testOpenAIIntegration(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       const apiKey = process.env.OPENAI_API_KEY;
-      const mockMode = process.env.OPENAI_MOCK_MODE === 'true';
+      const mockMode = process.env.OPENAI_MOCK_MODE === "true";
 
       if (mockMode) {
         return {
           success: true,
           details: {
-            mode: 'mock',
+            mode: "mock",
             apiKeyPresent: !!apiKey,
-            testType: 'mock_mode_enabled'
-          }
+            testType: "mock_mode_enabled",
+          },
         };
       }
 
@@ -505,70 +571,77 @@ export class BatchProcessingTester {
           success: false,
           error: new Error("OpenAI API key not configured"),
           details: {
-            mode: 'live',
-            apiKeyPresent: false
-          }
+            mode: "live",
+            apiKeyPresent: false,
+          },
         };
       }
 
       // Test basic API access (simple models list)
       const response = await fetch("https://api.openai.com/v1/models", {
         headers: {
-          "Authorization": `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
       });
 
       if (!response.ok) {
         return {
           success: false,
-          error: new Error(`OpenAI API access failed: ${response.status} ${response.statusText}`),
+          error: new Error(
+            `OpenAI API access failed: ${response.status} ${response.statusText}`
+          ),
           details: {
-            mode: 'live',
+            mode: "live",
             apiKeyPresent: true,
-            httpStatus: response.status
-          }
+            httpStatus: response.status,
+          },
         };
       }
 
       const models = await response.json();
-      const hasModels = models.data && Array.isArray(models.data) && models.data.length > 0;
+      const hasModels =
+        models.data && Array.isArray(models.data) && models.data.length > 0;
 
       return {
         success: hasModels,
         details: {
-          mode: 'live',
+          mode: "live",
           apiKeyPresent: true,
           apiAccessible: true,
           modelsCount: models.data?.length || 0,
-          hasGPTModels: models.data?.some((m: any) => m.id.includes('gpt')) || false
-        }
+          hasGPTModels:
+            models.data?.some((m: any) => m.id.includes("gpt")) || false,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
         error: error as Error,
         details: {
-          mode: 'live',
+          mode: "live",
           apiKeyPresent: !!process.env.OPENAI_API_KEY,
-          networkError: true
-        }
+          networkError: true,
+        },
       };
     }
   }
 
-  private async testErrorHandling(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testErrorHandling(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test handling of invalid batch requests
       let invalidBatchHandled = false;
       try {
         await this.prisma.aIBatchRequest.create({
           data: {
-            companyId: '', // Invalid empty company ID
-            openaiBatchId: 'test-invalid-batch',
-            inputFileId: 'test-invalid-input',
-            status: 'PENDING',
-          }
+            companyId: "", // Invalid empty company ID
+            openaiBatchId: "test-invalid-batch",
+            inputFileId: "test-invalid-input",
+            status: "PENDING",
+          },
         });
       } catch (error) {
         // This should fail, which means error handling is working
@@ -577,28 +650,28 @@ export class BatchProcessingTester {
 
       // Test handling of duplicate OpenAI batch IDs
       let duplicateHandled = false;
-      const uniqueId = 'test-duplicate-' + Date.now();
+      const uniqueId = "test-duplicate-" + Date.now();
 
       try {
         // Create first batch
         const firstBatch = await this.prisma.aIBatchRequest.create({
           data: {
-            companyId: 'test-company-duplicate',
+            companyId: "test-company-duplicate",
             openaiBatchId: uniqueId,
-            inputFileId: 'test-duplicate-input-1',
-            status: 'PENDING',
-          }
+            inputFileId: "test-duplicate-input-1",
+            status: "PENDING",
+          },
         });
 
         // Try to create duplicate
         try {
           await this.prisma.aIBatchRequest.create({
             data: {
-              companyId: 'test-company-duplicate',
+              companyId: "test-company-duplicate",
               openaiBatchId: uniqueId, // Same OpenAI batch ID
-              inputFileId: 'test-duplicate-input-2',
-              status: 'PENDING',
-            }
+              inputFileId: "test-duplicate-input-2",
+              status: "PENDING",
+            },
           });
         } catch (error) {
           // This should fail due to unique constraint
@@ -607,9 +680,8 @@ export class BatchProcessingTester {
 
         // Clean up
         await this.prisma.aIBatchRequest.delete({
-          where: { id: firstBatch.id }
+          where: { id: firstBatch.id },
         });
-
       } catch (error) {
         // Initial creation failed, that's also error handling
         duplicateHandled = true;
@@ -620,19 +692,22 @@ export class BatchProcessingTester {
         details: {
           invalidBatchHandled,
           duplicateHandled,
-          errorHandlingWorking: invalidBatchHandled && duplicateHandled
-        }
+          errorHandlingWorking: invalidBatchHandled && duplicateHandled,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testBatchPerformance(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testBatchPerformance(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Test query performance for batch operations
       const startTime = Date.now();
@@ -640,9 +715,9 @@ export class BatchProcessingTester {
       // Query for batches ready for processing
       const pendingBatches = await this.prisma.aIBatchRequest.findMany({
         where: {
-          status: { in: ['PENDING', 'UPLOADING', 'VALIDATING'] }
+          status: { in: ["PENDING", "UPLOADING", "VALIDATING"] },
         },
-        take: 100
+        take: 100,
       });
 
       const pendingBatchesTime = Date.now() - startTime;
@@ -652,15 +727,16 @@ export class BatchProcessingTester {
 
       const readyRequests = await this.prisma.aIProcessingRequest.findMany({
         where: {
-          processingStatus: 'PENDING_BATCHING'
+          processingStatus: "PENDING_BATCHING",
         },
-        take: 100
+        take: 100,
       });
 
       const readyRequestsTime = Date.now() - batchingStartTime;
 
       // Query performance should be reasonable
-      const performanceAcceptable = pendingBatchesTime < 1000 && readyRequestsTime < 1000;
+      const performanceAcceptable =
+        pendingBatchesTime < 1000 && readyRequestsTime < 1000;
 
       return {
         success: performanceAcceptable,
@@ -670,22 +746,25 @@ export class BatchProcessingTester {
           readyRequestsCount: readyRequests.length,
           readyRequestsQueryTime: readyRequestsTime,
           performanceAcceptable,
-          totalTestTime: Date.now() - startTime
-        }
+          totalTestTime: Date.now() - startTime,
+        },
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
 
-  private async testDataConsistency(): Promise<{ success: boolean; details?: Record<string, unknown>; error?: Error }> {
+  private async testDataConsistency(): Promise<{
+    success: boolean;
+    details?: Record<string, unknown>;
+    error?: Error;
+  }> {
     try {
       // Check for orphaned processing requests (batchId points to non-existent batch)
-      const orphanedRequests = await this.prisma.$queryRaw<{count: bigint}[]>`
+      const orphanedRequests = await this.prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(*) as count
         FROM "AIProcessingRequest" apr
         LEFT JOIN "AIBatchRequest" abr ON apr."batchId" = abr.id
@@ -695,7 +774,9 @@ export class BatchProcessingTester {
       const orphanedCount = Number(orphanedRequests[0]?.count || 0);
 
       // Check for processing requests with inconsistent status
-      const inconsistentRequests = await this.prisma.$queryRaw<{count: bigint}[]>`
+      const inconsistentRequests = await this.prisma.$queryRaw<
+        { count: bigint }[]
+      >`
         SELECT COUNT(*) as count
         FROM "AIProcessingRequest"
         WHERE ("batchId" IS NOT NULL AND "processingStatus" = 'PENDING_BATCHING')
@@ -705,7 +786,7 @@ export class BatchProcessingTester {
       const inconsistentCount = Number(inconsistentRequests[0]?.count || 0);
 
       // Check for batches with no associated requests
-      const emptyBatches = await this.prisma.$queryRaw<{count: bigint}[]>`
+      const emptyBatches = await this.prisma.$queryRaw<{ count: bigint }[]>`
         SELECT COUNT(*) as count
         FROM "AIBatchRequest" abr
         LEFT JOIN "AIProcessingRequest" apr ON abr.id = apr."batchId"
@@ -723,15 +804,18 @@ export class BatchProcessingTester {
           inconsistentRequests: inconsistentCount,
           emptyBatches: emptyBatchCount,
           dataConsistent,
-          issuesFound: orphanedCount + inconsistentCount
+          issuesFound: orphanedCount + inconsistentCount,
         },
-        error: !dataConsistent ? new Error(`Data consistency issues found: ${orphanedCount} orphaned requests, ${inconsistentCount} inconsistent requests`) : undefined
+        error: !dataConsistent
+          ? new Error(
+              `Data consistency issues found: ${orphanedCount} orphaned requests, ${inconsistentCount} inconsistent requests`
+            )
+          : undefined,
       };
-
     } catch (error) {
       return {
         success: false,
-        error: error as Error
+        error: error as Error,
       };
     }
   }
@@ -743,7 +827,7 @@ export class BatchProcessingTester {
     const report = `
 # Batch Processing System Test Report
 
-**Overall Status**: ${result.success ? '✅ All Critical Tests Passed' : '❌ Critical Tests Failed'}
+**Overall Status**: ${result.success ? "✅ All Critical Tests Passed" : "❌ Critical Tests Failed"}
 **Total Duration**: ${result.totalDuration}ms
 **Passed Tests**: ${result.passedTests}/${result.tests.length}
 **Failed Tests**: ${result.failedTests}/${result.tests.length}
@@ -751,19 +835,24 @@ export class BatchProcessingTester {
 
 ## Test Results
 
-${result.tests.map(test => `
+${result.tests
+  .map(
+    (test) => `
 ### ${test.name}
-- **Status**: ${test.success ? '✅ Pass' : '❌ Fail'}
+- **Status**: ${test.success ? "✅ Pass" : "❌ Fail"}
 - **Duration**: ${test.duration}ms
-${test.details ? `- **Details**: \`\`\`json\n${JSON.stringify(test.details, null, 2)}\n\`\`\`` : ''}
-${test.error ? `- **Error**: ${test.error.message}` : ''}
-`).join('')}
+${test.details ? `- **Details**: \`\`\`json\n${JSON.stringify(test.details, null, 2)}\n\`\`\`` : ""}
+${test.error ? `- **Error**: ${test.error.message}` : ""}
+`
+  )
+  .join("")}
 
 ## Summary
 
-${result.success ?
-  '🎉 Batch processing system is working correctly!' :
-  `⚠️ ${result.criticalFailures} critical issue(s) found. Please review and fix the issues above.`
+${
+  result.success
+    ? "🎉 Batch processing system is working correctly!"
+    : `⚠️ ${result.criticalFailures} critical issue(s) found. Please review and fix the issues above.`
 }
 
 ## Architecture Overview
@@ -776,14 +865,21 @@ The batch processing system provides:
 - **Status monitoring** with 2-minute check intervals
 - **Result processing** with 1-minute intervals
 
-${result.failedTests > 0 ? `
+${
+  result.failedTests > 0
+    ? `
 ## Issues Found
 
-${result.tests.filter(t => !t.success).map(test => `
+${result.tests
+  .filter((t) => !t.success)
+  .map(
+    (test) => `
 ### ${test.name}
-- **Error**: ${test.error?.message || 'Test failed'}
-- **Details**: ${test.details ? JSON.stringify(test.details, null, 2) : 'No additional details'}
-`).join('')}
+- **Error**: ${test.error?.message || "Test failed"}
+- **Details**: ${test.details ? JSON.stringify(test.details, null, 2) : "No additional details"}
+`
+  )
+  .join("")}
 
 ## Recommended Actions
 
@@ -792,23 +888,27 @@ ${result.tests.filter(t => !t.success).map(test => `
 3. **API Issues**: Check OpenAI API key configuration and network connectivity
 4. **Performance Issues**: Optimize database queries and add missing indexes
 5. **Data Issues**: Run data consistency checks and fix orphaned records
-` : `
+`
+    : `
 ## System Health
 
 ✅ All critical batch processing components are functioning correctly.
 
 ### Performance Metrics
-${result.tests.find(t => t.name === "Batch Processing Performance")?.details ?
-  `- Pending batches query: ${(result.tests.find(t => t.name === "Batch Processing Performance")?.details as any)?.pendingBatchesQueryTime}ms
-- Ready requests query: ${(result.tests.find(t => t.name === "Batch Processing Performance")?.details as any)?.readyRequestsQueryTime}ms`
-  : 'Performance metrics not available'}
+${
+  result.tests.find((t) => t.name === "Batch Processing Performance")?.details
+    ? `- Pending batches query: ${(result.tests.find((t) => t.name === "Batch Processing Performance")?.details as any)?.pendingBatchesQueryTime}ms
+- Ready requests query: ${(result.tests.find((t) => t.name === "Batch Processing Performance")?.details as any)?.readyRequestsQueryTime}ms`
+    : "Performance metrics not available"
+}
 
 ### Next Steps
 1. Monitor batch processing queues regularly
 2. Set up alerting for failed batches
 3. Optimize batch sizes based on usage patterns
 4. Consider implementing batch priority levels
-`}
+`
+}
 
 ---
 *Generated at ${new Date().toISOString()}*
@@ -824,18 +924,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const generateReport = process.argv.includes("--report");
 
-  tester.runBatchProcessingTests()
+  tester
+    .runBatchProcessingTests()
     .then((result) => {
-      console.log('\n=== BATCH PROCESSING TEST RESULTS ===');
-      console.log(`Overall Success: ${result.success ? '✅' : '❌'}`);
+      console.log("\n=== BATCH PROCESSING TEST RESULTS ===");
+      console.log(`Overall Success: ${result.success ? "✅" : "❌"}`);
       console.log(`Total Duration: ${result.totalDuration}ms`);
       console.log(`Passed Tests: ${result.passedTests}/${result.tests.length}`);
       console.log(`Failed Tests: ${result.failedTests}/${result.tests.length}`);
       console.log(`Critical Failures: ${result.criticalFailures}`);
 
-      console.log('\n=== INDIVIDUAL TEST RESULTS ===');
+      console.log("\n=== INDIVIDUAL TEST RESULTS ===");
       for (const test of result.tests) {
-        const status = test.success ? '✅' : '❌';
+        const status = test.success ? "✅" : "❌";
         console.log(`${status} ${test.name} (${test.duration}ms)`);
 
         if (test.error) {
@@ -858,7 +959,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
       process.exit(result.success ? 0 : 1);
     })
     .catch((error) => {
-      console.error('Batch processing tests failed:', error);
+      console.error("Batch processing tests failed:", error);
       process.exit(1);
     });
 }

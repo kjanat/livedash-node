@@ -73,14 +73,13 @@ export async function POST(
           { error: "User already exists in this company" },
           { status: 400 }
         );
-      } else {
-        return NextResponse.json(
-          {
-            error: `Email already in use by a user in company: ${existingUser.company.name}. Each email address can only be used once across all companies.`
-          },
-          { status: 400 }
-        );
       }
+      return NextResponse.json(
+        {
+          error: `Email already in use by a user in company: ${existingUser.company.name}. Each email address can only be used once across all companies.`,
+        },
+        { status: 400 }
+      );
     }
 
     // Generate a temporary password (in a real app, you'd send an invitation email)

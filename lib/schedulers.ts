@@ -1,5 +1,6 @@
 // Combined scheduler initialization with graceful shutdown
 
+import { auditLogScheduler } from "./auditLogScheduler";
 import { prisma } from "./prisma";
 import { startProcessingScheduler } from "./processingScheduler";
 import { startCsvImportScheduler } from "./scheduler";
@@ -8,6 +9,7 @@ import { startCsvImportScheduler } from "./scheduler";
  * Initialize all schedulers
  * - CSV import scheduler (runs every 15 minutes)
  * - Session processing scheduler (runs every hour)
+ * - Audit log retention scheduler (runs weekly by default)
  */
 export function initializeSchedulers() {
   // Start the CSV import scheduler
@@ -15,6 +17,14 @@ export function initializeSchedulers() {
 
   // Start the session processing scheduler
   startProcessingScheduler();
+
+  // Start the audit log retention scheduler
+  if (process.env.AUDIT_LOG_RETENTION_ENABLED !== "false") {
+    auditLogScheduler.start();
+    console.log("Audit log retention scheduler started");
+  } else {
+    console.log("Audit log retention scheduler disabled");
+  }
 
   console.log("All schedulers initialized successfully");
 
@@ -30,6 +40,10 @@ function setupGracefulShutdown() {
     console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
 
     try {
+      // Stop the audit log scheduler
+      auditLogScheduler.stop();
+      console.log("Audit log scheduler stopped.");
+
       // Disconnect from database
       await prisma.$disconnect();
       console.log("Database connections closed.");

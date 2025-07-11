@@ -11,26 +11,31 @@ The application implements multiple layers of HTTP security headers to provide d
 ### Core Security Headers
 
 #### X-Content-Type-Options: nosniff
+
 - **Purpose**: Prevents MIME type sniffing attacks
 - **Protection**: Stops browsers from interpreting files as different MIME types than declared
 - **Value**: `nosniff`
 
 #### X-Frame-Options: DENY
+
 - **Purpose**: Prevents clickjacking attacks
 - **Protection**: Blocks embedding the site in frames/iframes
 - **Value**: `DENY`
 
 #### X-XSS-Protection: 1; mode=block
+
 - **Purpose**: Enables XSS protection in legacy browsers
 - **Protection**: Activates built-in XSS filtering (primarily for older browsers)
 - **Value**: `1; mode=block`
 
 #### Referrer-Policy: strict-origin-when-cross-origin
+
 - **Purpose**: Controls referrer information leakage
 - **Protection**: Limits referrer data sent to external sites
 - **Value**: `strict-origin-when-cross-origin`
 
 #### X-DNS-Prefetch-Control: off
+
 - **Purpose**: Prevents DNS rebinding attacks
 - **Protection**: Disables DNS prefetching to reduce attack surface
 - **Value**: `off`
@@ -44,6 +49,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'un
 ```
 
 #### Key CSP Directives:
+
 - **default-src 'self'**: Restrictive default for all resource types
 - **script-src 'self' 'unsafe-eval' 'unsafe-inline'**: Allows Next.js dev tools and React functionality
 - **style-src 'self' 'unsafe-inline'**: Enables TailwindCSS and component styles
@@ -91,12 +97,15 @@ headers: async () => {
     },
     {
       source: "/(.*)",
-      headers: process.env.NODE_ENV === "production" ? [
-        // HSTS header for production only
-      ] : [],
+      headers:
+        process.env.NODE_ENV === "production"
+          ? [
+              // HSTS header for production only
+            ]
+          : [],
     },
   ];
-}
+};
 ```
 
 ### Environment-Specific Behavior
@@ -111,6 +120,7 @@ headers: async () => {
 Location: `tests/unit/http-security-headers.test.ts`
 
 Tests cover:
+
 - Individual header validation
 - CSP directive verification
 - Permissions Policy validation
@@ -122,6 +132,7 @@ Tests cover:
 Location: `tests/integration/security-headers-basic.test.ts`
 
 Tests cover:
+
 - Next.js configuration validation
 - Header generation verification
 - Environment-based header differences
@@ -172,6 +183,7 @@ pnpm test:security-headers https://your-domain.com
 ### Future Enhancements
 
 Planned improvements:
+
 1. CSP violation reporting endpoint
 2. Nonce-based CSP for inline scripts
 3. Additional Permissions Policy restrictions
@@ -182,6 +194,7 @@ Planned improvements:
 ### Next.js Compatibility
 
 Headers are configured to be compatible with:
+
 - Next.js 15+ App Router
 - React 19 development tools
 - TailwindCSS 4 styling system
@@ -190,6 +203,7 @@ Headers are configured to be compatible with:
 ### Browser Support
 
 Security headers are supported by:
+
 - All modern browsers (Chrome 60+, Firefox 60+, Safari 12+)
 - Graceful degradation for older browsers
 - Progressive enhancement approach

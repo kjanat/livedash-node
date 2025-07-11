@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCategory } from "@/lib/format-enums";
 import { trpc } from "@/lib/trpc-client";
+import { sessionFilterSchema } from "@/lib/validation";
+import type { z } from "zod";
 import type { ChatSession } from "../../../lib/types";
 
 interface FilterOptions {
@@ -30,21 +32,21 @@ interface FilterOptions {
 
 interface FilterSectionProps {
   filtersExpanded: boolean;
-  setFiltersExpanded: (expanded: boolean) => void;
+  setFiltersExpanded: (_expanded: boolean) => void;
   searchTerm: string;
-  setSearchTerm: (term: string) => void;
+  setSearchTerm: (_term: string) => void;
   selectedCategory: string;
-  setSelectedCategory: (category: string) => void;
+  setSelectedCategory: (_category: string) => void;
   selectedLanguage: string;
-  setSelectedLanguage: (language: string) => void;
+  setSelectedLanguage: (_language: string) => void;
   startDate: string;
-  setStartDate: (date: string) => void;
+  setStartDate: (_date: string) => void;
   endDate: string;
-  setEndDate: (date: string) => void;
+  setEndDate: (_date: string) => void;
   sortKey: string;
-  setSortKey: (key: string) => void;
+  setSortKey: (_key: string) => void;
   sortOrder: string;
-  setSortOrder: (order: string) => void;
+  setSortOrder: (_order: string) => void;
   filterOptions: FilterOptions;
   searchHeadingId: string;
   filtersHeadingId: string;
@@ -305,7 +307,7 @@ function SessionList({
       )}
 
       {!loading && !error && sessions.length > 0 && (
-        <ul className="space-y-4" role="list">
+        <ul className="space-y-4">
           {sessions.map((session) => (
             <li key={session.id}>
               <Card>
@@ -316,7 +318,7 @@ function SessionList({
                         <h3 className="font-medium text-base mb-1">
                           Session{" "}
                           {session.sessionId ||
-                            session.id.substring(0, 8) + "..."}
+                            `${session.id.substring(0, 8)}...`}
                         </h3>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">
@@ -382,7 +384,7 @@ function SessionList({
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  setCurrentPage: (page: number | ((prev: number) => number)) => void;
+  setCurrentPage: (_page: number | ((_prev: number) => number)) => void;
 }
 
 function Pagination({
@@ -487,7 +489,7 @@ export default function SessionsPage() {
   } = trpc.dashboard.getSessions.useQuery(
     {
       search: debouncedSearchTerm || undefined,
-      category: (selectedCategory as any) || undefined,
+      category: selectedCategory ? selectedCategory as z.infer<typeof sessionFilterSchema>["category"] : undefined,
       // language: selectedLanguage || undefined, // Not supported in schema yet
       startDate: startDate || undefined,
       endDate: endDate || undefined,
@@ -505,7 +507,7 @@ export default function SessionsPage() {
   // Update state when data changes
   useEffect(() => {
     if (sessionsData) {
-      setSessions((sessionsData.sessions as any) || []);
+      setSessions(sessionsData.sessions || []);
       setTotalPages(sessionsData.pagination.totalPages);
       setError(null);
     }

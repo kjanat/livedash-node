@@ -28,13 +28,10 @@ async function loginUser(page: Page) {
 
 async function waitForChartLoad(page: Page, chartSelector: string) {
   await page.waitForSelector(chartSelector);
-  await page.waitForFunction(
-    (selector) => {
-      const chart = document.querySelector(selector);
-      return chart && chart.children.length > 0;
-    },
-    chartSelector
-  );
+  await page.waitForFunction((selector) => {
+    const chart = document.querySelector(selector);
+    return chart && chart.children.length > 0;
+  }, chartSelector);
 }
 
 test.describe("Dashboard Navigation", () => {
@@ -57,34 +54,40 @@ test.describe("Dashboard Navigation", () => {
 
     test("should highlight active navigation item", async ({ page }) => {
       // Overview should be active by default
-      await expect(page.locator('[data-testid="nav-overview"]')).toHaveClass(/active/);
+      await expect(page.locator('[data-testid="nav-overview"]')).toHaveClass(
+        /active/
+      );
 
       // Navigate to sessions
       await page.click('[data-testid="nav-sessions"]');
-      await expect(page.locator('[data-testid="nav-sessions"]')).toHaveClass(/active/);
-      await expect(page.locator('[data-testid="nav-overview"]')).not.toHaveClass(/active/);
+      await expect(page.locator('[data-testid="nav-sessions"]')).toHaveClass(
+        /active/
+      );
+      await expect(
+        page.locator('[data-testid="nav-overview"]')
+      ).not.toHaveClass(/active/);
     });
 
     test("should navigate between sections correctly", async ({ page }) => {
       // Navigate to Sessions
       await page.click('[data-testid="nav-sessions"]');
       await expect(page).toHaveURL(/\/dashboard\/sessions/);
-      await expect(page.locator('h1')).toContainText('Sessions');
+      await expect(page.locator("h1")).toContainText("Sessions");
 
       // Navigate to Users
       await page.click('[data-testid="nav-users"]');
       await expect(page).toHaveURL(/\/dashboard\/users/);
-      await expect(page.locator('h1')).toContainText('Users');
+      await expect(page.locator("h1")).toContainText("Users");
 
       // Navigate to Company
       await page.click('[data-testid="nav-company"]');
       await expect(page).toHaveURL(/\/dashboard\/company/);
-      await expect(page.locator('h1')).toContainText('Company Settings');
+      await expect(page.locator("h1")).toContainText("Company Settings");
 
       // Navigate back to Overview
       await page.click('[data-testid="nav-overview"]');
       await expect(page).toHaveURL(/\/dashboard\/overview/);
-      await expect(page.locator('h1')).toContainText('Dashboard Overview');
+      await expect(page.locator("h1")).toContainText("Dashboard Overview");
     });
 
     test("should support breadcrumb navigation", async ({ page }) => {
@@ -100,9 +103,15 @@ test.describe("Dashboard Navigation", () => {
 
         // Check breadcrumbs
         await expect(page.locator('[data-testid="breadcrumb"]')).toBeVisible();
-        await expect(page.locator('[data-testid="breadcrumb-home"]')).toContainText('Dashboard');
-        await expect(page.locator('[data-testid="breadcrumb-sessions"]')).toContainText('Sessions');
-        await expect(page.locator('[data-testid="breadcrumb-current"]')).toContainText('Session Details');
+        await expect(
+          page.locator('[data-testid="breadcrumb-home"]')
+        ).toContainText("Dashboard");
+        await expect(
+          page.locator('[data-testid="breadcrumb-sessions"]')
+        ).toContainText("Sessions");
+        await expect(
+          page.locator('[data-testid="breadcrumb-current"]')
+        ).toContainText("Session Details");
       }
     });
   });
@@ -127,7 +136,9 @@ test.describe("Dashboard Navigation", () => {
 
       if (await notifications.isVisible()) {
         await notifications.click();
-        await expect(page.locator('[data-testid="notifications-dropdown"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="notifications-dropdown"]')
+        ).toBeVisible();
       }
     });
 
@@ -135,8 +146,10 @@ test.describe("Dashboard Navigation", () => {
       const searchInput = page.locator('[data-testid="global-search"]');
 
       if (await searchInput.isVisible()) {
-        await searchInput.fill('test search');
-        await expect(page.locator('[data-testid="search-results"]')).toBeVisible();
+        await searchInput.fill("test search");
+        await expect(
+          page.locator('[data-testid="search-results"]')
+        ).toBeVisible();
       }
     });
   });
@@ -167,13 +180,23 @@ test.describe("Data Visualization", () => {
   test.describe("Overview Dashboard", () => {
     test("should display key metrics cards", async ({ page }) => {
       // Check metric cards
-      await expect(page.locator('[data-testid="total-sessions-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="avg-sentiment-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="escalation-rate-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="avg-response-time-card"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="total-sessions-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="avg-sentiment-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="escalation-rate-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="avg-response-time-card"]')
+      ).toBeVisible();
 
       // Check that metrics have values
-      const totalSessions = page.locator('[data-testid="total-sessions-value"]');
+      const totalSessions = page.locator(
+        '[data-testid="total-sessions-value"]'
+      );
       await expect(totalSessions).toContainText(/\d+/); // Should contain numbers
     });
 
@@ -184,9 +207,15 @@ test.describe("Data Visualization", () => {
       await waitForChartLoad(page, '[data-testid="sentiment-chart"]');
 
       // Check chart has data
-      await expect(page.locator('[data-testid="positive-sentiment"]')).toBeVisible();
-      await expect(page.locator('[data-testid="neutral-sentiment"]')).toBeVisible();
-      await expect(page.locator('[data-testid="negative-sentiment"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="positive-sentiment"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="neutral-sentiment"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="negative-sentiment"]')
+      ).toBeVisible();
     });
 
     test("should display category distribution chart", async ({ page }) => {
@@ -226,8 +255,12 @@ test.describe("Data Visualization", () => {
       if (count > 0) {
         // Should show question text and count
         const firstQuestion = questionItems.first();
-        await expect(firstQuestion.locator('[data-testid="question-text"]')).toBeVisible();
-        await expect(firstQuestion.locator('[data-testid="question-count"]')).toBeVisible();
+        await expect(
+          firstQuestion.locator('[data-testid="question-text"]')
+        ).toBeVisible();
+        await expect(
+          firstQuestion.locator('[data-testid="question-count"]')
+        ).toBeVisible();
       }
     });
 
@@ -238,8 +271,12 @@ test.describe("Data Visualization", () => {
         await waitForChartLoad(page, '[data-testid="time-series-chart"]');
 
         // Check chart axes
-        await expect(page.locator('[data-testid="chart-x-axis"]')).toBeVisible();
-        await expect(page.locator('[data-testid="chart-y-axis"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="chart-x-axis"]')
+        ).toBeVisible();
+        await expect(
+          page.locator('[data-testid="chart-y-axis"]')
+        ).toBeVisible();
       }
     });
   });
@@ -250,13 +287,17 @@ test.describe("Data Visualization", () => {
 
       if (await sentimentChart.isVisible()) {
         // Click on positive sentiment section
-        const positiveSection = page.locator('[data-testid="positive-segment"]');
+        const positiveSection = page.locator(
+          '[data-testid="positive-segment"]'
+        );
 
         if (await positiveSection.isVisible()) {
           await positiveSection.click();
 
           // Should filter data or show details
-          await expect(page.locator('[data-testid="chart-filter-active"]')).toBeVisible();
+          await expect(
+            page.locator('[data-testid="chart-filter-active"]')
+          ).toBeVisible();
         }
       }
     });
@@ -288,7 +329,10 @@ test.describe("Data Visualization", () => {
         if (box) {
           await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
           await page.mouse.down();
-          await page.mouse.move(box.x + box.width / 2 + 50, box.y + box.height / 2);
+          await page.mouse.move(
+            box.x + box.width / 2 + 50,
+            box.y + box.height / 2
+          );
           await page.mouse.up();
         }
       }
@@ -310,7 +354,9 @@ test.describe("Data Visualization", () => {
         await page.waitForTimeout(1000);
 
         // Check that data is filtered
-        await expect(page.locator('[data-testid="filter-applied"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="filter-applied"]')
+        ).toBeVisible();
       }
     });
 
@@ -318,13 +364,15 @@ test.describe("Data Visualization", () => {
       const sentimentFilter = page.locator('[data-testid="sentiment-filter"]');
 
       if (await sentimentFilter.isVisible()) {
-        await sentimentFilter.selectOption('POSITIVE');
+        await sentimentFilter.selectOption("POSITIVE");
 
         // Should update all visualizations
         await page.waitForTimeout(1000);
 
         // Check filter is applied
-        await expect(page.locator('[data-testid="active-filters"]')).toContainText('Sentiment: Positive');
+        await expect(
+          page.locator('[data-testid="active-filters"]')
+        ).toContainText("Sentiment: Positive");
       }
     });
 
@@ -332,7 +380,7 @@ test.describe("Data Visualization", () => {
       // Apply some filters first
       const sentimentFilter = page.locator('[data-testid="sentiment-filter"]');
       if (await sentimentFilter.isVisible()) {
-        await sentimentFilter.selectOption('POSITIVE');
+        await sentimentFilter.selectOption("POSITIVE");
       }
 
       // Clear filters
@@ -341,7 +389,9 @@ test.describe("Data Visualization", () => {
         await clearButton.click();
 
         // Should reset all data
-        await expect(page.locator('[data-testid="active-filters"]')).toHaveCount(0);
+        await expect(
+          page.locator('[data-testid="active-filters"]')
+        ).toHaveCount(0);
       }
     });
   });
@@ -352,12 +402,12 @@ test.describe("Data Visualization", () => {
 
       if (await exportButton.isVisible()) {
         // Start download
-        const downloadPromise = page.waitForEvent('download');
+        const downloadPromise = page.waitForEvent("download");
         await exportButton.click();
         const download = await downloadPromise;
 
         // Verify download
-        expect(download.suggestedFilename()).toContain('.csv');
+        expect(download.suggestedFilename()).toContain(".csv");
       }
     });
 
@@ -365,7 +415,7 @@ test.describe("Data Visualization", () => {
       const exportButton = page.locator('[data-testid="export-image"]');
 
       if (await exportButton.isVisible()) {
-        const downloadPromise = page.waitForEvent('download');
+        const downloadPromise = page.waitForEvent("download");
         await exportButton.click();
         const download = await downloadPromise;
 
@@ -392,11 +442,17 @@ test.describe("Responsive Design", () => {
 
       // Open mobile menu
       await mobileMenu.click();
-      await expect(page.locator('[data-testid="mobile-navigation"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="mobile-navigation"]')
+      ).toBeVisible();
 
       // Check navigation items in mobile menu
-      await expect(page.locator('[data-testid="mobile-nav-overview"]')).toBeVisible();
-      await expect(page.locator('[data-testid="mobile-nav-sessions"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="mobile-nav-overview"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="mobile-nav-sessions"]')
+      ).toBeVisible();
     });
 
     test("should stack charts vertically on mobile", async ({ page }) => {
@@ -405,7 +461,7 @@ test.describe("Responsive Design", () => {
 
       // Charts should be stacked
       const chartContainer = page.locator('[data-testid="charts-container"]');
-      await expect(chartContainer).toHaveCSS('flex-direction', 'column');
+      await expect(chartContainer).toHaveCSS("flex-direction", "column");
     });
 
     test("should show simplified metrics on mobile", async ({ page }) => {
@@ -438,7 +494,7 @@ test.describe("Responsive Design", () => {
 
       // Charts should adapt to medium screen
       const chartGrid = page.locator('[data-testid="chart-grid"]');
-      await expect(chartGrid).toHaveCSS('grid-template-columns', /repeat\(2,/);
+      await expect(chartGrid).toHaveCSS("grid-template-columns", /repeat\(2,/);
     });
   });
 });
@@ -449,20 +505,22 @@ test.describe("Accessibility", () => {
   });
 
   test.describe("Keyboard Navigation", () => {
-    test("should support keyboard navigation in dashboard", async ({ page }) => {
+    test("should support keyboard navigation in dashboard", async ({
+      page,
+    }) => {
       await page.goto("http://localhost:3000/dashboard/overview");
 
       // Test tab navigation
-      await page.keyboard.press('Tab');
+      await page.keyboard.press("Tab");
 
       // Should focus on first interactive element
-      const focused = page.locator(':focus');
+      const focused = page.locator(":focus");
       await expect(focused).toBeVisible();
 
       // Navigate through elements
       for (let i = 0; i < 5; i++) {
-        await page.keyboard.press('Tab');
-        const currentFocus = page.locator(':focus');
+        await page.keyboard.press("Tab");
+        const currentFocus = page.locator(":focus");
         await expect(currentFocus).toBeVisible();
       }
     });
@@ -471,10 +529,10 @@ test.describe("Accessibility", () => {
       await page.goto("http://localhost:3000/dashboard/overview");
 
       // Test keyboard shortcuts (if implemented)
-      await page.keyboard.press('Alt+1'); // Navigate to overview
+      await page.keyboard.press("Alt+1"); // Navigate to overview
       await expect(page).toHaveURL(/\/dashboard\/overview/);
 
-      await page.keyboard.press('Alt+2'); // Navigate to sessions
+      await page.keyboard.press("Alt+2"); // Navigate to sessions
       await expect(page).toHaveURL(/\/dashboard\/sessions/);
     });
   });
@@ -484,14 +542,14 @@ test.describe("Accessibility", () => {
       await page.goto("http://localhost:3000/dashboard/overview");
 
       // Check main landmarks
-      await expect(page.locator('main')).toHaveAttribute('role', 'main');
-      await expect(page.locator('nav')).toHaveAttribute('role', 'navigation');
+      await expect(page.locator("main")).toHaveAttribute("role", "main");
+      await expect(page.locator("nav")).toHaveAttribute("role", "navigation");
 
       // Check chart accessibility
       const sentimentChart = page.locator('[data-testid="sentiment-chart"]');
       if (await sentimentChart.isVisible()) {
-        await expect(sentimentChart).toHaveAttribute('role', 'img');
-        await expect(sentimentChart).toHaveAttribute('aria-label');
+        await expect(sentimentChart).toHaveAttribute("role", "img");
+        await expect(sentimentChart).toHaveAttribute("aria-label");
       }
     });
 
@@ -504,7 +562,7 @@ test.describe("Accessibility", () => {
 
       for (let i = 0; i < count; i++) {
         const chart = charts.nth(i);
-        const ariaLabel = await chart.getAttribute('aria-label');
+        const ariaLabel = await chart.getAttribute("aria-label");
         expect(ariaLabel).toBeTruthy();
         expect(ariaLabel?.length).toBeGreaterThan(10); // Should be descriptive
       }
@@ -514,15 +572,15 @@ test.describe("Accessibility", () => {
       await page.goto("http://localhost:3000/dashboard/overview");
 
       // Check for live regions
-      const liveRegions = page.locator('[aria-live]');
+      const liveRegions = page.locator("[aria-live]");
       const count = await liveRegions.count();
 
       if (count > 0) {
         // Should have appropriate aria-live settings
         for (let i = 0; i < count; i++) {
           const region = liveRegions.nth(i);
-          const ariaLive = await region.getAttribute('aria-live');
-          expect(['polite', 'assertive']).toContain(ariaLive);
+          const ariaLive = await region.getAttribute("aria-live");
+          expect(["polite", "assertive"]).toContain(ariaLive);
         }
       }
     });
@@ -539,19 +597,27 @@ test.describe("Accessibility", () => {
         await darkModeToggle.click();
 
         // Check that elements are still visible
-        await expect(page.locator('[data-testid="total-sessions-card"]')).toBeVisible();
-        await expect(page.locator('[data-testid="sentiment-chart"]')).toBeVisible();
+        await expect(
+          page.locator('[data-testid="total-sessions-card"]')
+        ).toBeVisible();
+        await expect(
+          page.locator('[data-testid="sentiment-chart"]')
+        ).toBeVisible();
       }
     });
 
     test("should work without color", async ({ page }) => {
       // Test with forced colors (simulates high contrast mode)
-      await page.emulateMedia({ colorScheme: 'dark', forcedColors: 'active' });
+      await page.emulateMedia({ colorScheme: "dark", forcedColors: "active" });
       await page.goto("http://localhost:3000/dashboard/overview");
 
       // Elements should still be distinguishable
-      await expect(page.locator('[data-testid="total-sessions-card"]')).toBeVisible();
-      await expect(page.locator('[data-testid="sentiment-chart"]')).toBeVisible();
+      await expect(
+        page.locator('[data-testid="total-sessions-card"]')
+      ).toBeVisible();
+      await expect(
+        page.locator('[data-testid="sentiment-chart"]')
+      ).toBeVisible();
     });
   });
 });

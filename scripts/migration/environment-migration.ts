@@ -39,7 +39,7 @@ export class EnvironmentMigration {
       defaultValue: "http://localhost:3000/api/trpc",
       required: false,
       newInVersion: "2.0.0",
-      example: "https://yourdomain.com/api/trpc"
+      example: "https://yourdomain.com/api/trpc",
     },
     {
       key: "TRPC_BATCH_TIMEOUT",
@@ -47,7 +47,7 @@ export class EnvironmentMigration {
       defaultValue: "30000",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
+      validationRegex: "^[0-9]+$",
     },
     {
       key: "TRPC_MAX_BATCH_SIZE",
@@ -55,7 +55,7 @@ export class EnvironmentMigration {
       defaultValue: "100",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
+      validationRegex: "^[0-9]+$",
     },
 
     // Batch Processing Configuration
@@ -65,7 +65,7 @@ export class EnvironmentMigration {
       defaultValue: "true",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^(true|false)$"
+      validationRegex: "^(true|false)$",
     },
     {
       key: "BATCH_CREATE_INTERVAL",
@@ -73,7 +73,7 @@ export class EnvironmentMigration {
       defaultValue: "*/5 * * * *",
       required: false,
       newInVersion: "2.0.0",
-      example: "*/5 * * * * (every 5 minutes)"
+      example: "*/5 * * * * (every 5 minutes)",
     },
     {
       key: "BATCH_STATUS_CHECK_INTERVAL",
@@ -81,7 +81,7 @@ export class EnvironmentMigration {
       defaultValue: "*/2 * * * *",
       required: false,
       newInVersion: "2.0.0",
-      example: "*/2 * * * * (every 2 minutes)"
+      example: "*/2 * * * * (every 2 minutes)",
     },
     {
       key: "BATCH_RESULT_PROCESSING_INTERVAL",
@@ -89,7 +89,7 @@ export class EnvironmentMigration {
       defaultValue: "*/1 * * * *",
       required: false,
       newInVersion: "2.0.0",
-      example: "*/1 * * * * (every minute)"
+      example: "*/1 * * * * (every minute)",
     },
     {
       key: "BATCH_MAX_REQUESTS",
@@ -97,7 +97,7 @@ export class EnvironmentMigration {
       defaultValue: "1000",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
+      validationRegex: "^[0-9]+$",
     },
     {
       key: "BATCH_TIMEOUT_HOURS",
@@ -105,7 +105,7 @@ export class EnvironmentMigration {
       defaultValue: "24",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
+      validationRegex: "^[0-9]+$",
     },
 
     // Migration Specific
@@ -115,7 +115,7 @@ export class EnvironmentMigration {
       defaultValue: "development",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^(development|staging|production)$"
+      validationRegex: "^(development|staging|production)$",
     },
     {
       key: "MIGRATION_BACKUP_ENABLED",
@@ -123,7 +123,7 @@ export class EnvironmentMigration {
       defaultValue: "true",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^(true|false)$"
+      validationRegex: "^(true|false)$",
     },
     {
       key: "MIGRATION_ROLLBACK_ENABLED",
@@ -131,7 +131,7 @@ export class EnvironmentMigration {
       defaultValue: "true",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^(true|false)$"
+      validationRegex: "^(true|false)$",
     },
 
     // Enhanced Security
@@ -142,7 +142,7 @@ export class EnvironmentMigration {
       required: false,
       newInVersion: "2.0.0",
       validationRegex: "^[0-9]+$",
-      example: "900000 (15 minutes)"
+      example: "900000 (15 minutes)",
     },
     {
       key: "RATE_LIMIT_MAX_REQUESTS",
@@ -150,7 +150,7 @@ export class EnvironmentMigration {
       defaultValue: "100",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
+      validationRegex: "^[0-9]+$",
     },
 
     // Performance Monitoring
@@ -160,7 +160,7 @@ export class EnvironmentMigration {
       defaultValue: "true",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^(true|false)$"
+      validationRegex: "^(true|false)$",
     },
     {
       key: "METRICS_COLLECTION_INTERVAL",
@@ -168,8 +168,8 @@ export class EnvironmentMigration {
       defaultValue: "60",
       required: false,
       newInVersion: "2.0.0",
-      validationRegex: "^[0-9]+$"
-    }
+      validationRegex: "^[0-9]+$",
+    },
   ];
 
   private readonly deprecatedVariables: string[] = [
@@ -188,11 +188,14 @@ export class EnvironmentMigration {
       warnings: [],
       added: [],
       deprecated: [],
-      updated: []
+      updated: [],
     };
 
     try {
-      migrationLogger.startStep("ENVIRONMENT_MIGRATION", "Migrating environment configuration");
+      migrationLogger.startStep(
+        "ENVIRONMENT_MIGRATION",
+        "Migrating environment configuration"
+      );
 
       // Read current environment
       const currentEnv = this.readCurrentEnvironment();
@@ -217,13 +220,21 @@ export class EnvironmentMigration {
       if (result.success) {
         migrationLogger.completeStep("ENVIRONMENT_MIGRATION");
       } else {
-        migrationLogger.failStep("ENVIRONMENT_MIGRATION", new Error(`Migration failed with ${result.errors.length} errors`));
+        migrationLogger.failStep(
+          "ENVIRONMENT_MIGRATION",
+          new Error(`Migration failed with ${result.errors.length} errors`)
+        );
       }
-
     } catch (error) {
       result.success = false;
-      result.errors.push(`Environment migration failed: ${(error as Error).message}`);
-      migrationLogger.error("ENVIRONMENT_MIGRATION", "Critical migration error", error as Error);
+      result.errors.push(
+        `Environment migration failed: ${(error as Error).message}`
+      );
+      migrationLogger.error(
+        "ENVIRONMENT_MIGRATION",
+        "Critical migration error",
+        error as Error
+      );
     }
 
     return result;
@@ -234,16 +245,22 @@ export class EnvironmentMigration {
     const env: Record<string, string> = {};
 
     // Merge environment from multiple sources
-    envFiles.forEach(filename => {
+    envFiles.forEach((filename) => {
       const filepath = join(process.cwd(), filename);
       if (existsSync(filepath)) {
         try {
           const content = readFileSync(filepath, "utf8");
           const parsed = this.parseEnvFile(content);
           Object.assign(env, parsed);
-          migrationLogger.debug("ENV_READER", `Loaded environment from ${filename}`, { variables: Object.keys(parsed).length });
+          migrationLogger.debug(
+            "ENV_READER",
+            `Loaded environment from ${filename}`,
+            { variables: Object.keys(parsed).length }
+          );
         } catch (error) {
-          migrationLogger.warn("ENV_READER", `Failed to read ${filename}`, { error: (error as Error).message });
+          migrationLogger.warn("ENV_READER", `Failed to read ${filename}`, {
+            error: (error as Error).message,
+          });
         }
       }
     });
@@ -276,13 +293,16 @@ export class EnvironmentMigration {
     currentEnv: Record<string, string>,
     result: MigrationResult
   ): Promise<void> {
-    migrationLogger.info("ENV_VALIDATION", "Validating existing environment variables");
+    migrationLogger.info(
+      "ENV_VALIDATION",
+      "Validating existing environment variables"
+    );
 
     // Check required existing variables
     const requiredExisting = [
       "DATABASE_URL",
       "NEXTAUTH_SECRET",
-      "OPENAI_API_KEY"
+      "OPENAI_API_KEY",
     ];
 
     for (const key of requiredExisting) {
@@ -310,7 +330,9 @@ export class EnvironmentMigration {
     migrationLogger.info("ENV_ADDITION", "Adding new environment variables");
 
     const newEnvContent: string[] = [];
-    newEnvContent.push("# New environment variables for tRPC and Batch Processing");
+    newEnvContent.push(
+      "# New environment variables for tRPC and Batch Processing"
+    );
     newEnvContent.push("# Added during migration to version 2.0.0");
     newEnvContent.push("");
 
@@ -318,12 +340,21 @@ export class EnvironmentMigration {
 
     // Group variables by category
     const categories = {
-      "tRPC Configuration": this.newEnvironmentVariables.filter(v => v.key.startsWith("TRPC_")),
-      "Batch Processing": this.newEnvironmentVariables.filter(v => v.key.startsWith("BATCH_")),
-      "Migration Settings": this.newEnvironmentVariables.filter(v => v.key.startsWith("MIGRATION_")),
-      "Security & Performance": this.newEnvironmentVariables.filter(v =>
-        v.key.startsWith("RATE_LIMIT_") || v.key.startsWith("PERFORMANCE_") || v.key.startsWith("METRICS_")
-      )
+      "tRPC Configuration": this.newEnvironmentVariables.filter((v) =>
+        v.key.startsWith("TRPC_")
+      ),
+      "Batch Processing": this.newEnvironmentVariables.filter((v) =>
+        v.key.startsWith("BATCH_")
+      ),
+      "Migration Settings": this.newEnvironmentVariables.filter((v) =>
+        v.key.startsWith("MIGRATION_")
+      ),
+      "Security & Performance": this.newEnvironmentVariables.filter(
+        (v) =>
+          v.key.startsWith("RATE_LIMIT_") ||
+          v.key.startsWith("PERFORMANCE_") ||
+          v.key.startsWith("METRICS_")
+      ),
     };
 
     for (const [category, variables] of Object.entries(categories)) {
@@ -355,9 +386,13 @@ export class EnvironmentMigration {
     if (addedCount > 0) {
       const templatePath = join(process.cwd(), ".env.migration.template");
       writeFileSync(templatePath, newEnvContent.join("\n"));
-      migrationLogger.info("ENV_ADDITION", `Created environment template with ${addedCount} new variables`, {
-        templatePath
-      });
+      migrationLogger.info(
+        "ENV_ADDITION",
+        `Created environment template with ${addedCount} new variables`,
+        {
+          templatePath,
+        }
+      );
     }
   }
 
@@ -365,12 +400,17 @@ export class EnvironmentMigration {
     currentEnv: Record<string, string>,
     result: MigrationResult
   ): Promise<void> {
-    migrationLogger.info("ENV_DEPRECATION", "Checking for deprecated environment variables");
+    migrationLogger.info(
+      "ENV_DEPRECATION",
+      "Checking for deprecated environment variables"
+    );
 
     for (const deprecatedKey of this.deprecatedVariables) {
       if (currentEnv[deprecatedKey]) {
         result.deprecated.push(deprecatedKey);
-        result.warnings.push(`Deprecated environment variable found: ${deprecatedKey}`);
+        result.warnings.push(
+          `Deprecated environment variable found: ${deprecatedKey}`
+        );
       }
     }
   }
@@ -393,48 +433,70 @@ This guide helps you migrate your environment configuration for the new tRPC and
 
 ### 1. Add New Environment Variables
 
-${result.added.length > 0 ? `
+${
+  result.added.length > 0
+    ? `
 The following new environment variables need to be added to your \`.env.local\` file:
 
-${result.added.map(key => {
-  const config = this.newEnvironmentVariables.find(v => v.key === key);
-  return `
+${result.added
+  .map((key) => {
+    const config = this.newEnvironmentVariables.find((v) => v.key === key);
+    return `
 #### ${key}
 - **Description**: ${config?.description}
-- **Default**: ${config?.defaultValue || 'Not set'}
-- **Required**: ${config?.required ? 'Yes' : 'No'}
-${config?.example ? `- **Example**: ${config.example}` : ''}
+- **Default**: ${config?.defaultValue || "Not set"}
+- **Required**: ${config?.required ? "Yes" : "No"}
+${config?.example ? `- **Example**: ${config.example}` : ""}
 `;
-}).join('')}
-` : 'No new environment variables need to be added.'}
+  })
+  .join("")}
+`
+    : "No new environment variables need to be added."
+}
 
 ### 2. Update Existing Variables
 
-${result.updated.length > 0 ? `
+${
+  result.updated.length > 0
+    ? `
 The following variables already exist but may need review:
 
-${result.updated.map(key => `- ${key}`).join('\n')}
-` : 'No existing variables need updates.'}
+${result.updated.map((key) => `- ${key}`).join("\n")}
+`
+    : "No existing variables need updates."
+}
 
 ### 3. Handle Deprecated Variables
 
-${result.deprecated.length > 0 ? `
+${
+  result.deprecated.length > 0
+    ? `
 The following variables are deprecated and should be removed:
 
-${result.deprecated.map(key => `- ${key}`).join('\n')}
-` : 'No deprecated variables found.'}
+${result.deprecated.map((key) => `- ${key}`).join("\n")}
+`
+    : "No deprecated variables found."
+}
 
 ## Errors and Warnings
 
-${result.errors.length > 0 ? `
+${
+  result.errors.length > 0
+    ? `
 ### Errors (Must Fix)
-${result.errors.map(error => `- ${error}`).join('\n')}
-` : ''}
+${result.errors.map((error) => `- ${error}`).join("\n")}
+`
+    : ""
+}
 
-${result.warnings.length > 0 ? `
+${
+  result.warnings.length > 0
+    ? `
 ### Warnings (Recommended Fixes)
-${result.warnings.map(warning => `- ${warning}`).join('\n')}
-` : ''}
+${result.warnings.map((warning) => `- ${warning}`).join("\n")}
+`
+    : ""
+}
 
 ## Next Steps
 
@@ -469,7 +531,11 @@ pnpm migration:test-batch
     const guidePath = join(process.cwd(), "ENVIRONMENT_MIGRATION_GUIDE.md");
     writeFileSync(guidePath, guide);
 
-    migrationLogger.info("MIGRATION_GUIDE", "Created environment migration guide", { guidePath });
+    migrationLogger.info(
+      "MIGRATION_GUIDE",
+      "Created environment migration guide",
+      { guidePath }
+    );
   }
 
   private async createExampleEnvironmentFile(): Promise<void> {
@@ -558,7 +624,9 @@ PORT="3000"
     const examplePath = join(process.cwd(), ".env.example");
     writeFileSync(examplePath, example);
 
-    migrationLogger.info("EXAMPLE_ENV", "Created example environment file", { examplePath });
+    migrationLogger.info("EXAMPLE_ENV", "Created example environment file", {
+      examplePath,
+    });
   }
 
   /**
@@ -571,7 +639,7 @@ PORT="3000"
       warnings: [],
       added: [],
       deprecated: [],
-      updated: []
+      updated: [],
     };
 
     const currentEnv = this.readCurrentEnvironment();
@@ -581,7 +649,9 @@ PORT="3000"
       const value = currentEnv[config.key];
 
       if (config.required && !value) {
-        result.errors.push(`Required environment variable missing: ${config.key}`);
+        result.errors.push(
+          `Required environment variable missing: ${config.key}`
+        );
       }
 
       if (value && config.validationRegex) {
@@ -604,55 +674,57 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const command = process.argv[2];
 
   if (command === "validate") {
-    migration.validateEnvironmentConfiguration()
+    migration
+      .validateEnvironmentConfiguration()
       .then((result) => {
-        console.log('\n=== ENVIRONMENT VALIDATION RESULTS ===');
-        console.log(`Success: ${result.success ? '✅' : '❌'}`);
+        console.log("\n=== ENVIRONMENT VALIDATION RESULTS ===");
+        console.log(`Success: ${result.success ? "✅" : "❌"}`);
 
         if (result.errors.length > 0) {
-          console.log('\n❌ ERRORS:');
-          result.errors.forEach(error => console.log(`  - ${error}`));
+          console.log("\n❌ ERRORS:");
+          result.errors.forEach((error) => console.log(`  - ${error}`));
         }
 
         if (result.warnings.length > 0) {
-          console.log('\n⚠️  WARNINGS:');
-          result.warnings.forEach(warning => console.log(`  - ${warning}`));
+          console.log("\n⚠️  WARNINGS:");
+          result.warnings.forEach((warning) => console.log(`  - ${warning}`));
         }
 
         process.exit(result.success ? 0 : 1);
       })
       .catch((error) => {
-        console.error('Validation failed:', error);
+        console.error("Validation failed:", error);
         process.exit(1);
       });
   } else {
-    migration.migrateEnvironment()
+    migration
+      .migrateEnvironment()
       .then((result) => {
-        console.log('\n=== ENVIRONMENT MIGRATION RESULTS ===');
-        console.log(`Success: ${result.success ? '✅' : '❌'}`);
+        console.log("\n=== ENVIRONMENT MIGRATION RESULTS ===");
+        console.log(`Success: ${result.success ? "✅" : "❌"}`);
         console.log(`Added: ${result.added.length} variables`);
         console.log(`Updated: ${result.updated.length} variables`);
         console.log(`Deprecated: ${result.deprecated.length} variables`);
 
         if (result.errors.length > 0) {
-          console.log('\n❌ ERRORS:');
-          result.errors.forEach(error => console.log(`  - ${error}`));
+          console.log("\n❌ ERRORS:");
+          result.errors.forEach((error) => console.log(`  - ${error}`));
         }
 
         if (result.warnings.length > 0) {
-          console.log('\n⚠️  WARNINGS:');
-          result.warnings.forEach(warning => console.log(`  - ${warning}`));
+          console.log("\n⚠️  WARNINGS:");
+          result.warnings.forEach((warning) => console.log(`  - ${warning}`));
         }
 
-        console.log('\n📋 Next Steps:');
-        console.log('1. Review ENVIRONMENT_MIGRATION_GUIDE.md');
-        console.log('2. Update your .env.local file with new variables');
-        console.log('3. Run: pnpm migration:validate-env');
+        console.log("\n📋 Next Steps:");
+        console.log("1. Review ENVIRONMENT_MIGRATION_GUIDE.md");
+        console.log("2. Update your .env.local file with new variables");
+        console.log("3. Run: pnpm migration:validate-env");
 
         process.exit(result.success ? 0 : 1);
       })
       .catch((error) => {
-        console.error('Migration failed:', error);
+        console.error("Migration failed:", error);
         process.exit(1);
       });
   }

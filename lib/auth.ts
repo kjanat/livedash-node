@@ -2,6 +2,13 @@ import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
+import {
+  AuditOutcome,
+  AuditSeverity,
+  createAuditMetadata,
+  SecurityEventType,
+} from "./securityAuditLogger";
+import { enhancedSecurityLog } from "./securityMonitoring";
 
 // Define the shape of the JWT token
 declare module "next-auth/jwt" {
@@ -47,8 +54,25 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, _req) {
         if (!credentials?.email || !credentials?.password) {
+          await enhancedSecurityLog(
+            SecurityEventType.AUTHENTICATION,
+            "login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              metadata: createAuditMetadata({
+                error: "missing_credentials",
+                email: credentials?.email ? "[REDACTED]" : "missing",
+              }),
+            },
+            AuditSeverity.MEDIUM,
+            "Missing email or password",
+            {
+              attemptType: "missing_credentials",
+              endpoint: "/api/auth/signin",
+            }
+          );
           return null;
         }
 
@@ -58,6 +82,24 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user || !user.password) {
+          await enhancedSecurityLog(
+            SecurityEventType.AUTHENTICATION,
+            "login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              metadata: createAuditMetadata({
+                error: "user_not_found",
+                email: "[REDACTED]",
+              }),
+            },
+            AuditSeverity.MEDIUM,
+            "User not found or no password set",
+            {
+              attemptType: "user_not_found",
+              email: credentials.email,
+              endpoint: "/api/auth/signin",
+            }
+          );
           return null;
         }
 
@@ -67,13 +109,76 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
+          await enhancedSecurityLog(
+            SecurityEventType.AUTHENTICATION,
+            "login_attempt",
+            AuditOutcome.FAILURE,
+            {
+              userId: user.id,
+              companyId: user.companyId,
+              metadata: createAuditMetadata({
+                error: "invalid_password",
+                email: "[REDACTED]",
+              }),
+            },
+            AuditSeverity.HIGH,
+            "Invalid password",
+            {
+              attemptType: "invalid_password",
+              email: credentials.email,
+              endpoint: "/api/auth/signin",
+              userId: user.id,
+            }
+          );
           return null;
         }
 
         // Check if company is active
         if (user.company.status !== "ACTIVE") {
+          await enhancedSecurityLog(
+            SecurityEventType.AUTHENTICATION,
+            "login_attempt",
+            AuditOutcome.BLOCKED,
+            {
+              userId: user.id,
+              companyId: user.companyId,
+              metadata: createAuditMetadata({
+                error: "company_inactive",
+                companyStatus: user.company.status,
+              }),
+            },
+            AuditSeverity.HIGH,
+            `Company status is ${user.company.status}`,
+            {
+              attemptType: "company_inactive",
+              companyStatus: user.company.status,
+              endpoint: "/api/auth/signin",
+            }
+          );
           return null;
         }
+
+        // Log successful authentication
+        await enhancedSecurityLog(
+          SecurityEventType.AUTHENTICATION,
+          "login_success",
+          AuditOutcome.SUCCESS,
+          {
+            userId: user.id,
+            companyId: user.companyId,
+            metadata: createAuditMetadata({
+              userRole: user.role,
+              companyName: user.company.name,
+            }),
+          },
+          AuditSeverity.INFO,
+          undefined,
+          {
+            userRole: user.role,
+            companyName: user.company.name,
+            endpoint: "/api/auth/signin",
+          }
+        );
 
         return {
           id: user.id,

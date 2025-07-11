@@ -7,18 +7,21 @@ This guide provides step-by-step instructions for migrating LiveDash Node to ver
 ## 🚀 New Features
 
 ### tRPC Implementation
+
 - **Type-safe APIs**: End-to-end TypeScript safety from client to server
 - **Improved Performance**: Optimized query batching and caching
 - **Better Developer Experience**: Auto-completion and type checking
 - **Simplified Authentication**: Integrated with existing NextAuth.js setup
 
 ### OpenAI Batch API Integration
+
 - **50% Cost Reduction**: Batch processing reduces OpenAI API costs by half
 - **Enhanced Rate Limiting**: Better throughput management
 - **Improved Reliability**: Automatic retry mechanisms and error handling
 - **Automated Processing**: Background batch job lifecycle management
 
 ### Enhanced Security & Performance
+
 - **Rate Limiting**: In-memory rate limiting for all authentication endpoints
 - **Input Validation**: Comprehensive Zod schemas for all user inputs
 - **Performance Monitoring**: Built-in metrics collection and monitoring
@@ -27,6 +30,7 @@ This guide provides step-by-step instructions for migrating LiveDash Node to ver
 ## 📋 Pre-Migration Checklist
 
 ### System Requirements
+
 - [ ] Node.js 18+ installed
 - [ ] PostgreSQL 13+ database
 - [ ] `pg_dump` and `pg_restore` utilities available
@@ -35,6 +39,7 @@ This guide provides step-by-step instructions for migrating LiveDash Node to ver
 - [ ] Sufficient disk space for backups (at least 2GB)
 
 ### Environment Preparation
+
 - [ ] Review current environment variables
 - [ ] Ensure database connection is working
 - [ ] Verify all tests are passing
@@ -46,6 +51,7 @@ This guide provides step-by-step instructions for migrating LiveDash Node to ver
 ### Phase 1: Pre-Migration Setup
 
 #### 1.1 Install Migration Tools
+
 ```bash
 # Ensure you have the latest dependencies
 pnpm install
@@ -55,6 +61,7 @@ pnpm migration:validate-env --help
 ```
 
 #### 1.2 Run Pre-Deployment Checks
+
 ```bash
 # Run comprehensive pre-deployment validation
 pnpm migration:pre-check
@@ -69,6 +76,7 @@ pnpm migration:pre-check
 ```
 
 #### 1.3 Environment Configuration
+
 ```bash
 # Generate new environment variables
 pnpm migration:migrate-env
@@ -109,6 +117,7 @@ MIGRATION_ROLLBACK_ENABLED="true"
 ### Phase 2: Database Migration
 
 #### 2.1 Create Database Backup
+
 ```bash
 # Create full database backup
 pnpm migration:backup
@@ -118,12 +127,14 @@ pnpm migration:backup list
 ```
 
 #### 2.2 Validate Database Schema
+
 ```bash
 # Validate current database state
 pnpm migration:validate-db
 ```
 
 #### 2.3 Apply Database Migrations
+
 ```bash
 # Run Prisma migrations
 pnpm prisma:migrate
@@ -138,12 +149,14 @@ pnpm migration:validate-db
 ### Phase 3: Application Deployment
 
 #### 3.1 Dry Run Deployment
+
 ```bash
 # Test deployment process without making changes
 pnpm migration:deploy:dry-run
 ```
 
 #### 3.2 Full Deployment
+
 ```bash
 # Execute full deployment
 pnpm migration:deploy
@@ -160,6 +173,7 @@ pnpm migration:deploy
 ### Phase 4: Post-Migration Validation
 
 #### 4.1 System Health Check
+
 ```bash
 # Run comprehensive health checks
 pnpm migration:health-check
@@ -169,6 +183,7 @@ pnpm migration:health-report
 ```
 
 #### 4.2 Feature Validation
+
 ```bash
 # Test tRPC endpoints
 pnpm exec tsx scripts/migration/trpc-endpoint-tests.ts
@@ -185,6 +200,7 @@ pnpm migration:test
 If issues occur during migration, you can rollback using these steps:
 
 ### Automatic Rollback
+
 ```bash
 # Quick rollback (if migration failed)
 pnpm migration:rollback
@@ -194,6 +210,7 @@ pnpm migration:rollback:dry-run
 ```
 
 ### Manual Rollback Steps
+
 1. **Stop the application**
 2. **Restore database from backup**
 3. **Revert to previous code version**
@@ -201,6 +218,7 @@ pnpm migration:rollback:dry-run
 5. **Verify system functionality**
 
 ### Rollback Commands
+
 ```bash
 # Create rollback snapshot (before migration)
 pnpm migration:rollback:snapshot
@@ -217,6 +235,7 @@ pnpm migration:rollback --no-database
 ### Post-Migration Monitoring
 
 #### 1. Application Health
+
 ```bash
 # Check system health every hour for the first day
 */60 * * * * cd /path/to/livedash && pnpm migration:health-check
@@ -226,11 +245,13 @@ tail -f logs/migration.log
 ```
 
 #### 2. tRPC Performance
+
 - Monitor response times for tRPC endpoints
 - Check error rates in application logs
 - Verify type safety is working correctly
 
 #### 3. Batch Processing
+
 - Monitor batch job completion rates
 - Check OpenAI API cost reduction
 - Verify AI processing pipeline functionality
@@ -238,12 +259,14 @@ tail -f logs/migration.log
 ### Key Metrics to Monitor
 
 #### Performance Metrics
+
 - **Response Times**: tRPC endpoints should respond within 500ms
 - **Database Queries**: Complex queries should complete within 1s
 - **Memory Usage**: Should remain below 80% of allocated memory
 - **CPU Usage**: Process should remain responsive
 
 #### Business Metrics
+
 - **AI Processing Cost**: Should see ~50% reduction in OpenAI costs
 - **Processing Throughput**: Batch processing should handle larger volumes
 - **Error Rates**: Should remain below 1% for critical operations
@@ -254,6 +277,7 @@ tail -f logs/migration.log
 ### Common Issues and Solutions
 
 #### tRPC Endpoints Not Working
+
 ```bash
 # Check if tRPC files exist
 ls -la app/api/trpc/[trpc]/route.ts
@@ -269,6 +293,7 @@ curl -X POST http://localhost:3000/api/trpc/auth.getSession \
 ```
 
 #### Batch Processing Issues
+
 ```bash
 # Check batch processing components
 pnpm exec tsx scripts/migration/batch-processing-tests.ts
@@ -282,6 +307,7 @@ psql $DATABASE_URL -c "SELECT status, COUNT(*) FROM \"AIBatchRequest\" GROUP BY 
 ```
 
 #### Database Issues
+
 ```bash
 # Check database connection
 pnpm db:check
@@ -291,14 +317,15 @@ pnpm migration:validate-db
 
 # Check for missing indexes
 psql $DATABASE_URL -c "
-SELECT schemaname, tablename, indexname 
-FROM pg_indexes 
+SELECT schemaname, tablename, indexname
+FROM pg_indexes
 WHERE tablename IN ('Session', 'AIProcessingRequest', 'AIBatchRequest')
 ORDER BY tablename, indexname;
 "
 ```
 
 #### Environment Configuration Issues
+
 ```bash
 # Validate environment variables
 pnpm migration:validate-env
@@ -313,12 +340,14 @@ node -e "require('dotenv').config({path: '.env.local'}); console.log('✅ Enviro
 ### Getting Help
 
 #### Support Channels
+
 1. **Check Migration Logs**: Review `logs/migration.log` for detailed error information
 2. **Run Diagnostics**: Use the built-in health check and validation tools
 3. **Documentation**: Refer to component-specific documentation in `docs/`
 4. **Emergency Rollback**: Use rollback procedures if issues persist
 
 #### Useful Commands
+
 ```bash
 # Get detailed system information
 pnpm migration:health-report
@@ -336,6 +365,7 @@ pnpm prisma db pull --print
 ## 📝 Post-Migration Tasks
 
 ### Immediate Tasks (First 24 Hours)
+
 - [ ] Monitor application logs for errors
 - [ ] Verify all tRPC endpoints are responding correctly
 - [ ] Check batch processing job completion
@@ -344,6 +374,7 @@ pnpm prisma db pull --print
 - [ ] Update documentation and team knowledge
 
 ### Medium-term Tasks (First Week)
+
 - [ ] Optimize batch processing parameters based on usage
 - [ ] Fine-tune rate limiting settings
 - [ ] Set up monitoring alerts for new components
@@ -351,6 +382,7 @@ pnpm prisma db pull --print
 - [ ] Plan gradual feature adoption
 
 ### Long-term Tasks (First Month)
+
 - [ ] Analyze cost savings and performance improvements
 - [ ] Consider additional tRPC endpoint implementations
 - [ ] Optimize batch processing schedules
@@ -360,12 +392,14 @@ pnpm prisma db pull --print
 ## 🔒 Security Considerations
 
 ### New Security Features
+
 - **Enhanced Rate Limiting**: Applied to all authentication endpoints
 - **Input Validation**: Comprehensive Zod schemas prevent injection attacks
 - **Secure Headers**: HTTPS enforcement in production
 - **Token Security**: JWT with proper expiration and rotation
 
 ### Security Checklist
+
 - [ ] Verify rate limiting is working correctly
 - [ ] Test input validation on all forms
 - [ ] Ensure HTTPS is enforced in production
@@ -376,18 +410,21 @@ pnpm prisma db pull --print
 ## 📈 Expected Improvements
 
 ### Performance Improvements
+
 - **50% reduction** in OpenAI API costs through batch processing
 - **30% improvement** in API response times with tRPC
 - **25% reduction** in database query time with new indexes
 - **Enhanced scalability** for processing larger session volumes
 
 ### Developer Experience
+
 - **Type Safety**: End-to-end TypeScript types from client to server
 - **Better APIs**: Self-documenting tRPC procedures
 - **Improved Testing**: More reliable test suite with better validation
 - **Enhanced Monitoring**: Detailed health checks and reporting
 
 ### Operational Benefits
+
 - **Automated Batch Processing**: Reduced manual intervention
 - **Better Error Handling**: Comprehensive retry mechanisms
 - **Improved Monitoring**: Real-time health status and metrics
@@ -409,4 +446,5 @@ For issues during migration:
 Your LiveDash Node application is now running version 2.0.0 with tRPC and Batch API integration!
 
 ---
-*Migration Guide v2.0.0 - Updated January 2025*
+
+_Migration Guide v2.0.0 - Updated January 2025_

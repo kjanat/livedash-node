@@ -5,7 +5,12 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { generateCSRFToken, verifyCSRFToken, CSRFProtection, CSRF_CONFIG } from "../../lib/csrf";
+import {
+  generateCSRFToken,
+  verifyCSRFToken,
+  CSRFProtection,
+  CSRF_CONFIG,
+} from "../../lib/csrf";
 
 // Mock Next.js modules
 vi.mock("next/headers", () => ({

@@ -11,7 +11,7 @@ interface UserBasicInfo {
   role: string;
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });

@@ -8,18 +8,21 @@
  */
 
 import cron, { type ScheduledTask } from "node-cron";
+import { batchLogger } from "./batchLogger";
 import {
   checkBatchStatuses,
   createBatchRequest,
   getBatchProcessingStats,
+  getCircuitBreakerStatus,
   getPendingBatchRequests,
   processCompletedBatches,
+  retryFailedRequests,
 } from "./batchProcessor";
 import { prisma } from "./prisma";
 import { getSchedulerConfig } from "./schedulerConfig";
 
 /**
- * Configuration for batch scheduler intervals
+ * Configuration for batch scheduler intervals with enhanced error handling
  */
 const SCHEDULER_CONFIG = {
   // Check for new batches to create every 5 minutes
@@ -28,15 +31,27 @@ const SCHEDULER_CONFIG = {
   CHECK_STATUS_INTERVAL: "*/2 * * * *",
   // Process completed batches every minute
   PROCESS_RESULTS_INTERVAL: "* * * * *",
+  // Retry failed individual requests every 10 minutes
+  RETRY_FAILED_INTERVAL: "*/10 * * * *",
   // Minimum batch size to trigger creation
   MIN_BATCH_SIZE: 10,
   // Maximum time to wait before creating a batch (even if under min size)
   MAX_WAIT_TIME_MINUTES: 30,
+  // Maximum consecutive errors before pausing scheduler
+  MAX_CONSECUTIVE_ERRORS: 5,
+  // Pause duration when too many errors occur (in milliseconds)
+  ERROR_PAUSE_DURATION: 15 * 60 * 1000, // 15 minutes
 } as const;
 
 let createBatchesTask: ScheduledTask | null = null;
 let checkStatusTask: ScheduledTask | null = null;
 let processResultsTask: ScheduledTask | null = null;
+let retryFailedTask: ScheduledTask | null = null;
+
+// Error tracking for scheduler resilience
+let consecutiveErrors = 0;
+let lastErrorTime = 0;
+let isPaused = false;
 
 /**
  * Start the batch processing scheduler
@@ -59,45 +74,44 @@ export function startBatchScheduler(): void {
   // Schedule batch creation
   createBatchesTask = cron.schedule(
     SCHEDULER_CONFIG.CREATE_BATCHES_INTERVAL,
-    async () => {
-      try {
-        await createBatchesForAllCompanies();
-      } catch (error) {
-        console.error("Error in batch creation scheduler:", error);
-      }
-    }
+    () => handleSchedulerTask(createBatchesForAllCompanies, "batch creation")
   );
 
   // Schedule status checking
-  checkStatusTask = cron.schedule(
-    SCHEDULER_CONFIG.CHECK_STATUS_INTERVAL,
-    async () => {
-      try {
-        await checkBatchStatusesForAllCompanies();
-      } catch (error) {
-        console.error("Error in batch status checker:", error);
-      }
-    }
+  checkStatusTask = cron.schedule(SCHEDULER_CONFIG.CHECK_STATUS_INTERVAL, () =>
+    handleSchedulerTask(
+      checkBatchStatusesForAllCompanies,
+      "batch status checking"
+    )
   );
 
   // Schedule result processing
   processResultsTask = cron.schedule(
     SCHEDULER_CONFIG.PROCESS_RESULTS_INTERVAL,
-    async () => {
-      try {
-        await processCompletedBatchesForAllCompanies();
-      } catch (error) {
-        console.error("Error in batch result processor:", error);
-      }
-    }
+    () =>
+      handleSchedulerTask(
+        processCompletedBatchesForAllCompanies,
+        "batch result processing"
+      )
+  );
+
+  // Schedule failed request retry
+  retryFailedTask = cron.schedule(SCHEDULER_CONFIG.RETRY_FAILED_INTERVAL, () =>
+    handleSchedulerTask(
+      retryFailedRequestsForAllCompanies,
+      "failed request retry"
+    )
   );
 
   // Start all tasks
   createBatchesTask.start();
   checkStatusTask.start();
   processResultsTask.start();
+  retryFailedTask.start();
 
-  console.log("Batch scheduler started successfully");
+  console.log(
+    "Batch scheduler started successfully with enhanced error handling"
+  );
 }
 
 /**
@@ -122,6 +136,12 @@ export function stopBatchScheduler(): void {
     processResultsTask.stop();
     processResultsTask.destroy();
     processResultsTask = null;
+  }
+
+  if (retryFailedTask) {
+    retryFailedTask.stop();
+    retryFailedTask.destroy();
+    retryFailedTask = null;
   }
 
   console.log("Batch scheduler stopped");
@@ -285,10 +305,115 @@ export async function forceBatchCreation(companyId: string): Promise<void> {
  */
 export function getBatchSchedulerStatus() {
   return {
-    isRunning: !!(createBatchesTask && checkStatusTask && processResultsTask),
+    isRunning: !!(
+      createBatchesTask &&
+      checkStatusTask &&
+      processResultsTask &&
+      retryFailedTask
+    ),
     createBatchesRunning: !!createBatchesTask,
     checkStatusRunning: !!checkStatusTask,
     processResultsRunning: !!processResultsTask,
+    retryFailedRunning: !!retryFailedTask,
+    isPaused,
+    consecutiveErrors,
+    lastErrorTime: lastErrorTime ? new Date(lastErrorTime) : null,
+    circuitBreakers: getCircuitBreakerStatus(),
     config: SCHEDULER_CONFIG,
   };
+}
+
+/**
+ * Handle scheduler task execution with error tracking and recovery
+ */
+async function handleSchedulerTask(
+  taskFunction: () => Promise<void>,
+  taskName: string
+): Promise<void> {
+  // Check if scheduler is paused due to too many errors
+  if (isPaused) {
+    const now = Date.now();
+    if (now - lastErrorTime >= SCHEDULER_CONFIG.ERROR_PAUSE_DURATION) {
+      console.log(`Resuming scheduler after error pause: ${taskName}`);
+      isPaused = false;
+      consecutiveErrors = 0;
+    } else {
+      console.log(`Scheduler paused due to errors, skipping: ${taskName}`);
+      return;
+    }
+  }
+
+  const startTime = Date.now();
+  let successCount = 0;
+  let errorCount = 0;
+
+  try {
+    await taskFunction();
+    successCount = 1;
+
+    // Reset error counter on success
+    if (consecutiveErrors > 0) {
+      console.log(
+        `Scheduler recovered after ${consecutiveErrors} consecutive errors: ${taskName}`
+      );
+      consecutiveErrors = 0;
+    }
+  } catch (error) {
+    consecutiveErrors++;
+    lastErrorTime = Date.now();
+    errorCount = 1;
+
+    console.error(
+      `Error in ${taskName} (attempt ${consecutiveErrors}):`,
+      error
+    );
+
+    // Pause scheduler if too many consecutive errors
+    if (consecutiveErrors >= SCHEDULER_CONFIG.MAX_CONSECUTIVE_ERRORS) {
+      isPaused = true;
+      console.error(
+        `Pausing scheduler for ${SCHEDULER_CONFIG.ERROR_PAUSE_DURATION / 1000 / 60} minutes due to ${consecutiveErrors} consecutive errors`
+      );
+    }
+  } finally {
+    const duration = Date.now() - startTime;
+    await batchLogger.logScheduler(
+      taskName,
+      duration,
+      successCount,
+      errorCount,
+      errorCount > 0
+        ? new Error(`Scheduler task ${taskName} failed`)
+        : undefined
+    );
+  }
+}
+
+/**
+ * Retry failed individual requests for all companies
+ */
+async function retryFailedRequestsForAllCompanies(): Promise<void> {
+  try {
+    const companies = await prisma.company.findMany({
+      where: { status: "ACTIVE" },
+      select: { id: true },
+    });
+
+    for (const company of companies) {
+      await retryFailedRequests(company.id);
+    }
+  } catch (error) {
+    console.error("Failed to retry failed requests:", error);
+    throw error; // Re-throw to trigger error handling
+  }
+}
+
+/**
+ * Force resume scheduler (for manual recovery)
+ */
+export function forceResumeScheduler(): void {
+  isPaused = false;
+  consecutiveErrors = 0;
+  lastErrorTime = 0;
+  console.log("Scheduler manually resumed, error counters reset");
 }
