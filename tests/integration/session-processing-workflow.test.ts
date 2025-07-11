@@ -1,6 +1,6 @@
 /**
  * Integration tests for session processing workflow
- * 
+ *
  * Tests the complete end-to-end flow of session processing:
  * 1. Import processing (SessionImport → Session)
  * 2. Transcript fetching and parsing

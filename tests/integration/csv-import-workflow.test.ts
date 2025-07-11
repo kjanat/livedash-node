@@ -1,6 +1,6 @@
 /**
  * Integration tests for CSV import workflow
- * 
+ *
  * Tests the complete end-to-end flow of CSV import:
  * 1. CSV file fetching from URL
  * 2. Parsing and validation of CSV data
@@ -109,7 +109,7 @@ session2,user2,nl,NL,192.168.1.2,neutral,3,2024-01-15T11:00:00Z,2024-01-15T11:20
         expect(options.headers.Authorization).toBe(
           `Basic ${Buffer.from("testuser:testpass").toString("base64")}`
         );
-        
+
         return Promise.resolve({
           ok: true,
           text: async () => mockCsvData,
@@ -185,7 +185,7 @@ session2,user2,nl,NL,192.168.1.2,neutral,3,2024-01-15T11:00:00Z,2024-01-15T11:20
 
     it("should handle invalid CSV format", async () => {
       const invalidCsv = "invalid,csv,data\nwithout,proper,headers";
-      
+
       const fetchMock = await import("node-fetch");
       vi.mocked(fetchMock.default).mockResolvedValueOnce({
         ok: true,
@@ -347,13 +347,13 @@ session4,user4,en,US,192.168.1.4,positive,5,2024-01-15T10:00:00Z,2024-01-15T10:3
     it("should handle large CSV files efficiently", async () => {
       // Generate large CSV with 1000 rows
       const largeCSVRows = ["sessionId,userId,language,country,ipAddress,sentiment,messagesSent,startTime,endTime,escalated,forwardedHr,summary"];
-      
+
       for (let i = 0; i < 1000; i++) {
         largeCSVRows.push(
           `session${i},user${i},en,US,192.168.1.${i % 255},positive,5,2024-01-15T10:00:00Z,2024-01-15T10:30:00Z,false,false,Session ${i}`
         );
       }
-      
+
       const largeCsv = largeCSVRows.join("\n");
 
       const fetchMock = await import("node-fetch");

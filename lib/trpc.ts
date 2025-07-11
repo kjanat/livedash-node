@@ -15,6 +15,7 @@ import type { z } from "zod";
 import { authOptions } from "./auth";
 import { prisma } from "./prisma";
 import { validateInput } from "./validation";
+import { CSRFProtection } from "./csrf";
 
 /**
  * Create context for tRPC requests
@@ -152,6 +153,38 @@ export const adminProcedure = publicProcedure.use(enforceAdminAccess);
 export const validatedProcedure = createValidatedProcedure;
 
 /**
+ * CSRF protection middleware for state-changing operations
+ */
+const enforceCSRFProtection = t.middleware(async ({ ctx, next }) => {
+  // Extract request from context
+  const request = ctx.req as Request;
+
+  // Skip CSRF validation for GET requests
+  if (request.method === "GET") {
+    return next({ ctx });
+  }
+
+  // Convert to NextRequest for validation
+  const nextRequest = new Request(request.url, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body,
+  }) as any;
+
+  // Validate CSRF token
+  const validation = await CSRFProtection.validateRequest(nextRequest);
+
+  if (!validation.valid) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: validation.error || "CSRF validation failed",
+    });
+  }
+
+  return next({ ctx });
+});
+
+/**
  * Rate limiting middleware for sensitive operations
  */
 export const rateLimitedProcedure = publicProcedure.use(
@@ -161,3 +194,11 @@ export const rateLimitedProcedure = publicProcedure.use(
     return next({ ctx });
   }
 );
+
+/**
+ * CSRF-protected procedures for state-changing operations
+ */
+export const csrfProtectedProcedure = publicProcedure.use(enforceCSRFProtection);
+export const csrfProtectedAuthProcedure = csrfProtectedProcedure.use(enforceUserIsAuthed);
+export const csrfProtectedCompanyProcedure = csrfProtectedProcedure.use(enforceCompanyAccess);
+export const csrfProtectedAdminProcedure = csrfProtectedProcedure.use(enforceAdminAccess);

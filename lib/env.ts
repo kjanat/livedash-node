@@ -79,6 +79,9 @@ export const env = {
   NEXTAUTH_SECRET: parseEnvValue(process.env.NEXTAUTH_SECRET) || "",
   NODE_ENV: parseEnvValue(process.env.NODE_ENV) || "development",
 
+  // CSRF Protection
+  CSRF_SECRET: parseEnvValue(process.env.CSRF_SECRET) || parseEnvValue(process.env.NEXTAUTH_SECRET) || "fallback-csrf-secret",
+
   // OpenAI
   OPENAI_API_KEY: parseEnvValue(process.env.OPENAI_API_KEY) || "",
   OPENAI_MOCK_MODE: parseEnvValue(process.env.OPENAI_MOCK_MODE) === "true",

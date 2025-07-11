@@ -13,6 +13,8 @@ import {
   publicProcedure,
   protectedProcedure,
   rateLimitedProcedure,
+  csrfProtectedProcedure,
+  csrfProtectedAuthProcedure,
 } from "@/lib/trpc";
 import { TRPCError } from "@trpc/server";
 import {
@@ -23,12 +25,14 @@ import {
 } from "@/lib/validation";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import crypto from "node:crypto";
 
 export const authRouter = router({
   /**
    * Register a new user
+   * Protected with CSRF to prevent automated account creation
    */
-  register: rateLimitedProcedure
+  register: csrfProtectedProcedure
     .input(registerSchema)
     .mutation(async ({ input, ctx }) => {
       const { email, password, company: companyName } = input;
@@ -142,8 +146,9 @@ export const authRouter = router({
 
   /**
    * Request password reset
+   * Protected with CSRF to prevent abuse
    */
-  forgotPassword: rateLimitedProcedure
+  forgotPassword: csrfProtectedProcedure
     .input(forgotPasswordSchema)
     .mutation(async ({ input, ctx }) => {
       const { email } = input;
@@ -160,8 +165,8 @@ export const authRouter = router({
         };
       }
 
-      // Generate reset token (in real implementation, this would be a secure token)
-      const resetToken = Math.random().toString(36).substring(2, 15);
+      // Generate cryptographically secure reset token
+      const resetToken = crypto.randomBytes(32).toString('hex');
       const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour
 
       await ctx.prisma.user.update({
@@ -217,8 +222,9 @@ export const authRouter = router({
 
   /**
    * Update user profile
+   * Protected with CSRF and authentication
    */
-  updateProfile: protectedProcedure
+  updateProfile: csrfProtectedAuthProcedure
     .input(userUpdateSchema)
     .mutation(async ({ input, ctx }) => {
       const updateData: any = {};
@@ -283,8 +289,9 @@ export const authRouter = router({
 
   /**
    * Reset password with token
+   * Protected with CSRF to prevent abuse
    */
-  resetPassword: publicProcedure
+  resetPassword: csrfProtectedProcedure
     .input(
       z.object({
         token: z.string().min(1, "Reset token is required"),

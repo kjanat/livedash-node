@@ -9,6 +9,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createTRPCNext } from "@trpc/next";
 import superjson from "superjson";
 import type { AppRouter } from "@/server/routers/_app";
+import { CSRFClient } from "./csrf";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -54,10 +55,25 @@ export const trpc = createTRPCNext<AppRouter>({
            * @link https://trpc.io/docs/v10/header
            */
           headers() {
-            return {
-              // Include credentials for authentication
+            const headers: Record<string, string> = {};
+
+            // Add CSRF token for state-changing operations
+            const csrfToken = CSRFClient.getToken();
+            if (csrfToken) {
+              headers["x-csrf-token"] = csrfToken;
+            }
+
+            return headers;
+          },
+
+          /**
+           * Custom fetch implementation to include credentials
+           */
+          fetch(url, options) {
+            return fetch(url, {
+              ...options,
               credentials: "include",
-            };
+            });
           },
         }),
       ],
