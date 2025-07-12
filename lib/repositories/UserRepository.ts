@@ -225,12 +225,18 @@ export class UserRepository implements BaseRepository<User> {
   }
 
   /**
-   * Update user last login timestamp (Note: User model doesn't have lastLoginAt field)
+   * Update user last login timestamp
    */
   async updateLastLogin(id: string): Promise<User | null> {
     try {
-      // Just return the user since there's no lastLoginAt field to update
-      return await this.findById(id);
+      return await prisma.user.update({
+        where: { id },
+        data: { 
+          lastLoginAt: new Date(),
+          failedLoginAttempts: 0, // Reset failed attempts on successful login
+          lockedAt: null // Unlock account if it was locked
+        },
+      });
     } catch (error) {
       throw new RepositoryError(
         `Failed to update last login for user ${id}`,
@@ -355,9 +361,13 @@ export class UserRepository implements BaseRepository<User> {
 
       return await prisma.user.findMany({
         where: {
-          createdAt: { lt: cutoffDate },
+          OR: [
+            { lastLoginAt: { lt: cutoffDate } }, // Users who haven't logged in recently
+            { lastLoginAt: null, createdAt: { lt: cutoffDate } }, // Users who never logged in and were created long ago
+          ],
+          isActive: true, // Only consider active users
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: { lastLoginAt: "asc" },
       });
     } catch (error) {
       throw new RepositoryError(
@@ -388,6 +398,137 @@ export class UserRepository implements BaseRepository<User> {
       throw new RepositoryError(
         `Failed to search users with query "${query}"`,
         "SEARCH_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Increment failed login attempts and lock account if threshold exceeded
+   */
+  async incrementFailedLoginAttempts(email: string, maxAttempts = 5): Promise<User | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) return null;
+
+      const newFailedAttempts = user.failedLoginAttempts + 1;
+      const shouldLock = newFailedAttempts >= maxAttempts;
+
+      return await prisma.user.update({
+        where: { email },
+        data: {
+          failedLoginAttempts: newFailedAttempts,
+          ...(shouldLock && { lockedAt: new Date() }),
+        },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to increment failed login attempts for ${email}`,
+        "INCREMENT_FAILED_LOGIN_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Mark user email as verified
+   */
+  async verifyEmail(id: string): Promise<User | null> {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: {
+          emailVerified: true,
+          emailVerificationToken: null,
+          emailVerificationExpiry: null,
+        },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to verify email for user ${id}`,
+        "VERIFY_EMAIL_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Set email verification token
+   */
+  async setEmailVerificationToken(id: string, token: string, expiryHours = 24): Promise<User | null> {
+    try {
+      const expiry = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
+      return await prisma.user.update({
+        where: { id },
+        data: {
+          emailVerificationToken: token,
+          emailVerificationExpiry: expiry,
+        },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to set email verification token for user ${id}`,
+        "SET_VERIFICATION_TOKEN_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Deactivate user account
+   */
+  async deactivateUser(id: string): Promise<User | null> {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to deactivate user ${id}`,
+        "DEACTIVATE_USER_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Unlock user account
+   */
+  async unlockUser(id: string): Promise<User | null> {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: {
+          lockedAt: null,
+          failedLoginAttempts: 0,
+        },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to unlock user ${id}`,
+        "UNLOCK_USER_ERROR",
+        error as Error
+      );
+    }
+  }
+
+  /**
+   * Update user preferences
+   */
+  async updatePreferences(id: string, preferences: Record<string, unknown>): Promise<User | null> {
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: { preferences: preferences as any },
+      });
+    } catch (error) {
+      throw new RepositoryError(
+        `Failed to update preferences for user ${id}`,
+        "UPDATE_PREFERENCES_ERROR",
         error as Error
       );
     }

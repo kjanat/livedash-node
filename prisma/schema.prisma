@@ -91,11 +91,35 @@ model User {
   invitedAt        DateTime? @db.Timestamptz(6)
   /// Email of the user who invited this user (for audit trail)
   invitedBy        String?   @db.VarChar(255)
+  /// User management fields
+  /// When the user last logged in
+  lastLoginAt      DateTime? @db.Timestamptz(6)
+  /// Whether the user account is active
+  isActive         Boolean   @default(true)
+  /// Whether the user's email has been verified
+  emailVerified    Boolean   @default(false)
+  /// Token for email verification
+  emailVerificationToken String? @db.VarChar(255)
+  /// Expiration time for email verification token
+  emailVerificationExpiry DateTime? @db.Timestamptz(6)
+  /// Number of failed login attempts
+  failedLoginAttempts Int     @default(0)
+  /// When the account was locked due to failed attempts
+  lockedAt         DateTime? @db.Timestamptz(6)
+  /// User preferences and settings
+  preferences      Json?     @db.Json
+  /// User's timezone for proper datetime display
+  timezone         String?   @db.VarChar(50)
+  /// User's preferred language
+  preferredLanguage String?  @db.VarChar(10)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
   auditLogs        SecurityAuditLog[]
 
   @@index([companyId])
   @@index([email])
+  @@index([lastLoginAt])
+  @@index([isActive])
+  @@index([emailVerified])
 }
 
 /// *
