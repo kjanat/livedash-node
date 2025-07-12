@@ -13,6 +13,11 @@ const nextConfig = {
   // Allow cross-origin requests from specific origins in development
   allowedDevOrigins: ["localhost", "127.0.0.1", "192.168.1.2"],
 
+  // Disable ESLint during build (using Biome for linting)
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
   // Note: Security headers are now handled by middleware.ts for enhanced CSP with nonce support
 
   // Bundle optimization settings (swcMinify is now default and deprecated option removed)
@@ -41,8 +46,8 @@ const nextConfig = {
 
   // Experimental features for performance
   experimental: {
-    // Optimize CSS handling
-    optimizeCss: true,
+    // Optimize CSS handling - disabled due to critters dependency
+    optimizeCss: false,
     // Enable partial prerendering for better performance
     ppr: false, // Can be enabled when stable
     // Optimize package imports

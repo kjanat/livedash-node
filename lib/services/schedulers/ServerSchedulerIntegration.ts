@@ -59,7 +59,7 @@ export class ServerSchedulerIntegration {
         id: "csv-import",
         name: "CSV Import Scheduler",
         service: new CsvImportSchedulerService({
-          enabled: config.csvImport.enabled,
+          enabled: config.enabled,
           interval: config.csvImport.interval,
           timeout: 300000, // 5 minutes
           batchSize: 10,

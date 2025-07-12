@@ -455,8 +455,8 @@ export class DeploymentOrchestrator {
       migrationLogger.info("BATCH_TEST", "Testing batch processing system");
 
       // Test that batch processing components can be imported
-      const { BatchProcessor } = await import("../../lib/batchProcessor");
-      return BatchProcessor !== undefined;
+      const { createBatchRequest } = await import("../../lib/batchProcessor");
+      return createBatchRequest !== undefined;
     } catch (error) {
       migrationLogger.error(
         "BATCH_TEST",
@@ -478,7 +478,7 @@ export class DeploymentOrchestrator {
 
     if (!result.success) {
       throw new Error(
-        `Post-deployment validation failed: ${result.errors.join(", ")}`
+        `Post-deployment validation failed: ${result.failedChecks} checks failed out of ${result.checks.length} total checks`
       );
     }
 

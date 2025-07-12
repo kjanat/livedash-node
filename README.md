@@ -11,6 +11,7 @@ A comprehensive real-time analytics dashboard for monitoring user sessions with 
 ## Features
 
 ### Core Analytics
+
 - **Real-time Session Monitoring**: Track and analyze user sessions as they happen
 - **Interactive Visualizations**: Geographic maps, response time distributions, and advanced charts
 - **AI-Powered Analysis**: OpenAI integration with 50% cost reduction through batch processing
@@ -18,6 +19,7 @@ A comprehensive real-time analytics dashboard for monitoring user sessions with 
 - **Session Details**: In-depth analysis of individual user sessions with transcript parsing
 
 ### Security & Admin Features
+
 - **Enterprise Security**: Multi-layer security with CSRF protection, CSP, and rate limiting
 - **Security Monitoring**: Real-time threat detection and alerting system
 - **Audit Logging**: Comprehensive security audit trails with retention management
@@ -25,8 +27,9 @@ A comprehensive real-time analytics dashboard for monitoring user sessions with 
 - **Geographic Threat Detection**: IP-based threat analysis and anomaly detection
 
 ### Platform Management
+
 - **Multi-tenant Architecture**: Company-based data isolation and management
-- **User Management**: Role-based access control with platform admin capabilities  
+- **User Management**: Role-based access control with platform admin capabilities
 - **Batch Processing**: Optimized AI processing pipeline with automated scheduling
 - **Data Export**: CSV/JSON export capabilities for analytics and audit data
 
@@ -145,24 +148,28 @@ BATCH_RESULT_PROCESSING_INTERVAL="*/1 * * * *"
 ## Available Scripts
 
 ### Development
+
 - `pnpm dev`: Start development server with all features
 - `pnpm dev:next-only`: Start Next.js only (no background schedulers)
 - `pnpm build`: Build the application for production
 - `pnpm start`: Run the production build
 
 ### Code Quality
+
 - `pnpm lint`: Run ESLint
 - `pnpm lint:fix`: Fix ESLint issues automatically
 - `pnpm format`: Format code with Prettier
 - `pnpm format:check`: Check code formatting
 
 ### Database
+
 - `pnpm prisma:studio`: Open Prisma Studio to view database
 - `pnpm prisma:migrate`: Run database migrations
 - `pnpm prisma:generate`: Generate Prisma client
 - `pnpm prisma:seed`: Seed database with test data
 
 ### Testing
+
 - `pnpm test`: Run all tests (Vitest + Playwright)
 - `pnpm test:vitest`: Run unit and integration tests
 - `pnpm test:coverage`: Run tests with coverage reports
@@ -170,6 +177,7 @@ BATCH_RESULT_PROCESSING_INTERVAL="*/1 * * * *"
 - `pnpm test:csp`: Test CSP implementation
 
 ### Security & Migration
+
 - `pnpm migration:backup`: Create database backup
 - `pnpm migration:health-check`: Run system health checks
 - `pnpm test:security-headers`: Test HTTP security headers

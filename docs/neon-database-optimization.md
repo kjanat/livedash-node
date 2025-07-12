@@ -15,21 +15,21 @@ Can't reach database server at `ep-tiny-math-a2zsshve-pooler.eu-central-1.aws.ne
 
 ### 1. Neon Connection Limits
 
--   **Free Tier**: 20 concurrent connections
--   **Pro Tier**: 100 concurrent connections
--   **Multiple schedulers** can quickly exhaust connections
+- **Free Tier**: 20 concurrent connections
+- **Pro Tier**: 100 concurrent connections
+- **Multiple schedulers** can quickly exhaust connections
 
 ### 2. Connection Pooling Issues
 
--   Each scheduler was creating separate PrismaClient instances
--   No connection reuse between operations
--   No retry logic for temporary failures
+- Each scheduler was creating separate PrismaClient instances
+- No connection reuse between operations
+- No retry logic for temporary failures
 
 ### 3. Neon-Specific Challenges
 
--   **Auto-pause**: Databases pause after inactivity
--   **Cold starts**: First connection after pause takes longer
--   **Regional latency**: eu-central-1 may have variable latency
+- **Auto-pause**: Databases pause after inactivity
+- **Cold starts**: First connection after pause takes longer
+- **Regional latency**: eu-central-1 may have variable latency
 
 ## Solutions Implemented
 
@@ -106,9 +106,9 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 
 ### 2. Neon Dashboard Monitoring
 
--   Monitor "Active connections" in Neon dashboard
--   Check for connection spikes during scheduler runs
--   Review query performance and slow queries
+- Monitor "Active connections" in Neon dashboard
+- Check for connection spikes during scheduler runs
+- Review query performance and slow queries
 
 ### 3. Application Logs
 
@@ -158,9 +158,9 @@ const prisma = new PrismaClient({
 
 **Causes:**
 
--   Neon database auto-paused
--   Connection limit exceeded
--   Network issues
+- Neon database auto-paused
+- Connection limit exceeded
+- Network issues
 
 **Solutions:**
 
@@ -173,9 +173,9 @@ const prisma = new PrismaClient({
 
 **Causes:**
 
--   Idle connection timeout
--   Neon maintenance
--   Long-running transactions
+- Idle connection timeout
+- Neon maintenance
+- Long-running transactions
 
 **Solutions:**
 
@@ -187,9 +187,9 @@ const prisma = new PrismaClient({
 
 **Causes:**
 
--   Blocking database operations
--   Scheduler overlap
--   High CPU usage
+- Blocking database operations
+- Scheduler overlap
+- High CPU usage
 
 **Solutions:**
 
@@ -230,10 +230,10 @@ SESSION_PROCESSING_INTERVAL="0 */2 * * *"
 
 ## Monitoring Checklist
 
--   [ ] Check Neon dashboard for connection spikes
--   [ ] Monitor scheduler execution times
--   [ ] Review error logs for connection patterns
--   [ ] Test health endpoint regularly
--   [ ] Set up alerts for connection failures
+- [ ] Check Neon dashboard for connection spikes
+- [ ] Monitor scheduler execution times
+- [ ] Review error logs for connection patterns
+- [ ] Test health endpoint regularly
+- [ ] Set up alerts for connection failures
 
 With these optimizations, your Neon database connections should be much more stable and efficient!

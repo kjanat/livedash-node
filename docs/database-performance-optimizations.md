@@ -6,10 +6,10 @@ This document outlines the comprehensive database performance optimizations impl
 
 The optimization focuses on the most frequently queried patterns in the application, particularly around:
 
--   AI processing request tracking and batching
--   Session analytics and filtering
--   Security audit log analysis
--   Multi-tenant data isolation performance
+- AI processing request tracking and batching
+- Session analytics and filtering
+- Security audit log analysis
+- Multi-tenant data isolation performance
 
 ## Applied Optimizations
 
@@ -20,20 +20,20 @@ The optimization focuses on the most frequently queried patterns in the applicat
 
 ```sql
 -- Query pattern: companyId + processingStatus + requestedAt
-CREATE INDEX "AIProcessingRequest_companyId_processingStatus_requestedAt_idx" 
+CREATE INDEX "AIProcessingRequest_companyId_processingStatus_requestedAt_idx"
 ON "AIProcessingRequest" ("sessionId", "processingStatus", "requestedAt");
 
 -- Covering index for batch processing
-CREATE INDEX "AIProcessingRequest_session_companyId_processingStatus_idx" 
-ON "AIProcessingRequest" ("sessionId") 
+CREATE INDEX "AIProcessingRequest_session_companyId_processingStatus_idx"
+ON "AIProcessingRequest" ("sessionId")
 INCLUDE ("processingStatus", "batchId", "requestedAt");
 ```
 
 **Impact**:
 
--   ~70% faster batch job queries
--   Reduced I/O for cost analysis reports
--   Improved scheduler performance
+- ~70% faster batch job queries
+- Reduced I/O for cost analysis reports
+- Improved scheduler performance
 
 ### 2. Session Analytics Optimizations
 
@@ -42,21 +42,21 @@ INCLUDE ("processingStatus", "batchId", "requestedAt");
 
 ```sql
 -- Time-range queries with sentiment filtering
-CREATE INDEX "Session_companyId_startTime_sentiment_covering_idx" 
-ON "Session" ("companyId", "startTime", "sentiment") 
+CREATE INDEX "Session_companyId_startTime_sentiment_covering_idx"
+ON "Session" ("companyId", "startTime", "sentiment")
 INCLUDE ("endTime", "category", "escalated", "messagesSent");
 
 -- Performance analysis queries
-CREATE INDEX "Session_companyId_performance_idx" 
-ON "Session" ("companyId", "avgResponseTime", "escalated") 
+CREATE INDEX "Session_companyId_performance_idx"
+ON "Session" ("companyId", "avgResponseTime", "escalated")
 INCLUDE ("startTime", "messagesSent");
 ```
 
 **Impact**:
 
--   ~85% faster dashboard load times
--   Efficient date range filtering
--   Optimized sentiment analysis queries
+- ~85% faster dashboard load times
+- Efficient date range filtering
+- Optimized sentiment analysis queries
 
 ### 3. Security Audit Log Optimizations
 
@@ -65,21 +65,21 @@ INCLUDE ("startTime", "messagesSent");
 
 ```sql
 -- Admin security dashboard
-CREATE INDEX "SecurityAuditLog_companyId_eventType_outcome_timestamp_idx" 
+CREATE INDEX "SecurityAuditLog_companyId_eventType_outcome_timestamp_idx"
 ON "SecurityAuditLog" ("companyId", "eventType", "outcome", "timestamp");
 
 -- Threat detection queries
-CREATE INDEX "SecurityAuditLog_geographic_threat_idx" 
-ON "SecurityAuditLog" ("ipAddress", "country", "timestamp") 
-WHERE "outcome" IN ('FAILURE', 'BLOCKED', 'SUSPICIOUS') 
+CREATE INDEX "SecurityAuditLog_geographic_threat_idx"
+ON "SecurityAuditLog" ("ipAddress", "country", "timestamp")
+WHERE "outcome" IN ('FAILURE', 'BLOCKED', 'SUSPICIOUS')
 INCLUDE ("eventType", "severity", "userId", "companyId");
 ```
 
 **Impact**:
 
--   ~90% faster security monitoring
--   Efficient threat detection
--   Improved compliance reporting
+- ~90% faster security monitoring
+- Efficient threat detection
+- Improved compliance reporting
 
 ### 4. Message Processing Optimizations
 
@@ -88,15 +88,15 @@ INCLUDE ("eventType", "severity", "userId", "companyId");
 
 ```sql
 -- Message timeline with role filtering
-CREATE INDEX "Message_sessionId_timestamp_role_covering_idx" 
-ON "Message" ("sessionId", "timestamp", "role") 
+CREATE INDEX "Message_sessionId_timestamp_role_covering_idx"
+ON "Message" ("sessionId", "timestamp", "role")
 INCLUDE ("content");
 ```
 
 **Impact**:
 
--   ~60% faster conversation loading
--   Reduced memory usage for message queries
+- ~60% faster conversation loading
+- Reduced memory usage for message queries
 
 ### 5. Processing Pipeline Optimizations
 
@@ -105,42 +105,42 @@ INCLUDE ("content");
 
 ```sql
 -- Processing pipeline monitoring
-CREATE INDEX "SessionProcessingStatus_stage_status_startedAt_idx" 
-ON "SessionProcessingStatus" ("stage", "status", "startedAt") 
+CREATE INDEX "SessionProcessingStatus_stage_status_startedAt_idx"
+ON "SessionProcessingStatus" ("stage", "status", "startedAt")
 INCLUDE ("sessionId", "completedAt", "retryCount");
 
 -- Error analysis (partial index)
-CREATE INDEX "SessionProcessingStatus_error_analysis_idx" 
-ON "SessionProcessingStatus" ("status", "stage") 
-WHERE "status" IN ('FAILED', 'RETRY_PENDING') 
+CREATE INDEX "SessionProcessingStatus_error_analysis_idx"
+ON "SessionProcessingStatus" ("status", "stage")
+WHERE "status" IN ('FAILED', 'RETRY_PENDING')
 INCLUDE ("sessionId", "errorMessage", "retryCount", "startedAt");
 ```
 
 **Impact**:
 
--   ~75% faster processing monitoring
--   Efficient error tracking
--   Improved retry logic performance
+- ~75% faster processing monitoring
+- Efficient error tracking
+- Improved retry logic performance
 
 ## Index Strategy Principles
 
 ### 1. Composite Index Design
 
--   **Leading column**: Most selective filter (usually companyId for multi-tenancy)
--   **Secondary columns**: Common WHERE clause filters
--   **Covering columns**: SELECT list columns via INCLUDE
+- **Leading column**: Most selective filter (usually companyId for multi-tenancy)
+- **Secondary columns**: Common WHERE clause filters
+- **Covering columns**: SELECT list columns via INCLUDE
 
 ### 2. Partial Indexes
 
--   Used for error analysis and specific status filtering
--   Reduces index size and maintenance overhead
--   Improves write performance
+- Used for error analysis and specific status filtering
+- Reduces index size and maintenance overhead
+- Improves write performance
 
 ### 3. Covering Indexes
 
--   Include frequently accessed columns to avoid table lookups
--   Reduces I/O for read-heavy operations
--   Particularly effective for dashboard queries
+- Include frequently accessed columns to avoid table lookups
+- Reduces I/O for read-heavy operations
+- Particularly effective for dashboard queries
 
 ## Query Pattern Analysis
 
@@ -154,41 +154,41 @@ INCLUDE ("sessionId", "errorMessage", "retryCount", "startedAt");
 
 ### Before vs After Performance
 
-| Query Type | Before (ms) | After (ms) | Improvement |
-|------------|-------------|------------|-------------|
-| Dashboard load | 2,500 | 375 | 85% |
-| Batch queries | 1,800 | 540 | 70% |
-| Security monitoring | 3,200 | 320 | 90% |
-| Message timeline | 800 | 320 | 60% |
-| Processing status | 1,200 | 300 | 75% |
+| Query Type          | Before (ms) | After (ms) | Improvement |
+| ------------------- | ----------- | ---------- | ----------- |
+| Dashboard load      | 2,500       | 375        | 85%         |
+| Batch queries       | 1,800       | 540        | 70%         |
+| Security monitoring | 3,200       | 320        | 90%         |
+| Message timeline    | 800         | 320        | 60%         |
+| Processing status   | 1,200       | 300        | 75%         |
 
 ## Maintenance Considerations
 
 ### Index Monitoring
 
--   Monitor index usage with `pg_stat_user_indexes`
--   Track bloat with `pg_stat_user_tables`
--   Regular ANALYZE after bulk operations
+- Monitor index usage with `pg_stat_user_indexes`
+- Track bloat with `pg_stat_user_tables`
+- Regular ANALYZE after bulk operations
 
 ### Write Performance Impact
 
--   Composite indexes add ~15% write overhead
--   Offset by dramatic read performance gains
--   Monitored via slow query logs
+- Composite indexes add ~15% write overhead
+- Offset by dramatic read performance gains
+- Monitored via slow query logs
 
 ### Storage Impact
 
--   Indexes add ~25% to total storage
--   Covering indexes reduce need for table scans
--   Partial indexes minimize storage overhead
+- Indexes add ~25% to total storage
+- Covering indexes reduce need for table scans
+- Partial indexes minimize storage overhead
 
 ## Migration Safety
 
 ### CONCURRENTLY Operations
 
--   All indexes created with `CREATE INDEX CONCURRENTLY`
--   No table locks during creation
--   Production-safe deployment
+- All indexes created with `CREATE INDEX CONCURRENTLY`
+- No table locks during creation
+- Production-safe deployment
 
 ### Rollback Strategy
 
@@ -201,14 +201,14 @@ DROP INDEX CONCURRENTLY "specific_index_name";
 
 ```sql
 -- Check index usage
-SELECT schemaname, tablename, attname, n_distinct, correlation 
-FROM pg_stats 
+SELECT schemaname, tablename, attname, n_distinct, correlation
+FROM pg_stats
 WHERE tablename IN ('Session', 'AIProcessingRequest', 'SecurityAuditLog');
 
 -- Monitor query performance
-SELECT query, mean_exec_time, calls 
-FROM pg_stat_statements 
-ORDER BY mean_exec_time DESC 
+SELECT query, mean_exec_time, calls
+FROM pg_stat_statements
+ORDER BY mean_exec_time DESC
 LIMIT 10;
 ```
 
@@ -238,18 +238,18 @@ LIMIT 10;
 
 ### Monitoring Strategy
 
--   Set up automated index usage monitoring
--   Track slow query evolution
--   Monitor storage growth patterns
--   Implement performance alerting
+- Set up automated index usage monitoring
+- Track slow query evolution
+- Monitor storage growth patterns
+- Implement performance alerting
 
 ## Conclusion
 
 These database optimizations provide:
 
--   **70-90% improvement** in query performance
--   **Reduced server load** through efficient indexing
--   **Better user experience** with faster dashboards
--   **Scalable foundation** for future growth
+- **70-90% improvement** in query performance
+- **Reduced server load** through efficient indexing
+- **Better user experience** with faster dashboards
+- **Scalable foundation** for future growth
 
 The optimizations are designed to be production-safe and monitoring-friendly, ensuring both immediate performance gains and long-term maintainability.

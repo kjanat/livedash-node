@@ -31,16 +31,16 @@ export interface SecurityAlert {
   acknowledgedAt?: Date;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum AlertSeverity {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum AlertType {
   AUTHENTICATION_ANOMALY = "AUTHENTICATION_ANOMALY",
   RATE_LIMIT_BREACH = "RATE_LIMIT_BREACH",
@@ -58,7 +58,7 @@ export enum AlertType {
   SUSPICIOUS_USER_AGENT = "SUSPICIOUS_USER_AGENT",
   SESSION_HIJACKING = "SESSION_HIJACKING",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
 export interface SecurityMetrics {
   totalEvents: number;
@@ -75,14 +75,14 @@ export interface SecurityMetrics {
   userRiskScores: Array<{ userId: string; email: string; riskScore: number }>;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum ThreatLevel {
   LOW = "LOW",
   MODERATE = "MODERATE",
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
 export interface MonitoringConfig {
   thresholds: {
@@ -106,7 +106,7 @@ export interface MonitoringConfig {
   };
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum AlertChannel {
   EMAIL = "EMAIL",
   WEBHOOK = "WEBHOOK",
@@ -114,7 +114,7 @@ export enum AlertChannel {
   DISCORD = "DISCORD",
   PAGERDUTY = "PAGERDUTY",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
 export interface AnomalyDetectionResult {
   isAnomaly: boolean;
@@ -242,7 +242,7 @@ class SecurityMonitoringService {
    * Configure monitoring thresholds
    */
   updateConfig(config: DeepPartial<MonitoringConfig>): void {
-    this.config = this.deepMerge(this.config, config);
+    this.config = this.deepMerge(this.config as any, config as any) as unknown as MonitoringConfig;
   }
 
   /**
@@ -260,7 +260,7 @@ class SecurityMonitoringService {
         typeof source[key] === "object" &&
         !Array.isArray(source[key])
       ) {
-        result[key] = this.deepMerge(target[key] || {}, source[key]);
+        result[key] = this.deepMerge(target[key] || {} as any, source[key] as any);
       } else {
         result[key] = source[key];
       }

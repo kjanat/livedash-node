@@ -154,7 +154,13 @@ export class DatabaseBackup {
       const files = await import("node:fs/promises").then((fs) =>
         fs.readdir(dir)
       );
-      const backups = [];
+      const backups: Array<{
+        filename: string;
+        path: string;
+        size: number;
+        created: Date;
+        type: string;
+      }> = [];
 
       for (const file of files) {
         if (file.endsWith(".sql") || file.endsWith(".sql.gz")) {
@@ -255,7 +261,7 @@ export class DatabaseBackup {
         args: args.filter((arg) => arg !== dbConfig.password),
       });
 
-      const process = spawn("pg_dump", args, {
+      const pgProcess = spawn("pg_dump", args, {
         env: {
           ...process.env,
           PGPASSWORD: dbConfig.password,
@@ -264,7 +270,7 @@ export class DatabaseBackup {
 
       let errorOutput = "";
 
-      process.stderr.on("data", (data) => {
+      pgProcess.stderr.on("data", (data) => {
         const message = data.toString();
         errorOutput += message;
 
@@ -274,7 +280,7 @@ export class DatabaseBackup {
         }
       });
 
-      process.on("close", (code) => {
+      pgProcess.on("close", (code) => {
         if (code === 0) {
           migrationLogger.debug("PG_DUMP", "Backup completed successfully");
           resolve();
@@ -283,7 +289,7 @@ export class DatabaseBackup {
         }
       });
 
-      process.on("error", (error) => {
+      pgProcess.on("error", (error) => {
         reject(new Error(`Failed to start pg_dump: ${error.message}`));
       });
     });
@@ -396,7 +402,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const command = process.argv[2];
 
-  async function runCommand() {
+  const runCommand = async () => {
     switch (command) {
       case "full":
         return backup.createBackup();

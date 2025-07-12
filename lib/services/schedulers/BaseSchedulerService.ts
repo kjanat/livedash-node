@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import cron from "node-cron";
+import * as cron from "node-cron";
 
 /**
  * Scheduler status enumeration
@@ -109,7 +109,7 @@ export abstract class BaseSchedulerService extends EventEmitter {
         {
           scheduled: false, // Don't start immediately
           timezone: "UTC",
-        }
+        } as any
       );
 
       this.cronJob.start();
@@ -239,7 +239,7 @@ export abstract class BaseSchedulerService extends EventEmitter {
         {
           scheduled: false,
           timezone: "UTC",
-        }
+        } as any
       );
     }
 

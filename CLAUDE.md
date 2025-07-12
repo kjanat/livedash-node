@@ -177,7 +177,7 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
   - tRPC integration with CSRF-protected procedures
   - Client-side hooks and components for seamless integration
   - HTTP-only cookies with SameSite protection
-- **Enhanced Content Security Policy (CSP)**: 
+- **Enhanced Content Security Policy (CSP)**:
   - Nonce-based script execution for maximum XSS protection
   - Environment-specific policies (strict production, permissive development)
   - Real-time violation reporting and bypass detection
@@ -191,7 +191,7 @@ Environment variables are managed through `lib/env.ts` with .env.local file supp
   - Authentication endpoints: Login (5/15min), Registration (3/hour), Password Reset (5/15min)
   - CSP reporting: 10 reports per minute per IP
   - Admin endpoints: Configurable thresholds
-- **Input Validation & Security Headers**: 
+- **Input Validation & Security Headers**:
   - Comprehensive Zod schemas for all user inputs with XSS/injection prevention
   - HTTP security headers (HSTS, X-Frame-Options, X-Content-Type-Options, Permissions Policy)
   - Strong password requirements and email validation

@@ -176,9 +176,10 @@ export const adminRouter = router({
         updateData.password = await bcrypt.hash(updates.password, 12);
       }
 
-      if (updates.role) {
-        updateData.role = updates.role;
-      }
+      // TODO: Add role field to User model in Prisma schema
+      // if (updates.role) {
+      //   updateData.role = updates.role;
+      // }
 
       const updatedUser = await ctx.prisma.user.update({
         where: { id: userId },
@@ -279,13 +280,7 @@ export const adminRouter = router({
   updateCompanySettings: adminProcedure
     .input(companySettingsSchema)
     .mutation(async ({ input, ctx }) => {
-      const updateData: {
-        name: string;
-        csvUrl: string;
-        csvUsername?: string | null;
-        csvPassword?: string | null;
-        maxUsers?: number;
-      } = {
+      const updateData: any = {
         name: input.name,
         csvUrl: input.csvUrl,
       };

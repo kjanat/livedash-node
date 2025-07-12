@@ -22,17 +22,18 @@ Abstract base class providing common functionality:
 export abstract class BaseSchedulerService extends EventEmitter {
   // Common scheduler functionality
   protected abstract executeTask(): Promise<void>;
-  
-  async start(): Promise<void>
-  async stop(): Promise<void>
-  pause(): void
-  resume(): void
-  getHealthStatus(): HealthStatus
-  getMetrics(): SchedulerMetrics
+
+  async start(): Promise<void>;
+  async stop(): Promise<void>;
+  pause(): void;
+  resume(): void;
+  getHealthStatus(): HealthStatus;
+  getMetrics(): SchedulerMetrics;
 }
 ```
 
 **Features:**
+
 - Status management (STOPPED, STARTING, RUNNING, PAUSED, ERROR)
 - Metrics collection (run counts, timing, success/failure rates)
 - Event emission for monitoring
@@ -55,6 +56,7 @@ const csvScheduler = new CsvImportSchedulerService({
 ```
 
 **Features:**
+
 - Batch processing with configurable concurrency
 - Duplicate detection
 - Company-specific error handling
@@ -85,6 +87,7 @@ await manager.startAll();
 ```
 
 **Features:**
+
 - Automatic restart of failed critical schedulers
 - Health monitoring across all schedulers
 - Coordinated start/stop operations
@@ -103,6 +106,7 @@ npx tsx lib/services/schedulers/StandaloneSchedulerRunner.ts --list
 ```
 
 **Features:**
+
 - Independent process execution
 - Environment variable configuration
 - Graceful shutdown handling
@@ -116,17 +120,19 @@ All schedulers run within the main Next.js server process:
 
 ```typescript
 // server.ts
-import { initializeSchedulers } from './lib/services/schedulers/ServerSchedulerIntegration';
+import { initializeSchedulers } from "./lib/services/schedulers/ServerSchedulerIntegration";
 
 await initializeSchedulers();
 ```
 
 **Pros:**
+
 - Simple deployment
 - Lower resource usage
 - Easy local development
 
 **Cons:**
+
 - Limited scalability
 - Single point of failure
 - Resource contention
@@ -142,16 +148,18 @@ npm run dev
 # Terminal 2: CSV Import Scheduler
 npm run scheduler:csv-import
 
-# Terminal 3: Session Processing Scheduler  
+# Terminal 3: Session Processing Scheduler
 npm run scheduler:session-processing
 ```
 
 **Pros:**
+
 - Independent scaling
 - Fault isolation
 - Resource optimization per scheduler
 
 **Cons:**
+
 - More complex deployment
 - Higher resource overhead
 - Inter-process coordination needed
@@ -162,20 +170,20 @@ Each scheduler runs in separate containers managed by Kubernetes/Docker Swarm:
 
 ```yaml
 # docker-compose.yml
-version: '3.8'
+version: "3.8"
 services:
   app:
     build: .
     environment:
-      - SCHEDULER_ENABLED=false  # Disable in-process schedulers
-    
+      - SCHEDULER_ENABLED=false # Disable in-process schedulers
+
   csv-import-scheduler:
     build: .
     command: npx tsx lib/services/schedulers/StandaloneSchedulerRunner.ts --scheduler=csv-import
     environment:
       - CSV_IMPORT_INTERVAL=*/10 * * * *
       - CSV_IMPORT_BATCH_SIZE=10
-    
+
   session-processing-scheduler:
     build: .
     command: npx tsx lib/services/schedulers/StandaloneSchedulerRunner.ts --scheduler=session-processing
@@ -184,12 +192,14 @@ services:
 ```
 
 **Pros:**
+
 - Full horizontal scaling
 - Independent resource allocation
 - Health monitoring integration
 - Zero-downtime deployments
 
 **Cons:**
+
 - Complex orchestration setup
 - Network latency considerations
 - Distributed system challenges
@@ -213,7 +223,7 @@ CSV_IMPORT_TIMEOUT=300000
 IMPORT_PROCESSING_INTERVAL="*/2 * * * *"
 IMPORT_PROCESSING_TIMEOUT=120000
 
-# Session Processing Scheduler  
+# Session Processing Scheduler
 SESSION_PROCESSING_INTERVAL="*/5 * * * *"
 SESSION_PROCESSING_BATCH_SIZE=50
 
@@ -281,21 +291,27 @@ spec:
   template:
     spec:
       containers:
-      - name: scheduler
-        image: livedash:latest
-        command: ["npx", "tsx", "lib/services/schedulers/StandaloneSchedulerRunner.ts", "--scheduler=csv-import"]
-        livenessProbe:
-          httpGet:
-            path: /api/admin/schedulers/health
-            port: 3000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /api/admin/schedulers/health
-            port: 3000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: scheduler
+          image: livedash:latest
+          command:
+            [
+              "npx",
+              "tsx",
+              "lib/services/schedulers/StandaloneSchedulerRunner.ts",
+              "--scheduler=csv-import",
+            ]
+          livenessProbe:
+            httpGet:
+              path: /api/admin/schedulers/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/admin/schedulers/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 5
 ```
 
 ## Scaling Strategies
@@ -310,10 +326,10 @@ csv-import-scheduler:
   deploy:
     resources:
       limits:
-        cpus: '2.0'
+        cpus: "2.0"
         memory: 2G
       reservations:
-        cpus: '1.0'
+        cpus: "1.0"
         memory: 1G
 ```
 
@@ -328,16 +344,16 @@ kind: Deployment
 metadata:
   name: csv-import-scheduler
 spec:
-  replicas: 3  # Multiple instances
+  replicas: 3 # Multiple instances
   template:
     spec:
       containers:
-      - name: scheduler
-        env:
-        - name: SCHEDULER_INSTANCE_ID
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
+        - name: scheduler
+          env:
+            - name: SCHEDULER_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
 ```
 
 **Note:** Ensure scheduler logic handles multiple instances correctly (e.g., using database locks or partitioning).
@@ -352,10 +368,10 @@ csv-import-scheduler-us:
   environment:
     - REGION=us
     - CSV_COMPANIES_FILTER=region:us
-    
+
 csv-import-scheduler-eu:
   environment:
-    - REGION=eu  
+    - REGION=eu
     - CSV_COMPANIES_FILTER=region:eu
 ```
 

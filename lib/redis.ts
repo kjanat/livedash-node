@@ -38,10 +38,7 @@ class RedisManager {
         url: env.REDIS_URL,
         socket: {
           connectTimeout: 5000,
-          commandTimeout: 3000,
         },
-        retryDelayOnFailover: 100,
-        retryDelayOnClusterDown: 300,
       });
 
       this.client.on("error", (error) => {

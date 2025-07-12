@@ -18,14 +18,14 @@ import {
  * Security audit log with included relations
  */
 export type SecurityAuditLogWithRelations = SecurityAuditLog & {
-  user?: {
+  user: {
     id: string;
     email: string;
-  };
-  company?: {
+  } | null;
+  company: {
     id: string;
     name: string;
-  };
+  } | null;
 };
 
 /**
@@ -346,7 +346,7 @@ export class SecurityAuditLogRepository
             if (!acc[key]) {
               acc[key] = {
                 userId: event.userId!,
-                email: event.user?.email,
+                email: event.user?.email || 'Unknown',
                 count: 0,
               };
             }

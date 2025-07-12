@@ -23,7 +23,7 @@ export interface AuditLogEntry {
   context?: AuditLogContext;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum SecurityEventType {
   AUTHENTICATION = "AUTHENTICATION",
   AUTHORIZATION = "AUTHORIZATION",
@@ -38,9 +38,9 @@ export enum SecurityEventType {
   SYSTEM_CONFIG = "SYSTEM_CONFIG",
   API_SECURITY = "API_SECURITY",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum AuditOutcome {
   SUCCESS = "SUCCESS",
   FAILURE = "FAILURE",
@@ -48,9 +48,9 @@ export enum AuditOutcome {
   RATE_LIMITED = "RATE_LIMITED",
   SUSPICIOUS = "SUSPICIOUS",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
-/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-disable no-unused-vars */
 export enum AuditSeverity {
   INFO = "INFO",
   LOW = "LOW",
@@ -58,7 +58,7 @@ export enum AuditSeverity {
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
-/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
+/* eslint-enable no-unused-vars */
 
 class SecurityAuditLogger {
   private isEnabled: boolean;
@@ -87,7 +87,7 @@ class SecurityAuditLogger {
           country: entry.context?.country || null,
           sessionId: entry.context?.sessionId || null,
           requestId: entry.context?.requestId || null,
-          metadata: entry.context?.metadata || null,
+          metadata: (entry.context?.metadata as any) || undefined,
           errorMessage: entry.errorMessage || null,
         },
       });
@@ -415,8 +415,8 @@ export async function createAuditContext(
 
   if (session?.user) {
     context.userId = session.user.id;
-    context.companyId = session.user.companyId;
-    if (session.user.isPlatformUser) {
+    context.companyId = (session.user as any).companyId;
+    if ((session.user as any).isPlatformUser) {
       context.platformUserId = session.user.id;
     }
   }

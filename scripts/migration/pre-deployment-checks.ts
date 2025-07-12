@@ -273,6 +273,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -304,6 +305,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -319,12 +321,14 @@ export class PreDeploymentChecker {
         success: result.success,
         errors: result.errors,
         warnings: result.warnings,
+        critical: true,
       };
     } catch (error) {
       return {
         success: false,
         errors: [`Schema validation failed: ${(error as Error).message}`],
         warnings: [],
+        critical: true,
       };
     }
   }
@@ -367,6 +371,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -381,7 +386,7 @@ export class PreDeploymentChecker {
       const packagePath = join(process.cwd(), "package.json");
       if (!existsSync(packagePath)) {
         errors.push("package.json not found");
-        return { success: false, errors, warnings };
+        return { success: false, errors, warnings, critical: true };
       }
 
       const packageJson = JSON.parse(readFileSync(packagePath, "utf8"));
@@ -419,6 +424,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -466,6 +472,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -506,6 +513,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -520,7 +528,7 @@ export class PreDeploymentChecker {
 
       if (!apiKey) {
         errors.push("OPENAI_API_KEY not set");
-        return { success: false, errors, warnings };
+        return { success: false, errors, warnings, critical: true };
       }
 
       // Test API access (simple models list call)
@@ -548,6 +556,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -574,9 +583,9 @@ export class PreDeploymentChecker {
 
       // Check if tRPC types can be imported
       try {
-        const { AppRouter } = await import("../../server/routers/_app");
-        if (!AppRouter) {
-          warnings.push("AppRouter type not found");
+        const { appRouter } = await import("../../server/routers/_app");
+        if (!appRouter) {
+          warnings.push("AppRouter not found");
         }
       } catch (error) {
         errors.push(`Cannot import tRPC router: ${(error as Error).message}`);
@@ -591,6 +600,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -644,6 +654,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -684,6 +695,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -731,6 +743,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -763,6 +776,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 
@@ -800,6 +814,7 @@ export class PreDeploymentChecker {
       success: errors.length === 0,
       errors,
       warnings,
+      critical: true,
     };
   }
 }

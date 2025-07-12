@@ -491,7 +491,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const testBatch = process.argv.includes("--batch");
   const testSubscriptions = process.argv.includes("--subscriptions");
 
-  async function runTests() {
+  const runTests = async () => {
     // Run main endpoint tests
     const result = await tester.runEndpointTests();
 

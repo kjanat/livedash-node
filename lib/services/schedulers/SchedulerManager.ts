@@ -222,7 +222,7 @@ export class SchedulerManager extends EventEmitter {
     let runningCount = 0;
     let errorCount = 0;
 
-    for (const [id, registration] of this.schedulers) {
+    for (const [id, registration] of Array.from(this.schedulers.entries())) {
       const health = registration.service.getHealthStatus();
       const status = registration.service.getStatus();
 

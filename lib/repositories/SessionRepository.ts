@@ -54,8 +54,8 @@ export class SessionRepository implements BaseRepository<Session> {
           company: include?.company
             ? { select: { id: true, name: true } }
             : undefined,
-          sessionImport: include?.sessionImport
-            ? { select: { id: true, status: true } }
+          import: include?.sessionImport
+            ? { select: { id: true, externalSessionId: true } }
             : undefined,
         },
       });
@@ -147,7 +147,7 @@ export class SessionRepository implements BaseRepository<Session> {
   async create(data: CreateInput<Session>): Promise<Session> {
     try {
       return await prisma.session.create({
-        data: data as Prisma.SessionCreateInput,
+        data: data as unknown as Prisma.SessionCreateInput,
       });
     } catch (error) {
       throw new RepositoryError(

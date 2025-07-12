@@ -23,7 +23,10 @@ export class CsvImportSchedulerService extends BaseSchedulerService {
 
   constructor(config: Partial<CsvImportSchedulerConfig> = {}) {
     const defaultConfig = {
+      enabled: true,
       interval: "*/10 * * * *", // Every 10 minutes
+      maxRetries: 3,
+      retryDelay: 1000,
       timeout: 300000, // 5 minutes timeout
       batchSize: 10,
       maxConcurrentImports: 5,
@@ -53,7 +56,7 @@ export class CsvImportSchedulerService extends BaseSchedulerService {
       const companies = await prisma.company.findMany({
         where: {
           status: "ACTIVE",
-          csvUrl: { not: null }, // Only companies with CSV URLs
+          csvUrl: { not: null as any }, // Only companies with CSV URLs
         },
         take: this.csvConfig.batchSize,
         skip: skip,
@@ -204,13 +207,13 @@ export class CsvImportSchedulerService extends BaseSchedulerService {
             const existing = await prisma.sessionImport.findFirst({
               where: {
                 companyId: company.id,
-                externalId: rawSession.externalId,
+                externalSessionId: rawSession.externalSessionId,
               },
             });
 
             if (existing) {
               console.log(
-                `[${this.name}] Skipping duplicate session: ${rawSession.externalId} for company: ${company.name}`
+                `[${this.name}] Skipping duplicate session: ${rawSession.externalSessionId} for company: ${company.name}`
               );
               continue;
             }
@@ -220,21 +223,29 @@ export class CsvImportSchedulerService extends BaseSchedulerService {
           await prisma.sessionImport.create({
             data: {
               companyId: company.id,
-              externalId: rawSession.externalId,
-              csvData: rawSession.csvData,
-              status: "PENDING_PROCESSING",
-              metadata: {
-                importedAt: new Date().toISOString(),
-                csvUrl: company.csvUrl,
-                batchId: `batch_${Date.now()}`,
-              },
+              externalSessionId: rawSession.externalSessionId,
+              startTimeRaw: rawSession.startTimeRaw,
+              endTimeRaw: rawSession.endTimeRaw,
+              ipAddress: rawSession.ipAddress,
+              countryCode: rawSession.countryCode,
+              language: rawSession.language,
+              messagesSent: rawSession.messagesSent,
+              sentimentRaw: rawSession.sentimentRaw,
+              escalatedRaw: rawSession.escalatedRaw,
+              forwardedHrRaw: rawSession.forwardedHrRaw,
+              fullTranscriptUrl: rawSession.fullTranscriptUrl,
+              avgResponseTimeSeconds: rawSession.avgResponseTimeSeconds,
+              tokens: rawSession.tokens,
+              tokensEur: rawSession.tokensEur,
+              category: rawSession.category,
+              initialMessage: rawSession.initialMessage,
             },
           });
 
           importedCount++;
         } catch (sessionError) {
           console.error(
-            `[${this.name}] Failed to import session ${rawSession.externalId} for company ${company.name}:`,
+            `[${this.name}] Failed to import session ${rawSession.externalSessionId} for company ${company.name}:`,
             sessionError
           );
           // Continue with other sessions

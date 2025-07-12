@@ -39,7 +39,7 @@ export class SecurityMetricsService {
         timestamp: {
           gte: timeRange.start,
           lte: timeRange.end,
-        },
+        } as any,
         ...(companyId && { companyId }),
       },
     });
@@ -67,8 +67,16 @@ export class SecurityMetricsService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
 
-    // User risk scores
-    const userRiskScores = await this.calculateUserRiskScores(events);
+    // User risk scores - transform data to match expected format
+    const transformedEvents = events.map(event => ({
+      userId: event.userId || undefined,
+      user: event.user ? { email: event.user.email } : undefined,
+      eventType: event.eventType as SecurityEventType,
+      outcome: event.outcome as AuditOutcome,
+      severity: event.severity as AuditSeverity,
+      country: event.country || undefined,
+    }));
+    const userRiskScores = await this.calculateUserRiskScores(transformedEvents);
 
     // Calculate overall security score
     const securityScore = this.calculateSecurityScore({
@@ -114,10 +122,10 @@ export class SecurityMetricsService {
       country?: string;
     }>
   ): Promise<Array<{ userId: string; email: string; riskScore: number }>> {
-    const userEvents = events.filter((e) => e.userId);
+    const userEvents = events.filter((e) => e.userId) as Array<typeof events[0] & { userId: string }>;
     const userScores = new Map<
       string,
-      { email: string; score: number; events: typeof events }
+      { email: string; score: number; events: typeof userEvents }
     >();
 
     for (const event of userEvents) {
@@ -137,7 +145,7 @@ export class SecurityMetricsService {
       riskScore: number;
     }> = [];
 
-    for (const [userId, userData] of userScores) {
+    for (const [userId, userData] of Array.from(userScores.entries())) {
       let riskScore = 0;
 
       // Failed authentication attempts

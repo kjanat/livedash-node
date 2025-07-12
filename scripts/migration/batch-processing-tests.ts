@@ -318,9 +318,9 @@ export class BatchProcessingTester {
       // Check if key functions/classes exist
       const hasBatchConfig = "BATCH_CONFIG" in batchProcessor;
       const hasCreateBatch =
-        typeof batchProcessor.createBatchFromRequests === "function";
+        typeof batchProcessor.createBatchRequest === "function";
       const hasProcessBatch =
-        typeof batchProcessor.processBatchResults === "function";
+        typeof batchProcessor.processCompletedBatches === "function";
 
       return {
         success: hasBatchConfig || hasCreateBatch || hasProcessBatch, // At least one should exist
@@ -513,7 +513,7 @@ export class BatchProcessingTester {
       const hasScheduler =
         typeof batchScheduler.startBatchScheduler === "function";
       const hasProcessor =
-        typeof batchScheduler.processPendingBatches === "function";
+        typeof batchScheduler.forceBatchCreation === "function";
 
       // Check environment variables for scheduling
       const batchEnabled = process.env.BATCH_PROCESSING_ENABLED === "true";
