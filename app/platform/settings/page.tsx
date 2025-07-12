@@ -36,9 +36,11 @@ function usePlatformSession() {
   useEffect(() => {
     const abortController = new AbortController();
 
-    const handleAuthSuccess = (sessionData: any) => {
+    const handleAuthSuccess = (sessionData: {
+      user?: { isPlatformUser?: boolean };
+    }) => {
       if (sessionData?.user?.isPlatformUser) {
-        setSession(sessionData);
+        setSession(sessionData as any);
         setStatus("authenticated");
       } else {
         handleAuthFailure();

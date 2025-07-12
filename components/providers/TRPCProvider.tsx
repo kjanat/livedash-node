@@ -21,11 +21,36 @@ export function TRPCProvider({ children }: TRPCProviderProps) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            // Disable automatic refetching for better UX
+            // Optimize refetching behavior for better performance
             refetchOnWindowFocus: false,
             refetchOnReconnect: true,
-            staleTime: 30 * 1000, // 30 seconds
-            gcTime: 5 * 60 * 1000, // 5 minutes (was cacheTime)
+            refetchOnMount: false, // Only refetch if stale
+            retry: (failureCount, error) => {
+              // Smart retry logic based on error type
+              if (
+                error?.message?.includes("401") ||
+                error?.message?.includes("403")
+              ) {
+                return false; // Don't retry auth errors
+              }
+              return failureCount < 3;
+            },
+            retryDelay: (attemptIndex) =>
+              Math.min(1000 * 2 ** attemptIndex, 30000),
+
+            // Optimized cache times based on data type
+            staleTime: 2 * 60 * 1000, // 2 minutes - data is fresh for 2 minutes
+            gcTime: 10 * 60 * 1000, // 10 minutes - keep unused data for 10 minutes
+
+            // Performance optimizations
+            networkMode: "online", // Only run queries when online
+            notifyOnChangeProps: ["data", "error", "isLoading"], // Reduce re-renders
+          },
+          mutations: {
+            // Optimize mutation behavior
+            retry: 2,
+            networkMode: "online",
+            throwOnError: false, // Handle errors gracefully in components
           },
         },
       })

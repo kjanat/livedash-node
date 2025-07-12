@@ -10,8 +10,7 @@ import { rateLimiter } from "@/lib/rateLimiter";
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting for CSP reports
-    const ip =
-      request.ip || request.headers.get("x-forwarded-for") || "unknown";
+    const ip = request.headers.get("x-forwarded-for") || "unknown";
     const rateLimitResult = await rateLimiter.check(
       `csp-report:${ip}`,
       10, // 10 reports

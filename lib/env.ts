@@ -80,10 +80,17 @@ export const env = {
   NODE_ENV: parseEnvValue(process.env.NODE_ENV) || "development",
 
   // CSRF Protection
-  CSRF_SECRET:
-    parseEnvValue(process.env.CSRF_SECRET) ||
-    parseEnvValue(process.env.NEXTAUTH_SECRET) ||
-    "fallback-csrf-secret",
+  CSRF_SECRET: (() => {
+    const csrfSecret = parseEnvValue(process.env.CSRF_SECRET);
+    const nextAuthSecret = parseEnvValue(process.env.NEXTAUTH_SECRET);
+
+    if (csrfSecret) return csrfSecret;
+    if (nextAuthSecret) return nextAuthSecret;
+
+    throw new Error(
+      "CSRF_SECRET or NEXTAUTH_SECRET is required for security. Please set one of these environment variables."
+    );
+  })(),
 
   // OpenAI
   OPENAI_API_KEY: parseEnvValue(process.env.OPENAI_API_KEY) || "",
@@ -124,6 +131,13 @@ export const env = {
     10
   ),
 
+  // Redis Configuration (optional - graceful fallback to in-memory if not provided)
+  REDIS_URL: parseEnvValue(process.env.REDIS_URL) || "",
+  REDIS_TTL_DEFAULT: parseIntWithDefault(process.env.REDIS_TTL_DEFAULT, 300), // 5 minutes default
+  REDIS_TTL_SESSION: parseIntWithDefault(process.env.REDIS_TTL_SESSION, 1800), // 30 minutes
+  REDIS_TTL_USER: parseIntWithDefault(process.env.REDIS_TTL_USER, 900), // 15 minutes
+  REDIS_TTL_COMPANY: parseIntWithDefault(process.env.REDIS_TTL_COMPANY, 600), // 10 minutes
+
   // Server
   PORT: parseIntWithDefault(process.env.PORT, 3000),
 } as const;
@@ -141,6 +155,9 @@ export function validateEnv(): { valid: boolean; errors: string[] } {
   if (!env.NEXTAUTH_SECRET) {
     errors.push("NEXTAUTH_SECRET is required");
   }
+
+  // CSRF_SECRET validation is now handled in the IIFE above
+  // If we reach here, CSRF_SECRET is guaranteed to be set
 
   if (
     !env.OPENAI_API_KEY &&

@@ -1,7 +1,10 @@
 // Advanced database connection pooling configuration
 
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+
+const { PrismaClient } = pkg;
+
 import type { Pool } from "pg";
 import { env } from "./env";
 

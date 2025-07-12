@@ -15,7 +15,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { CSRFClient } from "../../lib/csrf";
+import { CSRFClient } from "../../lib/csrf-client";
 
 interface CSRFContextType {
   token: string | null;

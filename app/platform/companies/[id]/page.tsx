@@ -209,20 +209,26 @@ function useCompanyData(
   toast: ToastFunction,
   state: CompanyManagementState
 ) {
+  const { setCompany, setEditData, setOriginalData, setIsLoading } = state;
+  const [hasFetched, setHasFetched] = useState(false);
+
   const fetchCompany = useCallback(async () => {
+    if (hasFetched) return;
+
     try {
       const response = await fetch(`/api/platform/companies/${params.id}`);
       if (response.ok) {
         const data = await response.json();
-        state.setCompany(data);
+        setCompany(data);
         const companyData = {
           name: data.name,
           email: data.email,
           status: data.status,
           maxUsers: data.maxUsers,
         };
-        state.setEditData(companyData);
-        state.setOriginalData(companyData);
+        setEditData(companyData);
+        setOriginalData(companyData);
+        setHasFetched(true);
       } else {
         toast({
           title: "Error",
@@ -238,9 +244,17 @@ function useCompanyData(
         variant: "destructive",
       });
     } finally {
-      state.setIsLoading(false);
+      setIsLoading(false);
     }
-  }, [params.id, toast, state]);
+  }, [
+    params.id,
+    hasFetched,
+    toast,
+    setCompany,
+    setEditData,
+    setOriginalData,
+    setIsLoading,
+  ]);
 
   return { fetchCompany };
 }
@@ -254,6 +268,8 @@ function useNavigationControl(
   hasUnsavedChanges: () => boolean,
   state: CompanyManagementState
 ) {
+  const { setPendingNavigation, setShowUnsavedChangesDialog } = state;
+
   const handleNavigation = useCallback(
     (url: string) => {
       if (url.includes(`/platform/companies/${params.id}`)) {
@@ -262,13 +278,19 @@ function useNavigationControl(
       }
 
       if (hasUnsavedChanges()) {
-        state.setPendingNavigation(url);
-        state.setShowUnsavedChangesDialog(true);
+        setPendingNavigation(url);
+        setShowUnsavedChangesDialog(true);
       } else {
         router.push(url);
       }
     },
-    [router, params.id, hasUnsavedChanges, state]
+    [
+      router,
+      params.id,
+      hasUnsavedChanges,
+      setPendingNavigation,
+      setShowUnsavedChangesDialog,
+    ]
   );
 
   return { handleNavigation };
@@ -462,10 +484,14 @@ export default function CompanyManagement() {
     state.editData,
     state.originalData
   );
-  const { fetchCompany } = useCompanyData(params, toast, state);
+  const { fetchCompany } = useCompanyData(
+    { id: params.id as string },
+    toast,
+    state
+  );
   const { handleNavigation } = useNavigationControl(
     router,
-    params,
+    { id: params.id as string },
     hasUnsavedChanges,
     state
   );
@@ -479,7 +505,7 @@ export default function CompanyManagement() {
     }
 
     fetchCompany();
-  }, [session, status, router, fetchCompany]);
+  }, [status, session?.user?.isPlatformUser, fetchCompany, router.push]);
 
   const handleSave = async () => {
     state.setIsSaving(true);
@@ -576,7 +602,14 @@ export default function CompanyManagement() {
       if (response.ok) {
         state.setShowInviteUser(false);
         state.setInviteData({ name: "", email: "", role: "USER" });
-        fetchCompany();
+        // Refresh company data to show new user
+        const updatedResponse = await fetch(
+          `/api/platform/companies/${params.id}`
+        );
+        if (updatedResponse.ok) {
+          const updatedData = await updatedResponse.json();
+          state.setCompany(updatedData);
+        }
         toast({
           title: "Success",
           description: "User invited successfully",

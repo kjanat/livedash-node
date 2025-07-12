@@ -8,7 +8,7 @@ import {
 } from "./securityAuditLogger";
 
 export class AuditLogScheduler {
-  private retentionTask: cron.ScheduledTask | null = null;
+  private retentionTask: any = null;
   private isRunning = false;
 
   constructor() {
@@ -71,7 +71,6 @@ export class AuditLogScheduler {
         }
       },
       {
-        scheduled: false, // Don't start immediately
         timezone: "UTC", // Use UTC to avoid timezone issues
       }
     );

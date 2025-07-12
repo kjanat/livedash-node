@@ -503,14 +503,34 @@ function DashboardContent() {
         totalSessions: overviewData.totalSessions,
         avgSessionsPerDay: 0, // Will be computed properly later
         avgSessionLength: null,
-        days: { data: [], labels: [] },
-        languages: { data: [], labels: [] },
-        categories: { data: [], labels: [] },
-        countries: { data: [], labels: [] },
+        days: {},
+        languages: {},
+        categories: {},
+        countries: {},
         belowThresholdCount: 0,
-        // Map the available data
-        sentimentDistribution: overviewData.sentimentDistribution,
-        categoryDistribution: overviewData.categoryDistribution,
+        // Map sentiment data to individual counts
+        sentimentPositiveCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "positive"
+          )?.count || 0,
+        sentimentNeutralCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "neutral"
+          )?.count || 0,
+        sentimentNegativeCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "negative"
+          )?.count || 0,
+        // Map category data to CategoryMetrics format
+        ...(overviewData.categoryDistribution && {
+          categories: overviewData.categoryDistribution.reduce(
+            (acc, item) => {
+              acc[item.category] = item.count;
+              return acc;
+            },
+            {} as Record<string, number>
+          ),
+        }),
       };
       setMetrics(mappedMetrics as MetricsResult);
 

@@ -1,5 +1,8 @@
 // Enhanced Prisma client setup with connection pooling
-import { PrismaClient } from "@prisma/client";
+import pkg from "@prisma/client";
+
+const { PrismaClient } = pkg;
+
 import { createEnhancedPrismaClient } from "./database-pool";
 import { env } from "./env";
 

@@ -7,7 +7,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CSRFClient } from "../csrf";
+import { CSRFClient } from "../csrf-client";
 
 /**
  * Hook for managing CSRF tokens

@@ -11,10 +11,11 @@ import {
   type AlertType,
   type SecurityMetrics,
   securityMonitoring,
+  type ThreatLevel,
 } from "@/lib/securityMonitoring";
 
 const threatAnalysisSchema = z.object({
-  ipAddress: z.string().ip().optional(),
+  ipAddress: z.string().optional(),
   userId: z.string().uuid().optional(),
   timeRange: z
     .object({
@@ -39,9 +40,10 @@ export async function POST(request: NextRequest) {
     interface ThreatAnalysisResults {
       ipThreatAnalysis?: {
         ipAddress: string;
-        threatLevel: number;
+        threatLevel: ThreatLevel;
         isBlacklisted: boolean;
         riskFactors: string[];
+        recommendations: string[];
       };
       timeRangeAnalysis?: {
         timeRange: { start: Date; end: Date };
@@ -111,11 +113,12 @@ export async function POST(request: NextRequest) {
     await securityAuditLogger.logPlatformAdmin(
       "threat_analysis_performed",
       AuditOutcome.SUCCESS,
-      context,
-      undefined,
       {
-        analysisType: Object.keys(analysis),
-        threatLevel: results.overallThreatLandscape?.currentThreatLevel,
+        ...context,
+        metadata: {
+          analysisType: Object.keys(analysis),
+          threatLevel: results.overallThreatLandscape?.currentThreatLevel,
+        },
       }
     );
 
@@ -125,7 +128,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       );
     }

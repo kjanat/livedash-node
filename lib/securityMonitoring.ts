@@ -7,6 +7,11 @@ import {
   securityAuditLogger,
 } from "./securityAuditLogger";
 
+// Utility type for deep partial objects
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 export interface SecurityAlert {
   id: string;
   timestamp: Date;
@@ -370,7 +375,7 @@ class SecurityMonitoringService {
   /**
    * Configure monitoring thresholds
    */
-  updateConfig(config: Partial<MonitoringConfig>): void {
+  updateConfig(config: DeepPartial<MonitoringConfig>): void {
     this.config = this.deepMerge(this.config, config);
   }
 
@@ -412,6 +417,7 @@ class SecurityMonitoringService {
     threatLevel: ThreatLevel;
     riskFactors: string[];
     recommendations: string[];
+    isBlacklisted: boolean;
   }> {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
@@ -470,7 +476,11 @@ class SecurityMonitoringService {
       recommendations.push("Continue monitoring for suspicious activity");
     }
 
-    return { threatLevel, riskFactors, recommendations };
+    // Simple blacklist check based on threat level and risk factors
+    const isBlacklisted =
+      threatLevel === ThreatLevel.CRITICAL && riskFactors.length >= 3;
+
+    return { threatLevel, riskFactors, recommendations, isBlacklisted };
   }
 
   private async detectImediateThreats(

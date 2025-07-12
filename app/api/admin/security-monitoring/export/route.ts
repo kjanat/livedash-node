@@ -55,13 +55,14 @@ export async function GET(request: NextRequest) {
     await securityAuditLogger.logPlatformAdmin(
       "security_data_export",
       AuditOutcome.SUCCESS,
-      context,
-      undefined,
       {
-        exportType: query.type,
-        format: query.format,
-        timeRange,
-        dataSize: data.length,
+        ...context,
+        metadata: {
+          exportType: query.type,
+          format: query.format,
+          timeRange,
+          dataSize: data.length,
+        },
       }
     );
 
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid query parameters", details: error.errors },
+        { error: "Invalid query parameters", details: error.issues },
         { status: 400 }
       );
     }

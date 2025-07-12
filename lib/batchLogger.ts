@@ -378,9 +378,9 @@ class BatchLoggerService {
     }
 
     const allMetrics: Record<string, BatchMetrics> = {};
-    for (const [key, metrics] of this.metrics) {
+    this.metrics.forEach((metrics, key) => {
       allMetrics[key] = metrics;
-    }
+    });
     return allMetrics;
   }
 
@@ -411,18 +411,18 @@ class BatchLoggerService {
   cleanupMetrics(olderThanHours = 24): void {
     const cutoff = Date.now() - olderThanHours * 60 * 60 * 1000;
 
-    for (const [key, metrics] of this.metrics) {
+    this.metrics.forEach((metrics, key) => {
       if (metrics.operationStartTime < cutoff) {
         this.metrics.delete(key);
       }
-    }
+    });
 
     // Clear old operation times
-    for (const [operationId, startTime] of this.operationTimes) {
+    this.operationTimes.forEach((startTime, operationId) => {
       if (startTime < cutoff) {
         this.operationTimes.delete(operationId);
       }
-    }
+    });
 
     console.log(
       `Cleaned up batch processing metrics older than ${olderThanHours} hours`

@@ -90,6 +90,13 @@ class PerformanceTracker {
       },
     };
   }
+
+  reset(): void {
+    this.metrics = {
+      optimized: { totalTime: 0, operationCount: 0, errorCount: 0 },
+      original: { totalTime: 0, operationCount: 0, errorCount: 0 },
+    };
+  }
 }
 
 const performanceTracker = new PerformanceTracker();
@@ -205,7 +212,30 @@ export const IntegratedBatchProcessor = {
   getBatchProcessingStats: async (companyId?: string) => {
     return executeWithTracking(
       () => OptimizedProcessor.getBatchProcessingStatsOptimized(companyId),
-      () => OriginalProcessor.getBatchProcessingStats(companyId || ""),
+      async () => {
+        // Adapter function to transform original output to match optimized output
+        const originalResult = await OriginalProcessor.getBatchProcessingStats(
+          companyId || ""
+        );
+        const batchStats = originalResult.batchStats as Record<string, number>;
+
+        return {
+          totalBatches: Object.values(batchStats).reduce(
+            (sum, count) => sum + count,
+            0
+          ),
+          pendingRequests: originalResult.pendingRequests,
+          inProgressBatches:
+            (batchStats["IN_PROGRESS"] || 0) +
+            (batchStats["VALIDATING"] || 0) +
+            (batchStats["UPLOADING"] || 0) +
+            (batchStats["FINALIZING"] || 0),
+          completedBatches:
+            (batchStats["COMPLETED"] || 0) + (batchStats["PROCESSED"] || 0),
+          failedRequests:
+            (batchStats["FAILED"] || 0) + (batchStats["CANCELLED"] || 0),
+        };
+      },
       "getBatchProcessingStats"
     );
   },
@@ -303,10 +333,7 @@ export const IntegratedBatchProcessor = {
    * Reset performance tracking (useful for testing)
    */
   resetPerformanceTracking: (): void => {
-    performanceTracker.metrics = {
-      optimized: { totalTime: 0, operationCount: 0, errorCount: 0 },
-      original: { totalTime: 0, operationCount: 0, errorCount: 0 },
-    };
+    performanceTracker.reset();
   },
 };
 

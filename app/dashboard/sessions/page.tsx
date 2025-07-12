@@ -49,12 +49,16 @@ interface FilterSectionProps {
   setSortOrder: (_order: string) => void;
   filterOptions: FilterOptions;
   searchHeadingId: string;
+  searchId: string;
   filtersHeadingId: string;
   filterContentId: string;
   categoryFilterId: string;
   categoryHelpId: string;
   languageFilterId: string;
   languageHelpId: string;
+  startDateId: string;
+  endDateId: string;
+  sortById: string;
   sortOrderId: string;
   sortOrderHelpId: string;
 }
@@ -78,12 +82,16 @@ function FilterSection({
   setSortOrder,
   filterOptions,
   searchHeadingId,
+  searchId,
   filtersHeadingId,
   filterContentId,
   categoryFilterId,
   categoryHelpId,
   languageFilterId,
   languageHelpId,
+  startDateId,
+  endDateId,
+  sortById,
   sortOrderId,
   sortOrderHelpId,
 }: FilterSectionProps) {
@@ -433,12 +441,16 @@ export default function SessionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const searchHeadingId = useId();
+  const searchId = useId();
   const filtersHeadingId = useId();
   const filterContentId = useId();
   const categoryFilterId = useId();
   const categoryHelpId = useId();
   const languageFilterId = useId();
   const languageHelpId = useId();
+  const startDateId = useId();
+  const endDateId = useId();
+  const sortById = useId();
   const sortOrderId = useId();
   const sortOrderHelpId = useId();
   const resultsHeadingId = useId();
@@ -556,12 +568,16 @@ export default function SessionsPage() {
         setSortOrder={setSortOrder}
         filterOptions={filterOptions}
         searchHeadingId={searchHeadingId}
+        searchId={searchId}
         filtersHeadingId={filtersHeadingId}
         filterContentId={filterContentId}
         categoryFilterId={categoryFilterId}
         categoryHelpId={categoryHelpId}
         languageFilterId={languageFilterId}
         languageHelpId={languageHelpId}
+        startDateId={startDateId}
+        endDateId={endDateId}
+        sortById={sortById}
         sortOrderId={sortOrderId}
         sortOrderHelpId={sortOrderHelpId}
       />

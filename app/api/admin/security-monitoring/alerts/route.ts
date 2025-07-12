@@ -66,11 +66,12 @@ export async function GET(request: NextRequest) {
     await securityAuditLogger.logPlatformAdmin(
       "security_alerts_access",
       AuditOutcome.SUCCESS,
-      context,
-      undefined,
       {
-        alertCount: alerts.length,
-        filters: query,
+        ...context,
+        metadata: {
+          alertCount: alerts.length,
+          filters: query,
+        },
       }
     );
 
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid query parameters", details: error.errors },
+        { error: "Invalid query parameters", details: error.issues },
         { status: 400 }
       );
     }
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !session.user.isPlatformUser) {
+    if (!session?.user || !session.user.isPlatformUser || !session.user.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -123,9 +124,10 @@ export async function POST(request: NextRequest) {
       await securityAuditLogger.logPlatformAdmin(
         "security_alert_acknowledged",
         AuditOutcome.SUCCESS,
-        context,
-        undefined,
-        { alertId }
+        {
+          ...context,
+          metadata: { alertId },
+        }
       );
 
       return NextResponse.json({ success: true });
@@ -137,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid request", details: error.errors },
+        { error: "Invalid request", details: error.issues },
         { status: 400 }
       );
     }

@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 
-import { buildCSP, validateCSP, generateNonce } from "../lib/csp";
+import { validateCSP } from "../lib/csp";
+import { buildCSP, generateNonce } from "../lib/csp-server";
 
 interface TestCase {
   name: string;
@@ -15,7 +16,7 @@ const testCases: TestCase[] = [
     name: "Development CSP",
     config: { isDevelopment: true },
     shouldPass: true,
-    expectedWarnings: 2, // unsafe-eval and unsafe-inline warnings
+    expectedWarnings: 3, // unsafe-eval, unsafe-inline, and missing reporting warnings
   },
   {
     name: "Production CSP with nonce",

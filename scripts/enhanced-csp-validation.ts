@@ -1,12 +1,11 @@
 #!/usr/bin/env tsx
 
 import {
-  buildCSP,
   validateCSP,
   testCSPImplementation,
-  generateNonce,
   detectCSPBypass,
 } from "../lib/csp";
+import { buildCSP, generateNonce } from "../lib/csp-server";
 
 interface CSPValidationResult {
   configuration: string;

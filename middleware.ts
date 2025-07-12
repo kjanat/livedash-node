@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { buildCSP, generateNonce } from "@/lib/csp";
+import { buildCSP, generateNonce } from "@/lib/csp-server";
 
 export function middleware(request: NextRequest) {
   // Skip CSP for API routes (except CSP report endpoint)

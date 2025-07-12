@@ -274,7 +274,12 @@ export default function BatchMonitoringDashboard() {
   };
 
   const getHealthStatus = () => {
-    if (!monitoringData) return { status: "unknown", color: "gray" };
+    if (!monitoringData)
+      return {
+        status: "unknown",
+        color: "gray",
+        message: "No monitoring data",
+      };
 
     const { systemHealth } = monitoringData;
 
@@ -407,8 +412,13 @@ export default function BatchMonitoringDashboard() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <SystemHealthCard health={health} schedulerStatus={schedulerStatus} />
-        <CircuitBreakerCard circuitBreakerStatus={circuitBreakerStatus} />
+        <SystemHealthCard
+          health={health}
+          schedulerStatus={schedulerStatus as any}
+        />
+        <CircuitBreakerCard
+          circuitBreakerStatus={circuitBreakerStatus as any}
+        />
       </div>
     );
   };

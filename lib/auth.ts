@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { Cache } from "./cache";
 import { prisma } from "./prisma";
 import {
   AuditOutcome,
@@ -76,10 +77,43 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-          include: { company: true },
-        });
+        // Try to get user from cache first
+        const cachedUser = await Cache.getUserByEmail(credentials.email);
+        let fullUser: any = null;
+
+        if (cachedUser) {
+          // Get full user data from database if cached user found
+          fullUser = await prisma.user.findUnique({
+            where: { id: cachedUser.id },
+            include: { company: true },
+          });
+        } else {
+          // Cache miss - get from database and cache for next time
+          fullUser = await prisma.user.findUnique({
+            where: { email: credentials.email },
+            include: { company: true },
+          });
+
+          if (fullUser) {
+            // Cache the user data
+            await Cache.setUserByEmail(credentials.email, {
+              id: fullUser.id,
+              email: fullUser.email,
+              name: fullUser.name || undefined,
+              role: fullUser.role,
+              companyId: fullUser.companyId,
+            });
+            await Cache.setUser(fullUser.id, {
+              id: fullUser.id,
+              email: fullUser.email,
+              name: fullUser.name || undefined,
+              role: fullUser.role,
+              companyId: fullUser.companyId,
+            });
+          }
+        }
+
+        const user = fullUser;
 
         if (!user || !user.password) {
           await enhancedSecurityLog(
@@ -199,7 +233,7 @@ export const authOptions: NextAuthOptions = {
       name: "app-auth.session-token",
       options: {
         httpOnly: true,
-        sameSite: "lax",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
         path: "/",
         secure: process.env.NODE_ENV === "production",
       },

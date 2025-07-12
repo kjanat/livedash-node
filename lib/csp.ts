@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
-import { type NextRequest, NextResponse } from "next/server";
+// CSP types and browser-safe utilities
+// Server-only functions (generateNonce, buildCSP) are in csp-server.ts
 
 export interface CSPConfig {
   nonce?: string;
@@ -9,6 +9,105 @@ export interface CSPConfig {
   strictMode?: boolean;
   allowedExternalDomains?: string[];
   reportingLevel?: "none" | "violations" | "all";
+}
+
+/**
+ * Build Content Security Policy string based on configuration
+ */
+export function buildCSPString(config: CSPConfig = {}): string {
+  const {
+    nonce,
+    isDevelopment = false,
+    reportUri,
+    strictMode = false,
+    allowedExternalDomains = [],
+  } = config;
+
+  const directives: Record<string, string[]> = {
+    "default-src": ["'self'"],
+    "script-src": ["'self'"],
+    "style-src": ["'self'"],
+    "img-src": ["'self'", "data:", "blob:"],
+    "font-src": ["'self'", "data:"],
+    "connect-src": ["'self'"],
+    "frame-src": ["'none'"],
+    "object-src": ["'none'"],
+    "base-uri": ["'self'"],
+    "form-action": ["'self'"],
+    "frame-ancestors": ["'none'"],
+    "upgrade-insecure-requests": [],
+  };
+
+  // Script source configuration
+  if (isDevelopment) {
+    directives["script-src"].push("'unsafe-eval'", "'unsafe-inline'");
+  } else if (nonce) {
+    directives["script-src"].push(
+      `'nonce-${nonce}'`,
+      "'strict-dynamic'",
+      "'unsafe-inline'" // Required for browsers that don't support nonce
+    );
+  }
+
+  // Style source configuration
+  if (isDevelopment) {
+    directives["style-src"].push("'unsafe-inline'");
+  } else if (nonce) {
+    directives["style-src"].push(`'nonce-${nonce}'`);
+  }
+
+  // Development-specific relaxations
+  if (isDevelopment) {
+    // Allow WebSocket connections for hot reload
+    directives["connect-src"].push("ws:", "wss:");
+    // Allow local development servers
+    directives["connect-src"].push("http://localhost:*", "http://127.0.0.1:*");
+  }
+
+  // Map tile sources
+  directives["img-src"].push(
+    "https://*.basemaps.cartocdn.com",
+    "https://*.openstreetmap.org",
+    "https://unpkg.com" // For Leaflet markers
+  );
+
+  // External domains configuration
+  if (allowedExternalDomains.length > 0) {
+    directives["connect-src"].push(...allowedExternalDomains);
+  } else if (!strictMode) {
+    // In non-strict mode, allow HTTPS connections
+    directives["connect-src"].push("https:");
+  }
+
+  // Worker sources
+  directives["worker-src"] = ["'self'", "blob:"];
+
+  // Media sources
+  directives["media-src"] = ["'self'"];
+
+  // Manifest source
+  directives["manifest-src"] = ["'self'"];
+
+  // Report URI
+  if (reportUri) {
+    directives["report-uri"] = [reportUri];
+    directives["report-to"] = ["csp-endpoint"];
+  }
+
+  // Build the CSP string
+  return Object.entries(directives)
+    .filter(
+      ([_, values]) =>
+        values.length > 0 ||
+        ["upgrade-insecure-requests", "block-all-mixed-content"].includes(_)
+    )
+    .map(([directive, values]) => {
+      if (values.length === 0) {
+        return directive;
+      }
+      return `${directive} ${values.join(" ")}`;
+    })
+    .join("; ");
 }
 
 export interface CSPViolationReport {
@@ -22,155 +121,6 @@ export interface CSPViolationReport {
     "line-number"?: number;
     "column-number"?: number;
     "script-sample"?: string;
-  };
-}
-
-/**
- * Generate a cryptographically secure nonce for CSP
- */
-export function generateNonce(): string {
-  return crypto.randomBytes(16).toString("base64");
-}
-
-/**
- * Build Content Security Policy header value based on configuration
- */
-export function buildCSP(config: CSPConfig = {}): string {
-  const {
-    nonce,
-    isDevelopment = false,
-    reportUri,
-    _enforceMode = true,
-    strictMode = false,
-    allowedExternalDomains = [],
-    _reportingLevel = "violations",
-  } = config;
-
-  // Base directives for all environments
-  const baseDirectives = {
-    "default-src": ["'self'"],
-    "base-uri": ["'self'"],
-    "form-action": ["'self'"],
-    "frame-ancestors": ["'none'"],
-    "object-src": ["'none'"],
-    "upgrade-insecure-requests": true,
-  };
-
-  // Script sources - more restrictive in production
-  const scriptSrc = isDevelopment
-    ? ["'self'", "'unsafe-eval'", "'unsafe-inline'"]
-    : nonce
-      ? ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"]
-      : ["'self'"];
-
-  // Style sources - use nonce in production when available
-  const styleSrc = nonce
-    ? ["'self'", `'nonce-${nonce}'`]
-    : ["'self'", "'unsafe-inline'"]; // Fallback for TailwindCSS
-
-  // Image sources - allow self, data URIs, and specific trusted domains
-  const imgSrc = [
-    "'self'",
-    "data:",
-    "https://schema.org", // For structured data images
-    "https://livedash.notso.ai", // Application domain
-    "https://*.basemaps.cartocdn.com", // Leaflet map tiles
-    "https://*.openstreetmap.org", // OpenStreetMap tiles
-    ...allowedExternalDomains
-      .filter((domain) => domain.startsWith("https://"))
-      .map((domain) => domain),
-  ].filter(Boolean);
-
-  // Font sources - restrict to self and data URIs
-  const fontSrc = ["'self'", "data:"];
-
-  // Connect sources - API endpoints and trusted domains
-  const connectSrc = isDevelopment
-    ? ["'self'", "https:", "wss:", "ws:"] // Allow broader sources in dev for HMR
-    : strictMode
-      ? [
-          "'self'",
-          "https://api.openai.com", // OpenAI API
-          "https://livedash.notso.ai", // Application API
-          ...allowedExternalDomains.filter(
-            (domain) =>
-              domain.startsWith("https://") || domain.startsWith("wss://")
-          ),
-        ].filter(Boolean)
-      : [
-          "'self'",
-          "https://api.openai.com", // OpenAI API
-          "https://livedash.notso.ai", // Application API
-          "https:", // Allow all HTTPS in non-strict mode
-        ];
-
-  // Media sources - restrict to self
-  const mediaSrc = ["'self'"];
-
-  // Worker sources - restrict to self
-  const workerSrc = ["'self'"];
-
-  // Child sources - restrict to self
-  const childSrc = ["'self'"];
-
-  // Manifest sources - restrict to self
-  const manifestSrc = ["'self'"];
-
-  // Build the directive object
-  const directives = {
-    ...baseDirectives,
-    "script-src": scriptSrc,
-    "style-src": styleSrc,
-    "img-src": imgSrc,
-    "font-src": fontSrc,
-    "connect-src": connectSrc,
-    "media-src": mediaSrc,
-    "worker-src": workerSrc,
-    "child-src": childSrc,
-    "manifest-src": manifestSrc,
-  };
-
-  // Add report URI if provided
-  if (reportUri) {
-    directives["report-uri"] = [reportUri];
-    directives["report-to"] = ["csp-endpoint"];
-  }
-
-  // Convert directives to CSP string
-  const cspString = Object.entries(directives)
-    .map(([directive, value]) => {
-      if (value === true) return directive;
-      if (Array.isArray(value)) return `${directive} ${value.join(" ")}`;
-      return `${directive} ${value}`;
-    })
-    .join("; ");
-
-  return cspString;
-}
-
-/**
- * Create CSP middleware for Next.js
- */
-export function createCSPMiddleware(config: CSPConfig = {}) {
-  return (_request: NextRequest) => {
-    const nonce = generateNonce();
-    const isDevelopment = process.env.NODE_ENV === "development";
-
-    const csp = buildCSP({
-      ...config,
-      nonce,
-      isDevelopment,
-    });
-
-    const response = NextResponse.next();
-
-    // Set CSP header
-    response.headers.set("Content-Security-Policy", csp);
-
-    // Store nonce for use in components
-    response.headers.set("X-Nonce", nonce);
-
-    return response;
   };
 }
 

@@ -13,7 +13,7 @@ import {
  * Validates user authorization for audit logs access
  */
 async function validateAuditLogAccess(
-  session: { user?: { id: string; companyId: string; role: string } } | null,
+  session: { user?: { id?: string; companyId?: string; role?: string } } | null,
   ip: string,
   userAgent?: string
 ) {
@@ -33,17 +33,17 @@ async function validateAuditLogAccess(
     return { valid: false, status: 401, error: "Unauthorized" };
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (session?.user?.role !== "ADMIN") {
     await securityAuditLogger.logAuthorization(
       "audit_logs_insufficient_permissions",
       AuditOutcome.BLOCKED,
       {
-        userId: session.user.id,
-        companyId: session.user.companyId,
+        userId: session?.user?.id,
+        companyId: session?.user?.companyId,
         ipAddress: ip,
         userAgent,
         metadata: createAuditMetadata({
-          userRole: session.user.role,
+          userRole: session?.user?.role,
           requiredRole: "ADMIN",
         }),
       },
@@ -121,8 +121,9 @@ function buildAuditLogWhereClause(
 }
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
   try {
-    const session = await getServerSession(authOptions);
     const ip = extractClientIP(request);
     const userAgent = request.headers.get("user-agent") || undefined;
 
@@ -137,11 +138,23 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const filters = parseAuditLogFilters(url);
-    const { page, limit } = filters;
+    const {
+      page,
+      limit,
+      eventType,
+      outcome,
+      severity,
+      userId,
+      startDate,
+      endDate,
+    } = filters;
     const skip = (page - 1) * limit;
 
     // Build filter conditions
-    const where = buildAuditLogWhereClause(session.user.companyId, filters);
+    const where = buildAuditLogWhereClause(
+      session?.user?.companyId || "",
+      filters
+    );
 
     // Get audit logs with pagination
     const [auditLogs, totalCount] = await Promise.all([
@@ -177,8 +190,8 @@ export async function GET(request: NextRequest) {
       "audit_logs_accessed",
       AuditOutcome.SUCCESS,
       {
-        userId: session.user.id,
-        companyId: session.user.companyId,
+        userId: session?.user?.id,
+        companyId: session?.user?.companyId,
         ipAddress: ip,
         userAgent,
         metadata: createAuditMetadata({

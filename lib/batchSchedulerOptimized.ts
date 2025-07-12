@@ -9,7 +9,7 @@
  */
 
 import cron, { type ScheduledTask } from "node-cron";
-import { BatchOperation, batchLogger } from "./batchLogger";
+import { BatchLogLevel, BatchOperation, batchLogger } from "./batchLogger";
 import {
   checkBatchStatuses,
   createBatchRequest,
@@ -165,7 +165,7 @@ async function createBatchesOptimized(): Promise<void> {
 
     if (pendingRequestsByCompany.size === 0) {
       await batchLogger.log(
-        batchLogger.BatchLogLevel.DEBUG,
+        BatchLogLevel.DEBUG,
         "No pending requests found across all companies",
         { operation: BatchOperation.BATCH_CREATION }
       );

@@ -8,7 +8,7 @@
 import csrf from "csrf";
 import { cookies } from "next/headers";
 import type { NextRequest } from "next/server";
-import { env } from "./env";
+import { clientEnv } from "./env-client";
 
 const tokens = new csrf();
 
@@ -18,11 +18,14 @@ const tokens = new csrf();
 export const CSRF_CONFIG = {
   cookieName: "csrf-token",
   headerName: "x-csrf-token",
-  secret: env.CSRF_SECRET,
+  secret: clientEnv.CSRF_SECRET,
   cookie: {
     httpOnly: true,
-    secure: env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    secure: clientEnv.NODE_ENV === "production",
+    sameSite:
+      clientEnv.NODE_ENV === "production"
+        ? ("strict" as const)
+        : ("lax" as const),
     maxAge: 60 * 60 * 24, // 24 hours
   },
 } as const;
@@ -66,21 +69,8 @@ export function extractCSRFToken(request: NextRequest): string | null {
     return headerToken;
   }
 
-  // Check form data for POST requests
-  if (request.method === "POST") {
-    try {
-      const formData = request.formData();
-      return formData.then((data) => data.get("csrf_token") as string | null);
-    } catch {
-      // If formData fails, try JSON body
-      try {
-        const body = request.json();
-        return body.then((data) => data.csrfToken || null);
-      } catch {
-        return null;
-      }
-    }
-  }
+  // Note: For form data and JSON body, we need async handling
+  // This function will be made async or handled by the caller
 
   return null;
 }
@@ -90,7 +80,7 @@ export function extractCSRFToken(request: NextRequest): string | null {
  */
 export async function getCSRFTokenFromCookies(): Promise<string | null> {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get(CSRF_CONFIG.cookieName);
     return token?.value || null;
   } catch {
@@ -113,7 +103,7 @@ export const CSRFProtection = {
       options: {
         httpOnly: boolean;
         secure: boolean;
-        sameSite: "lax";
+        sameSite: "lax" | "strict";
         maxAge: number;
         path: string;
       };
@@ -224,63 +214,4 @@ export const CSRFProtection = {
   },
 };
 
-/**
- * Client-side utilities
- */
-export const CSRFClient = {
-  /**
-   * Get CSRF token from cookies (client-side)
-   */
-  getToken(): string | null {
-    if (typeof document === "undefined") return null;
-
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split("=");
-      if (name === CSRF_CONFIG.cookieName) {
-        return decodeURIComponent(value);
-      }
-    }
-    return null;
-  },
-
-  /**
-   * Add CSRF token to fetch options
-   */
-  addTokenToFetch(options: RequestInit = {}): RequestInit {
-    const token = this.getToken();
-    if (!token) return options;
-
-    return {
-      ...options,
-      headers: {
-        ...options.headers,
-        [CSRF_CONFIG.headerName]: token,
-      },
-    };
-  },
-
-  /**
-   * Add CSRF token to form data
-   */
-  addTokenToFormData(formData: FormData): FormData {
-    const token = this.getToken();
-    if (token) {
-      formData.append("csrf_token", token);
-    }
-    return formData;
-  },
-
-  /**
-   * Add CSRF token to object (for JSON requests)
-   */
-  addTokenToObject<T extends Record<string, unknown>>(
-    obj: T
-  ): T & { csrfToken: string } {
-    const token = this.getToken();
-    return {
-      ...obj,
-      csrfToken: token || "",
-    };
-  },
-};
+// Client-side utilities moved to ./csrf-client.ts to avoid server-side import issues

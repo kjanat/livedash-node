@@ -119,11 +119,11 @@ export class AuditLogRetentionManager {
     };
 
     if (policy.severityFilter && policy.severityFilter.length > 0) {
-      whereClause.severity = { in: policy.severityFilter };
+      whereClause.severity = { in: policy.severityFilter as any };
     }
 
     if (policy.eventTypeFilter && policy.eventTypeFilter.length > 0) {
-      whereClause.eventType = { in: policy.eventTypeFilter };
+      whereClause.eventType = { in: policy.eventTypeFilter as any };
     }
 
     return whereClause;

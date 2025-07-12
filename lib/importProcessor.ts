@@ -119,6 +119,14 @@ async function parseTranscriptIntoMessages(
 
   // Split transcript into lines and parse each message
   const lines = transcriptContent.split("\n").filter((line) => line.trim());
+  const messagesToCreate: Array<{
+    sessionId: string;
+    timestamp: Date | null;
+    role: string;
+    content: string;
+    order: number;
+  }> = [];
+
   let order = 0;
 
   for (const line of lines) {
@@ -158,22 +166,28 @@ async function parseTranscriptIntoMessages(
     // Skip empty content
     if (!content) continue;
 
-    // Create message record
-    await prisma.message.create({
-      data: {
-        sessionId,
-        timestamp,
-        role,
-        content,
-        order,
-      },
+    // Collect message data for batch creation
+    messagesToCreate.push({
+      sessionId,
+      timestamp,
+      role,
+      content,
+      order,
     });
 
     order++;
   }
 
+  // Batch create all messages at once for better performance
+  if (messagesToCreate.length > 0) {
+    await prisma.message.createMany({
+      data: messagesToCreate,
+      skipDuplicates: true, // Prevents errors on unique constraint violations
+    });
+  }
+
   console.log(
-    `[Import Processor] ✓ Parsed ${order} messages for session ${sessionId}`
+    `[Import Processor] ✓ Parsed ${messagesToCreate.length} messages for session ${sessionId} (batch operation)`
   );
 }
 

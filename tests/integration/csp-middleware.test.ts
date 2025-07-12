@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 import { middleware } from "@/middleware";
 
 // Mock the CSP utilities
-vi.mock("@/lib/csp", () => ({
+vi.mock("@/lib/csp-server", () => ({
   buildCSP: vi.fn(({ nonce, isDevelopment, reportUri }) => {
     const base = "default-src 'self'; object-src 'none'";
     const script = isDevelopment

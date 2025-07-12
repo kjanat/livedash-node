@@ -61,10 +61,10 @@ function SessionLocationInfo({ session }: { session: ChatSession }) {
           Location & Language
         </h4>
         <div className="space-y-2">
-          {session.countryCode && (
+          {session.country && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Country:</span>
-              <CountryDisplay countryCode={session.countryCode} />
+              <CountryDisplay countryCode={session.country} />
             </div>
           )}
           {session.language && (

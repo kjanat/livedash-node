@@ -45,20 +45,22 @@ function mapPrismaSessionToChatSession(prismaSession: {
     updatedAt: new Date(prismaSession.createdAt), // Fallback to createdAt
     // Prisma.Session does not have a `userId` field.
     userId: null, // Explicitly set to null or map if available from another source
+    // Prisma.Session does not have a `companyId` field.
+    companyId: "", // Explicitly set to empty string - should be resolved from session context
     // Ensure nullable fields from Prisma are correctly mapped to ChatSession's optional or nullable fields
     category: prismaSession.category ?? null,
     language: prismaSession.language ?? null,
     country: prismaSession.country ?? null,
     ipAddress: prismaSession.ipAddress ?? null,
     sentiment: prismaSession.sentiment ?? null,
-    messagesSent: prismaSession.messagesSent ?? null, // Maintain consistency with other nullable fields
+    messagesSent: prismaSession.messagesSent ?? undefined, // Maintain consistency with other nullable fields
     avgResponseTime: prismaSession.avgResponseTime ?? null,
     escalated: prismaSession.escalated,
     forwardedHr: prismaSession.forwardedHr,
-    initialMsg: prismaSession.initialMsg ?? null,
-    fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
-    summary: prismaSession.summary ?? null, // New field
-    transcriptContent: null, // Not available in Session model
+    initialMsg: prismaSession.initialMsg ?? undefined,
+    fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? undefined,
+    summary: prismaSession.summary ?? undefined, // New field
+    transcriptContent: undefined, // Not available in Session model
     messages:
       prismaSession.messages?.map((msg) => ({
         id: msg.id,

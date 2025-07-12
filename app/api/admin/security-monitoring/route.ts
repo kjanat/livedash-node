@@ -8,9 +8,18 @@ import {
   securityAuditLogger,
 } from "@/lib/securityAuditLogger";
 import {
+  AlertChannel,
   type AlertSeverity,
+  type MonitoringConfig,
   securityMonitoring,
 } from "@/lib/securityMonitoring";
+
+// Type for partial config updates that allows optional nested properties
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
+type ConfigUpdate = DeepPartial<MonitoringConfig>;
 
 const metricsQuerySchema = z.object({
   startDate: z.string().datetime().optional(),
@@ -34,9 +43,7 @@ const configUpdateSchema = z.object({
   alerting: z
     .object({
       enabled: z.boolean().optional(),
-      channels: z
-        .array(z.enum(["EMAIL", "WEBHOOK", "SLACK", "DISCORD", "PAGERDUTY"]))
-        .optional(),
+      channels: z.array(z.nativeEnum(AlertChannel)).optional(),
       suppressDuplicateMinutes: z.number().min(1).max(1440).optional(),
       escalationTimeoutMinutes: z.number().min(5).max(1440).optional(),
     })
@@ -107,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid query parameters", details: error.errors },
+        { error: "Invalid query parameters", details: error.issues },
         { status: 400 }
       );
     }
@@ -132,19 +139,35 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const config = configUpdateSchema.parse(body);
+    const validatedConfig = configUpdateSchema.parse(body);
     const context = await createAuditContext(request, session);
 
+    // Build the config update object with proper type safety
+    const configUpdate: ConfigUpdate = {};
+
+    if (validatedConfig.thresholds) {
+      configUpdate.thresholds = validatedConfig.thresholds;
+    }
+
+    if (validatedConfig.alerting) {
+      configUpdate.alerting = validatedConfig.alerting;
+    }
+
+    if (validatedConfig.retention) {
+      configUpdate.retention = validatedConfig.retention;
+    }
+
     // Update monitoring configuration
-    securityMonitoring.updateConfig(config);
+    securityMonitoring.updateConfig(configUpdate);
 
     // Log configuration change
     await securityAuditLogger.logPlatformAdmin(
       "security_monitoring_config_update",
       AuditOutcome.SUCCESS,
-      context,
-      undefined,
-      { configChanges: config }
+      {
+        ...context,
+        metadata: { configChanges: validatedConfig },
+      }
     );
 
     return NextResponse.json({
@@ -156,7 +179,7 @@ export async function POST(request: NextRequest) {
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid configuration", details: error.errors },
+        { error: "Invalid configuration", details: error.issues },
         { status: 400 }
       );
     }

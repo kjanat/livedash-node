@@ -16,8 +16,9 @@ import {
 
 // GET /api/admin/audit-logs/retention - Get retention statistics and policy status
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
   try {
-    const session = await getServerSession(authOptions);
     const ip = extractClientIP(request);
     const userAgent = request.headers.get("user-agent") || undefined;
 
@@ -127,8 +128,9 @@ export async function GET(request: NextRequest) {
 
 // POST /api/admin/audit-logs/retention - Execute retention policies manually
 export async function POST(request: NextRequest) {
+  const session = await getServerSession(authOptions);
+
   try {
-    const session = await getServerSession(authOptions);
     const ip = extractClientIP(request);
     const userAgent = request.headers.get("user-agent") || undefined;
 

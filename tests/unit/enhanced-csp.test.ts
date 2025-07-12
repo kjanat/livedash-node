@@ -1,12 +1,11 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
-  buildCSP,
   validateCSP,
   testCSPImplementation,
-  generateNonce,
   detectCSPBypass,
   type CSPConfig,
 } from "../../lib/csp";
+import { buildCSP, generateNonce } from "../../lib/csp-server";
 import { cspMonitoring } from "../../lib/csp-monitoring";
 
 describe("Enhanced CSP Implementation", () => {

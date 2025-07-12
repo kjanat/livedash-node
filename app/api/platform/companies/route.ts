@@ -12,8 +12,10 @@ import {
 
 // GET /api/platform/companies - List all companies
 export async function GET(request: NextRequest) {
+  let session: any = null;
+
   try {
-    const session = await getServerSession(platformAuthOptions);
+    session = await getServerSession(platformAuthOptions);
     const ip = extractClientIP(request);
     const userAgent = request.headers.get("user-agent") || undefined;
 
@@ -137,8 +139,10 @@ export async function GET(request: NextRequest) {
 
 // POST /api/platform/companies - Create new company
 export async function POST(request: NextRequest) {
+  let session: any = null;
+
   try {
-    const session = await getServerSession(platformAuthOptions);
+    session = await getServerSession(platformAuthOptions);
     const ip = extractClientIP(request);
     const userAgent = request.headers.get("user-agent") || undefined;
 

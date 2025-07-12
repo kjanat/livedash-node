@@ -136,8 +136,11 @@ export default function AuditLogsPage() {
   });
 
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
 
   const fetchAuditLogs = useCallback(async () => {
+    if (hasFetched) return;
+
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -161,6 +164,7 @@ export default function AuditLogsPage() {
         setAuditLogs(data.data.auditLogs);
         setPagination(data.data.pagination);
         setError(null);
+        setHasFetched(true);
       } else {
         setError(data.error || "Failed to fetch audit logs");
       }
@@ -170,17 +174,23 @@ export default function AuditLogsPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, filters]);
+  }, [pagination.page, pagination.limit, filters, hasFetched]);
 
   useEffect(() => {
-    if (session?.user?.role === "ADMIN") {
+    if (session?.user?.role === "ADMIN" && !hasFetched) {
       fetchAuditLogs();
     }
-  }, [session, fetchAuditLogs]);
+  }, [session?.user?.role, hasFetched, fetchAuditLogs]);
+
+  // Function to refresh audit logs (for filter changes)
+  const refreshAuditLogs = useCallback(() => {
+    setHasFetched(false);
+  }, []);
 
   const handleFilterChange = (key: keyof typeof filters, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPagination((prev) => ({ ...prev, page: 1 })); // Reset to first page
+    refreshAuditLogs(); // Trigger fresh fetch with new filters
   };
 
   const clearFilters = () => {
@@ -192,6 +202,7 @@ export default function AuditLogsPage() {
       startDate: "",
       endDate: "",
     });
+    refreshAuditLogs(); // Trigger fresh fetch with cleared filters
   };
 
   if (session?.user?.role !== "ADMIN") {
@@ -424,9 +435,10 @@ export default function AuditLogsPage() {
                 variant="outline"
                 size="sm"
                 disabled={!pagination.hasPrev}
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
-                }
+                onClick={() => {
+                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }));
+                  refreshAuditLogs();
+                }}
               >
                 Previous
               </Button>
@@ -434,9 +446,10 @@ export default function AuditLogsPage() {
                 variant="outline"
                 size="sm"
                 disabled={!pagination.hasNext}
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
-                }
+                onClick={() => {
+                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }));
+                  refreshAuditLogs();
+                }}
               >
                 Next
               </Button>

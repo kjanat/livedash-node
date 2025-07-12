@@ -223,7 +223,7 @@ async function retryWithBackoff<T>(
   operationName: string,
   maxRetries = BATCH_CONFIG.MAX_RETRIES
 ): Promise<T> {
-  let lastError: Error;
+  let lastError: Error = new Error("Operation failed");
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -411,6 +411,7 @@ export async function getPendingBatchRequests(
       },
       processingStatus: AIRequestStatus.PENDING_BATCHING,
       batchId: null,
+      sessionId: { not: null },
     },
     include: {
       session: {
@@ -436,7 +437,7 @@ export async function getPendingBatchRequests(
           content: string;
           order: number;
         }>;
-      } | null;
+      };
     })[]
   >;
 }
@@ -492,7 +493,9 @@ export async function createBatchRequest(
         messages: [
           {
             role: "system",
-            content: getSystemPromptForProcessingType(request.processingType),
+            content: getSystemPromptForProcessingType(
+              request.processingType || "full_analysis"
+            ),
           },
           {
             role: "user",
@@ -1278,6 +1281,14 @@ async function processIndividualRequest(request: {
   messages: Array<{ role: string; content: string }>;
   temperature?: number;
   max_tokens?: number;
+  processingType?: string;
+  session?: {
+    messages: Array<{
+      role: string;
+      content: string;
+      order: number;
+    }>;
+  };
 }): Promise<{
   usage: {
     prompt_tokens: number;
@@ -1318,7 +1329,9 @@ async function processIndividualRequest(request: {
         messages: [
           {
             role: "system",
-            content: getSystemPromptForProcessingType(request.processingType),
+            content: getSystemPromptForProcessingType(
+              request.processingType || "full_analysis"
+            ),
           },
           {
             role: "user",

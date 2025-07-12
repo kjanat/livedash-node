@@ -15,6 +15,7 @@ import {
   AIRequestStatus,
 } from "@prisma/client";
 import { BatchLogLevel, BatchOperation, batchLogger } from "./batchLogger";
+import { Cache } from "./cache";
 import { prisma } from "./prisma";
 
 /**
@@ -31,10 +32,22 @@ class CompanyCache {
   private allActiveCompanies: CachedCompany[] | null = null;
   private allActiveCompaniesCachedAt = 0;
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+  private readonly REDIS_CACHE_KEY = "active-companies";
 
   async getActiveCompanies(): Promise<CachedCompany[]> {
     const now = Date.now();
 
+    // Try Redis cache first
+    const redisCachedCompanies = await Cache.get<CachedCompany[]>(
+      this.REDIS_CACHE_KEY
+    );
+    if (redisCachedCompanies && redisCachedCompanies.length > 0) {
+      this.allActiveCompanies = redisCachedCompanies;
+      this.allActiveCompaniesCachedAt = now;
+      return redisCachedCompanies;
+    }
+
+    // Fall back to in-memory cache
     if (
       this.allActiveCompanies &&
       now - this.allActiveCompaniesCachedAt < this.CACHE_TTL
@@ -42,16 +55,23 @@ class CompanyCache {
       return this.allActiveCompanies;
     }
 
+    // Cache miss - fetch from database
     const companies = await prisma.company.findMany({
       where: { status: "ACTIVE" },
       select: { id: true, name: true },
     });
 
-    this.allActiveCompanies = companies.map((company) => ({
+    const cachedCompanies = companies.map((company) => ({
       ...company,
       cachedAt: now,
     }));
+
+    // Update both caches
+    this.allActiveCompanies = cachedCompanies;
     this.allActiveCompaniesCachedAt = now;
+
+    // Cache in Redis with 5-minute TTL
+    await Cache.set(this.REDIS_CACHE_KEY, cachedCompanies, 300);
 
     await batchLogger.log(
       BatchLogLevel.DEBUG,
@@ -62,13 +82,24 @@ class CompanyCache {
       }
     );
 
-    return this.allActiveCompanies;
+    return cachedCompanies;
   }
 
-  invalidate(): void {
+  async invalidate(): Promise<void> {
     this.cache.clear();
     this.allActiveCompanies = null;
     this.allActiveCompaniesCachedAt = 0;
+
+    // Clear Redis cache
+    await Cache.delete(this.REDIS_CACHE_KEY);
+  }
+
+  getStats() {
+    return {
+      isActive: this.allActiveCompanies !== null,
+      cachedAt: new Date(this.allActiveCompaniesCachedAt),
+      cacheSize: this.allActiveCompanies?.length || 0,
+    };
   }
 }
 
@@ -128,8 +159,19 @@ export async function getPendingBatchRequestsOptimized(
 /**
  * Batch operation to get pending requests for multiple companies
  */
+type AIProcessingRequestWithSession = AIProcessingRequest & {
+  session: {
+    messages: Array<{
+      id: string;
+      order: number;
+      role: string;
+      content: string;
+    }>;
+  };
+};
+
 export async function getPendingBatchRequestsForAllCompanies(): Promise<
-  Map<string, AIProcessingRequest[]>
+  Map<string, AIProcessingRequestWithSession[]>
 > {
   const startTime = Date.now();
   const companies = await companyCache.getActiveCompanies();
@@ -138,7 +180,7 @@ export async function getPendingBatchRequestsForAllCompanies(): Promise<
     return new Map();
   }
 
-  // Single query to get all pending requests for all companies
+  // Single query to get all pending requests for all companies with session messages
   const allRequests = await prisma.aIProcessingRequest.findMany({
     where: {
       session: {
@@ -149,10 +191,10 @@ export async function getPendingBatchRequestsForAllCompanies(): Promise<
     },
     include: {
       session: {
-        select: {
-          id: true,
-          companyId: true,
-          _count: { select: { messages: true } },
+        include: {
+          messages: {
+            orderBy: { order: "asc" },
+          },
         },
       },
     },
@@ -160,7 +202,7 @@ export async function getPendingBatchRequestsForAllCompanies(): Promise<
   });
 
   // Group requests by company
-  const requestsByCompany = new Map<string, AIProcessingRequest[]>();
+  const requestsByCompany = new Map<string, AIProcessingRequestWithSession[]>();
   for (const request of allRequests) {
     const companyId = request.session?.companyId;
     if (!companyId) continue;
@@ -491,17 +533,13 @@ export async function getBatchProcessingStatsOptimized(
 /**
  * Utility to invalidate company cache (call when companies are added/removed/status changed)
  */
-export function invalidateCompanyCache(): void {
-  companyCache.invalidate();
+export async function invalidateCompanyCache(): Promise<void> {
+  await companyCache.invalidate();
 }
 
 /**
  * Get cache statistics for monitoring
  */
 export function getCompanyCacheStats() {
-  return {
-    isActive: companyCache.allActiveCompanies !== null,
-    cachedAt: new Date(companyCache.allActiveCompaniesCachedAt),
-    cacheSize: companyCache.allActiveCompanies?.length || 0,
-  };
+  return companyCache.getStats();
 }
