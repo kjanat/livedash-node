@@ -1,4 +1,4 @@
-import cron from "node-cron";
+import * as cron from "node-cron";
 import { executeScheduledRetention } from "./auditLogRetention";
 import {
   AuditOutcome,
@@ -8,7 +8,7 @@ import {
 } from "./securityAuditLogger";
 
 export class AuditLogScheduler {
-  private retentionTask: any = null;
+  private retentionTask: cron.ScheduledTask | null = null;
   private isRunning = false;
 
   constructor() {
@@ -130,7 +130,7 @@ export class AuditLogScheduler {
   } {
     return {
       isRunning: this.isRunning,
-      nextExecution: this.retentionTask?.getStatus()?.next || undefined,
+      nextExecution: undefined, // node-cron doesn't provide next execution time
       schedule: process.env.AUDIT_LOG_RETENTION_SCHEDULE || "0 2 * * 0",
     };
   }

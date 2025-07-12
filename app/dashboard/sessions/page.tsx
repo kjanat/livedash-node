@@ -32,21 +32,21 @@ interface FilterOptions {
 
 interface FilterSectionProps {
   filtersExpanded: boolean;
-  setFiltersExpanded: (_expanded: boolean) => void;
+  setFiltersExpanded: (expanded: boolean) => void;
   searchTerm: string;
-  setSearchTerm: (_term: string) => void;
+  setSearchTerm: (term: string) => void;
   selectedCategory: string;
-  setSelectedCategory: (_category: string) => void;
+  setSelectedCategory: (category: string) => void;
   selectedLanguage: string;
-  setSelectedLanguage: (_language: string) => void;
+  setSelectedLanguage: (language: string) => void;
   startDate: string;
-  setStartDate: (_date: string) => void;
+  setStartDate: (date: string) => void;
   endDate: string;
-  setEndDate: (_date: string) => void;
+  setEndDate: (date: string) => void;
   sortKey: string;
-  setSortKey: (_key: string) => void;
+  setSortKey: (key: string) => void;
   sortOrder: string;
-  setSortOrder: (_order: string) => void;
+  setSortOrder: (order: string) => void;
   filterOptions: FilterOptions;
   searchHeadingId: string;
   searchId: string;
@@ -392,7 +392,7 @@ function SessionList({
 interface PaginationProps {
   currentPage: number;
   totalPages: number;
-  setCurrentPage: (_page: number | ((_prev: number) => number)) => void;
+  setCurrentPage: (page: number | ((prev: number) => number)) => void;
 }
 
 function Pagination({

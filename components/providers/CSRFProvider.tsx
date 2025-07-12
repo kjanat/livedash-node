@@ -22,10 +22,10 @@ interface CSRFContextType {
   loading: boolean;
   error: string | null;
   refreshToken: () => Promise<void>;
-  addTokenToFetch: (_options: RequestInit) => RequestInit;
-  addTokenToFormData: (_formData: FormData) => FormData;
+  addTokenToFetch: (options: RequestInit) => RequestInit;
+  addTokenToFormData: (formData: FormData) => FormData;
   addTokenToObject: <T extends Record<string, unknown>>(
-    _obj: T
+    obj: T
   ) => T & { csrfToken: string };
 }
 

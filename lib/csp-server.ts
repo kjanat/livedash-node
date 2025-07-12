@@ -14,7 +14,7 @@ export function generateNonce(): string {
   if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     const bytes = new Uint8Array(16);
     crypto.getRandomValues(bytes);
-    return btoa(String.fromCharCode(...bytes));
+    return btoa(String.fromCharCode.apply(null, Array.from(bytes)));
   }
 
   throw new Error(
@@ -30,10 +30,8 @@ export function buildCSP(config: CSPConfig = {}): string {
     nonce,
     isDevelopment = false,
     reportUri,
-    _enforceMode = true,
     strictMode = false,
     allowedExternalDomains = [],
-    _reportingLevel = "violations",
   } = config;
 
   // Base directives for all environments

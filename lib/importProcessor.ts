@@ -1,5 +1,5 @@
 // SessionImport to Session processor
-import { ProcessingStage, SentimentCategory } from "@prisma/client";
+import { ProcessingStage } from "@prisma/client";
 import cron from "node-cron";
 import { withRetry } from "./database-retry";
 import { getSchedulerConfig } from "./env";
@@ -75,34 +75,6 @@ function parseEuropeanDate(dateStr: string): Date {
   }
 
   return date;
-}
-
-/**
- * Helper function to parse sentiment from raw string (fallback only)
- */
-function _parseFallbackSentiment(
-  sentimentRaw: string | null
-): SentimentCategory | null {
-  if (!sentimentRaw) return null;
-
-  const sentimentStr = sentimentRaw.toLowerCase();
-  if (sentimentStr.includes("positive")) {
-    return SentimentCategory.POSITIVE;
-  }
-  if (sentimentStr.includes("negative")) {
-    return SentimentCategory.NEGATIVE;
-  }
-  return SentimentCategory.NEUTRAL;
-}
-
-/**
- * Helper function to parse boolean from raw string (fallback only)
- */
-function _parseFallbackBoolean(rawValue: string | null): boolean | null {
-  if (!rawValue) return null;
-  return ["true", "1", "yes", "escalated", "forwarded"].includes(
-    rawValue.toLowerCase()
-  );
 }
 
 /**

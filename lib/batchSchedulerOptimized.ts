@@ -137,7 +137,7 @@ export function stopOptimizedBatchScheduler(): void {
     { task: retryFailedTask, name: "retryFailedTask" },
   ];
 
-  for (const { task, name: _name } of tasks) {
+  for (const { task, name } of tasks) {
     if (task) {
       task.stop();
       task.destroy();

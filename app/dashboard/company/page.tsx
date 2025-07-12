@@ -15,7 +15,7 @@ export default function CompanySettingsPage() {
   const csvUsernameId = useId();
   const csvPasswordId = useId();
   const { data: session, status } = useSession();
-  const [_company, setCompany] = useState<Company | null>(null);
+  const [, setCompany] = useState<Company | null>(null);
   const [csvUrl, setCsvUrl] = useState<string>("");
   const [csvUsername, setCsvUsername] = useState<string>("");
   const [csvPassword, setCsvPassword] = useState<string>("");

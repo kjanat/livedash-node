@@ -275,7 +275,6 @@ class OpenAIMockServer {
         custom_id: `req-${i}`,
         response: {
           status_code: 200,
-          request_id: `req-${Date.now()}-${i}`,
           body: response,
         },
       });
@@ -375,11 +374,13 @@ export class MockOpenAIClient {
   get chat() {
     return {
       completions: {
-        create: async (params: unknown) => {
+        create: async (params: any) => {
           if (openAIMock.isEnabled()) {
-            return openAIMock.mockChatCompletion(params);
+            return openAIMock.mockChatCompletion(params as any);
           }
-          return this.realClient.chat.completions.create(params);
+          return (this.realClient as any).chat.completions.create(
+            params as any
+          );
         },
       },
     };
@@ -387,34 +388,34 @@ export class MockOpenAIClient {
 
   get batches() {
     return {
-      create: async (params: unknown) => {
+      create: async (params: any) => {
         if (openAIMock.isEnabled()) {
-          return openAIMock.mockCreateBatch(params);
+          return openAIMock.mockCreateBatch(params as any);
         }
-        return this.realClient.batches.create(params);
+        return (this.realClient as any).batches.create(params as any);
       },
       retrieve: async (batchId: string) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockGetBatch(batchId);
         }
-        return this.realClient.batches.retrieve(batchId);
+        return (this.realClient as any).batches.retrieve(batchId);
       },
     };
   }
 
   get files() {
     return {
-      create: async (params: unknown) => {
+      create: async (params: any) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockUploadFile(params);
         }
-        return this.realClient.files.create(params);
+        return (this.realClient as any).files.create(params);
       },
       content: async (fileId: string) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockGetFileContent(fileId);
         }
-        return this.realClient.files.content(fileId);
+        return (this.realClient as any).files.content(fileId);
       },
     };
   }

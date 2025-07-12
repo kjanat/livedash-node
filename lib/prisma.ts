@@ -8,7 +8,7 @@ import { env } from "./env";
 
 // Add prisma to the NodeJS global type
 declare const global: {
-  prisma: PrismaClient | undefined;
+  prisma: InstanceType<typeof PrismaClient> | undefined;
 };
 
 // Connection pooling configuration

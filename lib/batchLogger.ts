@@ -13,6 +13,7 @@ import {
   securityAuditLogger,
 } from "./securityAuditLogger";
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum BatchLogLevel {
   DEBUG = "DEBUG",
   INFO = "INFO",
@@ -20,7 +21,9 @@ export enum BatchLogLevel {
   ERROR = "ERROR",
   CRITICAL = "CRITICAL",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum BatchOperation {
   BATCH_CREATION = "BATCH_CREATION",
   BATCH_STATUS_CHECK = "BATCH_STATUS_CHECK",
@@ -33,6 +36,7 @@ export enum BatchOperation {
   INDIVIDUAL_REQUEST_RETRY = "INDIVIDUAL_REQUEST_RETRY",
   COST_TRACKING = "COST_TRACKING",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
 export interface BatchLogContext {
   operation: BatchOperation;

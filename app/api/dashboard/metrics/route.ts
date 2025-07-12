@@ -22,8 +22,8 @@ function convertToMockChatSession(
     sentiment: string | null;
     messagesSent: number | null;
     avgResponseTime: number | null;
-    escalated: boolean;
-    forwardedHr: boolean;
+    escalated: boolean | null;
+    forwardedHr: boolean | null;
     initialMsg: string | null;
     fullTranscriptUrl: string | null;
     summary: string | null;

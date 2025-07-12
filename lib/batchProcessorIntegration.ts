@@ -226,14 +226,14 @@ export const IntegratedBatchProcessor = {
           ),
           pendingRequests: originalResult.pendingRequests,
           inProgressBatches:
-            (batchStats["IN_PROGRESS"] || 0) +
-            (batchStats["VALIDATING"] || 0) +
-            (batchStats["UPLOADING"] || 0) +
-            (batchStats["FINALIZING"] || 0),
+            (batchStats.IN_PROGRESS || 0) +
+            (batchStats.VALIDATING || 0) +
+            (batchStats.UPLOADING || 0) +
+            (batchStats.FINALIZING || 0),
           completedBatches:
-            (batchStats["COMPLETED"] || 0) + (batchStats["PROCESSED"] || 0),
+            (batchStats.COMPLETED || 0) + (batchStats.PROCESSED || 0),
           failedRequests:
-            (batchStats["FAILED"] || 0) + (batchStats["CANCELLED"] || 0),
+            (batchStats.FAILED || 0) + (batchStats.CANCELLED || 0),
         };
       },
       "getBatchProcessingStats"

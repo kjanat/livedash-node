@@ -32,7 +32,7 @@ function renderMessageBubble(
             rehypePlugins={[rehypeRaw]}
             components={{
               p: "span",
-              a: ({ node: _node, ...props }) => (
+              a: ({ node, ...props }) => (
                 <a
                   className="text-sky-600 hover:text-sky-800 underline"
                   {...props}

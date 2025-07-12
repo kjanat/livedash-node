@@ -389,7 +389,12 @@ export function testCSPImplementation(csp: string): {
   }>;
   overallScore: number;
 } {
-  const testResults = [];
+  const testResults: Array<{
+    name: string;
+    passed: boolean;
+    description: string;
+    recommendation?: string;
+  }> = [];
 
   // Test 1: Script injection protection
   testResults.push({

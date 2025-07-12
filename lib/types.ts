@@ -70,6 +70,7 @@ export interface ChatSession {
   summary?: string | null; // Brief summary of the conversation
   messages?: Message[]; // Parsed messages from transcript
   transcriptContent?: string | null; // Full transcript content
+  questions?: string[]; // Extracted questions from the conversation
 }
 
 export interface SessionQuery {

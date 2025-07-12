@@ -1,11 +1,15 @@
-import { prisma } from "./prisma";
+import { SECURITY_MONITORING } from "./constants";
 import {
   type AuditLogContext,
-  AuditOutcome,
+  type AuditOutcome,
   AuditSeverity,
   SecurityEventType,
   securityAuditLogger,
 } from "./securityAuditLogger";
+import { AlertManagementService } from "./services/AlertManagementService";
+import { SecurityEventProcessor } from "./services/SecurityEventProcessor";
+import { SecurityMetricsService } from "./services/SecurityMetricsService";
+import { ThreatDetectionService } from "./services/ThreatDetectionService";
 
 // Utility type for deep partial objects
 type DeepPartial<T> = {
@@ -27,20 +31,23 @@ export interface SecurityAlert {
   acknowledgedAt?: Date;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum AlertSeverity {
   LOW = "LOW",
   MEDIUM = "MEDIUM",
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum AlertType {
   AUTHENTICATION_ANOMALY = "AUTHENTICATION_ANOMALY",
   RATE_LIMIT_BREACH = "RATE_LIMIT_BREACH",
   MULTIPLE_FAILED_LOGINS = "MULTIPLE_FAILED_LOGINS",
   SUSPICIOUS_IP_ACTIVITY = "SUSPICIOUS_IP_ACTIVITY",
   PRIVILEGE_ESCALATION = "PRIVILEGE_ESCALATION",
-  DATA_BREACH_ATTEMPT = "DATA_BREACH_ATTEMPT",
+  DATA_BREACH_ATTEMPT = "DATA_BRECH_ATTEMPT",
   CSRF_ATTACK = "CSRF_ATTACK",
   CSP_VIOLATION_SPIKE = "CSP_VIOLATION_SPIKE",
   ACCOUNT_ENUMERATION = "ACCOUNT_ENUMERATION",
@@ -51,6 +58,7 @@ export enum AlertType {
   SUSPICIOUS_USER_AGENT = "SUSPICIOUS_USER_AGENT",
   SESSION_HIJACKING = "SESSION_HIJACKING",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
 export interface SecurityMetrics {
   totalEvents: number;
@@ -67,12 +75,14 @@ export interface SecurityMetrics {
   userRiskScores: Array<{ userId: string; email: string; riskScore: number }>;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum ThreatLevel {
   LOW = "LOW",
   MODERATE = "MODERATE",
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
 export interface MonitoringConfig {
   thresholds: {
@@ -96,6 +106,7 @@ export interface MonitoringConfig {
   };
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum AlertChannel {
   EMAIL = "EMAIL",
   WEBHOOK = "WEBHOOK",
@@ -103,6 +114,7 @@ export enum AlertChannel {
   DISCORD = "DISCORD",
   PAGERDUTY = "PAGERDUTY",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
 export interface AnomalyDetectionResult {
   isAnomaly: boolean;
@@ -112,19 +124,26 @@ export interface AnomalyDetectionResult {
   recommendedActions: string[];
 }
 
+/**
+ * Refactored SecurityMonitoringService that coordinates focused services
+ * Responsibilities: Configuration, coordination, and background processing
+ */
 class SecurityMonitoringService {
-  private alerts: SecurityAlert[] = [];
   private config: MonitoringConfig;
-  private eventBuffer: Array<{
-    timestamp: Date;
-    eventType: SecurityEventType;
-    context: AuditLogContext;
-    outcome: AuditOutcome;
-    severity: AuditSeverity;
-  }> = [];
+  private eventProcessor: SecurityEventProcessor;
+  private threatDetection: ThreatDetectionService;
+  private alertManagement: AlertManagementService;
+  private metricsService: SecurityMetricsService;
 
   constructor() {
     this.config = this.getDefaultConfig();
+
+    // Initialize focused services
+    this.eventProcessor = new SecurityEventProcessor();
+    this.threatDetection = new ThreatDetectionService(this.config);
+    this.alertManagement = new AlertManagementService(this.config);
+    this.metricsService = new SecurityMetricsService();
+
     this.startBackgroundProcessing();
   }
 
@@ -139,30 +158,30 @@ class SecurityMonitoringService {
     metadata?: Record<string, unknown>
   ): Promise<void> {
     // Add event to buffer for analysis
-    this.eventBuffer.push({
-      timestamp: new Date(),
-      eventType,
-      context,
-      outcome,
-      severity,
-    });
+    this.eventProcessor.addEvent(eventType, outcome, context, severity);
 
     // Immediate threat detection
-    const threats = await this.detectImediateThreats(
+    const threatResult = await this.threatDetection.detectImmediateThreats(
       eventType,
       outcome,
       context,
       metadata
     );
 
-    for (const threat of threats) {
-      await this.createAlert(threat);
+    for (const threat of threatResult.threats) {
+      await this.alertManagement.createAlert(threat);
     }
 
     // Anomaly detection
-    const anomaly = await this.detectAnomalies(eventType, context);
+    const recentEvents = this.eventProcessor.getRecentEvents();
+    const anomaly = await this.threatDetection.detectAnomalies(
+      eventType,
+      context,
+      recentEvents
+    );
+
     if (anomaly.isAnomaly && anomaly.confidence > 0.7) {
-      await this.createAlert({
+      await this.alertManagement.createAlert({
         severity: this.mapConfidenceToSeverity(anomaly.confidence),
         type: AlertType.AUTHENTICATION_ANOMALY,
         title: `Anomaly Detected: ${anomaly.type}`,
@@ -174,7 +193,7 @@ class SecurityMonitoringService {
     }
 
     // Clean old events to prevent memory issues
-    this.cleanupEventBuffer();
+    this.eventProcessor.cleanup();
   }
 
   /**
@@ -184,115 +203,19 @@ class SecurityMonitoringService {
     timeRange: { start: Date; end: Date },
     companyId?: string
   ): Promise<SecurityMetrics> {
-    const whereClause = {
-      timestamp: {
-        gte: timeRange.start,
-        lte: timeRange.end,
-      },
-      ...(companyId && { companyId }),
-    };
-
-    // Get audit log data
-    const events = await prisma.securityAuditLog.findMany({
-      where: whereClause,
-      include: {
-        user: { select: { email: true } },
-        company: { select: { name: true } },
-      },
-    });
-
-    // Calculate metrics
-    const totalEvents = events.length;
-    const criticalEvents = events.filter(
-      (e) => e.severity === AuditSeverity.CRITICAL
-    ).length;
-
-    const activeAlerts = this.alerts.filter((a) => !a.acknowledged).length;
-    const resolvedAlerts = this.alerts.filter((a) => a.acknowledged).length;
-
-    // Event distribution by type
-    const eventsByType = events.reduce(
-      (acc, event) => {
-        acc[event.eventType] = (acc[event.eventType] || 0) + 1;
-        return acc;
-      },
-      {} as Record<SecurityEventType, number>
+    const alerts = this.alertManagement.getAlertsInTimeRange(timeRange);
+    return this.metricsService.calculateSecurityMetrics(
+      timeRange,
+      companyId,
+      alerts
     );
-
-    // Alert distribution by type
-    const alertsByType = this.alerts.reduce(
-      (acc, alert) => {
-        acc[alert.type] = (acc[alert.type] || 0) + 1;
-        return acc;
-      },
-      {} as Record<AlertType, number>
-    );
-
-    // Top threats
-    const topThreats = Object.entries(alertsByType)
-      .map(([type, count]) => ({ type: type as AlertType, count }))
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 5);
-
-    // Geographic distribution
-    const geoDistribution = events.reduce(
-      (acc, event) => {
-        if (event.country) {
-          acc[event.country] = (acc[event.country] || 0) + 1;
-        }
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    // Time distribution (by hour)
-    const timeDistribution = Array.from({ length: 24 }, (_, hour) => ({
-      hour,
-      count: events.filter((e) => e.timestamp.getHours() === hour).length,
-    }));
-
-    // User risk scores
-    const userRiskScores = await this.calculateUserRiskScores(events);
-
-    // Calculate overall security score
-    const securityScore = this.calculateSecurityScore({
-      totalEvents,
-      criticalEvents,
-      activeAlerts,
-      topThreats,
-    });
-
-    // Determine threat level
-    const threatLevel = this.determineThreatLevel(
-      securityScore,
-      activeAlerts,
-      criticalEvents
-    );
-
-    return {
-      totalEvents,
-      criticalEvents,
-      activeAlerts,
-      resolvedAlerts,
-      securityScore,
-      threatLevel,
-      eventsByType,
-      alertsByType,
-      topThreats,
-      geoDistribution,
-      timeDistribution,
-      userRiskScores,
-    };
   }
 
   /**
    * Get active security alerts
    */
   getActiveAlerts(severity?: AlertSeverity): SecurityAlert[] {
-    return this.alerts.filter(
-      (alert) =>
-        !alert.acknowledged && (!severity || alert.severity === severity)
-    );
+    return this.alertManagement.getActiveAlerts(severity);
   }
 
   /**
@@ -302,26 +225,7 @@ class SecurityMonitoringService {
     alertId: string,
     acknowledgedBy: string
   ): Promise<boolean> {
-    const alert = this.alerts.find((a) => a.id === alertId);
-    if (!alert) return false;
-
-    alert.acknowledged = true;
-    alert.acknowledgedBy = acknowledgedBy;
-    alert.acknowledgedAt = new Date();
-
-    // Log the acknowledgment
-    await securityAuditLogger.log({
-      eventType: SecurityEventType.SYSTEM_CONFIG,
-      action: "alert_acknowledged",
-      outcome: AuditOutcome.SUCCESS,
-      severity: AuditSeverity.INFO,
-      context: {
-        userId: acknowledgedBy,
-        metadata: { alertId, alertType: alert.type },
-      },
-    });
-
-    return true;
+    return this.alertManagement.acknowledgeAlert(alertId, acknowledgedBy);
   }
 
   /**
@@ -331,45 +235,7 @@ class SecurityMonitoringService {
     format: "json" | "csv",
     timeRange: { start: Date; end: Date }
   ): string {
-    const filteredAlerts = this.alerts.filter(
-      (a) => a.timestamp >= timeRange.start && a.timestamp <= timeRange.end
-    );
-
-    if (format === "csv") {
-      const headers = [
-        "timestamp",
-        "severity",
-        "type",
-        "title",
-        "description",
-        "eventType",
-        "userId",
-        "companyId",
-        "ipAddress",
-        "userAgent",
-        "acknowledged",
-      ].join(",");
-
-      const rows = filteredAlerts.map((alert) =>
-        [
-          alert.timestamp.toISOString(),
-          alert.severity,
-          alert.type,
-          `"${alert.title}"`,
-          `"${alert.description}"`,
-          alert.eventType,
-          alert.context.userId || "",
-          alert.context.companyId || "",
-          alert.context.ipAddress || "",
-          alert.context.userAgent || "",
-          alert.acknowledged.toString(),
-        ].join(",")
-      );
-
-      return [headers, ...rows].join("\n");
-    }
-
-    return JSON.stringify(filteredAlerts, null, 2);
+    return this.alertManagement.exportAlertsData(format, timeRange);
   }
 
   /**
@@ -419,431 +285,7 @@ class SecurityMonitoringService {
     recommendations: string[];
     isBlacklisted: boolean;
   }> {
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-    const events = await prisma.securityAuditLog.findMany({
-      where: {
-        ipAddress,
-        timestamp: { gte: oneDayAgo },
-      },
-    });
-
-    const riskFactors: string[] = [];
-    const recommendations: string[] = [];
-
-    // Failed login attempts
-    const failedLogins = events.filter(
-      (e) =>
-        e.eventType === SecurityEventType.AUTHENTICATION &&
-        e.outcome === AuditOutcome.FAILURE
-    ).length;
-
-    if (failedLogins > 10) {
-      riskFactors.push(`${failedLogins} failed login attempts in 24h`);
-      recommendations.push("Consider temporary IP blocking");
-    }
-
-    // Rate limit violations
-    const rateLimitViolations = events.filter(
-      (e) => e.outcome === AuditOutcome.RATE_LIMITED
-    ).length;
-
-    if (rateLimitViolations > 5) {
-      riskFactors.push(`${rateLimitViolations} rate limit violations`);
-      recommendations.push("Implement stricter rate limiting");
-    }
-
-    // Multiple user attempts
-    const uniqueUsers = new Set(events.map((e) => e.userId).filter(Boolean))
-      .size;
-    if (uniqueUsers > 5) {
-      riskFactors.push(`Access attempts to ${uniqueUsers} different accounts`);
-      recommendations.push("Investigate for account enumeration");
-    }
-
-    // Determine threat level
-    let threatLevel = ThreatLevel.LOW;
-    if (riskFactors.length >= 3) threatLevel = ThreatLevel.CRITICAL;
-    else if (riskFactors.length >= 2) threatLevel = ThreatLevel.HIGH;
-    else if (riskFactors.length >= 1) threatLevel = ThreatLevel.MODERATE;
-
-    // Ensure we always provide at least basic analysis
-    if (riskFactors.length === 0) {
-      riskFactors.push(`${events.length} security events in 24h`);
-    }
-
-    if (recommendations.length === 0) {
-      recommendations.push("Continue monitoring for suspicious activity");
-    }
-
-    // Simple blacklist check based on threat level and risk factors
-    const isBlacklisted =
-      threatLevel === ThreatLevel.CRITICAL && riskFactors.length >= 3;
-
-    return { threatLevel, riskFactors, recommendations, isBlacklisted };
-  }
-
-  private async detectImediateThreats(
-    eventType: SecurityEventType,
-    outcome: AuditOutcome,
-    context: AuditLogContext,
-    metadata?: Record<string, unknown>
-  ): Promise<Array<Omit<SecurityAlert, "id" | "timestamp" | "acknowledged">>> {
-    const threats: Array<
-      Omit<SecurityAlert, "id" | "timestamp" | "acknowledged">
-    > = [];
-    const now = new Date();
-
-    // Multiple failed logins detection
-    if (
-      eventType === SecurityEventType.AUTHENTICATION &&
-      outcome === AuditOutcome.FAILURE &&
-      context.ipAddress
-    ) {
-      const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000);
-      const recentFailures = await prisma.securityAuditLog.count({
-        where: {
-          eventType: SecurityEventType.AUTHENTICATION,
-          outcome: AuditOutcome.FAILURE,
-          ipAddress: context.ipAddress,
-          timestamp: { gte: fiveMinutesAgo },
-        },
-      });
-
-      if (recentFailures >= this.config.thresholds.failedLoginsPerMinute) {
-        threats.push({
-          severity: AlertSeverity.HIGH,
-          type: AlertType.BRUTE_FORCE_ATTACK,
-          title: "Brute Force Attack Detected",
-          description: `${recentFailures} failed login attempts from IP ${context.ipAddress} in 5 minutes`,
-          eventType,
-          context,
-          metadata: { failedAttempts: recentFailures, ...metadata },
-        });
-      }
-    }
-
-    // Suspicious admin activity
-    if (
-      eventType === SecurityEventType.PLATFORM_ADMIN ||
-      (eventType === SecurityEventType.USER_MANAGEMENT && context.userId)
-    ) {
-      const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-      const adminActions = await prisma.securityAuditLog.count({
-        where: {
-          userId: context.userId,
-          eventType: {
-            in: [
-              SecurityEventType.PLATFORM_ADMIN,
-              SecurityEventType.USER_MANAGEMENT,
-            ],
-          },
-          timestamp: { gte: oneHourAgo },
-        },
-      });
-
-      if (adminActions >= this.config.thresholds.adminActionsPerHour) {
-        threats.push({
-          severity: AlertSeverity.MEDIUM,
-          type: AlertType.UNUSUAL_ADMIN_ACTIVITY,
-          title: "Unusual Admin Activity",
-          description: `User ${context.userId} performed ${adminActions} admin actions in 1 hour`,
-          eventType,
-          context,
-          metadata: { adminActions, ...metadata },
-        });
-      }
-    }
-
-    // Rate limiting violations
-    if (outcome === AuditOutcome.RATE_LIMITED && context.ipAddress) {
-      const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
-      const rateLimitViolations = await prisma.securityAuditLog.count({
-        where: {
-          outcome: AuditOutcome.RATE_LIMITED,
-          ipAddress: context.ipAddress,
-          timestamp: { gte: oneMinuteAgo },
-        },
-      });
-
-      if (
-        rateLimitViolations >=
-        this.config.thresholds.rateLimitViolationsPerMinute
-      ) {
-        threats.push({
-          severity: AlertSeverity.MEDIUM,
-          type: AlertType.RATE_LIMIT_BREACH,
-          title: "Rate Limit Breach",
-          description: `IP ${context.ipAddress} exceeded rate limits ${rateLimitViolations} times in 1 minute`,
-          eventType,
-          context,
-          metadata: { violations: rateLimitViolations, ...metadata },
-        });
-      }
-    }
-
-    return threats;
-  }
-
-  private async detectAnomalies(
-    eventType: SecurityEventType,
-    context: AuditLogContext
-  ): Promise<AnomalyDetectionResult> {
-    // Simple anomaly detection based on historical patterns
-    const now = new Date();
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-
-    // Get historical data for baseline
-    const historicalEvents = await prisma.securityAuditLog.findMany({
-      where: {
-        eventType,
-        timestamp: { gte: sevenDaysAgo, lt: now },
-      },
-    });
-
-    // Check for unusual time patterns
-    const currentHour = now.getHours();
-    const hourlyEvents = (historicalEvents || []).filter(
-      (e) => e.timestamp.getHours() === currentHour
-    );
-    const avgHourlyEvents = hourlyEvents.length / 7; // 7 days average
-
-    const recentHourEvents = this.eventBuffer.filter(
-      (e) =>
-        e.eventType === eventType &&
-        e.timestamp.getHours() === currentHour &&
-        e.timestamp > new Date(now.getTime() - 60 * 60 * 1000)
-    ).length;
-
-    // Check for geographical anomalies
-    if (context.country && context.userId) {
-      const userCountries = new Set(
-        (historicalEvents || [])
-          .filter((e) => e.userId === context.userId && e.country)
-          .map((e) => e.country)
-      );
-
-      if (userCountries.size > 0 && !userCountries.has(context.country)) {
-        return {
-          isAnomaly: true,
-          confidence: 0.8,
-          type: "geographical_anomaly",
-          description: `User accessing from unusual country: ${context.country}`,
-          recommendedActions: [
-            "Verify user identity",
-            "Check for compromised credentials",
-            "Consider additional authentication",
-          ],
-        };
-      }
-    }
-
-    // Check for time-based anomalies
-    if (recentHourEvents > avgHourlyEvents * 3 && avgHourlyEvents > 0) {
-      return {
-        isAnomaly: true,
-        confidence: 0.7,
-        type: "temporal_anomaly",
-        description: `Unusual activity spike: ${recentHourEvents} events vs ${avgHourlyEvents.toFixed(1)} average`,
-        recommendedActions: [
-          "Investigate source of increased activity",
-          "Check for automated attacks",
-          "Review recent system changes",
-        ],
-      };
-    }
-
-    return {
-      isAnomaly: false,
-      confidence: 0,
-      type: "normal",
-      description: "No anomalies detected",
-      recommendedActions: [],
-    };
-  }
-
-  private async createAlert(
-    alertData: Omit<SecurityAlert, "id" | "timestamp" | "acknowledged">
-  ): Promise<void> {
-    // Check for duplicate suppression
-    const suppressionWindow = new Date(
-      Date.now() - this.config.alerting.suppressDuplicateMinutes * 60 * 1000
-    );
-    const isDuplicate = this.alerts.some(
-      (a) =>
-        a.type === alertData.type &&
-        a.context.ipAddress === alertData.context.ipAddress &&
-        a.timestamp > suppressionWindow
-    );
-
-    if (isDuplicate) return;
-
-    const alert: SecurityAlert = {
-      id: crypto.randomUUID(),
-      timestamp: new Date(),
-      acknowledged: false,
-      ...alertData,
-    };
-
-    this.alerts.push(alert);
-
-    // Log alert creation
-    await securityAuditLogger.log({
-      eventType: SecurityEventType.SYSTEM_CONFIG,
-      action: "security_alert_created",
-      outcome: AuditOutcome.SUCCESS,
-      severity: this.mapAlertSeverityToAuditSeverity(alert.severity),
-      context: alert.context,
-      errorMessage: undefined,
-    });
-
-    // Send notifications if enabled
-    if (this.config.alerting.enabled) {
-      await this.sendAlertNotifications(alert);
-    }
-  }
-
-  private async sendAlertNotifications(alert: SecurityAlert): Promise<void> {
-    // In production, integrate with actual notification services
-    console.error(
-      `🚨 SECURITY ALERT [${alert.severity}] ${alert.type}: ${alert.title}`
-    );
-    console.error(`Description: ${alert.description}`);
-    console.error("Context:", alert.context);
-
-    // Example integrations you could implement:
-    // - Email notifications
-    // - Slack webhooks
-    // - PagerDuty alerts
-    // - SMS notifications
-    // - Custom webhook endpoints
-  }
-
-  private async calculateUserRiskScores(
-    events: Array<{
-      userId?: string;
-      user?: { email: string };
-      eventType: SecurityEventType;
-      outcome: AuditOutcome;
-      severity: AuditSeverity;
-      country?: string;
-    }>
-  ): Promise<Array<{ userId: string; email: string; riskScore: number }>> {
-    const userEvents = events.filter((e) => e.userId);
-    const userScores = new Map<
-      string,
-      { email: string; score: number; events: typeof events }
-    >();
-
-    for (const event of userEvents) {
-      if (!userScores.has(event.userId)) {
-        userScores.set(event.userId, {
-          email: event.user?.email || "unknown",
-          score: 0,
-          events: [],
-        });
-      }
-      userScores.get(event.userId)?.events.push(event);
-    }
-
-    const riskScores: Array<{
-      userId: string;
-      email: string;
-      riskScore: number;
-    }> = [];
-
-    for (const [userId, userData] of userScores) {
-      let riskScore = 0;
-
-      // Failed authentication attempts
-      const failedAuth = userData.events.filter(
-        (e) =>
-          e.eventType === SecurityEventType.AUTHENTICATION &&
-          e.outcome === AuditOutcome.FAILURE
-      ).length;
-      riskScore += failedAuth * 10;
-
-      // Rate limit violations
-      const rateLimited = userData.events.filter(
-        (e) => e.outcome === AuditOutcome.RATE_LIMITED
-      ).length;
-      riskScore += rateLimited * 15;
-
-      // Critical events
-      const criticalEvents = userData.events.filter(
-        (e) => e.severity === AuditSeverity.CRITICAL
-      ).length;
-      riskScore += criticalEvents * 25;
-
-      // Multiple countries
-      const countries = new Set(
-        userData.events.map((e) => e.country).filter(Boolean)
-      );
-      if (countries.size > 2) riskScore += 20;
-
-      // Normalize score to 0-100 range
-      riskScore = Math.min(100, riskScore);
-
-      riskScores.push({
-        userId,
-        email: userData.email,
-        riskScore,
-      });
-    }
-
-    return riskScores.sort((a, b) => b.riskScore - a.riskScore).slice(0, 10);
-  }
-
-  private calculateSecurityScore(data: {
-    totalEvents: number;
-    criticalEvents: number;
-    activeAlerts: number;
-    topThreats: Array<{ type: AlertType; count: number }>;
-  }): number {
-    let score = 100;
-
-    // Deduct points for critical events
-    score -= Math.min(30, data.criticalEvents * 2);
-
-    // Deduct points for active alerts
-    score -= Math.min(25, data.activeAlerts * 3);
-
-    // Deduct points for high-severity threats
-    const highSeverityThreats = data.topThreats.filter((t) =>
-      [
-        AlertType.BRUTE_FORCE_ATTACK,
-        AlertType.DATA_BREACH_ATTEMPT,
-        AlertType.PRIVILEGE_ESCALATION,
-      ].includes(t.type)
-    );
-    score -= Math.min(
-      20,
-      highSeverityThreats.reduce((sum, t) => sum + t.count, 0) * 5
-    );
-
-    // Deduct points for high event volume (potential attacks)
-    if (data.totalEvents > 1000) {
-      score -= Math.min(15, (data.totalEvents - 1000) / 100);
-    }
-
-    return Math.max(0, Math.round(score));
-  }
-
-  private determineThreatLevel(
-    securityScore: number,
-    activeAlerts: number,
-    criticalEvents: number
-  ): ThreatLevel {
-    if (securityScore < 50 || activeAlerts >= 5 || criticalEvents >= 3) {
-      return ThreatLevel.CRITICAL;
-    }
-    if (securityScore < 70 || activeAlerts >= 3 || criticalEvents >= 2) {
-      return ThreatLevel.HIGH;
-    }
-    if (securityScore < 85 || activeAlerts >= 1 || criticalEvents >= 1) {
-      return ThreatLevel.MODERATE;
-    }
-    return ThreatLevel.LOW;
+    return this.metricsService.calculateIPThreatLevel(ipAddress);
   }
 
   private mapConfidenceToSeverity(confidence: number): AlertSeverity {
@@ -851,21 +293,6 @@ class SecurityMonitoringService {
     if (confidence >= 0.8) return AlertSeverity.HIGH;
     if (confidence >= 0.6) return AlertSeverity.MEDIUM;
     return AlertSeverity.LOW;
-  }
-
-  private mapAlertSeverityToAuditSeverity(
-    severity: AlertSeverity
-  ): AuditSeverity {
-    switch (severity) {
-      case AlertSeverity.CRITICAL:
-        return AuditSeverity.CRITICAL;
-      case AlertSeverity.HIGH:
-        return AuditSeverity.HIGH;
-      case AlertSeverity.MEDIUM:
-        return AuditSeverity.MEDIUM;
-      case AlertSeverity.LOW:
-        return AuditSeverity.LOW;
-    }
   }
 
   private getDefaultConfig(): MonitoringConfig {
@@ -893,47 +320,29 @@ class SecurityMonitoringService {
   }
 
   private startBackgroundProcessing(): void {
-    // Clean up old data every hour
-    setInterval(
-      () => {
-        this.cleanupOldData();
-      },
-      60 * 60 * 1000
-    );
+    // Clean up old data every cleanup interval
+    setInterval(() => {
+      this.cleanupOldData();
+    }, SECURITY_MONITORING.EVENT_BUFFER_CLEANUP_INTERVAL);
 
-    // Process event buffer every 30 seconds
+    // Process event buffer for threat detection
     setInterval(() => {
       this.processEventBuffer();
-    }, 30 * 1000);
-  }
-
-  private cleanupEventBuffer(): void {
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    this.eventBuffer = this.eventBuffer.filter(
-      (e) => e.timestamp >= oneHourAgo
-    );
+    }, SECURITY_MONITORING.BACKGROUND_PROCESSING_INTERVAL);
   }
 
   private cleanupOldData(): void {
-    const alertCutoff = new Date(
-      Date.now() -
-        this.config.retention.alertRetentionDays * 24 * 60 * 60 * 1000
-    );
-    this.alerts = this.alerts.filter((a) => a.timestamp >= alertCutoff);
-    this.cleanupEventBuffer();
+    this.alertManagement.cleanupOldAlerts();
+    this.eventProcessor.cleanup();
   }
 
   private async processEventBuffer(): Promise<void> {
     // Analyze patterns in event buffer for real-time threat detection
-    const now = new Date();
-    const oneMinuteAgo = new Date(now.getTime() - 60 * 1000);
-    const recentEvents = this.eventBuffer.filter(
-      (e) => e.timestamp >= oneMinuteAgo
-    );
+    const recentEvents = this.eventProcessor.getRecentEvents();
 
     // Check for event spikes
     if (recentEvents.length > 50) {
-      await this.createAlert({
+      await this.alertManagement.createAlert({
         severity: AlertSeverity.MEDIUM,
         type: AlertType.SUSPICIOUS_IP_ACTIVITY,
         title: "High Event Volume Detected",

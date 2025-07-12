@@ -61,12 +61,20 @@ export const dashboardRouter = router({
       const sessions = await ctx.prisma.session.findMany({
         where,
         include: {
+          import: {
+            select: {
+              externalSessionId: true,
+            },
+          },
           messages: {
             select: {
               id: true,
+              sessionId: true,
               role: true,
               content: true,
               order: true,
+              timestamp: true,
+              createdAt: true,
             },
             orderBy: { order: "asc" },
           },
@@ -88,7 +96,28 @@ export const dashboardRouter = router({
 
       return {
         sessions: sessions.map((session) => ({
-          ...session,
+          id: session.id,
+          sessionId: session.import?.externalSessionId || session.id,
+          companyId: session.companyId,
+          userId: session.userId,
+          category: session.category,
+          language: session.language,
+          country: session.country,
+          ipAddress: session.ipAddress,
+          sentiment: session.sentiment,
+          messagesSent: session.messagesSent ?? undefined,
+          startTime: session.startTime,
+          endTime: session.endTime,
+          createdAt: session.createdAt,
+          updatedAt: session.updatedAt,
+          avgResponseTime: session.avgResponseTime,
+          escalated: session.escalated ?? undefined,
+          forwardedHr: session.forwardedHr ?? undefined,
+          initialMsg: session.initialMsg ?? undefined,
+          fullTranscriptUrl: session.fullTranscriptUrl ?? undefined,
+          summary: session.summary ?? undefined,
+          messages: session.messages,
+          transcriptContent: null,
           questions: session.sessionQuestions.map((sq) => sq.question.content),
         })),
         pagination: {
@@ -112,7 +141,21 @@ export const dashboardRouter = router({
           companyId: ctx.company.id,
         },
         include: {
+          import: {
+            select: {
+              externalSessionId: true,
+            },
+          },
           messages: {
+            select: {
+              id: true,
+              sessionId: true,
+              role: true,
+              content: true,
+              order: true,
+              timestamp: true,
+              createdAt: true,
+            },
             orderBy: { order: "asc" },
           },
           sessionQuestions: {
@@ -136,7 +179,28 @@ export const dashboardRouter = router({
       }
 
       return {
-        ...session,
+        id: session.id,
+        sessionId: session.import?.externalSessionId || session.id,
+        companyId: session.companyId,
+        userId: session.userId,
+        category: session.category,
+        language: session.language,
+        country: session.country,
+        ipAddress: session.ipAddress,
+        sentiment: session.sentiment,
+        messagesSent: session.messagesSent ?? undefined,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        createdAt: session.createdAt,
+        updatedAt: session.updatedAt,
+        avgResponseTime: session.avgResponseTime,
+        escalated: session.escalated ?? undefined,
+        forwardedHr: session.forwardedHr ?? undefined,
+        initialMsg: session.initialMsg ?? undefined,
+        fullTranscriptUrl: session.fullTranscriptUrl ?? undefined,
+        summary: session.summary ?? undefined,
+        messages: session.messages,
+        transcriptContent: null,
         questions: session.sessionQuestions.map((sq) => sq.question.content),
       };
     }),

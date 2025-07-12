@@ -1,6 +1,6 @@
 import type { CompanyStatus } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { platformAuthOptions } from "../../../../lib/platform-auth";
 import { prisma } from "../../../../lib/prisma";
 import { extractClientIP } from "../../../../lib/rateLimiter";
@@ -12,7 +12,7 @@ import {
 
 // GET /api/platform/companies - List all companies
 export async function GET(request: NextRequest) {
-  let session: any = null;
+  let session: Session | null = null;
 
   try {
     session = await getServerSession(platformAuthOptions);
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
 
 // POST /api/platform/companies - Create new company
 export async function POST(request: NextRequest) {
-  let session: any = null;
+  let session: Session | null = null;
 
   try {
     session = await getServerSession(platformAuthOptions);
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
           name: adminName,
           role: "ADMIN",
           companyId: company.id,
-          invitedBy: session.user.email || "platform",
+          invitedBy: session?.user?.email || "platform",
           invitedAt: new Date(),
         },
       });

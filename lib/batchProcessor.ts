@@ -128,7 +128,7 @@ class CircuitBreaker {
 class BatchProcessingError extends Error {
   constructor(
     message: string,
-    public readonly _cause?: Error
+    public readonly cause?: Error
   ) {
     super(message);
     this.name = "BatchProcessingError";
@@ -145,7 +145,7 @@ class CircuitBreakerOpenError extends Error {
 class RetryableError extends Error {
   constructor(
     message: string,
-    public readonly _isRetryable = true
+    public readonly isRetryable = true
   ) {
     super(message);
     this.name = "RetryableError";
@@ -411,7 +411,6 @@ export async function getPendingBatchRequests(
       },
       processingStatus: AIRequestStatus.PENDING_BATCHING,
       batchId: null,
-      sessionId: { not: null },
     },
     include: {
       session: {
@@ -469,8 +468,6 @@ export async function createBatchRequest(
       `Batch size ${requests.length} exceeds maximum of ${BATCH_CONFIG.MAX_REQUESTS_PER_BATCH}`
     );
   }
-
-  const _operationId = `batch-create-${crypto.randomUUID()}`;
 
   try {
     await batchLogger.log(
@@ -1250,8 +1247,26 @@ export async function retryFailedRequests(
   for (const request of failedRequests) {
     try {
       await retryWithBackoff(async () => {
+        // Transform request to match processIndividualRequest interface
+        const transformedRequest = {
+          id: request.id,
+          model: request.model,
+          messages: [
+            {
+              role: "user",
+              content: formatMessagesForProcessing(
+                request.session?.messages || []
+              ),
+            },
+          ],
+          temperature: 0.1,
+          max_tokens: 1000,
+          processingType: request.processingType,
+          session: request.session,
+        };
+
         // Process individual request using regular OpenAI API
-        const result = await processIndividualRequest(request);
+        const result = await processIndividualRequest(transformedRequest);
         await updateProcessingRequestWithResult(request.id, result);
       }, `Retry individual request ${request.id}`);
 

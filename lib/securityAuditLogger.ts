@@ -23,6 +23,7 @@ export interface AuditLogEntry {
   context?: AuditLogContext;
 }
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum SecurityEventType {
   AUTHENTICATION = "AUTHENTICATION",
   AUTHORIZATION = "AUTHORIZATION",
@@ -37,7 +38,9 @@ export enum SecurityEventType {
   SYSTEM_CONFIG = "SYSTEM_CONFIG",
   API_SECURITY = "API_SECURITY",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum AuditOutcome {
   SUCCESS = "SUCCESS",
   FAILURE = "FAILURE",
@@ -45,7 +48,9 @@ export enum AuditOutcome {
   RATE_LIMITED = "RATE_LIMITED",
   SUSPICIOUS = "SUSPICIOUS",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-vars */
 export enum AuditSeverity {
   INFO = "INFO",
   LOW = "LOW",
@@ -53,6 +58,7 @@ export enum AuditSeverity {
   HIGH = "HIGH",
   CRITICAL = "CRITICAL",
 }
+/* eslint-enable @typescript-eslint/no-unused-vars, no-unused-vars */
 
 class SecurityAuditLogger {
   private isEnabled: boolean;

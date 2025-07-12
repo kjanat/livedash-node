@@ -141,7 +141,7 @@ function usePlatformDashboardState() {
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-  const [newCompanyData, setNewCompanyData] = useState({
+  const [newCompanyData, setNewCompanyData] = useState<NewCompanyData>({
     name: "",
     csvUrl: "",
     csvUsername: "",
@@ -202,9 +202,7 @@ function useFormIds() {
  */
 function renderCompanyFormFields(
   newCompanyData: NewCompanyData,
-  setNewCompanyData: (
-    updater: (prev: NewCompanyData) => NewCompanyData
-  ) => void,
+  setNewCompanyData: React.Dispatch<React.SetStateAction<NewCompanyData>>,
   formIds: FormIds
 ) {
   return (

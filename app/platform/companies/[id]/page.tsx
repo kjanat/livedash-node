@@ -505,7 +505,7 @@ export default function CompanyManagement() {
     }
 
     fetchCompany();
-  }, [status, session?.user?.isPlatformUser, fetchCompany, router.push]);
+  }, [status, session?.user?.isPlatformUser, fetchCompany, router]);
 
   const handleSave = async () => {
     state.setIsSaving(true);

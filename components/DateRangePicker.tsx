@@ -5,7 +5,7 @@ import { useEffect, useId, useState } from "react";
 interface DateRangePickerProps {
   minDate: string;
   maxDate: string;
-  onDateRangeChange: (_startDate: string, _endDate: string) => void;
+  onDateRangeChange: (startDate: string, endDate: string) => void;
   initialStartDate?: string;
   initialEndDate?: string;
 }

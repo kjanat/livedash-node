@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../lib/auth";
@@ -5,7 +6,9 @@ import { prisma } from "../../../../lib/prisma";
 import { extractClientIP } from "../../../../lib/rateLimiter";
 import {
   AuditOutcome,
+  type AuditSeverity,
   createAuditMetadata,
+  type SecurityEventType,
   securityAuditLogger,
 } from "../../../../lib/securityAuditLogger";
 
@@ -89,26 +92,16 @@ function parseAuditLogFilters(url: URL) {
 function buildAuditLogWhereClause(
   companyId: string,
   filters: ReturnType<typeof parseAuditLogFilters>
-) {
+): Prisma.SecurityAuditLogWhereInput {
   const { eventType, outcome, severity, userId, startDate, endDate } = filters;
 
-  const where: {
-    companyId: string;
-    eventType?: string;
-    outcome?: string;
-    severity?: string;
-    userId?: string;
-    timestamp?: {
-      gte?: Date;
-      lte?: Date;
-    };
-  } = {
+  const where: Prisma.SecurityAuditLogWhereInput = {
     companyId, // Only show logs for user's company
   };
 
-  if (eventType) where.eventType = eventType;
-  if (outcome) where.outcome = outcome;
-  if (severity) where.severity = severity;
+  if (eventType) where.eventType = eventType as SecurityEventType;
+  if (outcome) where.outcome = outcome as AuditOutcome;
+  if (severity) where.severity = severity as AuditSeverity;
   if (userId) where.userId = userId;
 
   if (startDate || endDate) {

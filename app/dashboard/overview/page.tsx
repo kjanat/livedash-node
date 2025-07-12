@@ -470,7 +470,7 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
-  const [company, _setCompany] = useState<Company | null>(null);
+  const [company] = useState<Company | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
@@ -505,27 +505,28 @@ function DashboardContent() {
         avgSessionLength: null,
         days: {},
         languages: {},
-        categories: {},
         countries: {},
         belowThresholdCount: 0,
         // Map sentiment data to individual counts
         sentimentPositiveCount:
           overviewData.sentimentDistribution?.find(
-            (s) => s.sentiment === "positive"
+            (s) => s.sentiment === "POSITIVE"
           )?.count || 0,
         sentimentNeutralCount:
           overviewData.sentimentDistribution?.find(
-            (s) => s.sentiment === "neutral"
+            (s) => s.sentiment === "NEUTRAL"
           )?.count || 0,
         sentimentNegativeCount:
           overviewData.sentimentDistribution?.find(
-            (s) => s.sentiment === "negative"
+            (s) => s.sentiment === "NEGATIVE"
           )?.count || 0,
         // Map category data to CategoryMetrics format
         ...(overviewData.categoryDistribution && {
           categories: overviewData.categoryDistribution.reduce(
             (acc, item) => {
-              acc[item.category] = item.count;
+              if (item.category) {
+                acc[item.category] = item.count;
+              }
               return acc;
             },
             {} as Record<string, number>

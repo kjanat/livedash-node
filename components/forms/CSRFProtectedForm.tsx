@@ -15,7 +15,7 @@ interface CSRFProtectedFormProps {
   children: ReactNode;
   action: string;
   method?: "POST" | "PUT" | "DELETE" | "PATCH";
-  onSubmit?: (_formData: FormData) => Promise<void> | void;
+  onSubmit?: (formData: FormData) => Promise<void> | void;
   className?: string;
   encType?: string;
 }

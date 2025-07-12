@@ -1,3 +1,4 @@
+import type { Company, User } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -55,7 +56,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials, _req) {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           await enhancedSecurityLog(
             SecurityEventType.AUTHENTICATION,
@@ -79,7 +80,7 @@ export const authOptions: NextAuthOptions = {
 
         // Try to get user from cache first
         const cachedUser = await Cache.getUserByEmail(credentials.email);
-        let fullUser: any = null;
+        let fullUser: (User & { company: Company }) | null = null;
 
         if (cachedUser) {
           // Get full user data from database if cached user found

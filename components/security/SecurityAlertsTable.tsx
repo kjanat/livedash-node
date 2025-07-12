@@ -29,7 +29,7 @@ interface SecurityAlert {
 
 interface SecurityAlertsTableProps {
   alerts: SecurityAlert[];
-  onAcknowledge: (_alertId: string) => void;
+  onAcknowledge: (alertId: string) => void;
 }
 
 export function SecurityAlertsTable({

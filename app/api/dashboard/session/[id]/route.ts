@@ -17,8 +17,8 @@ function mapPrismaSessionToChatSession(prismaSession: {
   sentiment: string | null;
   messagesSent: number | null;
   avgResponseTime: number | null;
-  escalated: boolean;
-  forwardedHr: boolean;
+  escalated: boolean | null;
+  forwardedHr: boolean | null;
   initialMsg: string | null;
   fullTranscriptUrl: string | null;
   summary: string | null;
@@ -55,8 +55,8 @@ function mapPrismaSessionToChatSession(prismaSession: {
     sentiment: prismaSession.sentiment ?? null,
     messagesSent: prismaSession.messagesSent ?? undefined, // Maintain consistency with other nullable fields
     avgResponseTime: prismaSession.avgResponseTime ?? null,
-    escalated: prismaSession.escalated,
-    forwardedHr: prismaSession.forwardedHr,
+    escalated: prismaSession.escalated ?? false,
+    forwardedHr: prismaSession.forwardedHr ?? false,
     initialMsg: prismaSession.initialMsg ?? undefined,
     fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? undefined,
     summary: prismaSession.summary ?? undefined, // New field

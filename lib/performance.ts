@@ -53,9 +53,9 @@ class PerformanceMonitor {
     });
 
     // Monitor CLS (Cumulative Layout Shift)
-    this.observeMetric("layout-shift", (entries) => {
+    this.observeMetric("layout-shift", (list) => {
       let clsValue = 0;
-      for (const entry of entries) {
+      for (const entry of list) {
         const entryWithValue = entry as PerformanceEntry & {
           value: number;
           hadRecentInput: boolean;
@@ -180,8 +180,8 @@ class PerformanceMonitor {
   private sendToAnalytics(metricName: string, value: number) {
     // Placeholder for analytics integration
     // You could send this to Google Analytics, Vercel Analytics, etc.
-    if (typeof gtag !== "undefined") {
-      gtag("event", "core_web_vital", {
+    if (typeof window !== "undefined" && "gtag" in window) {
+      (window as any).gtag("event", "core_web_vital", {
         name: metricName,
         value: Math.round(value),
         metric_rating: this.getRating(metricName, value),
@@ -339,11 +339,15 @@ export const ResourceOptimizer = {
     const scripts = Array.from(document.querySelectorAll("script[src]"));
     const styles = Array.from(document.querySelectorAll("link[href]"));
 
-    return [...scripts, ...styles].some(
-      (element) =>
-        (element as HTMLScriptElement | HTMLLinkElement).src === url ||
-        (element as HTMLLinkElement).href === url
-    );
+    return [...scripts, ...styles].some((element) => {
+      if (element.tagName === "SCRIPT") {
+        return (element as HTMLScriptElement).src === url;
+      }
+      if (element.tagName === "LINK") {
+        return (element as HTMLLinkElement).href === url;
+      }
+      return false;
+    });
   },
 };
 
