@@ -12,3 +12,17 @@ out
 
 ## Ignore dependencies
 node_modules
+
+## Files that are formatted by biome
+**/*.js
+**/*.ts
+**/*.cjs
+**/*.cts
+**/*.mjs
+**/*.mts
+**/*.d.cts
+**/*.d.mts
+**/*.jsx
+**/*.tsx
+**/*.json
+**/*.jsonc

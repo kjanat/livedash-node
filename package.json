@@ -229,7 +229,7 @@
     "*.{md,markdown}": [
       "markdownlint-cli2 --fix"
     ],
-    "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+    "*.{js,ts,cjs,cts,mjs,mts,d.cts,d.mts,jsx,tsx,json,jsonc}": [
       "biome check --files-ignore-unknown=true",
       "biome check --write --no-errors-on-unmatched",
       "biome format --write --no-errors-on-unmatched"
