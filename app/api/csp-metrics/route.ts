@@ -9,8 +9,16 @@ export async function GET(request: NextRequest) {
     // Authentication check for security metrics endpoint
     const session = await getServerSession(authOptions);
 
-    if (!session?.user || !session.user.isPlatformUser) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check for ADMIN role as CSP metrics contain sensitive security data
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden - Admin access required" },
+        { status: 403 }
+      );
     }
     // Rate limiting for metrics endpoint
     const ip = extractClientIP(request);
