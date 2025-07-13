@@ -4,7 +4,15 @@ import { AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -196,32 +204,32 @@ export function SecurityAlertsTable({
       )}
 
       {/* Alert Details Modal */}
-      {selectedAlert && (
-        <Card className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <Card className="max-w-2xl w-full max-h-[80vh] overflow-auto">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <CardTitle>{selectedAlert.title}</CardTitle>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={getSeverityColor(selectedAlert.severity)}>
-                      {selectedAlert.severity}
-                    </Badge>
-                    <Badge variant="outline">
-                      {formatAlertType(selectedAlert.type)}
-                    </Badge>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedAlert(null)}
+      <Dialog
+        open={!!selectedAlert}
+        onOpenChange={() => setSelectedAlert(null)}
+      >
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedAlert?.title}
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant={getSeverityColor(selectedAlert?.severity || "")}
                 >
-                  Close
-                </Button>
+                  {selectedAlert?.severity}
+                </Badge>
+                <Badge variant="outline">
+                  {formatAlertType(selectedAlert?.type || "")}
+                </Badge>
               </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </DialogTitle>
+            <DialogDescription>
+              Security alert details and context information
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedAlert && (
+            <div className="space-y-4">
               <div>
                 <h4 className="font-medium mb-2">Description</h4>
                 <p className="text-sm text-muted-foreground">
@@ -249,26 +257,28 @@ export function SecurityAlertsTable({
                     </div>
                   </div>
                 )}
+            </div>
+          )}
 
-              <div className="flex items-center justify-between pt-4 border-t">
-                <span className="text-sm text-muted-foreground">
-                  {formatTimestamp(selectedAlert.timestamp)}
-                </span>
-                {!selectedAlert.acknowledged && (
-                  <Button
-                    onClick={() => {
-                      onAcknowledge(selectedAlert.id);
-                      setSelectedAlert(null);
-                    }}
-                  >
-                    Acknowledge Alert
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </Card>
-      )}
+          <DialogFooter className="flex items-center justify-between pt-4 border-t">
+            <span className="text-sm text-muted-foreground">
+              {selectedAlert && formatTimestamp(selectedAlert.timestamp)}
+            </span>
+            <div className="flex gap-2">
+              {selectedAlert && !selectedAlert.acknowledged && (
+                <Button
+                  onClick={() => {
+                    onAcknowledge(selectedAlert.id);
+                    setSelectedAlert(null);
+                  }}
+                >
+                  Acknowledge Alert
+                </Button>
+              )}
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
