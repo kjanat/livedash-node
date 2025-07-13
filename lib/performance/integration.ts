@@ -152,6 +152,85 @@ async function executeWithDeduplication<T extends unknown[], R>(
 }
 
 /**
+ * Helper function to start monitoring if enabled
+ */
+function startMonitoringIfEnabled(enabled?: boolean): void {
+  if (enabled) {
+    try {
+      performanceMonitor.start();
+    } catch {
+      // Monitoring may already be running
+    }
+  }
+}
+
+/**
+ * Helper function to record request metrics if enabled
+ */
+function recordRequestIfEnabled(timer: ReturnType<typeof PerformanceUtils.createTimer>, isError: boolean, enabled?: boolean): void {
+  if (enabled) {
+    performanceMonitor.recordRequest(timer.end(), isError);
+  }
+}
+
+/**
+ * Helper function to execute request with caching/deduplication optimizations
+ */
+async function executeRequestWithOptimizations(
+  req: NextRequest,
+  opts: ReturnType<typeof mergeOptions>,
+  routeName: string,
+  originalHandler: (req: NextRequest) => Promise<NextResponse>
+): Promise<NextResponse> {
+  if (opts.cache?.enabled || opts.deduplication?.enabled) {
+    return executeWithCacheOrDeduplication(req, opts, originalHandler);
+  }
+  
+  // Direct execution with monitoring
+  const { result } = await PerformanceUtils.measureAsync(routeName, () =>
+    originalHandler(req)
+  );
+  return result;
+}
+
+/**
+ * Helper function to execute with cache or deduplication
+ */
+async function executeWithCacheOrDeduplication(
+  req: NextRequest,
+  opts: ReturnType<typeof mergeOptions>,
+  originalHandler: (req: NextRequest) => Promise<NextResponse>
+): Promise<NextResponse> {
+  const url = new URL(req.url);
+  const method = req.method;
+  const params = url.searchParams.toString();
+  const cacheKey = `${method}:${url.pathname}:${params}`;
+
+  if (opts.cache?.enabled) {
+    const cache =
+      caches[opts.cache.cacheName as keyof typeof caches] ||
+      caches.apiResponses;
+    return cache.getOrCompute(
+      cacheKey,
+      () => originalHandler(req),
+      opts.cache.ttl
+    );
+  }
+  
+  // Deduplication only
+  const deduplicator =
+    deduplicators[
+      opts.deduplication?.deduplicatorName as keyof typeof deduplicators
+    ] || deduplicators.api;
+
+  return deduplicator.execute(
+    cacheKey,
+    () => originalHandler(req),
+    { ttl: opts.deduplication?.ttl }
+  );
+}
+
+/**
  * Enhance an API route handler with performance optimizations
  */
 export function enhanceAPIRoute(
@@ -167,63 +246,12 @@ export function enhanceAPIRoute(
     const timer = PerformanceUtils.createTimer(`api.${routeName}`);
 
     try {
-      // Start monitoring if not already running
-      if (opts.monitoring?.enabled) {
-        try {
-          performanceMonitor.start();
-        } catch {
-          // Monitoring may already be running
-        }
-      }
-
-      let response: NextResponse;
-
-      if (opts.cache?.enabled || opts.deduplication?.enabled) {
-        // Generate cache key from request
-        const url = new URL(req.url);
-        const method = req.method;
-        const params = url.searchParams.toString();
-        const cacheKey = `${method}:${url.pathname}:${params}`;
-
-        if (opts.cache?.enabled) {
-          const cache =
-            caches[opts.cache.cacheName as keyof typeof caches] ||
-            caches.apiResponses;
-          response = await cache.getOrCompute(
-            cacheKey,
-            () => originalHandler(req),
-            opts.cache.ttl
-          );
-        } else {
-          // Deduplication only
-          const deduplicator =
-            deduplicators[
-              opts.deduplication!.deduplicatorName as keyof typeof deduplicators
-            ] || deduplicators.api;
-
-          response = await deduplicator.execute(
-            cacheKey,
-            () => originalHandler(req),
-            { ttl: opts.deduplication!.ttl }
-          );
-        }
-      } else {
-        // Direct execution with monitoring
-        const { result } = await PerformanceUtils.measureAsync(routeName, () =>
-          originalHandler(req)
-        );
-        response = result;
-      }
-
-      if (opts.monitoring?.recordRequests) {
-        performanceMonitor.recordRequest(timer.end(), false);
-      }
-
+      startMonitoringIfEnabled(opts.monitoring?.enabled);
+      const response = await executeRequestWithOptimizations(req, opts, routeName, originalHandler);
+      recordRequestIfEnabled(timer, false, opts.monitoring?.recordRequests);
       return response;
     } catch (error) {
-      if (opts.monitoring?.recordRequests) {
-        performanceMonitor.recordRequest(timer.end(), true);
-      }
+      recordRequestIfEnabled(timer, true, opts.monitoring?.recordRequests);
       throw error;
     }
   };
@@ -292,7 +320,7 @@ export function PerformanceOptimized(
  * Simple caching decorator
  */
 export function Cached(
-  cacheName = "default",
+  _cacheName = "default",
   ttl: number = 5 * 60 * 1000,
   keyGenerator?: (...args: unknown[]) => string
 ) {

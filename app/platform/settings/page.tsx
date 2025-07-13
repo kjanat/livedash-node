@@ -37,10 +37,28 @@ function usePlatformSession() {
     const abortController = new AbortController();
 
     const handleAuthSuccess = (sessionData: {
-      user?: { isPlatformUser?: boolean };
+      user?: { 
+        id?: string;
+        email?: string;
+        name?: string;
+        role?: string;
+        companyId?: string;
+        isPlatformUser?: boolean;
+        platformRole?: string;
+      };
     }) => {
       if (sessionData?.user?.isPlatformUser) {
-        setSession(sessionData as any);
+        setSession({
+          user: {
+            id: sessionData.user.id || '',
+            email: sessionData.user.email || '',
+            name: sessionData.user.name,
+            role: sessionData.user.role || '',
+            companyId: sessionData.user.companyId,
+            isPlatformUser: sessionData.user.isPlatformUser,
+            platformRole: sessionData.user.platformRole,
+          }
+        });
         setStatus("authenticated");
       } else {
         handleAuthFailure();

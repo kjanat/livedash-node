@@ -247,7 +247,7 @@ const calculateMetricsWithCache = async (
  */
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const requestTimer = PerformanceUtils.createTimer("metrics-request-total");
-  let cacheHit = false;
+  let _cacheHit = false;
   let deduplicationHit = false;
 
   try {
@@ -313,7 +313,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
       `full-metrics:${cacheKey}`
     );
     if (cachedResponse) {
-      cacheHit = true;
+      _cacheHit = true;
       const duration = requestTimer.end();
       performanceMonitor.recordRequest(duration, false);
 
@@ -415,6 +415,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     );
 
     const duration = requestTimer.end();
+    // biome-ignore lint/style/noNonNullAssertion: performanceMetrics is guaranteed to exist as we just created it
     responseData.performanceMetrics!.executionTime = duration;
 
     performanceMonitor.recordRequest(duration, false);

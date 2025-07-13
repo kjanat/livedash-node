@@ -248,7 +248,7 @@ export function asyncErrorHandler<T extends readonly unknown[], R>(
 /**
  * Error boundary for API route handlers
  */
-export function withErrorHandling<T extends readonly unknown[], R>(
+export function withErrorHandling<T extends readonly unknown[], _R>(
   handler: (...args: T) => Promise<NextResponse> | NextResponse
 ) {
   return async (...args: T): Promise<NextResponse> => {

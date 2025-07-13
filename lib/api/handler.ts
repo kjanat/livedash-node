@@ -10,11 +10,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import type { z } from "zod";
 import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { rateLimiter } from "@/lib/rateLimiter";
 import type { UserSession } from "@/lib/types";
 import {
-  APIError,
   AuthenticationError,
   AuthorizationError,
   handleAPIError,
@@ -247,16 +245,16 @@ function validateQuery<T>(request: NextRequest, schema: z.ZodSchema<T>): T {
  * Log API access for audit purposes
  */
 async function logAPIAccess(
-  context: APIContext,
-  outcome: "success" | "error",
-  endpoint: string,
-  error?: Error
+  _context: APIContext,
+  _outcome: "success" | "error",
+  _endpoint: string,
+  _error?: Error
 ): Promise<void> {
   try {
     // Only log if audit logging is enabled for this endpoint
     // TODO: Integrate with security audit logger service
     // Production logging should use proper logging service instead of console.log
-  } catch (logError) {
+  } catch (_logError) {
     // Don't fail the request if logging fails
     // TODO: Send to error tracking service
   }

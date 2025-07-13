@@ -6,7 +6,6 @@
  */
 
 import { PerformanceObserver, performance } from "node:perf_hooks";
-import { TIME } from "../constants";
 import { cacheManager } from "./cache";
 import { deduplicationManager } from "./deduplication";
 
@@ -223,7 +222,7 @@ export class PerformanceMonitor {
 
     console.log(
       "[Performance Monitor] Started monitoring with interval:",
-      intervalMs + "ms"
+      `${intervalMs}ms`
     );
   }
 
@@ -286,7 +285,7 @@ export class PerformanceMonitor {
       const eventLoopDelay = performance.now() - start;
 
       // Event loop utilization (approximated)
-      const eventLoopUtilization = Math.min(
+      const _eventLoopUtilization = Math.min(
         100,
         (eventLoopDelay / 16.67) * 100
       ); // 16.67ms = 60fps
@@ -778,7 +777,7 @@ export class PerformanceUtils {
       }
 
       descriptor.value = async function (...args: unknown[]) {
-        const { result, duration } = await PerformanceUtils.measureAsync(
+        const { result } = await PerformanceUtils.measureAsync(
           metricName,
           () => originalMethod.apply(this, args)
         );

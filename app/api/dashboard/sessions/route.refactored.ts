@@ -16,8 +16,6 @@ import {
   createAuthenticatedHandler,
   createPaginatedResponse,
   DatabaseError,
-  Permission,
-  ValidationError,
 } from "@/lib/api";
 import { prisma } from "@/lib/prisma";
 import type { ChatSession } from "@/lib/types";
@@ -182,10 +180,12 @@ function convertPrismaSessionToChatSession(ps: {
 export const GET = createAuthenticatedHandler(
   async (context, _, validatedQuery) => {
     const filters = validatedQuery as SessionQueryInput;
+    // biome-ignore lint/style/noNonNullAssertion: pagination is guaranteed to exist when enablePagination is true
     const { page, limit } = context.pagination!;
 
     try {
       // Validate company access (users can only see their company's sessions)
+      // biome-ignore lint/style/noNonNullAssertion: user is guaranteed to exist in authenticated handler
       const companyId = context.user!.companyId;
 
       // Build query conditions
@@ -238,6 +238,7 @@ export const GET = createAuthenticatedHandler(
       // Database errors are automatically handled by the error system
       if (error instanceof Error) {
         throw new DatabaseError("Failed to fetch sessions", {
+          // biome-ignore lint/style/noNonNullAssertion: user is guaranteed to exist in authenticated handler
           companyId: context.user!.companyId,
           filters,
           error: error.message,

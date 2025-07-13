@@ -5,13 +5,6 @@
  * into existing services using decorators and integration utilities.
  */
 
-import {
-  Cached,
-  Deduplicated,
-  Monitored,
-  PerformanceEnhanced,
-  PerformanceOptimized,
-} from "../performance/integration";
 import { AuditOutcome, AuditSeverity } from "../securityAuditLogger";
 import { AlertChannel, type MonitoringConfig } from "../securityMonitoring";
 import type { Alert, SecurityEvent } from "../types/security";
@@ -202,7 +195,7 @@ export class EnhancedSecurityService {
   //   monitoring: { enabled: true },
   // })
   private async generateAlertsIfNeeded(
-    event: SecurityEvent,
+    _event: SecurityEvent,
     threatLevel: ThreatLevel
   ): Promise<Alert[]> {
     if (threatLevel === ThreatLevel.LOW) {
@@ -388,7 +381,7 @@ export class EnhancedSecurityService {
   }
 
   // Private helper methods (would be implemented based on actual data access)
-  private async getSecurityEvents(timeRange: {
+  private async getSecurityEvents(_timeRange: {
     start: Date;
     end: Date;
   }): Promise<SecurityEvent[]> {
@@ -397,7 +390,7 @@ export class EnhancedSecurityService {
   }
 
   private calculateThreatDistribution(
-    events: SecurityEvent[]
+    _events: SecurityEvent[]
   ): Record<ThreatLevel, number> {
     return {
       [ThreatLevel.LOW]: 0,
@@ -407,7 +400,7 @@ export class EnhancedSecurityService {
     };
   }
 
-  private async getAlertCounts(timeRange: {
+  private async getAlertCounts(_timeRange: {
     start: Date;
     end: Date;
   }): Promise<Record<string, number>> {
@@ -434,7 +427,7 @@ export class EnhancedSecurityService {
     return Math.floor(Math.random() * 10);
   }
 
-  private async getRecentAlerts(limit: number): Promise<Alert[]> {
+  private async getRecentAlerts(_limit: number): Promise<Alert[]> {
     return [];
   }
 
@@ -447,13 +440,13 @@ export class EnhancedSecurityService {
   }
 
   private async performSearch(
-    query: Record<string, unknown>
+    _query: Record<string, unknown>
   ): Promise<SecurityEvent[]> {
     // Mock search implementation
     return [];
   }
 
-  private calculateAggregations(events: SecurityEvent[]) {
+  private calculateAggregations(_events: SecurityEvent[]) {
     return {
       byType: {},
       bySeverity: {},

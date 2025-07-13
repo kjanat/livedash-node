@@ -247,7 +247,7 @@ export class PerformanceOptimizer {
    * Optimize caching performance
    */
   private async optimizeCaching(
-    metrics: PerformanceMetrics
+    _metrics: PerformanceMetrics
   ): Promise<OptimizationResult[]> {
     const results: OptimizationResult[] = [];
 
@@ -284,7 +284,7 @@ export class PerformanceOptimizer {
    * Optimize response times
    */
   private async optimizeResponseTime(
-    metrics: PerformanceMetrics
+    _metrics: PerformanceMetrics
   ): Promise<OptimizationResult[]> {
     const results: OptimizationResult[] = [];
 
@@ -510,7 +510,7 @@ export class PerformanceOptimizer {
    * Handle memory bottleneck
    */
   private async handleMemoryBottleneck(
-    bottleneck: Bottleneck
+    _bottleneck: Bottleneck
   ): Promise<OptimizationResult[]> {
     const results: OptimizationResult[] = [];
 
@@ -534,7 +534,7 @@ export class PerformanceOptimizer {
    * Handle event loop bottleneck
    */
   private async handleEventLoopBottleneck(
-    bottleneck: Bottleneck
+    _bottleneck: Bottleneck
   ): Promise<OptimizationResult[]> {
     return [
       {
@@ -555,7 +555,7 @@ export class PerformanceOptimizer {
    * Handle cache bottleneck
    */
   private async handleCacheBottleneck(
-    bottleneck: Bottleneck
+    _bottleneck: Bottleneck
   ): Promise<OptimizationResult[]> {
     // Could implement cache warming or size adjustments
     return [
@@ -623,7 +623,7 @@ export class PerformanceOptimizer {
 
     // Calculate average improvement
     const improvementRates = this.optimizationHistory
-      .filter((r) => r.result.metrics?.improvement)
+      .filter((r) => r.result.metrics?.improvement !== undefined)
       .map((r) => r.result.metrics!.improvement);
 
     const averageImprovementRate =

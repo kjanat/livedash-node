@@ -222,7 +222,7 @@ export function requireAllPermissions(permissions: Permission[]) {
 export function validateCompanyAccess(
   context: APIContext,
   targetCompanyId: string,
-  resourceType?: ResourceType
+  _resourceType?: ResourceType
 ): CompanyAccessResult {
   if (!context.user) {
     return {
