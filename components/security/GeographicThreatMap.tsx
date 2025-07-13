@@ -8,114 +8,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { COUNTRY_NAMES } from "../../lib/constants/countries";
 
 interface GeographicThreatMapProps {
   geoDistribution: Record<string, number>;
   title?: string;
 }
 
-// Simple country code to name mapping for common countries
-const countryNames: Record<string, string> = {
-  USA: "United States",
-  GBR: "United Kingdom",
-  DEU: "Germany",
-  FRA: "France",
-  JPN: "Japan",
-  CHN: "China",
-  IND: "India",
-  BRA: "Brazil",
-  CAN: "Canada",
-  AUS: "Australia",
-  RUS: "Russia",
-  ESP: "Spain",
-  ITA: "Italy",
-  NLD: "Netherlands",
-  KOR: "South Korea",
-  MEX: "Mexico",
-  CHE: "Switzerland",
-  SWE: "Sweden",
-  NOR: "Norway",
-  DNK: "Denmark",
-  FIN: "Finland",
-  POL: "Poland",
-  BEL: "Belgium",
-  AUT: "Austria",
-  NZL: "New Zealand",
-  SGP: "Singapore",
-  THA: "Thailand",
-  IDN: "Indonesia",
-  MYS: "Malaysia",
-  PHL: "Philippines",
-  VNM: "Vietnam",
-  ARE: "UAE",
-  SAU: "Saudi Arabia",
-  ISR: "Israel",
-  ZAF: "South Africa",
-  EGY: "Egypt",
-  TUR: "Turkey",
-  GRC: "Greece",
-  PRT: "Portugal",
-  CZE: "Czech Republic",
-  HUN: "Hungary",
-  ROU: "Romania",
-  BGR: "Bulgaria",
-  HRV: "Croatia",
-  SVN: "Slovenia",
-  SVK: "Slovakia",
-  EST: "Estonia",
-  LVA: "Latvia",
-  LTU: "Lithuania",
-  LUX: "Luxembourg",
-  MLT: "Malta",
-  CYP: "Cyprus",
-  ISL: "Iceland",
-  IRL: "Ireland",
-  ARG: "Argentina",
-  CHL: "Chile",
-  COL: "Colombia",
-  PER: "Peru",
-  URY: "Uruguay",
-  ECU: "Ecuador",
-  BOL: "Bolivia",
-  PRY: "Paraguay",
-  VEN: "Venezuela",
-  UKR: "Ukraine",
-  BLR: "Belarus",
-  MDA: "Moldova",
-  GEO: "Georgia",
-  ARM: "Armenia",
-  AZE: "Azerbaijan",
-  KAZ: "Kazakhstan",
-  UZB: "Uzbekistan",
-  KGZ: "Kyrgyzstan",
-  TJK: "Tajikistan",
-  TKM: "Turkmenistan",
-  MNG: "Mongolia",
-};
+// Threat level configuration with colors
+const THREAT_LEVELS = {
+  high: { color: "destructive", bgColor: "bg-red-500" },
+  medium: { color: "secondary", bgColor: "bg-yellow-500" },
+  low: { color: "outline", bgColor: "bg-blue-500" },
+  minimal: { color: "outline", bgColor: "bg-gray-400" },
+} as const;
+
+type ThreatLevel = keyof typeof THREAT_LEVELS;
 
 export function GeographicThreatMap({
   geoDistribution,
   title = "Geographic Threat Distribution",
 }: GeographicThreatMapProps) {
-  const sortedCountries = Object.entries(geoDistribution)
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, 12);
-
+  // Calculate values once for efficiency
   const totalEvents = Object.values(geoDistribution).reduce(
     (sum, count) => sum + count,
     0
   );
+  const maxEventCount = Math.max(...Object.values(geoDistribution));
 
-  const getThreatLevel = (count: number, total: number) => {
+  const sortedCountries = Object.entries(geoDistribution)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 12);
+
+  const getThreatLevel = (count: number, total: number): ThreatLevel => {
     const percentage = (count / total) * 100;
-    if (percentage > 50) return { level: "high", color: "destructive" };
-    if (percentage > 20) return { level: "medium", color: "secondary" };
-    if (percentage > 5) return { level: "low", color: "outline" };
-    return { level: "minimal", color: "outline" };
+    if (percentage > 50) return "high";
+    if (percentage > 20) return "medium";
+    if (percentage > 5) return "low";
+    return "minimal";
   };
 
   const getCountryName = (code: string) => {
-    return countryNames[code] || code;
+    return COUNTRY_NAMES[code] || code;
   };
 
   return (
@@ -135,7 +69,7 @@ export function GeographicThreatMap({
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {sortedCountries.map(([countryCode, count]) => {
-                const threat = getThreatLevel(count, totalEvents);
+                const threatLevel = getThreatLevel(count, totalEvents);
                 const percentage = ((count / totalEvents) * 100).toFixed(1);
 
                 return (
@@ -150,7 +84,7 @@ export function GeographicThreatMap({
                         </span>
                         <Badge
                           variant={
-                            threat.color as
+                            THREAT_LEVELS[threatLevel].color as
                               | "default"
                               | "secondary"
                               | "destructive"
@@ -158,7 +92,7 @@ export function GeographicThreatMap({
                           }
                           className="text-xs"
                         >
-                          {threat.level}
+                          {threatLevel}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">
@@ -170,17 +104,9 @@ export function GeographicThreatMap({
                       <div className="text-2xl font-bold">{count}</div>
                       <div className="w-16 bg-gray-200 rounded-full h-2">
                         <div
-                          className={`h-2 rounded-full ${
-                            threat.level === "high"
-                              ? "bg-red-500"
-                              : threat.level === "medium"
-                                ? "bg-yellow-500"
-                                : threat.level === "low"
-                                  ? "bg-blue-500"
-                                  : "bg-gray-400"
-                          }`}
+                          className={`h-2 rounded-full ${THREAT_LEVELS[threatLevel].bgColor}`}
                           style={{
-                            width: `${Math.min(100, (count / Math.max(...Object.values(geoDistribution))) * 100)}%`,
+                            width: `${Math.min(100, (count / maxEventCount) * 100)}%`,
                           }}
                         />
                       </div>

@@ -41,19 +41,20 @@ function buildWhereClause(
   }
 
   // Date Range Filter
+  const dateFilters: { gte?: Date; lt?: Date } = {};
+
   if (startDate) {
-    whereClause.startTime = {
-      ...((whereClause.startTime as object) || {}),
-      gte: new Date(startDate),
-    };
+    dateFilters.gte = new Date(startDate);
   }
+
   if (endDate) {
     const inclusiveEndDate = new Date(endDate);
     inclusiveEndDate.setDate(inclusiveEndDate.getDate() + 1);
-    whereClause.startTime = {
-      ...((whereClause.startTime as object) || {}),
-      lt: inclusiveEndDate,
-    };
+    dateFilters.lt = inclusiveEndDate;
+  }
+
+  if (Object.keys(dateFilters).length > 0) {
+    whereClause.startTime = dateFilters;
   }
 
   return whereClause;

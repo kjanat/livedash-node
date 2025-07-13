@@ -16,6 +16,7 @@ interface CSRFProtectedFormProps {
   action: string;
   method?: "POST" | "PUT" | "DELETE" | "PATCH";
   onSubmit?: (formData: FormData) => Promise<void> | void;
+  onError?: (error: Error) => void;
   className?: string;
   encType?: string;
 }
@@ -28,6 +29,7 @@ export function CSRFProtectedForm({
   action,
   method = "POST",
   onSubmit,
+  onError,
   className,
   encType,
 }: CSRFProtectedFormProps) {
@@ -59,7 +61,14 @@ export function CSRFProtectedForm({
       }
     } catch (error) {
       console.error("Form submission error:", error);
-      // You might want to show an error message to the user here
+
+      // Notify user of the error
+      if (onError && error instanceof Error) {
+        onError(error);
+      } else {
+        // Fallback: show alert if no error handler provided
+        alert("An error occurred while submitting the form. Please try again.");
+      }
     }
   };
 
@@ -90,8 +99,11 @@ export function ExampleCSRFForm() {
 
   const handleCustomSubmit = async (formData: FormData) => {
     // Custom form submission logic
+    // Filter out CSRF token for security when logging
     const data = Object.fromEntries(formData.entries());
-    console.log("Form data:", data);
+    // biome-ignore lint/correctness/noUnusedVariables: csrf_token is intentionally extracted and discarded for security
+    const { csrf_token, ...safeData } = data;
+    console.log("Form data (excluding CSRF token):", safeData);
 
     // You can process the form data here before submission
     // The CSRF token is automatically included in formData

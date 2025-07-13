@@ -367,8 +367,16 @@ export default function AuditLogsPage() {
                 {auditLogs.map((log) => (
                   <TableRow
                     key={log.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-gray-50 focus:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
                     onClick={() => setSelectedLog(log)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedLog(log);
+                      }
+                    }}
+                    tabIndex={0}
+                    aria-label={`View details for ${eventTypeLabels[log.eventType] || log.eventType} event`}
                   >
                     <TableCell className="font-mono text-sm">
                       {formatDistanceToNow(new Date(log.timestamp), {
