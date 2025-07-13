@@ -84,6 +84,11 @@ interface NewCompanyData {
   maxUsers: number;
 }
 
+interface ValidationErrors {
+  csvUrl?: string;
+  adminEmail?: string;
+}
+
 interface FormIds {
   companyNameId: string;
   csvUrlId: string;
@@ -151,6 +156,7 @@ function usePlatformDashboardState() {
     adminPassword: "",
     maxUsers: 10,
   });
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
   return {
     dashboardData,
@@ -169,6 +175,8 @@ function usePlatformDashboardState() {
     setSearchTerm,
     newCompanyData,
     setNewCompanyData,
+    validationErrors,
+    setValidationErrors,
   };
 }
 
@@ -198,12 +206,43 @@ function useFormIds() {
 }
 
 /**
+ * Validation functions
+ */
+function validateEmail(email: string): string | undefined {
+  if (!email) return undefined;
+  
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!emailRegex.test(email)) {
+    return "Please enter a valid email address";
+  }
+  
+  return undefined;
+}
+
+function validateUrl(url: string): string | undefined {
+  if (!url) return undefined;
+  
+  try {
+    const urlObj = new URL(url);
+    if (!['http:', 'https:'].includes(urlObj.protocol)) {
+      return "URL must use HTTP or HTTPS protocol";
+    }
+    return undefined;
+  } catch {
+    return "Please enter a valid URL (e.g., https://api.company.com/data.csv)";
+  }
+}
+
+/**
  * Render company form fields
  */
 function renderCompanyFormFields(
   newCompanyData: NewCompanyData,
   setNewCompanyData: React.Dispatch<React.SetStateAction<NewCompanyData>>,
-  formIds: FormIds
+  formIds: FormIds,
+  validationErrors: ValidationErrors,
+  setValidationErrors: React.Dispatch<React.SetStateAction<ValidationErrors>>
 ) {
   return (
     <div className="grid gap-4 py-4">
@@ -226,14 +265,26 @@ function renderCompanyFormFields(
         <Input
           id={formIds.csvUrlId}
           value={newCompanyData.csvUrl}
-          onChange={(e) =>
+          onChange={(e) => {
+            const value = e.target.value;
             setNewCompanyData((prev: NewCompanyData) => ({
               ...prev,
-              csvUrl: e.target.value,
-            }))
-          }
+              csvUrl: value,
+            }));
+            
+            // Validate URL on change
+            const error = validateUrl(value);
+            setValidationErrors((prev) => ({
+              ...prev,
+              csvUrl: error,
+            }));
+          }}
           placeholder="https://api.company.com/sessions.csv"
+          className={validationErrors.csvUrl ? "border-red-500" : ""}
         />
+        {validationErrors.csvUrl && (
+          <p className="text-sm text-red-500">{validationErrors.csvUrl}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor={formIds.csvUsernameId}>CSV Auth Username</Label>
@@ -284,14 +335,26 @@ function renderCompanyFormFields(
           id={formIds.adminEmailId}
           type="email"
           value={newCompanyData.adminEmail}
-          onChange={(e) =>
+          onChange={(e) => {
+            const value = e.target.value;
             setNewCompanyData((prev: NewCompanyData) => ({
               ...prev,
-              adminEmail: e.target.value,
-            }))
-          }
+              adminEmail: value,
+            }));
+            
+            // Validate email on change
+            const error = validateEmail(value);
+            setValidationErrors((prev) => ({
+              ...prev,
+              adminEmail: error,
+            }));
+          }}
           placeholder="admin@acme.com"
+          className={validationErrors.adminEmail ? "border-red-500" : ""}
         />
+        {validationErrors.adminEmail && (
+          <p className="text-sm text-red-500">{validationErrors.adminEmail}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor={formIds.adminPasswordId}>Admin Password</Label>
@@ -549,6 +612,8 @@ export default function PlatformDashboard() {
     setSearchTerm,
     newCompanyData,
     setNewCompanyData,
+    validationErrors,
+    setValidationErrors,
   } = usePlatformDashboardState();
 
   const {
@@ -611,12 +676,21 @@ export default function PlatformDashboard() {
   };
 
   const validateCompanyData = () => {
-    return !!(
+    // Check for required fields
+    const hasRequiredFields = !!(
       newCompanyData.name &&
       newCompanyData.csvUrl &&
       newCompanyData.adminEmail &&
       newCompanyData.adminName
     );
+    
+    // Check for validation errors
+    const hasValidationErrors = !!(
+      validationErrors.csvUrl ||
+      validationErrors.adminEmail
+    );
+    
+    return hasRequiredFields && !hasValidationErrors;
   };
 
   const showValidationError = () => {
@@ -740,6 +814,7 @@ export default function PlatformDashboard() {
       adminPassword: "",
       maxUsers: 10,
     });
+    setValidationErrors({});
     setShowAddCompany(false);
   };
 
@@ -876,7 +951,9 @@ export default function PlatformDashboard() {
                         adminNameId,
                         adminPasswordId,
                         maxUsersId,
-                      }
+                      },
+                      validationErrors,
+                      setValidationErrors
                     )}
                     <DialogFooter>
                       <Button
@@ -887,7 +964,7 @@ export default function PlatformDashboard() {
                       </Button>
                       <Button
                         onClick={handleCreateCompany}
-                        disabled={isCreating}
+                        disabled={isCreating || !validateCompanyData()}
                       >
                         {isCreating ? "Creating..." : "Create Company"}
                       </Button>

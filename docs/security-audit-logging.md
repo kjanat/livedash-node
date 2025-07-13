@@ -104,8 +104,8 @@ import { securityAuditLogger, AuditOutcome } from "./lib/securityAuditLogger";
 await securityAuditLogger.logAuthentication("user_login_success", AuditOutcome.SUCCESS, {
   userId: "user-123",
   companyId: "company-456",
-  ipAddress: "192.168.1.1",
-  userAgent: "Mozilla/5.0...",
+  ipAddress: "192.168.1.***",
+  userAgent: "Mozilla/5.0 (masked)",
   metadata: { loginMethod: "password" },
 });
 

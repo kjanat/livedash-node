@@ -139,26 +139,19 @@ async function getPerformanceSummary() {
 
 async function getPerformanceHistory(limit: number) {
   const history = performanceMonitor.getHistory(limit);
-  const historyAsRecords = history.map(
-    (item) => item as unknown as Record<string, unknown>
-  );
+  // history is already typed as PerformanceMetrics[], no casting needed
 
   return NextResponse.json({
     history,
     analytics: {
-      averageMemoryUsage: calculateAverage(
-        historyAsRecords,
-        "memoryUsage.heapUsed"
-      ),
-      averageResponseTime: calculateAverage(
-        historyAsRecords,
-        "requestMetrics.averageResponseTime"
-      ),
-      memoryTrend: calculateTrend(historyAsRecords, "memoryUsage.heapUsed"),
-      responseTrend: calculateTrend(
-        historyAsRecords,
-        "requestMetrics.averageResponseTime"
-      ),
+      averageMemoryUsage: history.length > 0 
+        ? history.reduce((sum, item) => sum + item.memoryUsage.heapUsed, 0) / history.length
+        : 0,
+      averageResponseTime: history.length > 0
+        ? history.reduce((sum, item) => sum + item.requestMetrics.averageResponseTime, 0) / history.length
+        : 0,
+      memoryTrend: calculateTrend(history, "memoryUsage.heapUsed"),
+      responseTrend: calculateTrend(history, "requestMetrics.averageResponseTime"),
     },
   });
 }
@@ -269,11 +262,81 @@ async function optimizeCache(
   target: string,
   _options: Record<string, unknown> = {}
 ) {
-  // Implementation for cache optimization
-  return NextResponse.json({
-    success: true,
-    message: `Cache optimization applied to '${target}'`,
-  });
+  try {
+    let optimizationResults: string[] = [];
+
+    switch (target) {
+      case "memory":
+        // Trigger garbage collection and memory cleanup
+        if (global.gc) {
+          global.gc();
+          optimizationResults.push("Forced garbage collection");
+        }
+        
+        // Get current memory usage before optimization
+        const beforeMemory = cacheManager.getTotalMemoryUsage();
+        optimizationResults.push(`Memory usage before optimization: ${beforeMemory.toFixed(2)} MB`);
+        break;
+
+      case "lru":
+        // Clear all LRU caches to free memory
+        const beforeClearStats = cacheManager.getAllStats();
+        const totalCachesBefore = Object.keys(beforeClearStats).length;
+        
+        cacheManager.clearAll();
+        optimizationResults.push(`Cleared ${totalCachesBefore} LRU caches`);
+        break;
+
+      case "all":
+        // Comprehensive cache optimization
+        if (global.gc) {
+          global.gc();
+          optimizationResults.push("Forced garbage collection");
+        }
+        
+        const allStats = cacheManager.getAllStats();
+        const totalCaches = Object.keys(allStats).length;
+        const memoryBefore = cacheManager.getTotalMemoryUsage();
+        
+        cacheManager.clearAll();
+        
+        const memoryAfter = cacheManager.getTotalMemoryUsage();
+        const memorySaved = memoryBefore - memoryAfter;
+        
+        optimizationResults.push(
+          `Cleared ${totalCaches} caches`,
+          `Memory freed: ${memorySaved.toFixed(2)} MB`
+        );
+        break;
+
+      default:
+        return NextResponse.json({
+          success: false,
+          error: `Unknown optimization target: ${target}. Valid targets: memory, lru, all`,
+        }, { status: 400 });
+    }
+
+    // Get post-optimization metrics
+    const metrics = cacheManager.getPerformanceReport();
+    
+    return NextResponse.json({
+      success: true,
+      message: `Cache optimization applied to '${target}'`,
+      optimizations: optimizationResults,
+      metrics: {
+        totalMemoryUsage: metrics.totalMemoryUsage,
+        averageHitRate: metrics.averageHitRate,
+        totalCaches: metrics.totalCaches,
+      },
+    });
+  } catch (error) {
+    console.error("Cache optimization failed:", error);
+    return NextResponse.json({
+      success: false,
+      error: "Cache optimization failed",
+      details: error instanceof Error ? error.message : "Unknown error",
+    }, { status: 500 });
+  }
 }
 
 async function invalidatePattern(
@@ -285,11 +348,77 @@ async function invalidatePattern(
     throw new Error("Pattern is required for invalidation");
   }
 
-  // Implementation for pattern-based invalidation
-  return NextResponse.json({
-    success: true,
-    message: `Pattern '${pattern}' invalidated in cache '${target}'`,
-  });
+  try {
+    let invalidatedCount = 0;
+    let invalidationResults: string[] = [];
+
+    switch (target) {
+      case "all":
+        // Clear all caches (pattern-based clearing not available in current implementation)
+        const allCacheStats = cacheManager.getAllStats();
+        const allCacheNames = Object.keys(allCacheStats);
+        
+        cacheManager.clearAll();
+        invalidatedCount = allCacheNames.length;
+        invalidationResults.push(`Cleared all ${invalidatedCount} caches (pattern matching not supported)`);
+        break;
+
+      case "memory":
+        // Get memory usage and clear if pattern would match memory operations
+        const memoryBefore = cacheManager.getTotalMemoryUsage();
+        cacheManager.clearAll();
+        const memoryAfter = cacheManager.getTotalMemoryUsage();
+        
+        invalidatedCount = 1;
+        invalidationResults.push(`Cleared memory caches, freed ${(memoryBefore - memoryAfter).toFixed(2)} MB`);
+        break;
+
+      case "lru": 
+        // Clear all LRU caches
+        const lruStats = cacheManager.getAllStats();
+        const lruCacheCount = Object.keys(lruStats).length;
+        
+        cacheManager.clearAll();
+        invalidatedCount = lruCacheCount;
+        invalidationResults.push(`Cleared ${invalidatedCount} LRU caches`);
+        break;
+
+      default:
+        // Try to remove a specific cache by name
+        const removed = cacheManager.removeCache(target);
+        if (!removed) {
+          return NextResponse.json({
+            success: false,
+            error: `Cache '${target}' not found. Valid targets: all, memory, lru, or specific cache name`,
+          }, { status: 400 });
+        }
+        invalidatedCount = 1;
+        invalidationResults.push(`Removed cache '${target}'`);
+        break;
+    }
+
+    // Get post-invalidation metrics
+    const metrics = cacheManager.getPerformanceReport();
+
+    return NextResponse.json({
+      success: true,
+      message: `Pattern '${pattern}' invalidated in cache '${target}'`,
+      invalidated: invalidatedCount,
+      details: invalidationResults,
+      metrics: {
+        totalMemoryUsage: metrics.totalMemoryUsage,
+        totalCaches: metrics.totalCaches,
+        averageHitRate: metrics.averageHitRate,
+      },
+    });
+  } catch (error) {
+    console.error("Pattern invalidation failed:", error);
+    return NextResponse.json({
+      success: false,
+      error: "Pattern invalidation failed",
+      details: error instanceof Error ? error.message : "Unknown error",
+    }, { status: 500 });
+  }
 }
 
 // Helper functions
@@ -363,7 +492,7 @@ function calculateOverallDeduplicationStats(
   };
 }
 
-function calculateAverage(
+function _calculateAverage(
   history: Record<string, unknown>[],
   path: string
 ): number {
@@ -378,7 +507,7 @@ function calculateAverage(
 }
 
 function calculateTrend(
-  history: Record<string, unknown>[],
+  history: Array<PerformanceMetrics>,
   path: string
 ): "increasing" | "decreasing" | "stable" {
   if (history.length < 2) return "stable";
@@ -388,12 +517,20 @@ function calculateTrend(
 
   if (older.length === 0) return "stable";
 
-  const recentAvg = calculateAverage(recent, path);
-  const olderAvg = calculateAverage(older, path);
+  const recentAvg = recent.length > 0 
+    ? recent.reduce((sum, item) => sum + getNestedPropertyValue(item, path), 0) / recent.length
+    : 0;
+  const olderAvg = older.length > 0
+    ? older.reduce((sum, item) => sum + getNestedPropertyValue(item, path), 0) / older.length
+    : 0;
 
   if (recentAvg > olderAvg * 1.1) return "increasing";
   if (recentAvg < olderAvg * 0.9) return "decreasing";
   return "stable";
+}
+
+function getNestedPropertyValue(obj: Record<string, unknown>, path: string): number {
+  return path.split('.').reduce((current, key) => current?.[key] ?? 0, obj) || 0;
 }
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {

@@ -136,8 +136,8 @@ const metrics = await response.json();
         "sourceFile": "https://example.com/page",
         "riskLevel": "high",
         "bypassAttempt": true,
-        "ipAddress": "192.168.1.100",
-        "userAgent": "Mozilla/5.0..."
+        "ipAddress": "192.168.1.***",
+        "userAgent": "Mozilla/5.0 (masked)"
       }
     ]
   }
@@ -425,9 +425,16 @@ CSP_ALERT_THRESHOLD=5              # violations per 10 minutes
 
 ### Privacy Protection
 
-- **IP anonymization** option for GDPR compliance
-- **User agent sanitization** removes sensitive information
-- **No personal data** stored in violation reports
+**⚠️ Data Collection Notice:**
+- **IP addresses** are collected and stored in memory for security monitoring
+- **User agent strings** are stored for browser compatibility analysis
+- **Legal basis**: Legitimate interest for security incident detection and prevention
+- **Retention**: In-memory storage only, automatically purged after 7 days or application restart
+- **Data minimization**: Only violation-related metadata is retained, not page content
+
+**Planned Privacy Enhancements:**
+- IP anonymization options for GDPR compliance (roadmap)
+- User agent sanitization to remove sensitive information (roadmap)
 
 ### Rate Limiting Protection
 

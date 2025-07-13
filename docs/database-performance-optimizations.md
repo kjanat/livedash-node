@@ -21,12 +21,12 @@ The optimization focuses on the most frequently queried patterns in the applicat
 ```sql
 -- Query pattern: companyId + processingStatus + requestedAt
 CREATE INDEX "AIProcessingRequest_companyId_processingStatus_requestedAt_idx"
-ON "AIProcessingRequest" ("sessionId", "processingStatus", "requestedAt");
+ON "AIProcessingRequest" ("companyId", "processingStatus", "requestedAt");
 
 -- Covering index for batch processing
-CREATE INDEX "AIProcessingRequest_session_companyId_processingStatus_idx"
-ON "AIProcessingRequest" ("sessionId")
-INCLUDE ("processingStatus", "batchId", "requestedAt");
+CREATE INDEX "AIProcessingRequest_companyId_processingStatus_covering_idx"
+ON "AIProcessingRequest" ("companyId")
+INCLUDE ("processingStatus", "batchId", "requestedAt", "sessionId");
 ```
 
 **Impact**:

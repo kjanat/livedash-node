@@ -65,8 +65,8 @@ const data = await response.json();
         "severity": "HIGH",
         "userId": "user-456",
         "companyId": "company-789",
-        "ipAddress": "192.168.1.100",
-        "userAgent": "Mozilla/5.0...",
+        "ipAddress": "192.168.1.***",
+        "userAgent": "Mozilla/5.0 (masked)",
         "timestamp": "2024-01-01T12:00:00Z",
         "description": "Failed login attempt",
         "metadata": {

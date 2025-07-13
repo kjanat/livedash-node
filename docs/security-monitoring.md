@@ -191,7 +191,7 @@ const analysis = await fetch("/api/admin/security-monitoring/threat-analysis", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    ipAddress: "192.168.1.100",
+    ipAddress: "192.168.1.***",
     timeRange: {
       start: "2024-01-01T00:00:00Z",
       end: "2024-01-02T00:00:00Z",

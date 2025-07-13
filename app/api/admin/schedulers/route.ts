@@ -1,131 +1,92 @@
-import { type NextRequest, NextResponse } from "next/server";
 import { getSchedulerIntegration } from "@/lib/services/schedulers/ServerSchedulerIntegration";
+import { createAdminHandler } from "@/lib/api";
+import { z } from "zod";
 
 /**
  * Get all schedulers with their status and metrics
+ * Requires admin authentication
  */
-export async function GET() {
-  try {
-    const integration = getSchedulerIntegration();
-    const schedulers = integration.getSchedulersList();
-    const health = integration.getHealthStatus();
+export const GET = createAdminHandler(async (_context) => {
+  const integration = getSchedulerIntegration();
+  const schedulers = integration.getSchedulersList();
+  const health = integration.getHealthStatus();
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        health,
-        schedulers,
-        timestamp: new Date().toISOString(),
-      },
-    });
-  } catch (error) {
-    console.error("[Scheduler Management API] GET Error:", error);
+  return {
+    success: true,
+    data: {
+      health,
+      schedulers,
+      timestamp: new Date().toISOString(),
+    },
+  };
+});
 
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to get scheduler information",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+const PostInputSchema = z.object({
+  action: z.enum(["start", "stop", "trigger", "startAll", "stopAll"]),
+  schedulerId: z.string().optional(),
+}).refine(
+  (data) => {
+    // schedulerId is required for individual scheduler actions
+    const actionsRequiringSchedulerId = ["start", "stop", "trigger"];
+    if (actionsRequiringSchedulerId.includes(data.action)) {
+      return data.schedulerId !== undefined && data.schedulerId.length > 0;
+    }
+    return true;
+  },
+  {
+    message: "schedulerId is required for start, stop, and trigger actions",
+    path: ["schedulerId"],
   }
-}
+);
 
 /**
  * Control scheduler operations (start/stop/trigger)
+ * Requires admin authentication
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { action, schedulerId } = body;
+export const POST = createAdminHandler(async (_context, validatedData) => {
+  const { action, schedulerId } = validatedData;
 
-    if (!action) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Action is required",
-        },
-        { status: 400 }
-      );
-    }
+  const integration = getSchedulerIntegration();
 
-    const integration = getSchedulerIntegration();
-
-    switch (action) {
-      case "start":
-        if (!schedulerId) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "schedulerId is required for start action",
-            },
-            { status: 400 }
-          );
-        }
+  switch (action) {
+    case "start":
+      if (schedulerId) {
         await integration.startScheduler(schedulerId);
-        break;
+      }
+      break;
 
-      case "stop":
-        if (!schedulerId) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "schedulerId is required for stop action",
-            },
-            { status: 400 }
-          );
-        }
+    case "stop":
+      if (schedulerId) {
         await integration.stopScheduler(schedulerId);
-        break;
+      }
+      break;
 
-      case "trigger":
-        if (!schedulerId) {
-          return NextResponse.json(
-            {
-              success: false,
-              error: "schedulerId is required for trigger action",
-            },
-            { status: 400 }
-          );
-        }
+    case "trigger":
+      if (schedulerId) {
         await integration.triggerScheduler(schedulerId);
-        break;
+      }
+      break;
 
-      case "startAll":
-        await integration.getManager().startAll();
-        break;
+    case "startAll":
+      await integration.getManager().startAll();
+      break;
 
-      case "stopAll":
-        await integration.getManager().stopAll();
-        break;
+    case "stopAll":
+      await integration.getManager().stopAll();
+      break;
 
-      default:
-        return NextResponse.json(
-          {
-            success: false,
-            error: `Unknown action: ${action}`,
-          },
-          { status: 400 }
-        );
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Action '${action}' completed successfully`,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("[Scheduler Management API] POST Error:", error);
-
-    return NextResponse.json(
-      {
+    default:
+      return {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        timestamp: new Date().toISOString(),
-      },
-      { status: 500 }
-    );
+        error: `Unknown action: ${action}`,
+      };
   }
-}
+
+  return {
+    success: true,
+    message: `Action '${action}' completed successfully`,
+    timestamp: new Date().toISOString(),
+  };
+}, {
+  validateInput: PostInputSchema,
+});

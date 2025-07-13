@@ -230,17 +230,35 @@ function useCompanyData(
         setOriginalData(companyData);
         setHasFetched(true);
       } else {
+        const errorText = await response.text();
+        const errorMessage = `Failed to load company data (${response.status}: ${response.statusText})`;
+        
+        console.error("Failed to fetch company - HTTP Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          response: errorText,
+          url: response.url,
+        });
+        
         toast({
           title: "Error",
-          description: "Failed to load company data",
+          description: errorMessage,
           variant: "destructive",
         });
       }
     } catch (error) {
-      console.error("Failed to fetch company:", error);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      
+      console.error("Failed to fetch company - Network/Parse Error:", {
+        message: errorMessage,
+        error: error,
+        stack: error instanceof Error ? error.stack : undefined,
+        url: `/api/platform/companies/${params.id}`,
+      });
+      
       toast({
-        title: "Error",
-        description: "Failed to load company data",
+        title: "Error", 
+        description: `Failed to load company data: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
@@ -350,12 +368,20 @@ function renderCompanyInfoCard(
               id={maxUsersFieldId}
               type="number"
               value={state.editData.maxUsers || 0}
-              onChange={(e) =>
+              onChange={(e) => {
+                const value = e.target.value;
+                const parsedValue = Number.parseInt(value, 10);
+                
+                // Validate input: must be a positive number
+                const maxUsers = !Number.isNaN(parsedValue) && parsedValue > 0 
+                  ? parsedValue 
+                  : 1; // Default to 1 for invalid/negative values
+                
                 state.setEditData((prev) => ({
                   ...prev,
-                  maxUsers: Number.parseInt(e.target.value),
-                }))
-              }
+                  maxUsers,
+                }));
+              }}
               disabled={!canEdit}
             />
           </div>
