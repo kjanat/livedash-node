@@ -2,21 +2,21 @@ import { type NextRequest, NextResponse } from "next/server";
 import { buildCSP, generateNonce } from "@/lib/csp-server";
 
 export function middleware(request: NextRequest) {
-  // Skip CSP for API routes (except CSP report endpoint)
-  if (
-    request.nextUrl.pathname.startsWith("/api") &&
-    !request.nextUrl.pathname.startsWith("/api/csp-report")
-  ) {
-    return NextResponse.next();
-  }
+  const pathname = request.nextUrl.pathname;
 
-  // Skip CSP for static assets
+  // Skip middleware entirely for static assets and Next.js internals
   if (
-    request.nextUrl.pathname.startsWith("/_next") ||
-    request.nextUrl.pathname.startsWith("/favicon") ||
-    request.nextUrl.pathname.includes(".")
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/") ||
+    pathname.includes(".") ||
+    pathname.startsWith("/favicon")
   ) {
-    return NextResponse.next();
+    // Skip CSP for API routes except CSP report endpoint
+    if (pathname === "/api/csp-report") {
+      // Allow CSP report endpoint to proceed with CSP headers
+    } else {
+      return NextResponse.next();
+    }
   }
 
   const response = NextResponse.next();
@@ -104,13 +104,18 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes, handled separately)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public folder files
+     * Match all request paths except:
+     * - API routes (except /api/csp-report)
+     * - Next.js internals (_next)
+     * - Static files (anything with a file extension)
+     * - Favicon
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|public).*)",
+    {
+      source: "/((?!_next|favicon.ico).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
   ],
 };

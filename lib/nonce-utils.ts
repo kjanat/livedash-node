@@ -8,19 +8,12 @@ export async function getNonce(): Promise<string | undefined> {
     const headersList = await headers();
     const nonce = headersList.get("X-Nonce");
 
-    // Log for debugging hydration issues
-    if (!nonce && process.env.NODE_ENV === "development") {
-      console.warn(
-        "No nonce found in headers - this may cause hydration mismatches"
-      );
-    }
-
+    // Don't warn about missing nonce as it's expected for static assets
+    // The middleware only adds nonce for non-static routes
     return nonce || undefined;
-  } catch (error) {
+  } catch {
     // Headers not available (e.g., in client-side code)
-    if (process.env.NODE_ENV === "development") {
-      console.warn("Failed to get headers for nonce:", error);
-    }
+    // This is expected and not an error
     return undefined;
   }
 }
