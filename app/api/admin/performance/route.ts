@@ -6,14 +6,14 @@
  */
 
 import { NextResponse } from "next/server";
-import {
-  performanceMonitor,
-  PerformanceUtils,
-} from "@/lib/performance/monitor";
-import { deduplicationManager } from "@/lib/performance/deduplication";
-import { cacheManager } from "@/lib/performance/cache";
 import { withErrorHandling } from "@/lib/api/errors";
 import { createAPIHandler, UserRole } from "@/lib/api/handler";
+import { cacheManager } from "@/lib/performance/cache";
+import { deduplicationManager } from "@/lib/performance/deduplication";
+import {
+  PerformanceUtils,
+  performanceMonitor,
+} from "@/lib/performance/monitor";
 
 /**
  * GET /api/admin/performance
@@ -26,7 +26,7 @@ export const GET = withErrorHandling(
       const type = url.searchParams.get("type") || "summary";
       const limit = Math.min(
         100,
-        parseInt(url.searchParams.get("limit") || "50", 10)
+        Number.parseInt(url.searchParams.get("limit") || "50", 10)
       );
 
       switch (type) {
@@ -144,14 +144,23 @@ async function getPerformanceHistory(limit: number) {
   return NextResponse.json({
     history,
     analytics: {
-      averageMemoryUsage: history.length > 0 
-        ? history.reduce((sum, item) => sum + item.memoryUsage.heapUsed, 0) / history.length
-        : 0,
-      averageResponseTime: history.length > 0
-        ? history.reduce((sum, item) => sum + item.requestMetrics.averageResponseTime, 0) / history.length
-        : 0,
+      averageMemoryUsage:
+        history.length > 0
+          ? history.reduce((sum, item) => sum + item.memoryUsage.heapUsed, 0) /
+            history.length
+          : 0,
+      averageResponseTime:
+        history.length > 0
+          ? history.reduce(
+              (sum, item) => sum + item.requestMetrics.averageResponseTime,
+              0
+            ) / history.length
+          : 0,
       memoryTrend: calculateTrend(history, "memoryUsage.heapUsed"),
-      responseTrend: calculateTrend(history, "requestMetrics.averageResponseTime"),
+      responseTrend: calculateTrend(
+        history,
+        "requestMetrics.averageResponseTime"
+      ),
     },
   });
 }
@@ -230,13 +239,12 @@ async function clearCache(target?: string) {
         ? `Cache '${target}' cleared`
         : `Cache '${target}' not found`,
     });
-  } else {
-    cacheManager.clearAll();
-    return NextResponse.json({
-      success: true,
-      message: "All caches cleared",
-    });
   }
+  cacheManager.clearAll();
+  return NextResponse.json({
+    success: true,
+    message: "All caches cleared",
+  });
 }
 
 async function startMonitoring(options: { interval?: number } = {}) {
@@ -263,62 +271,70 @@ async function optimizeCache(
   _options: Record<string, unknown> = {}
 ) {
   try {
-    let optimizationResults: string[] = [];
+    const optimizationResults: string[] = [];
 
     switch (target) {
-      case "memory":
+      case "memory": {
         // Trigger garbage collection and memory cleanup
         if (global.gc) {
           global.gc();
           optimizationResults.push("Forced garbage collection");
         }
-        
+
         // Get current memory usage before optimization
         const beforeMemory = cacheManager.getTotalMemoryUsage();
-        optimizationResults.push(`Memory usage before optimization: ${beforeMemory.toFixed(2)} MB`);
+        optimizationResults.push(
+          `Memory usage before optimization: ${beforeMemory.toFixed(2)} MB`
+        );
         break;
+      }
 
-      case "lru":
+      case "lru": {
         // Clear all LRU caches to free memory
         const beforeClearStats = cacheManager.getAllStats();
         const totalCachesBefore = Object.keys(beforeClearStats).length;
-        
+
         cacheManager.clearAll();
         optimizationResults.push(`Cleared ${totalCachesBefore} LRU caches`);
         break;
+      }
 
-      case "all":
+      case "all": {
         // Comprehensive cache optimization
         if (global.gc) {
           global.gc();
           optimizationResults.push("Forced garbage collection");
         }
-        
+
         const allStats = cacheManager.getAllStats();
         const totalCaches = Object.keys(allStats).length;
         const memoryBefore = cacheManager.getTotalMemoryUsage();
-        
+
         cacheManager.clearAll();
-        
+
         const memoryAfter = cacheManager.getTotalMemoryUsage();
         const memorySaved = memoryBefore - memoryAfter;
-        
+
         optimizationResults.push(
           `Cleared ${totalCaches} caches`,
           `Memory freed: ${memorySaved.toFixed(2)} MB`
         );
         break;
+      }
 
       default:
-        return NextResponse.json({
-          success: false,
-          error: `Unknown optimization target: ${target}. Valid targets: memory, lru, all`,
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Unknown optimization target: ${target}. Valid targets: memory, lru, all`,
+          },
+          { status: 400 }
+        );
     }
 
     // Get post-optimization metrics
     const metrics = cacheManager.getPerformanceReport();
-    
+
     return NextResponse.json({
       success: true,
       message: `Cache optimization applied to '${target}'`,
@@ -331,11 +347,14 @@ async function optimizeCache(
     });
   } catch (error) {
     console.error("Cache optimization failed:", error);
-    return NextResponse.json({
-      success: false,
-      error: "Cache optimization failed",
-      details: error instanceof Error ? error.message : "Unknown error",
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Cache optimization failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -350,51 +369,62 @@ async function invalidatePattern(
 
   try {
     let invalidatedCount = 0;
-    let invalidationResults: string[] = [];
+    const invalidationResults: string[] = [];
 
     switch (target) {
-      case "all":
+      case "all": {
         // Clear all caches (pattern-based clearing not available in current implementation)
         const allCacheStats = cacheManager.getAllStats();
         const allCacheNames = Object.keys(allCacheStats);
-        
+
         cacheManager.clearAll();
         invalidatedCount = allCacheNames.length;
-        invalidationResults.push(`Cleared all ${invalidatedCount} caches (pattern matching not supported)`);
+        invalidationResults.push(
+          `Cleared all ${invalidatedCount} caches (pattern matching not supported)`
+        );
         break;
+      }
 
-      case "memory":
+      case "memory": {
         // Get memory usage and clear if pattern would match memory operations
         const memoryBefore = cacheManager.getTotalMemoryUsage();
         cacheManager.clearAll();
         const memoryAfter = cacheManager.getTotalMemoryUsage();
-        
-        invalidatedCount = 1;
-        invalidationResults.push(`Cleared memory caches, freed ${(memoryBefore - memoryAfter).toFixed(2)} MB`);
-        break;
 
-      case "lru": 
+        invalidatedCount = 1;
+        invalidationResults.push(
+          `Cleared memory caches, freed ${(memoryBefore - memoryAfter).toFixed(2)} MB`
+        );
+        break;
+      }
+
+      case "lru": {
         // Clear all LRU caches
         const lruStats = cacheManager.getAllStats();
         const lruCacheCount = Object.keys(lruStats).length;
-        
+
         cacheManager.clearAll();
         invalidatedCount = lruCacheCount;
         invalidationResults.push(`Cleared ${invalidatedCount} LRU caches`);
         break;
+      }
 
-      default:
+      default: {
         // Try to remove a specific cache by name
         const removed = cacheManager.removeCache(target);
         if (!removed) {
-          return NextResponse.json({
-            success: false,
-            error: `Cache '${target}' not found. Valid targets: all, memory, lru, or specific cache name`,
-          }, { status: 400 });
+          return NextResponse.json(
+            {
+              success: false,
+              error: `Cache '${target}' not found. Valid targets: all, memory, lru, or specific cache name`,
+            },
+            { status: 400 }
+          );
         }
         invalidatedCount = 1;
         invalidationResults.push(`Removed cache '${target}'`);
         break;
+      }
     }
 
     // Get post-invalidation metrics
@@ -413,11 +443,14 @@ async function invalidatePattern(
     });
   } catch (error) {
     console.error("Pattern invalidation failed:", error);
-    return NextResponse.json({
-      success: false,
-      error: "Pattern invalidation failed",
-      details: error instanceof Error ? error.message : "Unknown error",
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Pattern invalidation failed",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 
@@ -507,7 +540,7 @@ function _calculateAverage(
 }
 
 function calculateTrend(
-  history: Array<PerformanceMetrics>,
+  history: Array<any>,
   path: string
 ): "increasing" | "decreasing" | "stable" {
   if (history.length < 2) return "stable";
@@ -517,20 +550,30 @@ function calculateTrend(
 
   if (older.length === 0) return "stable";
 
-  const recentAvg = recent.length > 0 
-    ? recent.reduce((sum, item) => sum + getNestedPropertyValue(item, path), 0) / recent.length
-    : 0;
-  const olderAvg = older.length > 0
-    ? older.reduce((sum, item) => sum + getNestedPropertyValue(item, path), 0) / older.length
-    : 0;
+  const recentAvg =
+    recent.length > 0
+      ? recent.reduce(
+          (sum, item) => sum + getNestedPropertyValue(item, path),
+          0
+        ) / recent.length
+      : 0;
+  const olderAvg =
+    older.length > 0
+      ? older.reduce(
+          (sum, item) => sum + getNestedPropertyValue(item, path),
+          0
+        ) / older.length
+      : 0;
 
   if (recentAvg > olderAvg * 1.1) return "increasing";
   if (recentAvg < olderAvg * 0.9) return "decreasing";
   return "stable";
 }
 
-function getNestedPropertyValue(obj: Record<string, unknown>, path: string): number {
-  return path.split('.').reduce((current, key) => current?.[key] ?? 0, obj) || 0;
+function getNestedPropertyValue(obj: any, path: string): number {
+  return (
+    path.split(".").reduce((current, key) => current?.[key] ?? 0, obj) || 0
+  );
 }
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
