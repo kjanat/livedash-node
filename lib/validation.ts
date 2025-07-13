@@ -71,8 +71,16 @@ export const sessionFilterSchema = z.object({
       "UNRECOGNIZED_OTHER",
     ])
     .optional(),
+  language: z
+    .string()
+    .regex(/^[a-z]{2}$/)
+    .optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
+  sortKey: z
+    .enum(["startTime", "category", "language", "sentiment", "sessionId"])
+    .default("startTime"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(100).default(20),
 });

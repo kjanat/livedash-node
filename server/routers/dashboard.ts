@@ -21,8 +21,18 @@ export const dashboardRouter = router({
   getSessions: companyProcedure
     .input(sessionFilterSchema)
     .query(async ({ input, ctx }) => {
-      const { search, sentiment, category, startDate, endDate, page, limit } =
-        input;
+      const {
+        search,
+        sentiment,
+        category,
+        language,
+        startDate,
+        endDate,
+        sortKey,
+        sortOrder,
+        page,
+        limit,
+      } = input;
 
       // Build where clause
       const where: Prisma.SessionWhereInput = {
@@ -42,6 +52,10 @@ export const dashboardRouter = router({
 
       if (category) {
         where.category = category;
+      }
+
+      if (language) {
+        where.language = language;
       }
 
       if (startDate || endDate) {
@@ -89,7 +103,7 @@ export const dashboardRouter = router({
             orderBy: { order: "asc" },
           },
         },
-        orderBy: { startTime: "desc" },
+        orderBy: { [sortKey]: sortOrder },
         skip: (page - 1) * limit,
         take: limit,
       });

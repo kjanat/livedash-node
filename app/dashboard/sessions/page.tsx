@@ -504,11 +504,11 @@ export default function SessionsPage() {
       category: selectedCategory
         ? (selectedCategory as z.infer<typeof sessionFilterSchema>["category"])
         : undefined,
-      // language: selectedLanguage || undefined, // Not supported in schema yet
+      language: selectedLanguage || undefined,
       startDate: startDate || undefined,
       endDate: endDate || undefined,
-      // sortKey: sortKey || undefined, // Not supported in schema yet
-      // sortOrder: sortOrder || undefined, // Not supported in schema yet
+      sortKey: sortKey || undefined,
+      sortOrder: sortOrder || undefined,
       page: currentPage,
       limit: pageSize,
     },
