@@ -1,16 +1,16 @@
 // SessionImport to Session processor
-import { ProcessingStage, SentimentCategory } from "@prisma/client";
+import { ProcessingStage } from "@prisma/client";
 import cron from "node-cron";
-import { withRetry } from "./database-retry.js";
+import { withRetry } from "./database-retry";
 import { getSchedulerConfig } from "./env";
-import { prisma } from "./prisma.js";
+import { prisma } from "./prisma";
 import {
   completeStage,
   failStage,
   initializeSession,
   skipStage,
   startStage,
-} from "./processingStatusManager.js";
+} from "./processingStatusManager";
 import {
   fetchTranscriptContent,
   isValidTranscriptUrl,
@@ -22,19 +22,23 @@ interface ImportRecord {
   startTimeRaw: string;
   endTimeRaw: string;
   externalSessionId: string;
-  sessionId?: string;
-  userId?: string;
-  category?: string;
-  language?: string;
-  sentiment?: string;
-  escalated?: boolean;
-  forwardedHr?: boolean;
-  avgResponseTime?: number;
-  messagesSent?: number;
-  fullTranscriptUrl?: string;
-  rawTranscriptContent?: string;
-  aiSummary?: string;
-  initialMsg?: string;
+  sessionId?: string | null;
+  userId?: string | null;
+  category: string | null;
+  language: string | null;
+  sentiment?: string | null;
+  escalated?: boolean | null;
+  forwardedHr?: boolean | null;
+  avgResponseTime?: number | null;
+  messagesSent: number | null;
+  fullTranscriptUrl: string | null;
+  rawTranscriptContent: string | null;
+  aiSummary?: string | null;
+  initialMsg?: string | null;
+  ipAddress: string | null;
+  countryCode: string | null;
+  avgResponseTimeSeconds: number | null;
+  initialMessage: string | null;
 }
 
 /**
@@ -74,34 +78,6 @@ function parseEuropeanDate(dateStr: string): Date {
 }
 
 /**
- * Helper function to parse sentiment from raw string (fallback only)
- */
-function _parseFallbackSentiment(
-  sentimentRaw: string | null
-): SentimentCategory | null {
-  if (!sentimentRaw) return null;
-
-  const sentimentStr = sentimentRaw.toLowerCase();
-  if (sentimentStr.includes("positive")) {
-    return SentimentCategory.POSITIVE;
-  }
-  if (sentimentStr.includes("negative")) {
-    return SentimentCategory.NEGATIVE;
-  }
-  return SentimentCategory.NEUTRAL;
-}
-
-/**
- * Helper function to parse boolean from raw string (fallback only)
- */
-function _parseFallbackBoolean(rawValue: string | null): boolean | null {
-  if (!rawValue) return null;
-  return ["true", "1", "yes", "escalated", "forwarded"].includes(
-    rawValue.toLowerCase()
-  );
-}
-
-/**
  * Parse transcript content into Message records
  */
 async function parseTranscriptIntoMessages(
@@ -115,6 +91,14 @@ async function parseTranscriptIntoMessages(
 
   // Split transcript into lines and parse each message
   const lines = transcriptContent.split("\n").filter((line) => line.trim());
+  const messagesToCreate: Array<{
+    sessionId: string;
+    timestamp: Date | null;
+    role: string;
+    content: string;
+    order: number;
+  }> = [];
+
   let order = 0;
 
   for (const line of lines) {
@@ -154,22 +138,28 @@ async function parseTranscriptIntoMessages(
     // Skip empty content
     if (!content) continue;
 
-    // Create message record
-    await prisma.message.create({
-      data: {
-        sessionId,
-        timestamp,
-        role,
-        content,
-        order,
-      },
+    // Collect message data for batch creation
+    messagesToCreate.push({
+      sessionId,
+      timestamp,
+      role,
+      content,
+      order,
     });
 
     order++;
   }
 
+  // Batch create all messages at once for better performance
+  if (messagesToCreate.length > 0) {
+    await prisma.message.createMany({
+      data: messagesToCreate,
+      skipDuplicates: true, // Prevents errors on unique constraint violations
+    });
+  }
+
   console.log(
-    `[Import Processor] ✓ Parsed ${order} messages for session ${sessionId}`
+    `[Import Processor] ✓ Parsed ${messagesToCreate.length} messages for session ${sessionId} (batch operation)`
   );
 }
 
@@ -245,7 +235,7 @@ async function handleTranscriptFetching(
     );
 
     if (transcriptResult.success) {
-      transcriptContent = transcriptResult.content;
+      transcriptContent = transcriptResult.content ?? null;
       console.log(
         `[Import Processor] ✓ Fetched transcript for ${importRecord.externalSessionId} (${transcriptContent?.length} chars)`
       );
@@ -282,7 +272,7 @@ async function handleTranscriptFetching(
     });
   }
 
-  return transcriptContent;
+  return transcriptContent ?? null;
 }
 
 /**
@@ -429,7 +419,10 @@ async function processQueuedImportsInternal(batchSize = 50): Promise<void> {
 
     // Process with concurrency limit to avoid overwhelming the database
     const concurrencyLimit = 5;
-    const results = [];
+    const results: Array<{
+      importRecord: (typeof unprocessedImports)[0];
+      result: Awaited<ReturnType<typeof processSingleImport>>;
+    }> = [];
 
     for (let i = 0; i < batchPromises.length; i += concurrencyLimit) {
       const chunk = batchPromises.slice(i, i + concurrencyLimit);

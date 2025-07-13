@@ -70,6 +70,7 @@ export default function MessageViewer({ messages }: MessageViewerProps) {
               ? new Date(messages[0].timestamp).toLocaleString()
               : "No timestamp"}
           </span>
+          {/* prettier-ignore */}
           <span>
             Last message: {(() => {
               const lastMessage = messages[messages.length - 1];

@@ -10,6 +10,83 @@ interface TranscriptViewerProps {
 }
 
 /**
+ * Renders a message bubble with proper styling
+ */
+function renderMessageBubble(
+  speaker: string,
+  messages: string[],
+  key: string
+): React.ReactNode {
+  return (
+    <div key={key} className={`mb-3 ${speaker === "User" ? "text-right" : ""}`}>
+      <div
+        className={`inline-block px-4 py-2 rounded-lg ${
+          speaker === "User"
+            ? "bg-blue-100 text-blue-800"
+            : "bg-gray-100 text-gray-800"
+        }`}
+      >
+        {messages.map((msg, i) => (
+          <ReactMarkdown
+            key={`msg-${msg.substring(0, 20).replace(/\s/g, "-")}-${i}`}
+            rehypePlugins={[rehypeRaw]}
+            components={{
+              p: "span",
+              a: ({ node, ...props }) => (
+                <a
+                  className="text-sky-600 hover:text-sky-800 underline"
+                  {...props}
+                />
+              ),
+            }}
+          >
+            {msg}
+          </ReactMarkdown>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Checks if a line indicates a new speaker
+ */
+function isNewSpeakerLine(line: string): boolean {
+  return line.startsWith("User:") || line.startsWith("Assistant:");
+}
+
+/**
+ * Extracts speaker and message content from a speaker line
+ */
+function extractSpeakerInfo(line: string): {
+  speaker: string;
+  content: string;
+} {
+  const speaker = line.startsWith("User:") ? "User" : "Assistant";
+  const content = line.substring(line.indexOf(":") + 1).trim();
+  return { speaker, content };
+}
+
+/**
+ * Processes accumulated messages for a speaker
+ */
+function processAccumulatedMessages(
+  currentSpeaker: string | null,
+  currentMessages: string[],
+  elements: React.ReactNode[]
+): void {
+  if (currentSpeaker && currentMessages.length > 0) {
+    elements.push(
+      renderMessageBubble(
+        currentSpeaker,
+        currentMessages,
+        `message-${elements.length}`
+      )
+    );
+  }
+}
+
+/**
  * Format the transcript content into a more readable format with styling
  */
 function formatTranscript(content: string): React.ReactNode[] {
@@ -17,114 +94,37 @@ function formatTranscript(content: string): React.ReactNode[] {
     return [<p key="empty">No transcript content available.</p>];
   }
 
-  // Split the transcript by lines
   const lines = content.split("\n");
-
   const elements: React.ReactNode[] = [];
   let currentSpeaker: string | null = null;
   let currentMessages: string[] = [];
 
   // Process each line
-  lines.forEach((line) => {
+  for (const line of lines) {
     const trimmedLine = line.trim();
     if (!trimmedLine) {
-      // Empty line, ignore
-      return;
+      continue; // Skip empty lines
     }
 
-    // Check if this is a new speaker line
-    if (line.startsWith("User:") || line.startsWith("Assistant:")) {
-      // If we have accumulated messages for a previous speaker, add them
-      if (currentSpeaker && currentMessages.length > 0) {
-        elements.push(
-          <div
-            key={`message-${elements.length}`}
-            className={`mb-3 ${currentSpeaker === "User" ? "text-right" : ""}`}
-          >
-            <div
-              className={`inline-block px-4 py-2 rounded-lg ${
-                currentSpeaker === "User"
-                  ? "bg-blue-100 text-blue-800"
-                  : "bg-gray-100 text-gray-800"
-              }`}
-            >
-              {currentMessages.map((msg, i) => (
-                // Use ReactMarkdown to render each message part
-                <ReactMarkdown
-                  key={`msg-${msg.substring(0, 20).replace(/\s/g, "-")}-${i}`}
-                  rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
-                  components={{
-                    p: "span",
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-                    a: ({ node: _node, ...props }) => (
-                      <a
-                        className="text-sky-600 hover:text-sky-800 underline"
-                        {...props}
-                      />
-                    ),
-                  }}
-                >
-                  {msg}
-                </ReactMarkdown>
-              ))}
-            </div>
-          </div>
-        );
-        currentMessages = [];
-      }
+    if (isNewSpeakerLine(line)) {
+      // Process any accumulated messages from previous speaker
+      processAccumulatedMessages(currentSpeaker, currentMessages, elements);
+      currentMessages = [];
 
-      // Set the new current speaker
-      currentSpeaker = trimmedLine.startsWith("User:") ? "User" : "Assistant";
-      // Add the content after "User:" or "Assistant:"
-      const messageContent = trimmedLine
-        .substring(trimmedLine.indexOf(":") + 1)
-        .trim();
-      if (messageContent) {
-        currentMessages.push(messageContent);
+      // Set new speaker and add initial content
+      const { speaker, content } = extractSpeakerInfo(trimmedLine);
+      currentSpeaker = speaker;
+      if (content) {
+        currentMessages.push(content);
       }
     } else if (currentSpeaker) {
-      // This is a continuation of the current speaker's message
+      // Continuation of current speaker's message
       currentMessages.push(trimmedLine);
     }
-  });
-
-  // Add any remaining messages
-  if (currentSpeaker && currentMessages.length > 0) {
-    elements.push(
-      <div
-        key={`message-${elements.length}`}
-        className={`mb-3 ${currentSpeaker === "User" ? "text-right" : ""}`}
-      >
-        <div
-          className={`inline-block px-4 py-2 rounded-lg ${
-            currentSpeaker === "User"
-              ? "bg-blue-100 text-blue-800"
-              : "bg-gray-100 text-gray-800"
-          }`}
-        >
-          {currentMessages.map((msg, i) => (
-            // Use ReactMarkdown to render each message part
-            <ReactMarkdown
-              key={`msg-final-${msg.substring(0, 20).replace(/\s/g, "-")}-${i}`}
-              rehypePlugins={[rehypeRaw]} // Add rehypeRaw to plugins
-              components={{
-                p: "span",
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-                a: ({ node: _node, ...props }) => (
-                  <a
-                    className="text-sky-600 hover:text-sky-800 underline"
-                    {...props}
-                  />
-                ),
-              }}
-            >
-              {msg}
-            </ReactMarkdown>
-          ))}
-        </div>
-      </div>
-    );
   }
+
+  // Process any remaining messages
+  processAccumulatedMessages(currentSpeaker, currentMessages, elements);
 
   return elements;
 }

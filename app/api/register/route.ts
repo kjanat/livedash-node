@@ -1,38 +1,24 @@
 import bcrypt from "bcryptjs";
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { extractClientIP, InMemoryRateLimiter } from "../../../lib/rateLimiter";
 import { registerSchema, validateInput } from "../../../lib/validation";
 
-// In-memory rate limiting (for production, use Redis or similar)
-const registrationAttempts = new Map<
-  string,
-  { count: number; resetTime: number }
->();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const attempts = registrationAttempts.get(ip);
-
-  if (!attempts || now > attempts.resetTime) {
-    registrationAttempts.set(ip, { count: 1, resetTime: now + 60 * 60 * 1000 }); // 1 hour window
-    return true;
-  }
-
-  if (attempts.count >= 3) {
-    // Max 3 registrations per hour per IP
-    return false;
-  }
-
-  attempts.count++;
-  return true;
-}
+// Rate limiting for registration endpoint
+const registrationLimiter = new InMemoryRateLimiter({
+  maxAttempts: 3,
+  windowMs: 60 * 60 * 1000, // 1 hour
+  maxEntries: 10000,
+  cleanupIntervalMs: 5 * 60 * 1000, // 5 minutes
+});
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limiting check
-    const ip =
-      request.ip || request.headers.get("x-forwarded-for") || "unknown";
-    if (!checkRateLimit(ip)) {
+    // Rate limiting check using shared utility
+    const ip = extractClientIP(request);
+    const rateLimitResult = registrationLimiter.checkRateLimit(ip);
+
+    if (!rateLimitResult.allowed) {
       return NextResponse.json(
         {
           success: false,

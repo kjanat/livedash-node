@@ -9,22 +9,26 @@ The LiveDash system has two main schedulers that work together to fetch and proc
 
 ## Current Status (as of latest check)
 
--   **Total sessions**: 107
--   **Processed sessions**: 0  
--   **Sessions with transcript**: 0
--   **Ready for processing**: 0
+- **Total sessions**: 107
+- **Processed sessions**: 0
+- **Sessions with transcript**: 0
+- **Ready for processing**: 0
 
 ## How the `processed` Field Works
 
 The ProcessingScheduler picks up sessions where `processed` is **NOT** `true`, which includes:
 
--   `processed = false`
--   `processed = null`
+- `processed = false`
+- `processed = null`
 
 **Query used:**
 
 ```javascript
-{ processed: { not: true } } // Either false or null
+{
+  processed: {
+    not: true;
+  }
+} // Either false or null
 ```
 
 ## Complete Workflow
@@ -33,10 +37,10 @@ The ProcessingScheduler picks up sessions where `processed` is **NOT** `true`, w
 
 **What it does:**
 
--   Fetches session data from company CSV URLs
--   Creates session records in database with basic metadata
--   Sets `transcriptContent = null` initially
--   Sets `processed = null` initially
+- Fetches session data from company CSV URLs
+- Creates session records in database with basic metadata
+- Sets `transcriptContent = null` initially
+- Sets `processed = null` initially
 
 **Runs:** Every 30 minutes (cron: `*/30 * * * *`)
 
@@ -44,9 +48,9 @@ The ProcessingScheduler picks up sessions where `processed` is **NOT** `true`, w
 
 **What it does:**
 
--   Downloads full transcript content for sessions
--   Updates `transcriptContent` field with actual conversation data
--   Sessions remain `processed = null` until AI processing
+- Downloads full transcript content for sessions
+- Updates `transcriptContent` field with actual conversation data
+- Sessions remain `processed = null` until AI processing
 
 **Runs:** As part of session refresh process
 
@@ -54,11 +58,11 @@ The ProcessingScheduler picks up sessions where `processed` is **NOT** `true`, w
 
 **What it does:**
 
--   Finds sessions with transcript content where `processed != true`
--   Sends transcripts to OpenAI for analysis
--   Extracts: sentiment, category, questions, summary, etc.
--   Updates session with processed data
--   Sets `processed = true`
+- Finds sessions with transcript content where `processed != true`
+- Sends transcripts to OpenAI for analysis
+- Extracts: sentiment, category, questions, summary, etc.
+- Updates session with processed data
+- Sets `processed = true`
 
 **Runs:** Every hour (cron: `0 * * * *`)
 
@@ -94,39 +98,42 @@ node scripts/manual-triggers.js both
 
 1.  **Check if sessions have transcripts:**
 
-   ```bash
-   node scripts/manual-triggers.js status
-   ```
+```bash
+node scripts/manual-triggers.js status
+```
 
 2.  **If "Sessions with transcript" is 0:**
-   -   Sessions exist but transcripts haven't been fetched yet
-   -   Run session refresh: `node scripts/manual-triggers.js refresh`
+
+- Sessions exist but transcripts haven't been fetched yet
+- Run session refresh: `node scripts/manual-triggers.js refresh`
 
 3.  **If "Ready for processing" is 0 but "Sessions with transcript" > 0:**
-   -   All sessions with transcripts have already been processed
-   -   Check if `OPENAI_API_KEY` is set in environment
+
+- All sessions with transcripts have already been processed
+- Check if `OPENAI_API_KEY` is set in environment
 
 ### Common Issues
 
 #### "No sessions found requiring processing"
 
--   All sessions with transcripts have been processed (`processed = true`)
--   Or no sessions have transcript content yet
+- All sessions with transcripts have been processed (`processed = true`)
+- Or no sessions have transcript content yet
 
 #### "OPENAI_API_KEY environment variable is not set"
 
--   Add OpenAI API key to `.env.development` file
--   Restart the application
+- Add OpenAI API key to `.env.development` file
+- Restart the application
 
 #### "Error fetching transcript: Unauthorized"
 
--   CSV credentials are incorrect or expired
--   Check company CSV username/password in database
+- CSV credentials are incorrect or expired
+- Check company CSV username/password in database
 
 ## Database Field Mapping
 
 ### Before AI Processing
 
+<!-- prettier-ignore -->
 ```javascript
 {
   id: "session-uuid",
@@ -141,6 +148,7 @@ node scripts/manual-triggers.js both
 
 ### After AI Processing
 
+<!-- prettier-ignore -->
 ```javascript
 {
   id: "session-uuid", 
@@ -163,16 +171,16 @@ node scripts/manual-triggers.js both
 
 ### Session Refresh Scheduler
 
--   **File**: `lib/scheduler.js`
--   **Frequency**: Every 30 minutes
--   **Cron**: `*/30 * * * *`
+- **File**: `lib/scheduler.js`
+- **Frequency**: Every 30 minutes
+- **Cron**: `*/30 * * * *`
 
-### Processing Scheduler  
+### Processing Scheduler
 
--   **File**: `lib/processingScheduler.js`
--   **Frequency**: Every hour
--   **Cron**: `0 * * * *`
--   **Batch size**: 10 sessions per run
+- **File**: `lib/processingScheduler.js`
+- **Frequency**: Every hour
+- **Cron**: `0 * * * *`
+- **Batch size**: 10 sessions per run
 
 ## Environment Variables Required
 
@@ -192,20 +200,20 @@ NEXTAUTH_URL="http://localhost:3000"
 
 1.  **Trigger session refresh** to fetch transcripts:
 
-   ```bash
-   node scripts/manual-triggers.js refresh
-   ```
+```bash
+node scripts/manual-triggers.js refresh
+```
 
 2.  **Check status** to see if transcripts were fetched:
 
-   ```bash
-   node scripts/manual-triggers.js status
-   ```
+```bash
+node scripts/manual-triggers.js status
+```
 
 3.  **Trigger processing** if transcripts are available:
 
-   ```bash
-   node scripts/manual-triggers.js process
-   ```
+```bash
+node scripts/manual-triggers.js process
+```
 
 4.  **View results** in the dashboard session details pages

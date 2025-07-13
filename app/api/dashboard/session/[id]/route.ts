@@ -2,6 +2,78 @@ import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import type { ChatSession } from "../../../../../lib/types";
 
+/**
+ * Maps Prisma session object to ChatSession type
+ */
+function mapPrismaSessionToChatSession(prismaSession: {
+  id: string;
+  startTime: Date;
+  endTime: Date | null;
+  createdAt: Date;
+  category: string | null;
+  language: string | null;
+  country: string | null;
+  ipAddress: string | null;
+  sentiment: string | null;
+  messagesSent: number | null;
+  avgResponseTime: number | null;
+  escalated: boolean | null;
+  forwardedHr: boolean | null;
+  initialMsg: string | null;
+  fullTranscriptUrl: string | null;
+  summary: string | null;
+  messages: Array<{
+    id: string;
+    sessionId: string;
+    timestamp: Date | null;
+    role: string;
+    content: string;
+    order: number;
+    createdAt: Date;
+  }>;
+}): ChatSession {
+  return {
+    // Spread prismaSession to include all its properties
+    ...prismaSession,
+    // Override properties that need conversion or specific mapping
+    id: prismaSession.id, // ChatSession.id from Prisma.Session.id
+    sessionId: prismaSession.id, // ChatSession.sessionId from Prisma.Session.id
+    startTime: new Date(prismaSession.startTime),
+    endTime: prismaSession.endTime ? new Date(prismaSession.endTime) : null,
+    createdAt: new Date(prismaSession.createdAt),
+    // Prisma.Session does not have an `updatedAt` field. We'll use `createdAt` as a fallback.
+    updatedAt: new Date(prismaSession.createdAt), // Fallback to createdAt
+    // Prisma.Session does not have a `userId` field.
+    userId: null, // Explicitly set to null or map if available from another source
+    // Prisma.Session does not have a `companyId` field.
+    companyId: "", // Explicitly set to empty string - should be resolved from session context
+    // Ensure nullable fields from Prisma are correctly mapped to ChatSession's optional or nullable fields
+    category: prismaSession.category ?? null,
+    language: prismaSession.language ?? null,
+    country: prismaSession.country ?? null,
+    ipAddress: prismaSession.ipAddress ?? null,
+    sentiment: prismaSession.sentiment ?? null,
+    messagesSent: prismaSession.messagesSent ?? undefined,
+    avgResponseTime: prismaSession.avgResponseTime ?? null,
+    escalated: prismaSession.escalated ?? undefined,
+    forwardedHr: prismaSession.forwardedHr ?? undefined,
+    initialMsg: prismaSession.initialMsg ?? undefined,
+    fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
+    summary: prismaSession.summary ?? null,
+    transcriptContent: undefined, // Not available in Session model
+    messages:
+      prismaSession.messages?.map((msg) => ({
+        id: msg.id,
+        sessionId: msg.sessionId,
+        timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+        role: msg.role,
+        content: msg.content,
+        order: msg.order,
+        createdAt: new Date(msg.createdAt),
+      })) ?? [], // New field - parsed messages
+  };
+}
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -30,45 +102,7 @@ export async function GET(
     }
 
     // Map Prisma session object to ChatSession type
-    const session: ChatSession = {
-      // Spread prismaSession to include all its properties
-      ...prismaSession,
-      // Override properties that need conversion or specific mapping
-      id: prismaSession.id, // ChatSession.id from Prisma.Session.id
-      sessionId: prismaSession.id, // ChatSession.sessionId from Prisma.Session.id
-      startTime: new Date(prismaSession.startTime),
-      endTime: prismaSession.endTime ? new Date(prismaSession.endTime) : null,
-      createdAt: new Date(prismaSession.createdAt),
-      // Prisma.Session does not have an `updatedAt` field. We'll use `createdAt` as a fallback.
-      // Or, if your business logic implies an update timestamp elsewhere, use that.
-      updatedAt: new Date(prismaSession.createdAt), // Fallback to createdAt
-      // Prisma.Session does not have a `userId` field.
-      userId: null, // Explicitly set to null or map if available from another source
-      // Ensure nullable fields from Prisma are correctly mapped to ChatSession's optional or nullable fields
-      category: prismaSession.category ?? null,
-      language: prismaSession.language ?? null,
-      country: prismaSession.country ?? null,
-      ipAddress: prismaSession.ipAddress ?? null,
-      sentiment: prismaSession.sentiment ?? null,
-      messagesSent: prismaSession.messagesSent ?? undefined, // Use undefined if ChatSession expects number | undefined
-      avgResponseTime: prismaSession.avgResponseTime ?? null,
-      escalated: prismaSession.escalated ?? undefined,
-      forwardedHr: prismaSession.forwardedHr ?? undefined,
-      initialMsg: prismaSession.initialMsg ?? undefined,
-      fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
-      summary: prismaSession.summary ?? null, // New field
-      transcriptContent: null, // Not available in Session model
-      messages:
-        prismaSession.messages?.map((msg) => ({
-          id: msg.id,
-          sessionId: msg.sessionId,
-          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
-          role: msg.role,
-          content: msg.content,
-          order: msg.order,
-          createdAt: new Date(msg.createdAt),
-        })) ?? [], // New field - parsed messages
-    };
+    const session: ChatSession = mapPrismaSessionToChatSession(prismaSession);
 
     return NextResponse.json({ session });
   } catch (error) {

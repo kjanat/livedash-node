@@ -1,0 +1,148 @@
+/**
+ * Application-wide constants and configuration values
+ * Centralizes magic numbers and reduces code duplication
+ */
+
+// Time constants (in milliseconds)
+export const TIME = {
+  SECOND: 1000,
+  MINUTE: 60 * 1000,
+  HOUR: 60 * 60 * 1000,
+  DAY: 24 * 60 * 60 * 1000,
+  WEEK: 7 * 24 * 60 * 60 * 1000,
+} as const;
+
+// Database and query limits
+export const DATABASE = {
+  CONNECTION_POOL_SIZE: 15,
+  QUERY_TIMEOUT: 30 * TIME.SECOND,
+  MAX_RETRY_ATTEMPTS: 3,
+  RETRY_DELAY_BASE: 1 * TIME.SECOND,
+  RETRY_DELAY_MAX: 30 * TIME.SECOND,
+} as const;
+
+// Batch processing configuration
+export const BATCH_PROCESSING = {
+  MAX_REQUESTS_PER_BATCH: 1000,
+  MIN_STATUS_CHECK_INTERVAL: 1 * TIME.MINUTE,
+  MAX_BATCH_TIMEOUT: 24 * TIME.HOUR,
+  REQUEST_TIMEOUT: 60 * TIME.SECOND,
+  CIRCUIT_BREAKER_TIMEOUT: 5 * TIME.MINUTE,
+  DEFAULT_BATCH_SIZE: 50,
+} as const;
+
+// AI Processing limits
+export const AI_PROCESSING = {
+  MAX_TOKENS: 1000,
+  DEFAULT_TEMPERATURE: 0.7,
+  MAX_RETRIES: 3,
+  TIMEOUT: 60 * TIME.SECOND,
+} as const;
+
+// Rate limiting configuration
+export const RATE_LIMITING = {
+  AUTH_WINDOW: 15 * TIME.MINUTE,
+  AUTH_MAX_ATTEMPTS: 5,
+  REGISTRATION_WINDOW: 1 * TIME.HOUR,
+  REGISTRATION_MAX_ATTEMPTS: 3,
+  PASSWORD_RESET_WINDOW: 15 * TIME.MINUTE,
+  PASSWORD_RESET_MAX_ATTEMPTS: 5,
+  CSP_REPORT_WINDOW: 1 * TIME.MINUTE,
+  CSP_REPORT_MAX_REPORTS: 10,
+  DEFAULT_WINDOW: 1 * TIME.MINUTE,
+  DEFAULT_MAX_REQUESTS: 100,
+} as const;
+
+// Security monitoring configuration
+export const SECURITY_MONITORING = {
+  EVENT_BUFFER_MAX_SIZE: 10000,
+  EVENT_BUFFER_CLEANUP_INTERVAL: 5 * TIME.MINUTE,
+  EVENT_RETENTION_HOURS: 1,
+  ALERT_RETENTION_DAYS: 30,
+  BACKGROUND_PROCESSING_INTERVAL: 30 * TIME.SECOND,
+  THREAT_DETECTION_WINDOW: 1 * TIME.MINUTE,
+  ANOMALY_CONFIDENCE_THRESHOLD: 0.8,
+} as const;
+
+// Cache configuration
+export const CACHE = {
+  DEFAULT_TTL: 5 * TIME.MINUTE,
+  LONG_TTL: 1 * TIME.HOUR,
+  SHORT_TTL: 30 * TIME.SECOND,
+  MAX_SIZE: 10000,
+  CLEANUP_INTERVAL: 5 * TIME.MINUTE,
+} as const;
+
+// File processing limits
+export const FILE_PROCESSING = {
+  MAX_FILE_SIZE: 100 * 1024 * 1024, // 100MB
+  CHUNK_SIZE: 1024 * 1024, // 1MB
+  MAX_CONCURRENT_UPLOADS: 5,
+  UPLOAD_TIMEOUT: 10 * TIME.MINUTE,
+} as const;
+
+// Session configuration
+export const SESSION = {
+  PLATFORM_USER_DURATION: 8 * TIME.HOUR,
+  COMPANY_USER_DURATION: 24 * TIME.HOUR,
+  CLEANUP_INTERVAL: 1 * TIME.HOUR,
+  MAX_CONCURRENT_SESSIONS: 5,
+} as const;
+
+// Scheduler configuration
+export const SCHEDULER = {
+  CSV_IMPORT_INTERVAL: 5 * TIME.MINUTE,
+  PROCESSING_INTERVAL: 2 * TIME.MINUTE,
+  BATCH_CREATION_INTERVAL: 5 * TIME.MINUTE,
+  BATCH_STATUS_CHECK_INTERVAL: 2 * TIME.MINUTE,
+  AUDIT_LOG_CLEANUP_INTERVAL: 24 * TIME.HOUR,
+  DEFAULT_CONCURRENCY: 5,
+  MAX_PROCESSING_TIME: 30 * TIME.MINUTE,
+} as const;
+
+// API configuration
+export const API = {
+  DEFAULT_TIMEOUT: 30 * TIME.SECOND,
+  LONG_TIMEOUT: 2 * TIME.MINUTE,
+  MAX_RETRIES: 3,
+  RETRY_DELAY: 1 * TIME.SECOND,
+  MAX_RESPONSE_SIZE: 10 * 1024 * 1024, // 10MB
+} as const;
+
+// Validation limits
+export const VALIDATION = {
+  MIN_PASSWORD_LENGTH: 12,
+  MAX_PASSWORD_LENGTH: 128,
+  MAX_EMAIL_LENGTH: 254,
+  MAX_NAME_LENGTH: 100,
+  MAX_DESCRIPTION_LENGTH: 1000,
+  MAX_SEARCH_QUERY_LENGTH: 500,
+} as const;
+
+// Environment-specific configurations
+export const ENVIRONMENT = {
+  DEVELOPMENT: {
+    LOG_LEVEL: "debug",
+    MOCK_EXTERNAL_APIS: true,
+    STRICT_CSP: false,
+  },
+  PRODUCTION: {
+    LOG_LEVEL: "warn",
+    MOCK_EXTERNAL_APIS: false,
+    STRICT_CSP: true,
+  },
+  TEST: {
+    LOG_LEVEL: "error",
+    MOCK_EXTERNAL_APIS: true,
+    STRICT_CSP: false,
+  },
+} as const;
+
+// Feature flags
+export const FEATURES = {
+  ENABLE_BATCH_OPTIMIZATION: true,
+  ENABLE_SECURITY_MONITORING: true,
+  ENABLE_PERFORMANCE_TRACKING: true,
+  ENABLE_CACHE: true,
+  ENABLE_RATE_LIMITING: true,
+} as const;

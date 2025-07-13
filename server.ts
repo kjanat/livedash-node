@@ -2,6 +2,7 @@
 import { createServer } from "node:http";
 import { parse } from "node:url";
 import next from "next";
+import { startBatchScheduler } from "./lib/batchProcessorIntegration.js";
 import { getSchedulerConfig, logEnvConfig, validateEnv } from "./lib/env.js";
 import { startImportProcessingScheduler } from "./lib/importProcessor.js";
 import { startProcessingScheduler } from "./lib/processingScheduler.js";
@@ -33,6 +34,7 @@ app.prepare().then(() => {
     startCsvImportScheduler();
     startImportProcessingScheduler();
     startProcessingScheduler();
+    startBatchScheduler();
     console.log("All schedulers initialized successfully");
   }
 

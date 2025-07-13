@@ -213,9 +213,9 @@ export function createErrorResponse(error: AppError) {
           error.validationErrors && {
             validationErrors: error.validationErrors,
           }),
-        ...(error instanceof ResourceNotFoundError &&
+        ...(error instanceof NotFoundError &&
           error.resource && { resource: error.resource }),
-        ...(error instanceof ResourceNotFoundError &&
+        ...(error instanceof NotFoundError &&
           error.resourceId && {
             resourceId: error.resourceId,
           }),

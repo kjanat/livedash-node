@@ -1,0 +1,28 @@
+# Don't ignore doc files - we'll use prettier-ignore comments instead
+
+## Ignore lockfile
+pnpm-lock.yaml
+package-lock.json
+
+## Ignore build outputs
+.next
+dist
+build
+out
+
+## Ignore dependencies
+node_modules
+
+## Files that are formatted by biome
+**/*.js
+**/*.ts
+**/*.cjs
+**/*.cts
+**/*.mjs
+**/*.mts
+**/*.d.cts
+**/*.d.mts
+**/*.jsx
+**/*.tsx
+**/*.json
+**/*.jsonc

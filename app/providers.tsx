@@ -2,6 +2,8 @@
 
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
+import { CSRFProvider } from "@/components/providers/CSRFProvider";
+import { TRPCProvider } from "@/components/providers/TRPCProvider";
 import { ThemeProvider } from "@/components/theme-provider";
 
 export function Providers({ children }: { children: ReactNode }) {
@@ -18,7 +20,9 @@ export function Providers({ children }: { children: ReactNode }) {
         refetchInterval={30 * 60}
         refetchOnWindowFocus={false}
       >
-        {children}
+        <CSRFProvider>
+          <TRPCProvider>{children}</TRPCProvider>
+        </CSRFProvider>
       </SessionProvider>
     </ThemeProvider>
   );

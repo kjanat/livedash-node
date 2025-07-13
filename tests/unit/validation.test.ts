@@ -176,6 +176,36 @@ describe("Validation Schemas", () => {
       const data = { limit: 101 };
       expect(sessionFilterSchema.safeParse(data).success).toBe(false);
     });
+
+    it("should validate valid language code", () => {
+      const data = { language: "en" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(true);
+    });
+
+    it("should invalidate invalid language code", () => {
+      const data = { language: "invalid" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(false);
+    });
+
+    it("should validate valid sortKey", () => {
+      const data = { sortKey: "startTime" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(true);
+    });
+
+    it("should invalidate invalid sortKey", () => {
+      const data = { sortKey: "invalid" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(false);
+    });
+
+    it("should validate valid sortOrder", () => {
+      const data = { sortOrder: "asc" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(true);
+    });
+
+    it("should invalidate invalid sortOrder", () => {
+      const data = { sortOrder: "invalid" };
+      expect(sessionFilterSchema.safeParse(data).success).toBe(false);
+    });
   });
 
   describe("companySettingsSchema", () => {

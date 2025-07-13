@@ -39,6 +39,43 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 
+type ToastFunction = (props: {
+  title: string;
+  description: string;
+  variant?: "default" | "destructive";
+}) => void;
+
+interface CompanyManagementState {
+  company: Company | null;
+  setCompany: (company: Company | null) => void;
+  isLoading: boolean;
+  setIsLoading: (loading: boolean) => void;
+  isSaving: boolean;
+  setIsSaving: (saving: boolean) => void;
+  editData: Partial<Company>;
+  setEditData: (
+    data: Partial<Company> | ((prev: Partial<Company>) => Partial<Company>)
+  ) => void;
+  originalData: Partial<Company>;
+  setOriginalData: (data: Partial<Company>) => void;
+  showInviteUser: boolean;
+  setShowInviteUser: (show: boolean) => void;
+  inviteData: { name: string; email: string; role: string };
+  setInviteData: (
+    data:
+      | { name: string; email: string; role: string }
+      | ((prev: { name: string; email: string; role: string }) => {
+          name: string;
+          email: string;
+          role: string;
+        })
+  ) => void;
+  showUnsavedChangesDialog: boolean;
+  setShowUnsavedChangesDialog: (show: boolean) => void;
+  pendingNavigation: string | null;
+  setPendingNavigation: (navigation: string | null) => void;
+}
+
 interface User {
   id: string;
   name: string;
@@ -64,51 +101,10 @@ interface Company {
   };
 }
 
-export default function CompanyManagement() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const params = useParams();
-  const { toast } = useToast();
-
-  const companyNameFieldId = useId();
-  const companyEmailFieldId = useId();
-  const maxUsersFieldId = useId();
-  const inviteNameFieldId = useId();
-  const inviteEmailFieldId = useId();
-
-  const fetchCompany = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/platform/companies/${params.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setCompany(data);
-        const companyData = {
-          name: data.name,
-          email: data.email,
-          status: data.status,
-          maxUsers: data.maxUsers,
-        };
-        setEditData(companyData);
-        setOriginalData(companyData);
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load company data",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Failed to fetch company:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load company data",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [params.id, toast]);
-
+/**
+ * Custom hook for company management state
+ */
+function useCompanyManagementState() {
   const [company, setCompany] = useState<Company | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -126,9 +122,55 @@ export default function CompanyManagement() {
     null
   );
 
-  // Function to check if data has been modified
+  return {
+    company,
+    setCompany,
+    isLoading,
+    setIsLoading,
+    isSaving,
+    setIsSaving,
+    editData,
+    setEditData,
+    originalData,
+    setOriginalData,
+    showInviteUser,
+    setShowInviteUser,
+    inviteData,
+    setInviteData,
+    showUnsavedChangesDialog,
+    setShowUnsavedChangesDialog,
+    pendingNavigation,
+    setPendingNavigation,
+  };
+}
+
+/**
+ * Custom hook for form IDs
+ */
+function useCompanyFormIds() {
+  const companyNameFieldId = useId();
+  const companyEmailFieldId = useId();
+  const maxUsersFieldId = useId();
+  const inviteNameFieldId = useId();
+  const inviteEmailFieldId = useId();
+
+  return {
+    companyNameFieldId,
+    companyEmailFieldId,
+    maxUsersFieldId,
+    inviteNameFieldId,
+    inviteEmailFieldId,
+  };
+}
+
+/**
+ * Custom hook for data validation and comparison
+ */
+function useDataComparison(
+  editData: Partial<Company>,
+  originalData: Partial<Company>
+) {
   const hasUnsavedChanges = useCallback(() => {
-    // Normalize data for comparison (handle null/undefined/empty string equivalence)
     const normalizeValue = (value: string | number | null | undefined) => {
       if (value === null || value === undefined || value === "") {
         return "";
@@ -156,16 +198,104 @@ export default function CompanyManagement() {
     );
   }, [editData, originalData]);
 
-  // Handle navigation protection - must be at top level
+  return { hasUnsavedChanges };
+}
+
+/**
+ * Custom hook for company data fetching
+ */
+function useCompanyData(
+  params: { id: string | string[] },
+  toast: ToastFunction,
+  state: CompanyManagementState
+) {
+  const { setCompany, setEditData, setOriginalData, setIsLoading } = state;
+  const [hasFetched, setHasFetched] = useState(false);
+
+  const fetchCompany = useCallback(async () => {
+    if (hasFetched) return;
+
+    try {
+      const response = await fetch(`/api/platform/companies/${params.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setCompany(data);
+        const companyData = {
+          name: data.name,
+          email: data.email,
+          status: data.status,
+          maxUsers: data.maxUsers,
+        };
+        setEditData(companyData);
+        setOriginalData(companyData);
+        setHasFetched(true);
+      } else {
+        const errorText = await response.text();
+        const errorMessage = `Failed to load company data (${response.status}: ${response.statusText})`;
+
+        console.error("Failed to fetch company - HTTP Error:", {
+          status: response.status,
+          statusText: response.statusText,
+          response: errorText,
+          url: response.url,
+        });
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
+      console.error("Failed to fetch company - Network/Parse Error:", {
+        message: errorMessage,
+        error: error,
+        stack: error instanceof Error ? error.stack : undefined,
+        url: `/api/platform/companies/${params.id}`,
+      });
+
+      toast({
+        title: "Error",
+        description: `Failed to load company data: ${errorMessage}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    params.id,
+    hasFetched,
+    toast,
+    setCompany,
+    setEditData,
+    setOriginalData,
+    setIsLoading,
+  ]);
+
+  return { fetchCompany };
+}
+
+/**
+ * Custom hook for navigation handling
+ */
+function useNavigationControl(
+  router: { push: (url: string) => void },
+  params: { id: string | string[] },
+  hasUnsavedChanges: () => boolean,
+  state: CompanyManagementState
+) {
+  const { setPendingNavigation, setShowUnsavedChangesDialog } = state;
+
   const handleNavigation = useCallback(
     (url: string) => {
-      // Allow navigation within the same company (different tabs, etc.)
       if (url.includes(`/platform/companies/${params.id}`)) {
         router.push(url);
         return;
       }
 
-      // If there are unsaved changes, show confirmation dialog
       if (hasUnsavedChanges()) {
         setPendingNavigation(url);
         setShowUnsavedChangesDialog(true);
@@ -173,7 +303,225 @@ export default function CompanyManagement() {
         router.push(url);
       }
     },
-    [router, params.id, hasUnsavedChanges]
+    [
+      router,
+      params.id,
+      hasUnsavedChanges,
+      setPendingNavigation,
+      setShowUnsavedChangesDialog,
+    ]
+  );
+
+  return { handleNavigation };
+}
+
+/**
+ * Helper function to render company information card
+ */
+function renderCompanyInfoCard(
+  state: CompanyManagementState,
+  canEdit: boolean,
+  companyNameFieldId: string,
+  companyEmailFieldId: string,
+  maxUsersFieldId: string,
+  hasUnsavedChanges: () => boolean,
+  handleSave: () => Promise<void>
+) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Company Information</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor={companyNameFieldId}>Company Name</Label>
+            <Input
+              id={companyNameFieldId}
+              value={state.editData.name || ""}
+              onChange={(e) =>
+                state.setEditData((prev) => ({
+                  ...prev,
+                  name: e.target.value,
+                }))
+              }
+              disabled={!canEdit}
+            />
+          </div>
+          <div>
+            <Label htmlFor={companyEmailFieldId}>Contact Email</Label>
+            <Input
+              id={companyEmailFieldId}
+              type="email"
+              value={state.editData.email || ""}
+              onChange={(e) =>
+                state.setEditData((prev) => ({
+                  ...prev,
+                  email: e.target.value,
+                }))
+              }
+              disabled={!canEdit}
+            />
+          </div>
+          <div>
+            <Label htmlFor={maxUsersFieldId}>Max Users</Label>
+            <Input
+              id={maxUsersFieldId}
+              type="number"
+              value={state.editData.maxUsers || 0}
+              onChange={(e) => {
+                const value = e.target.value;
+                const parsedValue = Number.parseInt(value, 10);
+
+                // Validate input: must be a positive number
+                const maxUsers =
+                  !Number.isNaN(parsedValue) && parsedValue > 0
+                    ? parsedValue
+                    : 1; // Default to 1 for invalid/negative values
+
+                state.setEditData((prev) => ({
+                  ...prev,
+                  maxUsers,
+                }));
+              }}
+              disabled={!canEdit}
+            />
+          </div>
+          <div>
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={state.editData.status}
+              onValueChange={(value) =>
+                state.setEditData((prev) => ({
+                  ...prev,
+                  status: value,
+                }))
+              }
+              disabled={!canEdit}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">Active</SelectItem>
+                <SelectItem value="TRIAL">Trial</SelectItem>
+                <SelectItem value="SUSPENDED">Suspended</SelectItem>
+                <SelectItem value="ARCHIVED">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        {canEdit && hasUnsavedChanges() && (
+          <div className="flex gap-2 pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                state.setEditData(state.originalData);
+              }}
+            >
+              Cancel Changes
+            </Button>
+            <Button onClick={handleSave} disabled={state.isSaving}>
+              <Save className="w-4 h-4 mr-2" />
+              {state.isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Helper function to render users tab content
+ */
+function renderUsersTab(state: CompanyManagementState, canEdit: boolean) {
+  return (
+    <TabsContent value="users" className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              Users ({state.company?.users.length || 0})
+            </span>
+            {canEdit && (
+              <Button size="sm" onClick={() => state.setShowInviteUser(true)}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Invite User
+              </Button>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {state.company?.users.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-4 border rounded-lg"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
+                      {user.name?.charAt(0) ||
+                        user.email.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="font-medium">{user.name || "No name"}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {user.email}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4">
+                  <Badge variant="outline">{user.role}</Badge>
+                  <div className="text-sm text-muted-foreground">
+                    Joined {new Date(user.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {(state.company?.users.length || 0) === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No users found. Invite the first user to get started.
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </TabsContent>
+  );
+}
+
+export default function CompanyManagement() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const params = useParams();
+  const { toast } = useToast();
+
+  const state = useCompanyManagementState();
+  const {
+    companyNameFieldId,
+    companyEmailFieldId,
+    maxUsersFieldId,
+    inviteNameFieldId,
+    inviteEmailFieldId,
+  } = useCompanyFormIds();
+  const { hasUnsavedChanges } = useDataComparison(
+    state.editData,
+    state.originalData
+  );
+  const { fetchCompany } = useCompanyData(
+    { id: params.id as string },
+    toast,
+    state
+  );
+  const { handleNavigation } = useNavigationControl(
+    router,
+    { id: params.id as string },
+    hasUnsavedChanges,
+    state
   );
 
   useEffect(() => {
@@ -185,27 +533,27 @@ export default function CompanyManagement() {
     }
 
     fetchCompany();
-  }, [session, status, router, fetchCompany]);
+  }, [status, session?.user?.isPlatformUser, fetchCompany, router]);
 
   const handleSave = async () => {
-    setIsSaving(true);
+    state.setIsSaving(true);
     try {
       const response = await fetch(`/api/platform/companies/${params.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editData),
+        body: JSON.stringify(state.editData),
       });
 
       if (response.ok) {
         const updatedCompany = await response.json();
-        setCompany(updatedCompany);
+        state.setCompany(updatedCompany);
         const companyData = {
           name: updatedCompany.name,
           email: updatedCompany.email,
           status: updatedCompany.status,
           maxUsers: updatedCompany.maxUsers,
         };
-        setOriginalData(companyData);
+        state.setOriginalData(companyData);
         toast({
           title: "Success",
           description: "Company updated successfully",
@@ -220,7 +568,7 @@ export default function CompanyManagement() {
         variant: "destructive",
       });
     } finally {
-      setIsSaving(false);
+      state.setIsSaving(false);
     }
   };
 
@@ -235,8 +583,10 @@ export default function CompanyManagement() {
       });
 
       if (response.ok) {
-        setCompany((prev) => (prev ? { ...prev, status: newStatus } : null));
-        setEditData((prev) => ({ ...prev, status: newStatus }));
+        state.setCompany((prev) =>
+          prev ? { ...prev, status: newStatus } : null
+        );
+        state.setEditData((prev) => ({ ...prev, status: newStatus }));
         toast({
           title: "Success",
           description: `Company ${statusAction}d successfully`,
@@ -254,16 +604,54 @@ export default function CompanyManagement() {
   };
 
   const confirmNavigation = () => {
-    if (pendingNavigation) {
-      router.push(pendingNavigation);
-      setPendingNavigation(null);
+    if (state.pendingNavigation) {
+      router.push(state.pendingNavigation);
+      state.setPendingNavigation(null);
     }
-    setShowUnsavedChangesDialog(false);
+    state.setShowUnsavedChangesDialog(false);
   };
 
   const cancelNavigation = () => {
-    setPendingNavigation(null);
-    setShowUnsavedChangesDialog(false);
+    state.setPendingNavigation(null);
+    state.setShowUnsavedChangesDialog(false);
+  };
+
+  const handleInviteUser = async () => {
+    try {
+      const response = await fetch(
+        `/api/platform/companies/${params.id}/users`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state.inviteData),
+        }
+      );
+
+      if (response.ok) {
+        state.setShowInviteUser(false);
+        state.setInviteData({ name: "", email: "", role: "USER" });
+        // Refresh company data to show new user
+        const updatedResponse = await fetch(
+          `/api/platform/companies/${params.id}`
+        );
+        if (updatedResponse.ok) {
+          const updatedData = await updatedResponse.json();
+          state.setCompany(updatedData);
+        }
+        toast({
+          title: "Success",
+          description: "User invited successfully",
+        });
+      } else {
+        throw new Error("Failed to invite user");
+      }
+    } catch (_error) {
+      toast({
+        title: "Error",
+        description: "Failed to invite user",
+        variant: "destructive",
+      });
+    }
   };
 
   // Protect against browser back/forward and other navigation
@@ -281,7 +669,6 @@ export default function CompanyManagement() {
           "You have unsaved changes. Are you sure you want to leave this page?"
         );
         if (!confirmLeave) {
-          // Push the current state back to prevent navigation
           window.history.pushState(null, "", window.location.href);
           e.preventDefault();
         }
@@ -296,37 +683,6 @@ export default function CompanyManagement() {
       window.removeEventListener("popstate", handlePopState);
     };
   }, [hasUnsavedChanges]);
-
-  const handleInviteUser = async () => {
-    try {
-      const response = await fetch(
-        `/api/platform/companies/${params.id}/users`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(inviteData),
-        }
-      );
-
-      if (response.ok) {
-        setShowInviteUser(false);
-        setInviteData({ name: "", email: "", role: "USER" });
-        fetchCompany(); // Refresh company data
-        toast({
-          title: "Success",
-          description: "User invited successfully",
-        });
-      } else {
-        throw new Error("Failed to invite user");
-      }
-    } catch (_error) {
-      toast({
-        title: "Error",
-        description: "Failed to invite user",
-        variant: "destructive",
-      });
-    }
-  };
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -343,7 +699,7 @@ export default function CompanyManagement() {
     }
   };
 
-  if (status === "loading" || isLoading) {
+  if (status === "loading" || state.isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">Loading company details...</div>
@@ -351,7 +707,7 @@ export default function CompanyManagement() {
     );
   }
 
-  if (!session?.user?.isPlatformUser || !company) {
+  if (!session?.user?.isPlatformUser || !state.company) {
     return null;
   }
 
@@ -374,10 +730,10 @@ export default function CompanyManagement() {
               <div>
                 <div className="flex items-center gap-3">
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {company.name}
+                    {state.company.name}
                   </h1>
-                  <Badge variant={getStatusBadgeVariant(company.status)}>
-                    {company.status}
+                  <Badge variant={getStatusBadgeVariant(state.company.status)}>
+                    {state.company.status}
                   </Badge>
                 </div>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -390,7 +746,7 @@ export default function CompanyManagement() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowInviteUser(true)}
+                  onClick={() => state.setShowInviteUser(true)}
                 >
                   <UserPlus className="w-4 h-4 mr-2" />
                   Invite User
@@ -422,10 +778,10 @@ export default function CompanyManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {company.users.length}
+                    {state.company.users.length}
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    of {company.maxUsers} maximum
+                    of {state.company.maxUsers} maximum
                   </p>
                 </CardContent>
               </Card>
@@ -439,7 +795,7 @@ export default function CompanyManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {company._count.sessions}
+                    {state.company._count.sessions}
                   </div>
                 </CardContent>
               </Card>
@@ -453,7 +809,7 @@ export default function CompanyManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {company._count.imports}
+                    {state.company._count.imports}
                   </div>
                 </CardContent>
               </Card>
@@ -465,160 +821,25 @@ export default function CompanyManagement() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-sm font-bold">
-                    {new Date(company.createdAt).toLocaleDateString()}
+                    {new Date(state.company.createdAt).toLocaleDateString()}
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             {/* Company Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor={companyNameFieldId}>Company Name</Label>
-                    <Input
-                      id={companyNameFieldId}
-                      value={editData.name || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={companyEmailFieldId}>Contact Email</Label>
-                    <Input
-                      id={companyEmailFieldId}
-                      type="email"
-                      value={editData.email || ""}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor={maxUsersFieldId}>Max Users</Label>
-                    <Input
-                      id={maxUsersFieldId}
-                      type="number"
-                      value={editData.maxUsers || 0}
-                      onChange={(e) =>
-                        setEditData((prev) => ({
-                          ...prev,
-                          maxUsers: Number.parseInt(e.target.value),
-                        }))
-                      }
-                      disabled={!canEdit}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="status">Status</Label>
-                    <Select
-                      value={editData.status}
-                      onValueChange={(value) =>
-                        setEditData((prev) => ({ ...prev, status: value }))
-                      }
-                      disabled={!canEdit}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="TRIAL">Trial</SelectItem>
-                        <SelectItem value="SUSPENDED">Suspended</SelectItem>
-                        <SelectItem value="ARCHIVED">Archived</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {canEdit && hasUnsavedChanges() && (
-                  <div className="flex gap-2 pt-4 border-t">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setEditData(originalData);
-                      }}
-                    >
-                      Cancel Changes
-                    </Button>
-                    <Button onClick={handleSave} disabled={isSaving}>
-                      <Save className="w-4 h-4 mr-2" />
-                      {isSaving ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {renderCompanyInfoCard(
+              state,
+              canEdit,
+              companyNameFieldId,
+              companyEmailFieldId,
+              maxUsersFieldId,
+              hasUnsavedChanges,
+              handleSave
+            )}
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Users ({company.users.length})
-                  </span>
-                  {canEdit && (
-                    <Button size="sm" onClick={() => setShowInviteUser(true)}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Invite User
-                    </Button>
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {company.users.map((user) => (
-                    <div
-                      key={user.id}
-                      className="flex items-center justify-between p-4 border rounded-lg"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                          <span className="text-sm font-medium text-blue-600 dark:text-blue-300">
-                            {user.name?.charAt(0) ||
-                              user.email.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium">
-                            {user.name || "No name"}
-                          </div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="outline">{user.role}</Badge>
-                        <div className="text-sm text-muted-foreground">
-                          Joined {new Date(user.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {company.users.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No users found. Invite the first user to get started.
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+          {renderUsersTab(state, canEdit)}
 
           <TabsContent value="settings" className="space-y-6">
             <Card>
@@ -641,9 +862,9 @@ export default function CompanyManagement() {
                         <AlertDialogTrigger asChild>
                           <Button
                             variant="destructive"
-                            disabled={company.status === "SUSPENDED"}
+                            disabled={state.company.status === "SUSPENDED"}
                           >
-                            {company.status === "SUSPENDED"
+                            {state.company.status === "SUSPENDED"
                               ? "Already Suspended"
                               : "Suspend"}
                           </Button>
@@ -668,7 +889,7 @@ export default function CompanyManagement() {
                       </AlertDialog>
                     </div>
 
-                    {company.status === "SUSPENDED" && (
+                    {state.company.status === "SUSPENDED" && (
                       <div className="flex items-center justify-between p-4 border border-green-200 dark:border-green-800 rounded-lg">
                         <div>
                           <h3 className="font-medium">Reactivate Company</h3>
@@ -706,7 +927,7 @@ export default function CompanyManagement() {
       </div>
 
       {/* Invite User Dialog */}
-      {showInviteUser && (
+      {state.showInviteUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-md mx-4">
             <CardHeader>
@@ -717,9 +938,12 @@ export default function CompanyManagement() {
                 <Label htmlFor={inviteNameFieldId}>Name</Label>
                 <Input
                   id={inviteNameFieldId}
-                  value={inviteData.name}
+                  value={state.inviteData.name}
                   onChange={(e) =>
-                    setInviteData((prev) => ({ ...prev, name: e.target.value }))
+                    state.setInviteData((prev) => ({
+                      ...prev,
+                      name: e.target.value,
+                    }))
                   }
                   placeholder="User's full name"
                 />
@@ -729,9 +953,9 @@ export default function CompanyManagement() {
                 <Input
                   id={inviteEmailFieldId}
                   type="email"
-                  value={inviteData.email}
+                  value={state.inviteData.email}
                   onChange={(e) =>
-                    setInviteData((prev) => ({
+                    state.setInviteData((prev) => ({
                       ...prev,
                       email: e.target.value,
                     }))
@@ -742,9 +966,9 @@ export default function CompanyManagement() {
               <div>
                 <Label htmlFor="inviteRole">Role</Label>
                 <Select
-                  value={inviteData.role}
+                  value={state.inviteData.role}
                   onValueChange={(value) =>
-                    setInviteData((prev) => ({ ...prev, role: value }))
+                    state.setInviteData((prev) => ({ ...prev, role: value }))
                   }
                 >
                   <SelectTrigger>
@@ -759,7 +983,7 @@ export default function CompanyManagement() {
               <div className="flex gap-2 pt-4">
                 <Button
                   variant="outline"
-                  onClick={() => setShowInviteUser(false)}
+                  onClick={() => state.setShowInviteUser(false)}
                   className="flex-1"
                 >
                   Cancel
@@ -767,7 +991,7 @@ export default function CompanyManagement() {
                 <Button
                   onClick={handleInviteUser}
                   className="flex-1"
-                  disabled={!inviteData.email || !inviteData.name}
+                  disabled={!state.inviteData.email || !state.inviteData.name}
                 >
                   <Mail className="w-4 h-4 mr-2" />
                   Send Invite
@@ -780,8 +1004,8 @@ export default function CompanyManagement() {
 
       {/* Unsaved Changes Dialog */}
       <AlertDialog
-        open={showUnsavedChangesDialog}
-        onOpenChange={setShowUnsavedChangesDialog}
+        open={state.showUnsavedChangesDialog}
+        onOpenChange={state.setShowUnsavedChangesDialog}
       >
         <AlertDialogContent>
           <AlertDialogHeader>

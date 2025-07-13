@@ -79,8 +79,22 @@ export const env = {
   NEXTAUTH_SECRET: parseEnvValue(process.env.NEXTAUTH_SECRET) || "",
   NODE_ENV: parseEnvValue(process.env.NODE_ENV) || "development",
 
+  // CSRF Protection
+  CSRF_SECRET: (() => {
+    const csrfSecret = parseEnvValue(process.env.CSRF_SECRET);
+    const nextAuthSecret = parseEnvValue(process.env.NEXTAUTH_SECRET);
+
+    if (csrfSecret) return csrfSecret;
+    if (nextAuthSecret) return nextAuthSecret;
+
+    throw new Error(
+      "CSRF_SECRET or NEXTAUTH_SECRET is required for security. Please set one of these environment variables."
+    );
+  })(),
+
   // OpenAI
   OPENAI_API_KEY: parseEnvValue(process.env.OPENAI_API_KEY) || "",
+  OPENAI_MOCK_MODE: parseEnvValue(process.env.OPENAI_MOCK_MODE) === "true",
 
   // Scheduler Configuration
   SCHEDULER_ENABLED: parseEnvValue(process.env.SCHEDULER_ENABLED) === "true",
@@ -106,7 +120,7 @@ export const env = {
   // Database Configuration
   DATABASE_URL: parseEnvValue(process.env.DATABASE_URL) || "",
   DATABASE_URL_DIRECT: parseEnvValue(process.env.DATABASE_URL_DIRECT) || "",
-  
+
   // Database Connection Pooling
   DATABASE_CONNECTION_LIMIT: parseIntWithDefault(
     process.env.DATABASE_CONNECTION_LIMIT,
@@ -116,6 +130,13 @@ export const env = {
     process.env.DATABASE_POOL_TIMEOUT,
     10
   ),
+
+  // Redis Configuration (optional - graceful fallback to in-memory if not provided)
+  REDIS_URL: parseEnvValue(process.env.REDIS_URL) || "",
+  REDIS_TTL_DEFAULT: parseIntWithDefault(process.env.REDIS_TTL_DEFAULT, 300), // 5 minutes default
+  REDIS_TTL_SESSION: parseIntWithDefault(process.env.REDIS_TTL_SESSION, 1800), // 30 minutes
+  REDIS_TTL_USER: parseIntWithDefault(process.env.REDIS_TTL_USER, 900), // 15 minutes
+  REDIS_TTL_COMPANY: parseIntWithDefault(process.env.REDIS_TTL_COMPANY, 600), // 10 minutes
 
   // Server
   PORT: parseIntWithDefault(process.env.PORT, 3000),
@@ -135,8 +156,17 @@ export function validateEnv(): { valid: boolean; errors: string[] } {
     errors.push("NEXTAUTH_SECRET is required");
   }
 
-  if (!env.OPENAI_API_KEY && env.NODE_ENV === "production") {
-    errors.push("OPENAI_API_KEY is required in production");
+  // CSRF_SECRET validation is now handled in the IIFE above
+  // If we reach here, CSRF_SECRET is guaranteed to be set
+
+  if (
+    !env.OPENAI_API_KEY &&
+    env.NODE_ENV === "production" &&
+    !env.OPENAI_MOCK_MODE
+  ) {
+    errors.push(
+      "OPENAI_API_KEY is required in production (unless OPENAI_MOCK_MODE is enabled)"
+    );
   }
 
   return {
@@ -174,6 +204,7 @@ export function logEnvConfig(): void {
   console.log(`  NODE_ENV: ${env.NODE_ENV}`);
   console.log(`  NEXTAUTH_URL: ${env.NEXTAUTH_URL}`);
   console.log(`  SCHEDULER_ENABLED: ${env.SCHEDULER_ENABLED}`);
+  console.log(`  OPENAI_MOCK_MODE: ${env.OPENAI_MOCK_MODE}`);
   console.log(`  PORT: ${env.PORT}`);
 
   if (env.SCHEDULER_ENABLED) {

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatEnumValue } from "@/lib/format-enums";
+import { trpc } from "@/lib/trpc-client";
 import ModernBarChart from "../../../components/charts/bar-chart";
 import ModernDonutChart from "../../../components/charts/donut-chart";
 import ModernLineChart from "../../../components/charts/line-chart";
@@ -38,92 +39,10 @@ import MetricCard from "../../../components/ui/metric-card";
 import WordCloud from "../../../components/WordCloud";
 import type { Company, MetricsResult, WordCloudWord } from "../../../lib/types";
 
-// Safely wrapped component with useSession
-function DashboardContent() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const [metrics, setMetrics] = useState<MetricsResult | null>(null);
-  const [company, setCompany] = useState<Company | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
-  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
-
-  const refreshStatusId = useId();
-  const isAuditor = session?.user?.role === "AUDITOR";
-
-  // Function to fetch metrics with optional date range
-  const fetchMetrics = useCallback(
-    async (startDate?: string, endDate?: string, isInitial = false) => {
-      setLoading(true);
-      try {
-        let url = "/api/dashboard/metrics";
-        if (startDate && endDate) {
-          url += `?startDate=${startDate}&endDate=${endDate}`;
-        }
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        setMetrics(data.metrics);
-        setCompany(data.company);
-
-        // Set initial load flag
-        if (isInitial) {
-          setIsInitialLoad(false);
-        }
-      } catch (error) {
-        console.error("Error fetching metrics:", error);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
-
-  useEffect(() => {
-    // Redirect if not authenticated
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-
-    // Fetch metrics and company on mount if authenticated
-    if (status === "authenticated" && isInitialLoad) {
-      fetchMetrics(undefined, undefined, true);
-    }
-  }, [status, router, isInitialLoad, fetchMetrics]);
-
-  async function handleRefresh() {
-    if (isAuditor) return;
-    try {
-      setRefreshing(true);
-
-      if (!company?.id) {
-        setRefreshing(false);
-        alert("Cannot refresh: Company ID is missing");
-        return;
-      }
-
-      const res = await fetch("/api/admin/refresh-sessions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId: company.id }),
-      });
-
-      if (res.ok) {
-        const metricsRes = await fetch("/api/dashboard/metrics");
-        const data = await metricsRes.json();
-        setMetrics(data.metrics);
-      } else {
-        const errorData = await res.json();
-        alert(`Failed to refresh sessions: ${errorData.error}`);
-      }
-    } finally {
-      setRefreshing(false);
-    }
-  }
-
-  // Show loading state while session status is being determined
+/**
+ * Loading states component for better organization
+ */
+function DashboardLoadingStates({ status }: { status: string }) {
   if (status === "loading") {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -145,74 +64,83 @@ function DashboardContent() {
     );
   }
 
-  if (loading || !metrics || !company) {
-    return (
-      <div className="space-y-8">
-        {/* Header Skeleton */}
+  return null;
+}
+
+/**
+ * Loading skeleton component
+ */
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-8">
+      {/* Header Skeleton */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-24" />
+              <Skeleton className="h-10 w-20" />
+            </div>
+          </div>
+        </CardHeader>
+      </Card>
+
+      {/* Metrics Grid Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {Array.from({ length: 8 }, (_, i) => {
+          const metricTypes = [
+            "sessions",
+            "users",
+            "time",
+            "response",
+            "costs",
+            "peak",
+            "resolution",
+            "languages",
+          ];
+          return (
+            <MetricCard
+              key={`skeleton-${metricTypes[i] || "metric"}-card-loading`}
+              title=""
+              value=""
+              isLoading
+            />
+          );
+        })}
+      </div>
+
+      {/* Charts Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-4 w-64" />
-              </div>
-              <div className="flex gap-2">
-                <Skeleton className="h-10 w-24" />
-                <Skeleton className="h-10 w-20" />
-              </div>
-            </div>
+            <Skeleton className="h-6 w-32" />
           </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
         </Card>
-
-        {/* Metrics Grid Skeleton */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }, (_, i) => {
-            const metricTypes = [
-              "sessions",
-              "users",
-              "time",
-              "response",
-              "costs",
-              "peak",
-              "resolution",
-              "languages",
-            ];
-            return (
-              <MetricCard
-                key={`skeleton-${metricTypes[i] || "metric"}-card-loading`}
-                title=""
-                value=""
-                isLoading
-              />
-            );
-          })}
-        </div>
-
-        {/* Charts Skeleton */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2">
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-64 w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-32" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-64 w-full" />
-            </CardContent>
-          </Card>
-        </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
-  // Data preparation functions
-  const getSentimentData = () => {
+/**
+ * Data processing utilities
+ */
+function useDashboardData(metrics: MetricsResult | null) {
+  const getSentimentData = useCallback(() => {
     if (!metrics) return [];
 
     const sentimentData = {
@@ -238,9 +166,9 @@ function DashboardContent() {
         color: "hsl(var(--chart-3))",
       },
     ];
-  };
+  }, [metrics]);
 
-  const getSessionsOverTimeData = () => {
+  const getSessionsOverTimeData = useCallback(() => {
     if (!metrics?.days) return [];
 
     return Object.entries(metrics.days).map(([date, value]) => ({
@@ -250,9 +178,9 @@ function DashboardContent() {
       }),
       value: value as number,
     }));
-  };
+  }, [metrics?.days]);
 
-  const getCategoriesData = () => {
+  const getCategoriesData = useCallback(() => {
     if (!metrics?.categories) return [];
 
     return Object.entries(metrics.categories).map(([name, value]) => {
@@ -265,23 +193,23 @@ function DashboardContent() {
         value: value as number,
       };
     });
-  };
+  }, [metrics?.categories]);
 
-  const getLanguagesData = () => {
+  const getLanguagesData = useCallback(() => {
     if (!metrics?.languages) return [];
 
     return Object.entries(metrics.languages).map(([name, value]) => ({
       name,
       value: value as number,
     }));
-  };
+  }, [metrics?.languages]);
 
-  const getWordCloudData = (): WordCloudWord[] => {
+  const getWordCloudData = useCallback((): WordCloudWord[] => {
     if (!metrics?.wordCloudData) return [];
     return metrics.wordCloudData;
-  };
+  }, [metrics?.wordCloudData]);
 
-  const getCountryData = () => {
+  const getCountryData = useCallback(() => {
     if (!metrics?.countries) return {};
     return Object.entries(metrics.countries).reduce(
       (acc, [code, count]) => {
@@ -292,10 +220,10 @@ function DashboardContent() {
       },
       {} as Record<string, number>
     );
-  };
+  }, [metrics?.countries]);
 
-  const getResponseTimeData = () => {
-    const avgTime = metrics.avgResponseTime || 1.5;
+  const getResponseTimeData = useCallback(() => {
+    const avgTime = metrics?.avgResponseTime || 1.5;
     const simulatedData: number[] = [];
 
     for (let i = 0; i < 50; i++) {
@@ -304,81 +232,428 @@ function DashboardContent() {
     }
 
     return simulatedData;
+  }, [metrics?.avgResponseTime]);
+
+  return {
+    getSentimentData,
+    getSessionsOverTimeData,
+    getCategoriesData,
+    getLanguagesData,
+    getWordCloudData,
+    getCountryData,
+    getResponseTimeData,
   };
+}
+
+/**
+ * Dashboard header component
+ */
+function DashboardHeader({
+  company,
+  metrics,
+  isAuditor,
+  refreshing,
+  onRefresh,
+}: {
+  company: Company;
+  metrics: MetricsResult;
+  isAuditor: boolean;
+  refreshing: boolean;
+  onRefresh: () => void;
+}) {
+  const refreshStatusId = useId();
+
+  return (
+    <Card className="border-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5">
+      <CardHeader>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl font-bold tracking-tight">
+                {company.name}
+              </h1>
+              <Badge variant="secondary" className="text-xs">
+                Analytics Dashboard
+              </Badge>
+            </div>
+            <p className="text-muted-foreground">
+              Last updated{" "}
+              <span className="font-medium">
+                {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
+              </span>
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={onRefresh}
+              disabled={refreshing || isAuditor}
+              size="sm"
+              className="gap-2"
+              aria-label={
+                refreshing
+                  ? "Refreshing dashboard data"
+                  : "Refresh dashboard data"
+              }
+              aria-describedby={refreshing ? refreshStatusId : undefined}
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                aria-hidden="true"
+              />
+              {refreshing ? "Refreshing..." : "Refresh"}
+            </Button>
+            {refreshing && (
+              <div id={refreshStatusId} className="sr-only" aria-live="polite">
+                Dashboard data is being refreshed
+              </div>
+            )}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" aria-label="Account menu">
+                  <MoreVertical className="h-4 w-4" aria-hidden="true" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => signOut({ callbackUrl: "/login" })}
+                >
+                  <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+}
+
+/**
+ * Individual metric card components for better organization
+ */
+function SessionMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Total Sessions"
+      value={metrics.totalSessions?.toLocaleString()}
+      icon={<MessageSquare className="h-5 w-5" />}
+      trend={{
+        value: metrics.sessionTrend ?? 0,
+        isPositive: (metrics.sessionTrend ?? 0) >= 0,
+      }}
+      variant="primary"
+    />
+  );
+}
+
+function UsersMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Unique Users"
+      value={metrics.uniqueUsers?.toLocaleString()}
+      icon={<Users className="h-5 w-5" />}
+      trend={{
+        value: metrics.usersTrend ?? 0,
+        isPositive: (metrics.usersTrend ?? 0) >= 0,
+      }}
+      variant="success"
+    />
+  );
+}
+
+function SessionTimeMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Avg. Session Time"
+      value={`${Math.round(metrics.avgSessionLength || 0)}s`}
+      icon={<Clock className="h-5 w-5" />}
+      trend={{
+        value: metrics.avgSessionTimeTrend ?? 0,
+        isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
+      }}
+    />
+  );
+}
+
+function ResponseTimeMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Avg. Response Time"
+      value={`${metrics.avgResponseTime?.toFixed(1) || 0}s`}
+      icon={<Zap className="h-5 w-5" />}
+      trend={{
+        value: metrics.avgResponseTimeTrend ?? 0,
+        isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0,
+      }}
+      variant="warning"
+    />
+  );
+}
+
+function CostsMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Daily Costs"
+      value={`€${metrics.avgDailyCosts?.toFixed(4) || "0.0000"}`}
+      icon={<Euro className="h-5 w-5" />}
+      description="Average per day"
+    />
+  );
+}
+
+function PeakUsageMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Peak Usage"
+      value={metrics.peakUsageTime || "N/A"}
+      icon={<TrendingUp className="h-5 w-5" />}
+      description="Busiest hour"
+    />
+  );
+}
+
+function ResolutionRateMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Resolution Rate"
+      value={`${metrics.resolvedChatsPercentage?.toFixed(1) || "0.0"}%`}
+      icon={<CheckCircle className="h-5 w-5" />}
+      trend={{
+        value: metrics.resolvedChatsPercentage ?? 0,
+        isPositive: (metrics.resolvedChatsPercentage ?? 0) >= 80,
+      }}
+      variant={
+        metrics.resolvedChatsPercentage && metrics.resolvedChatsPercentage >= 80
+          ? "success"
+          : "warning"
+      }
+    />
+  );
+}
+
+function LanguagesMetricCard({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <MetricCard
+      title="Active Languages"
+      value={Object.keys(metrics.languages || {}).length}
+      icon={<Globe className="h-5 w-5" />}
+      description="Languages detected"
+    />
+  );
+}
+
+/**
+ * Simplified metrics grid component
+ */
+function MetricsGrid({ metrics }: { metrics: MetricsResult }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <SessionMetricCard metrics={metrics} />
+      <UsersMetricCard metrics={metrics} />
+      <SessionTimeMetricCard metrics={metrics} />
+      <ResponseTimeMetricCard metrics={metrics} />
+      <CostsMetricCard metrics={metrics} />
+      <PeakUsageMetricCard metrics={metrics} />
+      <ResolutionRateMetricCard metrics={metrics} />
+      <LanguagesMetricCard metrics={metrics} />
+    </div>
+  );
+}
+
+/**
+ * Main dashboard content with reduced complexity
+ */
+function DashboardContent() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [metrics, setMetrics] = useState<MetricsResult | null>(null);
+  // Remove unused company state that was causing skeleton view to always show
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
+
+  const isAuditor = session?.user?.role === "AUDITOR";
+  const dataHelpers = useDashboardData(metrics);
+
+  // Function to fetch metrics with optional date range
+  // tRPC query for dashboard metrics
+  const {
+    data: overviewData,
+    isLoading: isLoadingMetrics,
+    refetch: refetchMetrics,
+    error: metricsError,
+  } = trpc.dashboard.getOverview.useQuery(
+    {
+      // Add date range parameters when implemented
+      // startDate: dateRange?.startDate,
+      // endDate: dateRange?.endDate,
+    },
+    {
+      enabled: status === "authenticated",
+    }
+  );
+
+  // Update state when data changes
+  useEffect(() => {
+    if (overviewData) {
+      // Map overview data to metrics format expected by the component
+      const mappedMetrics: Partial<MetricsResult> = {
+        totalSessions: overviewData.totalSessions,
+        avgSessionsPerDay: overviewData.avgSessionsPerDay || 0,
+        avgSessionLength: overviewData.avgSessionLength || 0,
+        days:
+          overviewData.timeSeriesData?.reduce(
+            (acc, item) => {
+              if (item.date) {
+                acc[item.date] = item.sessionCount || 0;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        languages:
+          overviewData.languageDistribution?.reduce(
+            (acc, item) => {
+              if (item.language) {
+                acc[item.language] = item.count;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        countries:
+          overviewData.geographicDistribution?.reduce(
+            (acc, item) => {
+              if (item.country) {
+                acc[item.country] = item.count;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        belowThresholdCount: overviewData.belowThresholdCount || 0,
+        // Map sentiment data to individual counts
+        sentimentPositiveCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "POSITIVE"
+          )?.count || 0,
+        sentimentNeutralCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "NEUTRAL"
+          )?.count || 0,
+        sentimentNegativeCount:
+          overviewData.sentimentDistribution?.find(
+            (s) => s.sentiment === "NEGATIVE"
+          )?.count || 0,
+        // Map category data to CategoryMetrics format
+        ...(overviewData.categoryDistribution && {
+          categories: overviewData.categoryDistribution.reduce(
+            (acc, item) => {
+              if (item.category) {
+                acc[item.category] = item.count;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ),
+        }),
+      };
+      setMetrics(mappedMetrics as MetricsResult);
+
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    }
+  }, [overviewData, isInitialLoad]);
+
+  // Admin refresh sessions mutation
+  const refreshSessionsMutation = trpc.admin.refreshSessions.useMutation({
+    onSuccess: () => {
+      // Refetch metrics after successful refresh
+      refetchMetrics();
+    },
+    onError: (error) => {
+      alert(`Failed to refresh sessions: ${error.message}`);
+    },
+  });
+
+  useEffect(() => {
+    // Redirect if not authenticated
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+    // tRPC queries handle data fetching automatically
+  }, [status, router]);
+
+  // Enhanced error handling with user feedback
+  if (metricsError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="text-red-600 text-lg font-semibold">
+            Failed to load dashboard data
+          </div>
+          <p className="text-gray-600">
+            There was an error loading your dashboard metrics. Please try
+            refreshing the page.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  async function handleRefresh() {
+    if (isAuditor) return;
+
+    setRefreshing(true);
+    try {
+      await refreshSessionsMutation.mutateAsync();
+    } finally {
+      setRefreshing(false);
+    }
+  }
+
+  // Show loading state while session status is being determined
+  const loadingState = DashboardLoadingStates({ status });
+  if (loadingState) return loadingState;
+
+  // Show loading state while data is being fetched
+  if (isLoadingMetrics && !metrics) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto" />
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8">
-      {/* Modern Header */}
-      <Card className="border-0 bg-linear-to-r from-primary/5 via-primary/10 to-primary/5">
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <h1 className="text-3xl font-bold tracking-tight">
-                  {company.name}
-                </h1>
-                <Badge variant="secondary" className="text-xs">
-                  Analytics Dashboard
-                </Badge>
-              </div>
-              <p className="text-muted-foreground">
-                Last updated{" "}
-                <span className="font-medium">
-                  {new Date(metrics.lastUpdated || Date.now()).toLocaleString()}
-                </span>
-              </p>
-            </div>
+      <DashboardHeader
+        company={{ name: "Analytics Dashboard" } as Company}
+        metrics={metrics}
+        isAuditor={isAuditor}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
+      />
 
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleRefresh}
-                disabled={refreshing || isAuditor}
-                size="sm"
-                className="gap-2"
-                aria-label={
-                  refreshing
-                    ? "Refreshing dashboard data"
-                    : "Refresh dashboard data"
-                }
-                aria-describedby={refreshing ? refreshStatusId : undefined}
-              >
-                <RefreshCw
-                  className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                  aria-hidden="true"
-                />
-                {refreshing ? "Refreshing..." : "Refresh"}
-              </Button>
-              {refreshing && (
-                <div
-                  id={refreshStatusId}
-                  className="sr-only"
-                  aria-live="polite"
-                >
-                  Dashboard data is being refreshed
-                </div>
-              )}
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" aria-label="Account menu">
-                    <MoreVertical className="h-4 w-4" aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => signOut({ callbackUrl: "/login" })}
-                  >
-                    <LogOut className="h-4 w-4 mr-2" aria-hidden="true" />
-                    Sign out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Date Range Picker - Temporarily disabled to debug infinite loop */}
+      {/* Date Range Picker */}
       {/* {dateRange && (
         <DateRangePicker
           minDate={dateRange.minDate}
@@ -389,100 +664,19 @@ function DashboardContent() {
         />
       )} */}
 
-      {/* Modern Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Total Sessions"
-          value={metrics.totalSessions?.toLocaleString()}
-          icon={<MessageSquare className="h-5 w-5" />}
-          trend={{
-            value: metrics.sessionTrend ?? 0,
-            isPositive: (metrics.sessionTrend ?? 0) >= 0,
-          }}
-          variant="primary"
-        />
-
-        <MetricCard
-          title="Unique Users"
-          value={metrics.uniqueUsers?.toLocaleString()}
-          icon={<Users className="h-5 w-5" />}
-          trend={{
-            value: metrics.usersTrend ?? 0,
-            isPositive: (metrics.usersTrend ?? 0) >= 0,
-          }}
-          variant="success"
-        />
-
-        <MetricCard
-          title="Avg. Session Time"
-          value={`${Math.round(metrics.avgSessionLength || 0)}s`}
-          icon={<Clock className="h-5 w-5" />}
-          trend={{
-            value: metrics.avgSessionTimeTrend ?? 0,
-            isPositive: (metrics.avgSessionTimeTrend ?? 0) >= 0,
-          }}
-        />
-
-        <MetricCard
-          title="Avg. Response Time"
-          value={`${metrics.avgResponseTime?.toFixed(1) || 0}s`}
-          icon={<Zap className="h-5 w-5" />}
-          trend={{
-            value: metrics.avgResponseTimeTrend ?? 0,
-            isPositive: (metrics.avgResponseTimeTrend ?? 0) <= 0,
-          }}
-          variant="warning"
-        />
-
-        <MetricCard
-          title="Daily Costs"
-          value={`€${metrics.avgDailyCosts?.toFixed(4) || "0.0000"}`}
-          icon={<Euro className="h-5 w-5" />}
-          description="Average per day"
-        />
-
-        <MetricCard
-          title="Peak Usage"
-          value={metrics.peakUsageTime || "N/A"}
-          icon={<TrendingUp className="h-5 w-5" />}
-          description="Busiest hour"
-        />
-
-        <MetricCard
-          title="Resolution Rate"
-          value={`${metrics.resolvedChatsPercentage?.toFixed(1) || "0.0"}%`}
-          icon={<CheckCircle className="h-5 w-5" />}
-          trend={{
-            value: metrics.resolvedChatsPercentage ?? 0,
-            isPositive: (metrics.resolvedChatsPercentage ?? 0) >= 80,
-          }}
-          variant={
-            metrics.resolvedChatsPercentage &&
-            metrics.resolvedChatsPercentage >= 80
-              ? "success"
-              : "warning"
-          }
-        />
-
-        <MetricCard
-          title="Active Languages"
-          value={Object.keys(metrics.languages || {}).length}
-          icon={<Globe className="h-5 w-5" />}
-          description="Languages detected"
-        />
-      </div>
+      <MetricsGrid metrics={metrics} />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <ModernLineChart
-          data={getSessionsOverTimeData()}
+          data={dataHelpers.getSessionsOverTimeData()}
           title="Sessions Over Time"
           className="lg:col-span-2"
           height={350}
         />
 
         <ModernDonutChart
-          data={getSentimentData()}
+          data={dataHelpers.getSentimentData()}
           title="Conversation Sentiment"
           centerText={{
             title: "Total",
@@ -494,13 +688,13 @@ function DashboardContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ModernBarChart
-          data={getCategoriesData()}
+          data={dataHelpers.getCategoriesData()}
           title="Sessions by Category"
           height={350}
         />
 
         <ModernDonutChart
-          data={getLanguagesData()}
+          data={dataHelpers.getLanguagesData()}
           title="Languages Used"
           height={350}
         />
@@ -516,7 +710,7 @@ function DashboardContent() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <GeographicMap countries={getCountryData()} />
+            <GeographicMap countries={dataHelpers.getCountryData()} />
           </CardContent>
         </Card>
 
@@ -529,7 +723,11 @@ function DashboardContent() {
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
-              <WordCloud words={getWordCloudData()} width={500} height={300} />
+              <WordCloud
+                words={dataHelpers.getWordCloudData()}
+                width={500}
+                height={300}
+              />
             </div>
           </CardContent>
         </Card>
@@ -545,7 +743,7 @@ function DashboardContent() {
         </CardHeader>
         <CardContent>
           <ResponseTimeDistribution
-            data={getResponseTimeData()}
+            data={dataHelpers.getResponseTimeData()}
             average={metrics.avgResponseTime || 0}
           />
         </CardContent>

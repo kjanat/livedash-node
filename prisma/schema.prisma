@@ -25,6 +25,9 @@ model PlatformUser {
   name      String           @db.VarChar(255)
   createdAt DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt DateTime         @updatedAt @db.Timestamptz(6)
+  
+  /// Relations
+  auditLogs SecurityAuditLog[]
 
   @@index([email])
 }
@@ -55,6 +58,8 @@ model Company {
   sessions        Session[]
   imports         SessionImport[]
   users           User[]           @relation("CompanyUsers")
+  aiBatchRequests AIBatchRequest[]
+  auditLogs       SecurityAuditLog[]
 
   @@index([name])
   @@index([status])
@@ -86,10 +91,35 @@ model User {
   invitedAt        DateTime? @db.Timestamptz(6)
   /// Email of the user who invited this user (for audit trail)
   invitedBy        String?   @db.VarChar(255)
+  /// User management fields
+  /// When the user last logged in
+  lastLoginAt      DateTime? @db.Timestamptz(6)
+  /// Whether the user account is active
+  isActive         Boolean   @default(true)
+  /// Whether the user's email has been verified
+  emailVerified    Boolean   @default(false)
+  /// Token for email verification
+  emailVerificationToken String? @db.VarChar(255)
+  /// Expiration time for email verification token
+  emailVerificationExpiry DateTime? @db.Timestamptz(6)
+  /// Number of failed login attempts
+  failedLoginAttempts Int     @default(0)
+  /// When the account was locked due to failed attempts
+  lockedAt         DateTime? @db.Timestamptz(6)
+  /// User preferences and settings
+  preferences      Json?     @db.Json
+  /// User's timezone for proper datetime display
+  timezone         String?   @db.VarChar(50)
+  /// User's preferred language
+  preferredLanguage String?  @db.VarChar(10)
   company          Company   @relation("CompanyUsers", fields: [companyId], references: [id], onDelete: Cascade)
+  auditLogs        SecurityAuditLog[]
 
   @@index([companyId])
   @@index([email])
+  @@index([lastLoginAt])
+  @@index([isActive])
+  @@index([emailVerified])
 }
 
 /// *
@@ -246,14 +276,42 @@ model SessionQuestion {
 }
 
 /// *
+/// * AI BATCH REQUEST TRACKING (OpenAI Batch API)
+/// * Tracks batch jobs submitted to OpenAI for cost-efficient processing
+model AIBatchRequest {
+  id                 String               @id @default(cuid())
+  companyId          String
+  company            Company              @relation(fields: [companyId], references: [id])
+
+  /// OpenAI specific IDs
+  openaiBatchId      String               @unique
+  inputFileId        String
+  outputFileId       String?
+  errorFileId        String?
+
+  /// Our internal status tracking
+  status             AIBatchRequestStatus @default(PENDING)
+
+  /// Timestamps
+  createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+  completedAt        DateTime?            @db.Timestamptz(6)
+  processedAt        DateTime?            @db.Timestamptz(6) // When we finished processing the results
+
+  /// Relation to the individual requests included in this batch
+  processingRequests AIProcessingRequest[]
+
+  @@index([companyId, status])
+}
+
+/// *
 /// * AI PROCESSING COST TRACKING
 model AIProcessingRequest {
-  id                       String    @id @default(uuid())
+  id                       String         @id @default(uuid())
   sessionId                String
-  openaiRequestId          String?   @db.VarChar(255)
-  model                    String    @db.VarChar(100)
-  serviceTier              String?   @db.VarChar(50)
-  systemFingerprint        String?   @db.VarChar(255)
+  openaiRequestId          String?        @db.VarChar(255)
+  model                    String         @db.VarChar(100)
+  serviceTier              String?        @db.VarChar(50)
+  systemFingerprint        String?        @db.VarChar(255)
   promptTokens             Int
   completionTokens         Int
   totalTokens              Int
@@ -263,21 +321,31 @@ model AIProcessingRequest {
   audioTokensCompletion    Int?
   acceptedPredictionTokens Int?
   rejectedPredictionTokens Int?
-  promptTokenCost          Float     @db.Real
-  completionTokenCost      Float     @db.Real
-  totalCostEur             Float     @db.Real
-  processingType           String    @db.VarChar(100)
+  promptTokenCost          Float          @db.Real
+  completionTokenCost      Float          @db.Real
+  totalCostEur             Float          @db.Real
+  processingType           String         @db.VarChar(100)
   success                  Boolean
   errorMessage             String?
-  requestedAt              DateTime  @default(now()) @db.Timestamptz(6)
-  completedAt              DateTime? @db.Timestamptz(6)
-  session                  Session   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  requestedAt              DateTime       @default(now()) @db.Timestamptz(6)
+  completedAt              DateTime?      @db.Timestamptz(6)
+  
+  /// === NEW BATCH API FIELDS ===
+  processingStatus         AIRequestStatus @default(PENDING_BATCHING)
+  batchId                  String?
+  batch                    AIBatchRequest? @relation(fields: [batchId], references: [id])
+  
+  session                  Session        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
   @@index([sessionId, requestedAt])
   @@index([requestedAt])
   @@index([model])
   @@index([success, requestedAt])
+  @@index([processingStatus]) // Add this index for efficient querying
+  @@index([processingStatus, requestedAt]) // Optimize time-based status queries
+  @@index([batchId]) // Optimize batch-related queries
+  @@index([processingStatus, batchId]) // Composite index for batch status filtering
 }
 
 /// *
@@ -426,4 +494,147 @@ enum ProcessingStatus {
   FAILED
   /// Stage was intentionally skipped
   SKIPPED
+}
+
+/// OpenAI Batch Request Status
+enum AIBatchRequestStatus {
+  /// Batch request created, waiting to upload file to OpenAI
+  PENDING
+  /// Currently uploading file to OpenAI
+  UPLOADING
+  /// OpenAI is validating the uploaded file
+  VALIDATING
+  /// Batch is queued or running on OpenAI's side
+  IN_PROGRESS
+  /// OpenAI is finalizing the batch results
+  FINALIZING
+  /// Batch completed on OpenAI, ready for processing
+  COMPLETED
+  /// We have processed the results from the completed batch
+  PROCESSED
+  /// Batch failed during processing
+  FAILED
+  /// Batch was cancelled
+  CANCELLED
+}
+
+/// Status for individual AI processing requests within a batch
+enum AIRequestStatus {
+  /// Request is waiting to be included in a batch
+  PENDING_BATCHING
+  /// Request is currently part of a batch being processed
+  BATCHING_IN_PROGRESS
+  /// Processing completed successfully
+  PROCESSING_COMPLETE
+  /// Processing failed
+  PROCESSING_FAILED
+}
+
+/// *
+/// * SECURITY AUDIT LOG (comprehensive security event tracking)
+/// * Tracks all security-critical events for compliance and incident investigation
+/// * Immutable records with structured metadata for analysis
+model SecurityAuditLog {
+  id              String             @id @default(uuid())
+  /// Event category for filtering and analysis
+  eventType       SecurityEventType
+  /// High-level action description
+  action          String             @db.VarChar(255)
+  /// Detailed event outcome (success, failure, blocked)
+  outcome         AuditOutcome
+  /// User who performed the action (if authenticated)
+  userId          String?
+  /// Company context for multi-tenant filtering
+  companyId       String?
+  /// Platform user who performed the action (for admin events)
+  platformUserId  String?
+  /// Client IP address for geographic analysis
+  ipAddress       String?            @db.Inet
+  /// User agent string for device/browser analysis
+  userAgent       String?
+  /// ISO 3166-1 alpha-3 country code derived from IP
+  country         String?            @db.VarChar(3)
+  /// Structured metadata with additional context
+  metadata        Json?
+  /// Error message if action failed
+  errorMessage    String?
+  /// Severity level for alerting and prioritization
+  severity        AuditSeverity      @default(INFO)
+  /// Session ID for correlation with user sessions
+  sessionId       String?            @db.VarChar(255)
+  /// Request ID for tracing across system boundaries
+  requestId       String?            @db.VarChar(255)
+  /// Immutable timestamp for chronological ordering
+  timestamp       DateTime           @default(now()) @db.Timestamptz(6)
+  
+  /// Relations
+  user            User?              @relation(fields: [userId], references: [id])
+  company         Company?           @relation(fields: [companyId], references: [id])
+  platformUser    PlatformUser?      @relation(fields: [platformUserId], references: [id])
+
+  @@index([eventType, timestamp])
+  @@index([companyId, eventType, timestamp])
+  @@index([userId, timestamp])
+  @@index([platformUserId, timestamp])
+  @@index([outcome, severity, timestamp])
+  @@index([ipAddress, timestamp])
+  @@index([timestamp])
+  @@index([sessionId])
+  @@index([requestId])
+}
+
+/// Security event categories for audit logging
+enum SecurityEventType {
+  /// Authentication events (login, logout, password changes)
+  AUTHENTICATION
+  /// Authorization events (permission checks, access denied)
+  AUTHORIZATION
+  /// User management events (create, update, delete, invite)
+  USER_MANAGEMENT
+  /// Company management events (create, suspend, settings changes)
+  COMPANY_MANAGEMENT
+  /// Rate limiting and abuse prevention
+  RATE_LIMITING
+  /// CSRF protection violations
+  CSRF_PROTECTION
+  /// Security header violations
+  SECURITY_HEADERS
+  /// Password reset flows
+  PASSWORD_RESET
+  /// Platform admin activities
+  PLATFORM_ADMIN
+  /// Data export and privacy events
+  DATA_PRIVACY
+  /// System configuration changes
+  SYSTEM_CONFIG
+  /// API security events
+  API_SECURITY
+}
+
+/// Outcome classification for audit events
+enum AuditOutcome {
+  /// Action completed successfully
+  SUCCESS
+  /// Action failed due to user error or invalid input
+  FAILURE
+  /// Action was blocked by security controls
+  BLOCKED
+  /// Action triggered rate limiting
+  RATE_LIMITED
+  /// Action was suspicious but not blocked
+  SUSPICIOUS
+}
+
+/// Severity levels for audit events
+enum AuditSeverity {
+  /// Informational events for compliance tracking
+  INFO
+  /// Low-impact security events
+  LOW
+  /// Medium-impact security events requiring attention
+  MEDIUM
+  /// High-impact security events requiring immediate attention
+  HIGH
+  /// Critical security events requiring urgent response
+  CRITICAL
 }

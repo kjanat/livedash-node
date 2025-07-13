@@ -5,6 +5,69 @@ import { sessionMetrics } from "../../../../lib/metrics";
 import { prisma } from "../../../../lib/prisma";
 import type { ChatSession } from "../../../../lib/types";
 
+/**
+ * Converts a Prisma session to ChatSession format for metrics
+ */
+function convertToMockChatSession(
+  ps: {
+    id: string;
+    companyId: string;
+    startTime: Date;
+    endTime: Date | null;
+    createdAt: Date;
+    category: string | null;
+    language: string | null;
+    country: string | null;
+    ipAddress: string | null;
+    sentiment: string | null;
+    messagesSent: number | null;
+    avgResponseTime: number | null;
+    escalated: boolean | null;
+    forwardedHr: boolean | null;
+    initialMsg: string | null;
+    fullTranscriptUrl: string | null;
+    summary: string | null;
+  },
+  questions: string[]
+): ChatSession {
+  // Convert questions to mock messages for backward compatibility
+  const mockMessages = questions.map((q, index) => ({
+    id: `question-${index}`,
+    sessionId: ps.id,
+    timestamp: ps.createdAt,
+    role: "User",
+    content: q,
+    order: index,
+    createdAt: ps.createdAt,
+  }));
+
+  return {
+    id: ps.id,
+    sessionId: ps.id,
+    companyId: ps.companyId,
+    startTime: new Date(ps.startTime),
+    endTime: ps.endTime ? new Date(ps.endTime) : null,
+    transcriptContent: "",
+    createdAt: new Date(ps.createdAt),
+    updatedAt: new Date(ps.createdAt),
+    category: ps.category || undefined,
+    language: ps.language || undefined,
+    country: ps.country || undefined,
+    ipAddress: ps.ipAddress || undefined,
+    sentiment: ps.sentiment === null ? undefined : ps.sentiment,
+    messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent,
+    avgResponseTime:
+      ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
+    escalated: ps.escalated || false,
+    forwardedHr: ps.forwardedHr || false,
+    initialMsg: ps.initialMsg || undefined,
+    fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
+    summary: ps.summary || undefined,
+    messages: mockMessages, // Use questions as messages for metrics
+    userId: undefined,
+  };
+}
+
 interface SessionUser {
   email: string;
   name?: string;
@@ -107,45 +170,8 @@ export async function GET(request: NextRequest) {
 
   // Convert Prisma sessions to ChatSession[] type for sessionMetrics
   const chatSessions: ChatSession[] = prismaSessions.map((ps) => {
-    // Get questions for this session or empty array
     const questions = questionsBySession[ps.id] || [];
-
-    // Convert questions to mock messages for backward compatibility
-    const mockMessages = questions.map((q, index) => ({
-      id: `question-${index}`,
-      sessionId: ps.id,
-      timestamp: ps.createdAt,
-      role: "User",
-      content: q,
-      order: index,
-      createdAt: ps.createdAt,
-    }));
-
-    return {
-      id: ps.id,
-      sessionId: ps.id,
-      companyId: ps.companyId,
-      startTime: new Date(ps.startTime),
-      endTime: ps.endTime ? new Date(ps.endTime) : null,
-      transcriptContent: "",
-      createdAt: new Date(ps.createdAt),
-      updatedAt: new Date(ps.createdAt),
-      category: ps.category || undefined,
-      language: ps.language || undefined,
-      country: ps.country || undefined,
-      ipAddress: ps.ipAddress || undefined,
-      sentiment: ps.sentiment === null ? undefined : ps.sentiment,
-      messagesSent: ps.messagesSent === null ? undefined : ps.messagesSent,
-      avgResponseTime:
-        ps.avgResponseTime === null ? undefined : ps.avgResponseTime,
-      escalated: ps.escalated || false,
-      forwardedHr: ps.forwardedHr || false,
-      initialMsg: ps.initialMsg || undefined,
-      fullTranscriptUrl: ps.fullTranscriptUrl || undefined,
-      summary: ps.summary || undefined,
-      messages: mockMessages, // Use questions as messages for metrics
-      userId: undefined,
-    };
+    return convertToMockChatSession(ps, questions);
   });
 
   // Pass company config to metrics

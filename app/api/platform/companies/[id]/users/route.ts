@@ -51,17 +51,33 @@ export async function POST(
       );
     }
 
-    // Check if user already exists in this company
-    const existingUser = await prisma.user.findFirst({
+    // Check if user already exists (emails must be globally unique)
+    const existingUser = await prisma.user.findUnique({
       where: {
         email,
-        companyId,
+      },
+      select: {
+        id: true,
+        companyId: true,
+        company: {
+          select: {
+            name: true,
+          },
+        },
       },
     });
 
     if (existingUser) {
+      if (existingUser.companyId === companyId) {
+        return NextResponse.json(
+          { error: "User already exists in this company" },
+          { status: 400 }
+        );
+      }
       return NextResponse.json(
-        { error: "User already exists in this company" },
+        {
+          error: `Email already in use by a user in company: ${existingUser.company.name}. Each email address can only be used once across all companies.`,
+        },
         { status: 400 }
       );
     }

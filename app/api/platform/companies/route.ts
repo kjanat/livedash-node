@@ -1,15 +1,38 @@
 import type { CompanyStatus } from "@prisma/client";
 import { type NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession, type Session } from "next-auth";
 import { platformAuthOptions } from "../../../../lib/platform-auth";
 import { prisma } from "../../../../lib/prisma";
+import { extractClientIP } from "../../../../lib/rateLimiter";
+import {
+  AuditOutcome,
+  createAuditMetadata,
+  securityAuditLogger,
+} from "../../../../lib/securityAuditLogger";
 
 // GET /api/platform/companies - List all companies
 export async function GET(request: NextRequest) {
+  let session: Session | null = null;
+
   try {
-    const session = await getServerSession(platformAuthOptions);
+    session = await getServerSession(platformAuthOptions);
+    const ip = extractClientIP(request);
+    const userAgent = request.headers.get("user-agent") || undefined;
 
     if (!session?.user?.isPlatformUser) {
+      await securityAuditLogger.logPlatformAdmin(
+        "platform_companies_unauthorized_access",
+        AuditOutcome.BLOCKED,
+        {
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            error: "no_platform_session",
+          }),
+        },
+        "Unauthorized attempt to access platform companies list"
+      );
+
       return NextResponse.json(
         { error: "Platform access required" },
         { status: 401 }
@@ -63,6 +86,24 @@ export async function GET(request: NextRequest) {
       prisma.company.count({ where }),
     ]);
 
+    // Log successful platform companies access
+    await securityAuditLogger.logPlatformAdmin(
+      "platform_companies_list_accessed",
+      AuditOutcome.SUCCESS,
+      {
+        platformUserId: session.user.id,
+        ipAddress: ip,
+        userAgent,
+        metadata: createAuditMetadata({
+          companiesReturned: companies.length,
+          totalCompanies: total,
+          filters: { status, search },
+          pagination: { page, limit },
+        }),
+      },
+      "Platform companies list accessed"
+    );
+
     return NextResponse.json({
       companies,
       pagination: {
@@ -74,6 +115,21 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Platform companies list error:", error);
+
+    await securityAuditLogger.logPlatformAdmin(
+      "platform_companies_list_error",
+      AuditOutcome.FAILURE,
+      {
+        platformUserId: session?.user?.id,
+        ipAddress: extractClientIP(request),
+        userAgent: request.headers.get("user-agent") || undefined,
+        metadata: createAuditMetadata({
+          error: "server_error",
+        }),
+      },
+      `Server error in platform companies list: ${error}`
+    );
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -83,13 +139,33 @@ export async function GET(request: NextRequest) {
 
 // POST /api/platform/companies - Create new company
 export async function POST(request: NextRequest) {
+  let session: Session | null = null;
+
   try {
-    const session = await getServerSession(platformAuthOptions);
+    session = await getServerSession(platformAuthOptions);
+    const ip = extractClientIP(request);
+    const userAgent = request.headers.get("user-agent") || undefined;
 
     if (
       !session?.user?.isPlatformUser ||
       session.user.platformRole === "SUPPORT"
     ) {
+      await securityAuditLogger.logPlatformAdmin(
+        "platform_company_create_unauthorized",
+        AuditOutcome.BLOCKED,
+        {
+          platformUserId: session?.user?.id,
+          ipAddress: ip,
+          userAgent,
+          metadata: createAuditMetadata({
+            error: "insufficient_permissions",
+            requiredRole: "ADMIN",
+            currentRole: session?.user?.platformRole,
+          }),
+        },
+        "Unauthorized attempt to create platform company"
+      );
+
       return NextResponse.json(
         { error: "Admin access required" },
         { status: 403 }
@@ -153,7 +229,7 @@ export async function POST(request: NextRequest) {
           name: adminName,
           role: "ADMIN",
           companyId: company.id,
-          invitedBy: session.user.email || "platform",
+          invitedBy: session?.user?.email || "platform",
           invitedAt: new Date(),
         },
       });
@@ -164,6 +240,27 @@ export async function POST(request: NextRequest) {
         generatedPassword: adminPassword ? null : finalAdminPassword,
       };
     });
+
+    // Log successful company creation
+    await securityAuditLogger.logCompanyManagement(
+      "platform_company_created",
+      AuditOutcome.SUCCESS,
+      {
+        platformUserId: session.user.id,
+        companyId: result.company.id,
+        ipAddress: ip,
+        userAgent,
+        metadata: createAuditMetadata({
+          companyName: result.company.name,
+          companyStatus: result.company.status,
+          adminUserEmail: "[REDACTED]",
+          adminUserName: result.adminUser.name,
+          maxUsers: result.company.maxUsers,
+          hasGeneratedPassword: !!result.generatedPassword,
+        }),
+      },
+      "Platform company created successfully"
+    );
 
     return NextResponse.json(
       {
@@ -179,6 +276,21 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Platform company creation error:", error);
+
+    await securityAuditLogger.logCompanyManagement(
+      "platform_company_create_error",
+      AuditOutcome.FAILURE,
+      {
+        platformUserId: session?.user?.id,
+        ipAddress: extractClientIP(request),
+        userAgent: request.headers.get("user-agent") || undefined,
+        metadata: createAuditMetadata({
+          error: "server_error",
+        }),
+      },
+      `Server error in platform company creation: ${error}`
+    );
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
