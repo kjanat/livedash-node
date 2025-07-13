@@ -9,38 +9,42 @@ The Security Monitoring and Alerting System provides comprehensive real-time sec
 ### Core Components
 
 1.  **Security Monitoring Service** (`lib/securityMonitoring.ts`)
-   -   Real-time event processing
-   -   Anomaly detection algorithms
-   -   Alert generation and management
-   -   Security score calculation
-   -   Threat level assessment
+
+- Real-time event processing
+- Anomaly detection algorithms
+- Alert generation and management
+- Security score calculation
+- Threat level assessment
 
 2.  **Enhanced Security Logging** (`enhancedSecurityLog`)
-   -   Integrates with existing audit logger
-   -   Processes events through monitoring system
-   -   Triggers immediate threat detection
+
+- Integrates with existing audit logger
+- Processes events through monitoring system
+- Triggers immediate threat detection
 
 3.  **API Endpoints** (`app/api/admin/security-monitoring/`)
-   -   `/api/admin/security-monitoring` - Main metrics and configuration
-   -   `/api/admin/security-monitoring/alerts` - Alert management
-   -   `/api/admin/security-monitoring/export` - Data export
-   -   `/api/admin/security-monitoring/threat-analysis` - Threat analysis
+
+- `/api/admin/security-monitoring` - Main metrics and configuration
+- `/api/admin/security-monitoring/alerts` - Alert management
+- `/api/admin/security-monitoring/export` - Data export
+- `/api/admin/security-monitoring/threat-analysis` - Threat analysis
 
 4.  **Dashboard UI** (`app/platform/security/page.tsx`)
-   -   Real-time security metrics
-   -   Active alerts management
-   -   Threat analysis visualization
-   -   Configuration management
+
+- Real-time security metrics
+- Active alerts management
+- Threat analysis visualization
+- Configuration management
 
 ## Features
 
 ### Real-time Monitoring
 
--   **Authentication Events**: Login attempts, failures, brute force attacks
--   **Rate Limiting**: Excessive request patterns, API abuse
--   **Admin Activity**: Unusual administrative actions
--   **Geographic Anomalies**: Logins from unusual locations
--   **Temporal Anomalies**: Activity spikes outside normal patterns
+- **Authentication Events**: Login attempts, failures, brute force attacks
+- **Rate Limiting**: Excessive request patterns, API abuse
+- **Admin Activity**: Unusual administrative actions
+- **Geographic Anomalies**: Logins from unusual locations
+- **Temporal Anomalies**: Activity spikes outside normal patterns
 
 ### Alert Types
 
@@ -69,29 +73,32 @@ enum AlertType {
 The system implements several anomaly detection algorithms:
 
 1.  **Geographic Anomaly Detection**
-   -   Detects logins from unusual countries
-   -   Compares against historical user patterns
-   -   Confidence scoring based on deviation
+
+- Detects logins from unusual countries
+- Compares against historical user patterns
+- Confidence scoring based on deviation
 
 2.  **Temporal Anomaly Detection**
-   -   Identifies activity spikes during unusual hours
-   -   Compares current activity to historical averages
-   -   Configurable thresholds for different event types
+
+- Identifies activity spikes during unusual hours
+- Compares current activity to historical averages
+- Configurable thresholds for different event types
 
 3.  **Behavioral Anomaly Detection**
-   -   Multiple failed login attempts
-   -   Rapid succession of actions
-   -   Pattern deviation analysis
+
+- Multiple failed login attempts
+- Rapid succession of actions
+- Pattern deviation analysis
 
 ### Security Scoring
 
 The system calculates a real-time security score (0-100) based on:
 
--   Critical security events (weight: 25)
--   Active unresolved alerts (weight: 30)
--   High-severity threats (weight: 20)
--   Overall event volume (weight: 15)
--   System stability factors (weight: 10)
+- Critical security events (weight: 25)
+- Active unresolved alerts (weight: 30)
+- High-severity threats (weight: 20)
+- Overall event volume (weight: 15)
+- System stability factors (weight: 10)
 
 ### Threat Levels
 
@@ -255,117 +262,121 @@ await enhancedSecurityLog(
 
 ### Security Overview
 
--   Real-time security score (0-100)
--   Current threat level indicator
--   Active alerts count
--   Security events summary
+- Real-time security score (0-100)
+- Current threat level indicator
+- Active alerts count
+- Security events summary
 
 ### Alert Management
 
--   View active and historical alerts
--   Filter by severity and type
--   Acknowledge alerts with tracking
--   Detailed alert context and metadata
+- View active and historical alerts
+- Filter by severity and type
+- Acknowledge alerts with tracking
+- Detailed alert context and metadata
 
 ### Threat Analysis
 
--   Geographic distribution of events
--   Top threat types and patterns
--   User risk scoring
--   IP threat level analysis
+- Geographic distribution of events
+- Top threat types and patterns
+- User risk scoring
+- IP threat level analysis
 
 ### Configuration Management
 
--   Adjust detection thresholds
--   Configure alerting channels
--   Set data retention policies
--   Export capabilities
+- Adjust detection thresholds
+- Configure alerting channels
+- Set data retention policies
+- Export capabilities
 
 ## Performance Considerations
 
 ### Memory Management
 
--   Event buffer limited to 1 hour of data
--   Automatic cleanup of old alerts (configurable)
--   Efficient in-memory storage for real-time analysis
+- Event buffer limited to 1 hour of data
+- Automatic cleanup of old alerts (configurable)
+- Efficient in-memory storage for real-time analysis
 
 ### Database Impact
 
--   Leverages existing audit log indexes
--   Optimized queries for time-range filtering
--   Background processing to avoid blocking operations
+- Leverages existing audit log indexes
+- Optimized queries for time-range filtering
+- Background processing to avoid blocking operations
 
 ### Scalability
 
--   Stateless architecture (except for buffering)
--   Horizontal scaling support
--   Configurable processing intervals
+- Stateless architecture (except for buffering)
+- Horizontal scaling support
+- Configurable processing intervals
 
 ## Security Considerations
 
 ### Access Control
 
--   Platform admin authentication required
--   Role-based access to security endpoints
--   Audit logging of all monitoring activities
+- Platform admin authentication required
+- Role-based access to security endpoints
+- Audit logging of all monitoring activities
 
 ### Data Privacy
 
--   Sensitive data redaction in logs
--   IP address anonymization options
--   Configurable data retention periods
+- Sensitive data redaction in logs
+- IP address anonymization options
+- Configurable data retention periods
 
 ### Alert Suppression
 
--   Duplicate alert suppression (configurable window)
--   Rate limiting on alert generation
--   Escalation policies for critical threats
+- Duplicate alert suppression (configurable window)
+- Rate limiting on alert generation
+- Escalation policies for critical threats
 
 ## Monitoring and Maintenance
 
 ### Health Checks
 
--   Monitor service availability
--   Check alert generation pipeline
--   Verify data export functionality
+- Monitor service availability
+- Check alert generation pipeline
+- Verify data export functionality
 
 ### Regular Tasks
 
--   Review and adjust thresholds quarterly
--   Analyze false positive rates
--   Update threat detection patterns
--   Clean up old alert data
+- Review and adjust thresholds quarterly
+- Analyze false positive rates
+- Update threat detection patterns
+- Clean up old alert data
 
 ### Performance Metrics
 
--   Alert response time
--   False positive/negative rates
--   System resource usage
--   User engagement with alerts
+- Alert response time
+- False positive/negative rates
+- System resource usage
+- User engagement with alerts
 
 ## Future Enhancements
 
 ### Planned Features
 
 1.  **Machine Learning Integration**
-   -   Behavioral pattern recognition
-   -   Adaptive threshold adjustment
-   -   Predictive threat modeling
+
+- Behavioral pattern recognition
+- Adaptive threshold adjustment
+- Predictive threat modeling
 
 2.  **Advanced Analytics**
-   -   Threat intelligence integration
-   -   Cross-correlation analysis
-   -   Risk trend analysis
+
+- Threat intelligence integration
+- Cross-correlation analysis
+- Risk trend analysis
 
 3.  **Integration Enhancements**
-   -   SIEM system connectors
-   -   Webhook customization
-   -   Mobile app notifications
+
+- SIEM system connectors
+- Webhook customization
+- Mobile app notifications
 
 4.  **Automated Response**
-   -   IP blocking automation
-   -   Account suspension workflows
-   -   Incident response orchestration
+
+- IP blocking automation
+- Account suspension workflows
+- Incident response orchestration
 
 ## Troubleshooting
 
@@ -373,27 +384,27 @@ await enhancedSecurityLog(
 
 **High False Positive Rate**
 
--   Review and adjust detection thresholds
--   Analyze user behavior patterns
--   Consider geographical variations
+- Review and adjust detection thresholds
+- Analyze user behavior patterns
+- Consider geographical variations
 
 **Missing Alerts**
 
--   Check service configuration
--   Verify audit log integration
--   Review threshold settings
+- Check service configuration
+- Verify audit log integration
+- Review threshold settings
 
 **Performance Issues**
 
--   Monitor memory usage
--   Adjust cleanup intervals
--   Optimize database queries
+- Monitor memory usage
+- Adjust cleanup intervals
+- Optimize database queries
 
 **Export Failures**
 
--   Check file permissions
--   Verify date range validity
--   Monitor server resources
+- Check file permissions
+- Verify date range validity
+- Monitor server resources
 
 ### Debugging
 
@@ -419,24 +430,24 @@ console.log("Active alerts:", alerts.length);
 
 ### Unit Tests
 
--   Alert generation logic
--   Anomaly detection algorithms
--   Configuration management
--   Data export functionality
+- Alert generation logic
+- Anomaly detection algorithms
+- Configuration management
+- Data export functionality
 
 ### Integration Tests
 
--   API endpoint security
--   Database integration
--   Real-time event processing
--   Alert acknowledgment flow
+- API endpoint security
+- Database integration
+- Real-time event processing
+- Alert acknowledgment flow
 
 ### Load Testing
 
--   High-volume event processing
--   Concurrent alert generation
--   Database performance under load
--   Memory usage patterns
+- High-volume event processing
+- Concurrent alert generation
+- Database performance under load
+- Memory usage patterns
 
 Run tests:
 

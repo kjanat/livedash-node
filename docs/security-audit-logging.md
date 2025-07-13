@@ -12,49 +12,49 @@ The security audit logging system provides comprehensive tracking of security-cr
 
 The system logs the following event types:
 
--   **Authentication Events**: Login attempts, password changes, session management
--   **Authorization Events**: Permission checks, access denied events
--   **User Management**: User creation, modification, deletion, invitations
--   **Company Management**: Company suspension, settings changes
--   **Rate Limiting**: Abuse prevention and rate limit violations
--   **CSRF Protection**: Cross-site request forgery protection events
--   **Security Headers**: Security header violations
--   **Password Reset**: Password reset flows and token validation
--   **Platform Admin**: Administrative activities by platform users
--   **Data Privacy**: Data export and privacy-related events
--   **System Configuration**: System setting changes
--   **API Security**: API-related security events
+- **Authentication Events**: Login attempts, password changes, session management
+- **Authorization Events**: Permission checks, access denied events
+- **User Management**: User creation, modification, deletion, invitations
+- **Company Management**: Company suspension, settings changes
+- **Rate Limiting**: Abuse prevention and rate limit violations
+- **CSRF Protection**: Cross-site request forgery protection events
+- **Security Headers**: Security header violations
+- **Password Reset**: Password reset flows and token validation
+- **Platform Admin**: Administrative activities by platform users
+- **Data Privacy**: Data export and privacy-related events
+- **System Configuration**: System setting changes
+- **API Security**: API-related security events
 
 ### 2. Structured Logging
 
 Each audit log entry includes:
 
--   **Event Type**: Categorizes the security event
--   **Action**: Specific action performed
--   **Outcome**: Success, failure, blocked, rate limited, or suspicious
--   **Severity**: Info, low, medium, high, or critical
--   **Context**: User ID, company ID, platform user ID, IP address, user agent
--   **Metadata**: Structured additional information
--   **Timestamp**: Immutable timestamp for chronological ordering
+- **Event Type**: Categorizes the security event
+- **Action**: Specific action performed
+- **Outcome**: Success, failure, blocked, rate limited, or suspicious
+- **Severity**: Info, low, medium, high, or critical
+- **Context**: User ID, company ID, platform user ID, IP address, user agent
+- **Metadata**: Structured additional information
+- **Timestamp**: Immutable timestamp for chronological ordering
 
 ### 3. Multi-Tenant Security
 
--   Company-scoped audit logs ensure data isolation
--   Platform admin actions tracked separately
--   Role-based access controls for audit log viewing
+- Company-scoped audit logs ensure data isolation
+- Platform admin actions tracked separately
+- Role-based access controls for audit log viewing
 
 ### 4. Log Retention and Management
 
--   **Configurable Retention Policies**: Different retention periods based on event type and severity
--   **Automatic Archival**: Critical and high-severity events archived before deletion
--   **Scheduled Cleanup**: Weekly automated retention policy execution
--   **Manual Controls**: Admin interface for manual retention execution
+- **Configurable Retention Policies**: Different retention periods based on event type and severity
+- **Automatic Archival**: Critical and high-severity events archived before deletion
+- **Scheduled Cleanup**: Weekly automated retention policy execution
+- **Manual Controls**: Admin interface for manual retention execution
 
 ### 5. Administrative Interface
 
--   **Audit Log Viewer**: Comprehensive filtering and search capabilities
--   **Retention Management**: View statistics and execute retention policies
--   **Real-time Monitoring**: Track security events as they occur
+- **Audit Log Viewer**: Comprehensive filtering and search capabilities
+- **Retention Management**: View statistics and execute retention policies
+- **Real-time Monitoring**: Track security events as they occur
 
 ## Architecture
 
@@ -132,12 +132,12 @@ Administrators can access audit logs through:
 
 ### Filtering Options
 
--   Event type (authentication, authorization, etc.)
--   Outcome (success, failure, blocked, etc.)
--   Severity level (info, low, medium, high, critical)
--   Date range
--   User ID
--   Pagination support
+- Event type (authentication, authorization, etc.)
+- Outcome (success, failure, blocked, etc.)
+- Severity level (info, low, medium, high, critical)
+- Date range
+- User ID
+- Pagination support
 
 ## Configuration
 
@@ -170,51 +170,51 @@ AUDIT_LOG_RETENTION_DRY_RUN=false
 
 ### Data Protection
 
--   **IP Address Storage**: Client IP addresses stored for geographic analysis
--   **Sensitive Data Redaction**: Passwords, tokens, and emails marked as `[REDACTED]`
--   **Metadata Sanitization**: Complex objects sanitized to prevent data leakage
+- **IP Address Storage**: Client IP addresses stored for geographic analysis
+- **Sensitive Data Redaction**: Passwords, tokens, and emails marked as `[REDACTED]`
+- **Metadata Sanitization**: Complex objects sanitized to prevent data leakage
 
 ### Access Controls
 
--   **Admin-Only Access**: Only users with `ADMIN` role can view audit logs
--   **Company Isolation**: Users can only view logs for their own company
--   **Platform Separation**: Platform admin logs tracked separately
+- **Admin-Only Access**: Only users with `ADMIN` role can view audit logs
+- **Company Isolation**: Users can only view logs for their own company
+- **Platform Separation**: Platform admin logs tracked separately
 
 ### Performance
 
--   **Async Logging**: All logging operations are asynchronous to avoid blocking
--   **Error Handling**: Logging failures don't affect application functionality
--   **Indexed Queries**: Database indexes optimize common query patterns
--   **Batch Operations**: Retention policies use batch operations for efficiency
+- **Async Logging**: All logging operations are asynchronous to avoid blocking
+- **Error Handling**: Logging failures don't affect application functionality
+- **Indexed Queries**: Database indexes optimize common query patterns
+- **Batch Operations**: Retention policies use batch operations for efficiency
 
 ## Compliance Features
 
 ### Audit Standards
 
--   **Immutable Records**: Audit logs cannot be modified after creation
--   **Chronological Ordering**: Precise timestamps for event sequencing
--   **Non-Repudiation**: User actions clearly attributed and timestamped
--   **Comprehensive Coverage**: All security-relevant events logged
+- **Immutable Records**: Audit logs cannot be modified after creation
+- **Chronological Ordering**: Precise timestamps for event sequencing
+- **Non-Repudiation**: User actions clearly attributed and timestamped
+- **Comprehensive Coverage**: All security-relevant events logged
 
 ### Reporting
 
--   **Event Statistics**: Summary statistics by event type, severity, and time period
--   **Export Capabilities**: Structured data export for compliance reporting
--   **Retention Tracking**: Detailed logging of retention policy execution
+- **Event Statistics**: Summary statistics by event type, severity, and time period
+- **Export Capabilities**: Structured data export for compliance reporting
+- **Retention Tracking**: Detailed logging of retention policy execution
 
 ## Monitoring and Alerting
 
 ### System Health
 
--   **Scheduler Status**: Monitor retention scheduler health
--   **Error Tracking**: Log retention and audit logging errors
--   **Performance Metrics**: Track logging performance and database impact
+- **Scheduler Status**: Monitor retention scheduler health
+- **Error Tracking**: Log retention and audit logging errors
+- **Performance Metrics**: Track logging performance and database impact
 
 ### Security Monitoring
 
--   **Failed Authentication Patterns**: Track repeated login failures
--   **Privilege Escalation**: Monitor administrative action patterns
--   **Suspicious Activity**: Identify unusual access patterns
+- **Failed Authentication Patterns**: Track repeated login failures
+- **Privilege Escalation**: Monitor administrative action patterns
+- **Suspicious Activity**: Identify unusual access patterns
 
 ## Troubleshooting
 
@@ -227,9 +227,9 @@ AUDIT_LOG_RETENTION_DRY_RUN=false
 
 ### Debug Information
 
--   Check application logs for scheduler startup messages
--   Monitor database query performance for audit log operations
--   Review retention policy validation warnings
+- Check application logs for scheduler startup messages
+- Monitor database query performance for audit log operations
+- Review retention policy validation warnings
 
 ## Best Practices
 
@@ -251,13 +251,13 @@ AUDIT_LOG_RETENTION_DRY_RUN=false
 
 ### Planned Features
 
--   **Real-time Alerting**: Immediate notifications for critical security events
--   **Advanced Analytics**: ML-based anomaly detection and pattern recognition
--   **Export Formats**: Additional export formats for compliance reporting
--   **External Integration**: SIEM and security tool integrations
+- **Real-time Alerting**: Immediate notifications for critical security events
+- **Advanced Analytics**: ML-based anomaly detection and pattern recognition
+- **Export Formats**: Additional export formats for compliance reporting
+- **External Integration**: SIEM and security tool integrations
 
 ### Performance Optimizations
 
--   **Log Partitioning**: Database partitioning for improved query performance
--   **Compression**: Log compression for storage efficiency
--   **Streaming**: Real-time log streaming for external systems
+- **Log Partitioning**: Database partitioning for improved query performance
+- **Compression**: Log compression for storage efficiency
+- **Streaming**: Real-time log streaming for external systems

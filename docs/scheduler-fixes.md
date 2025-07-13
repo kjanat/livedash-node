@@ -8,8 +8,8 @@
 
 **Solution**:
 
--   Added validation in `fetchAndStoreSessionsForAllCompanies()` to skip companies with example/invalid URLs
--   Removed the invalid company record from the database using `fix_companies.js`
+- Added validation in `fetchAndStoreSessionsForAllCompanies()` to skip companies with example/invalid URLs
+- Removed the invalid company record from the database using `fix_companies.js`
 
 ### 2. Transcript Fetching Errors
 
@@ -17,10 +17,10 @@
 
 **Solution**:
 
--   Improved error handling in `fetchTranscriptContent()` function
--   Added probabilistic logging (only ~10% of errors logged) to prevent log spam
--   Added timeout (10 seconds) for transcript fetching
--   Made transcript fetching failures non-blocking (sessions are still created without transcript content)
+- Improved error handling in `fetchTranscriptContent()` function
+- Added probabilistic logging (only ~10% of errors logged) to prevent log spam
+- Added timeout (10 seconds) for transcript fetching
+- Made transcript fetching failures non-blocking (sessions are still created without transcript content)
 
 ### 3. CSV Fetching Errors
 
@@ -28,8 +28,8 @@
 
 **Solution**:
 
--   Added URL validation to skip companies with `example.com` URLs
--   Improved error logging to be more descriptive
+- Added URL validation to skip companies with `example.com` URLs
+- Improved error logging to be more descriptive
 
 ## Current Status
 
@@ -42,23 +42,23 @@
 
 After cleanup, only valid companies remain:
 
--   **Demo Company** (`790b9233-d369-451f-b92c-f4dceb42b649`)
-    -   CSV URL: `https://proto.notso.ai/jumbo/chats`
-    -   Has valid authentication credentials
-    -   107 sessions in database
+- **Demo Company** (`790b9233-d369-451f-b92c-f4dceb42b649`)
+  - CSV URL: `https://proto.notso.ai/jumbo/chats`
+  - Has valid authentication credentials
+  - 107 sessions in database
 
 ## Files Modified
 
 1.  **lib/csvFetcher.js**
 
--   Added company URL validation
--   Improved transcript fetching error handling
--   Reduced error log verbosity
+- Added company URL validation
+- Improved transcript fetching error handling
+- Reduced error log verbosity
 
 2.  **fix_companies.js** (cleanup script)
 
--   Removes invalid company records
--   Can be run again if needed
+- Removes invalid company records
+- Can be run again if needed
 
 ## Monitoring
 

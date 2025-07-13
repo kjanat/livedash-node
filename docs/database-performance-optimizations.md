@@ -6,10 +6,10 @@ This document outlines the comprehensive database performance optimizations impl
 
 The optimization focuses on the most frequently queried patterns in the application, particularly around:
 
-  - AI processing request tracking and batching
-  - Session analytics and filtering
-  - Security audit log analysis
-  - Multi-tenant data isolation performance
+- AI processing request tracking and batching
+- Session analytics and filtering
+- Security audit log analysis
+- Multi-tenant data isolation performance
 
 ## Applied Optimizations
 
@@ -31,9 +31,9 @@ INCLUDE ("processingStatus", "batchId", "requestedAt", "sessionId");
 
 **Impact**:
 
-  - ~70% faster batch job queries
-  - Reduced I/O for cost analysis reports
-  - Improved scheduler performance
+- ~70% faster batch job queries
+- Reduced I/O for cost analysis reports
+- Improved scheduler performance
 
 ### 2. Session Analytics Optimizations
 
@@ -54,9 +54,9 @@ INCLUDE ("startTime", "messagesSent");
 
 **Impact**:
 
-  - ~85% faster dashboard load times
-  - Efficient date range filtering
-  - Optimized sentiment analysis queries
+- ~85% faster dashboard load times
+- Efficient date range filtering
+- Optimized sentiment analysis queries
 
 ### 3. Security Audit Log Optimizations
 
@@ -77,9 +77,9 @@ INCLUDE ("eventType", "severity", "userId", "companyId");
 
 **Impact**:
 
-  - ~90% faster security monitoring
-  - Efficient threat detection
-  - Improved compliance reporting
+- ~90% faster security monitoring
+- Efficient threat detection
+- Improved compliance reporting
 
 ### 4. Message Processing Optimizations
 
@@ -95,8 +95,8 @@ INCLUDE ("content");
 
 **Impact**:
 
-  - ~60% faster conversation loading
-  - Reduced memory usage for message queries
+- ~60% faster conversation loading
+- Reduced memory usage for message queries
 
 ### 5. Processing Pipeline Optimizations
 
@@ -118,29 +118,29 @@ INCLUDE ("sessionId", "errorMessage", "retryCount", "startedAt");
 
 **Impact**:
 
-  - ~75% faster processing monitoring
-  - Efficient error tracking
-  - Improved retry logic performance
+- ~75% faster processing monitoring
+- Efficient error tracking
+- Improved retry logic performance
 
 ## Index Strategy Principles
 
 ### 1. Composite Index Design
 
-  - **Leading column**: Most selective filter (usually companyId for multi-tenancy)
-  - **Secondary columns**: Common WHERE clause filters
-  - **Covering columns**: SELECT list columns via INCLUDE
+- **Leading column**: Most selective filter (usually companyId for multi-tenancy)
+- **Secondary columns**: Common WHERE clause filters
+- **Covering columns**: SELECT list columns via INCLUDE
 
 ### 2. Partial Indexes
 
-  - Used for error analysis and specific status filtering
-  - Reduces index size and maintenance overhead
-  - Improves write performance
+- Used for error analysis and specific status filtering
+- Reduces index size and maintenance overhead
+- Improves write performance
 
 ### 3. Covering Indexes
 
-  - Include frequently accessed columns to avoid table lookups
-  - Reduces I/O for read-heavy operations
-  - Particularly effective for dashboard queries
+- Include frequently accessed columns to avoid table lookups
+- Reduces I/O for read-heavy operations
+- Particularly effective for dashboard queries
 
 ## Query Pattern Analysis
 
@@ -166,29 +166,29 @@ INCLUDE ("sessionId", "errorMessage", "retryCount", "startedAt");
 
 ### Index Monitoring
 
-  - Monitor index usage with `pg_stat_user_indexes`
-  - Track bloat with `pg_stat_user_tables`
-  - Regular ANALYZE after bulk operations
+- Monitor index usage with `pg_stat_user_indexes`
+- Track bloat with `pg_stat_user_tables`
+- Regular ANALYZE after bulk operations
 
 ### Write Performance Impact
 
-  - Composite indexes add ~15% write overhead
-  - Offset by dramatic read performance gains
-  - Monitored via slow query logs
+- Composite indexes add ~15% write overhead
+- Offset by dramatic read performance gains
+- Monitored via slow query logs
 
 ### Storage Impact
 
-  - Indexes add ~25% to total storage
-  - Covering indexes reduce need for table scans
-  - Partial indexes minimize storage overhead
+- Indexes add ~25% to total storage
+- Covering indexes reduce need for table scans
+- Partial indexes minimize storage overhead
 
 ## Migration Safety
 
 ### CONCURRENTLY Operations
 
-  - All indexes created with `CREATE INDEX CONCURRENTLY`
-  - No table locks during creation
-  - Production-safe deployment
+- All indexes created with `CREATE INDEX CONCURRENTLY`
+- No table locks during creation
+- Production-safe deployment
 
 ### Rollback Strategy
 
@@ -238,18 +238,18 @@ LIMIT 10;
 
 ### Monitoring Strategy
 
-  - Set up automated index usage monitoring
-  - Track slow query evolution
-  - Monitor storage growth patterns
-  - Implement performance alerting
+- Set up automated index usage monitoring
+- Track slow query evolution
+- Monitor storage growth patterns
+- Implement performance alerting
 
 ## Conclusion
 
 These database optimizations provide:
 
-  - **70-90% improvement** in query performance
-  - **Reduced server load** through efficient indexing
-  - **Better user experience** with faster dashboards
-  - **Scalable foundation** for future growth
+- **70-90% improvement** in query performance
+- **Reduced server load** through efficient indexing
+- **Better user experience** with faster dashboards
+- **Scalable foundation** for future growth
 
 The optimizations are designed to be production-safe and monitoring-friendly, ensuring both immediate performance gains and long-term maintainability.

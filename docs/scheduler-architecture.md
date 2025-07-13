@@ -6,11 +6,11 @@ This document describes the extracted scheduler architecture that enables horizo
 
 The scheduler system has been refactored from a monolithic approach to a service-oriented architecture that supports:
 
--   **Individual Scheduler Services** - Each scheduler runs as a separate service
--   **Horizontal Scaling** - Multiple instances of the same scheduler can run across different machines
--   **Health Monitoring** - Built-in health checks for load balancers and orchestrators
--   **Graceful Shutdown** - Proper handling of shutdown signals for zero-downtime deployments
--   **Centralized Management** - Optional scheduler manager for coordinated operations
+- **Individual Scheduler Services** - Each scheduler runs as a separate service
+- **Horizontal Scaling** - Multiple instances of the same scheduler can run across different machines
+- **Health Monitoring** - Built-in health checks for load balancers and orchestrators
+- **Graceful Shutdown** - Proper handling of shutdown signals for zero-downtime deployments
+- **Centralized Management** - Optional scheduler manager for coordinated operations
 
 ## Components
 
@@ -34,11 +34,11 @@ export abstract class BaseSchedulerService extends EventEmitter {
 
 **Features:**
 
--   Status management (STOPPED, STARTING, RUNNING, PAUSED, ERROR)
--   Metrics collection (run counts, timing, success/failure rates)
--   Event emission for monitoring
--   Configurable intervals and timeouts
--   Automatic retry handling
+- Status management (STOPPED, STARTING, RUNNING, PAUSED, ERROR)
+- Metrics collection (run counts, timing, success/failure rates)
+- Event emission for monitoring
+- Configurable intervals and timeouts
+- Automatic retry handling
 
 ### 2. Individual Scheduler Services
 
@@ -57,16 +57,16 @@ const csvScheduler = new CsvImportSchedulerService({
 
 **Features:**
 
--   Batch processing with configurable concurrency
--   Duplicate detection
--   Company-specific error handling
--   Progress monitoring
+- Batch processing with configurable concurrency
+- Duplicate detection
+- Company-specific error handling
+- Progress monitoring
 
 #### Additional Schedulers (To Be Implemented)
 
--   `ImportProcessingSchedulerService` - Process imported CSV data into sessions
--   `SessionProcessingSchedulerService` - AI analysis and categorization
--   `BatchProcessingSchedulerService` - OpenAI Batch API integration
+- `ImportProcessingSchedulerService` - Process imported CSV data into sessions
+- `SessionProcessingSchedulerService` - AI analysis and categorization
+- `BatchProcessingSchedulerService` - OpenAI Batch API integration
 
 ### 3. SchedulerManager
 
@@ -88,10 +88,10 @@ await manager.startAll();
 
 **Features:**
 
--   Automatic restart of failed critical schedulers
--   Health monitoring across all schedulers
--   Coordinated start/stop operations
--   Event aggregation and logging
+- Automatic restart of failed critical schedulers
+- Health monitoring across all schedulers
+- Coordinated start/stop operations
+- Event aggregation and logging
 
 ### 4. Standalone Scheduler Runner
 
@@ -107,10 +107,10 @@ npx tsx lib/services/schedulers/StandaloneSchedulerRunner.ts --list
 
 **Features:**
 
--   Independent process execution
--   Environment variable configuration
--   Graceful shutdown handling
--   Health reporting for monitoring
+- Independent process execution
+- Environment variable configuration
+- Graceful shutdown handling
+- Health reporting for monitoring
 
 ## Deployment Patterns
 
@@ -127,15 +127,15 @@ await initializeSchedulers();
 
 **Pros:**
 
--   Simple deployment
--   Lower resource usage
--   Easy local development
+- Simple deployment
+- Lower resource usage
+- Easy local development
 
 **Cons:**
 
--   Limited scalability
--   Single point of failure
--   Resource contention
+- Limited scalability
+- Single point of failure
+- Resource contention
 
 ### 2. Separate Processes
 
@@ -154,15 +154,15 @@ npm run scheduler:session-processing
 
 **Pros:**
 
--   Independent scaling
--   Fault isolation
--   Resource optimization per scheduler
+- Independent scaling
+- Fault isolation
+- Resource optimization per scheduler
 
 **Cons:**
 
--   More complex deployment
--   Higher resource overhead
--   Inter-process coordination needed
+- More complex deployment
+- Higher resource overhead
+- Inter-process coordination needed
 
 ### 3. Container Orchestration (Recommended for Production)
 
@@ -193,16 +193,16 @@ services:
 
 **Pros:**
 
--   Full horizontal scaling
--   Independent resource allocation
--   Health monitoring integration
--   Zero-downtime deployments
+- Full horizontal scaling
+- Independent resource allocation
+- Health monitoring integration
+- Zero-downtime deployments
 
 **Cons:**
 
--   Complex orchestration setup
--   Network latency considerations
--   Distributed system challenges
+- Complex orchestration setup
+- Network latency considerations
+- Distributed system challenges
 
 ## Configuration
 
@@ -380,31 +380,35 @@ csv-import-scheduler-eu:
 ### From Current Architecture
 
 1.  **Phase 1: Extract Schedulers**
-   -   ✅ Create BaseSchedulerService
-   -   ✅ Implement CsvImportSchedulerService
-   -   ✅ Create SchedulerManager
-   -   ⏳ Implement remaining scheduler services
+
+- ✅ Create BaseSchedulerService
+- ✅ Implement CsvImportSchedulerService
+- ✅ Create SchedulerManager
+- ⏳ Implement remaining scheduler services
 
 2.  **Phase 2: Deployment Options**
-   -   ✅ Add ServerSchedulerIntegration for backwards compatibility
-   -   ✅ Create StandaloneSchedulerRunner
-   -   ✅ Add health check endpoints
+
+- ✅ Add ServerSchedulerIntegration for backwards compatibility
+- ✅ Create StandaloneSchedulerRunner
+- ✅ Add health check endpoints
 
 3.  **Phase 3: Container Support**
-   -   ⏳ Create Dockerfile for scheduler containers
-   -   ⏳ Add Kubernetes manifests
-   -   ⏳ Implement distributed coordination
+
+- ⏳ Create Dockerfile for scheduler containers
+- ⏳ Add Kubernetes manifests
+- ⏳ Implement distributed coordination
 
 4.  **Phase 4: Production Migration**
-   -   ⏳ Deploy separate scheduler containers
-   -   ⏳ Monitor performance and stability
-   -   ⏳ Gradually increase horizontal scaling
+
+- ⏳ Deploy separate scheduler containers
+- ⏳ Monitor performance and stability
+- ⏳ Gradually increase horizontal scaling
 
 ### Breaking Changes
 
--   Scheduler initialization moved from `server.ts` to `ServerSchedulerIntegration`
--   Individual scheduler functions replaced with service classes
--   Configuration moved to environment variables
+- Scheduler initialization moved from `server.ts` to `ServerSchedulerIntegration`
+- Individual scheduler functions replaced with service classes
+- Configuration moved to environment variables
 
 ## Benefits
 

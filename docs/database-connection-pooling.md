@@ -29,42 +29,45 @@ DATABASE_URL="postgresql://user:pass@host:5432/db?connection_limit=20&pool_timeo
 
 #### Standard Pooling (Default)
 
--   Uses Prisma's built-in connection pooling
--   Simpler configuration
--   Good for development and small-scale deployments
+- Uses Prisma's built-in connection pooling
+- Simpler configuration
+- Good for development and small-scale deployments
 
 #### Enhanced Pooling (Recommended for Production)
 
--   Uses PostgreSQL native connection pooling with `@prisma/adapter-pg`
--   Advanced monitoring and health checks
--   Better resource management
--   Detailed connection metrics
+- Uses PostgreSQL native connection pooling with `@prisma/adapter-pg`
+- Advanced monitoring and health checks
+- Better resource management
+- Detailed connection metrics
 
 ## Implementation Details
 
 ### Fixed Issues
 
 1.  **Multiple PrismaClient Instances**:
-   -   ❌ Before: Each scheduler created its own PrismaClient
-   -   ✅ After: All modules use singleton pattern from `lib/prisma.ts`
+
+- ❌ Before: Each scheduler created its own PrismaClient
+- ✅ After: All modules use singleton pattern from `lib/prisma.ts`
 
 2.  **No Connection Management**:
-   -   ❌ Before: No graceful shutdown or connection cleanup
-   -   ✅ After: Proper cleanup on process termination
+
+- ❌ Before: No graceful shutdown or connection cleanup
+- ✅ After: Proper cleanup on process termination
 
 3.  **No Monitoring**:
-   -   ❌ Before: No visibility into connection usage
-   -   ✅ After: Health check endpoint and connection metrics
+
+- ❌ Before: No visibility into connection usage
+- ✅ After: Health check endpoint and connection metrics
 
 ### Key Files Modified
 
--   `lib/prisma.ts` - Enhanced singleton with pooling options
--   `lib/database-pool.ts` - Advanced pooling configuration
--   `lib/processingScheduler.ts` - Fixed to use singleton
--   `lib/importProcessor.ts` - Fixed to use singleton
--   `lib/processingStatusManager.ts` - Fixed to use singleton
--   `lib/schedulers.ts` - Added graceful shutdown
--   `app/api/admin/database-health/route.ts` - Monitoring endpoint
+- `lib/prisma.ts` - Enhanced singleton with pooling options
+- `lib/database-pool.ts` - Advanced pooling configuration
+- `lib/processingScheduler.ts` - Fixed to use singleton
+- `lib/importProcessor.ts` - Fixed to use singleton
+- `lib/processingStatusManager.ts` - Fixed to use singleton
+- `lib/schedulers.ts` - Added graceful shutdown
+- `app/api/admin/database-health/route.ts` - Monitoring endpoint
 
 ## Monitoring
 
@@ -79,36 +82,36 @@ curl -H "Authorization: Bearer your-token" \
 
 Response includes:
 
--   Connection status
--   Pool statistics (if enhanced pooling enabled)
--   Basic metrics (session counts, etc.)
--   Configuration details
+- Connection status
+- Pool statistics (if enhanced pooling enabled)
+- Basic metrics (session counts, etc.)
+- Configuration details
 
 ### Connection Metrics
 
 With enhanced pooling enabled, you'll see console logs for:
 
--   Connection acquisitions/releases
--   Pool size changes
--   Error events
--   Health check results
+- Connection acquisitions/releases
+- Pool size changes
+- Error events
+- Health check results
 
 ## Performance Benefits
 
 ### Before Optimization
 
--   Multiple connection pools (one per scheduler)
--   Potential connection exhaustion under load
--   No connection monitoring
--   Resource waste from idle connections
+- Multiple connection pools (one per scheduler)
+- Potential connection exhaustion under load
+- No connection monitoring
+- Resource waste from idle connections
 
 ### After Optimization
 
--   Single shared connection pool
--   Configurable pool size and timeouts
--   Connection health monitoring
--   Graceful shutdown and cleanup
--   Better resource utilization
+- Single shared connection pool
+- Configurable pool size and timeouts
+- Connection health monitoring
+- Graceful shutdown and cleanup
+- Better resource utilization
 
 ## Recommended Settings
 
