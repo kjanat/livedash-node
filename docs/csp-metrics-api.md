@@ -6,11 +6,11 @@ This document describes the Content Security Policy (CSP) metrics and violation 
 
 The CSP Metrics API provides comprehensive monitoring of Content Security Policy violations, including:
 
--   Real-time violation tracking and metrics
--   Bypass attempt detection and risk assessment
--   Policy optimization recommendations
--   Historical trend analysis
--   Export capabilities for security analysis
+  - Real-time violation tracking and metrics
+  - Bypass attempt detection and risk assessment
+  - Policy optimization recommendations
+  - Historical trend analysis
+  - Export capabilities for security analysis
 
 ## API Endpoints
 
@@ -24,7 +24,7 @@ POST /api/csp-report
 
 #### Request Headers
 
--   `Content-Type`: `application/csp-report` or `application/json`
+  - `Content-Type`: `application/csp-report` or `application/json`
 
 #### Request Body (Automatic from Browser)
 
@@ -43,10 +43,10 @@ POST /api/csp-report
 
 #### Features
 
--   **Rate Limiting**: 10 reports per minute per IP
--   **Risk Assessment**: Automatic classification of violation severity
--   **Bypass Detection**: Identifies potential CSP bypass attempts
--   **Real-time Processing**: Immediate analysis and alerting
+  - **Rate Limiting**: 10 reports per minute per IP
+  - **Risk Assessment**: Automatic classification of violation severity
+  - **Bypass Detection**: Identifies potential CSP bypass attempts
+  - **Real-time Processing**: Immediate analysis and alerting
 
 ### CSP Metrics API
 
@@ -67,11 +67,11 @@ GET /api/csp-metrics
 
 #### Time Range Options
 
--   `1h` - Last 1 hour
--   `6h` - Last 6 hours
--   `24h` - Last 24 hours (default)
--   `7d` - Last 7 days
--   `30d` - Last 30 days
+  - `1h` - Last 1 hour
+  - `6h` - Last 6 hours
+  - `24h` - Last 24 hours (default)
+  - `7d` - Last 7 days
+  - `30d` - Last 30 days
 
 #### Example Request
 
@@ -165,11 +165,11 @@ console.log(result.recommendations); // array of suggestions
 
 The service automatically assesses violation risk based on:
 
--   **Directive Type**: Script violations are higher risk than style violations
--   **Source Pattern**: External domains vs inline vs data URIs
--   **Bypass Indicators**: Known CSP bypass techniques
--   **Frequency**: Repeated violations from same source
--   **Geographic Factors**: Unusual source locations
+  - **Directive Type**: Script violations are higher risk than style violations
+  - **Source Pattern**: External domains vs inline vs data URIs
+  - **Bypass Indicators**: Known CSP bypass techniques
+  - **Frequency**: Repeated violations from same source
+  - **Geographic Factors**: Unusual source locations
 
 #### 3. Bypass Detection
 
@@ -191,10 +191,10 @@ const bypassPatterns = [
 
 Based on violation patterns, the service provides actionable recommendations:
 
--   **Tighten Policies**: Suggest removing broad allowlists
--   **Add Domains**: Recommend allowing legitimate external resources
--   **Implement Nonces**: Suggest nonce-based policies for inline content
--   **Upgrade Directives**: Recommend modern CSP features
+  - **Tighten Policies**: Suggest removing broad allowlists
+  - **Add Domains**: Recommend allowing legitimate external resources
+  - **Implement Nonces**: Suggest nonce-based policies for inline content
+  - **Upgrade Directives**: Recommend modern CSP features
 
 ## Violation Analysis
 
@@ -405,21 +405,21 @@ CSP_ALERT_THRESHOLD=5              # violations per 10 minutes
 
 ### Rate Limiting
 
--   **10 reports per minute per IP** prevents spam attacks
--   **Exponential backoff** for repeated violations from same source
--   **Memory cleanup** removes old violations automatically
+  - **10 reports per minute per IP** prevents spam attacks
+  - **Exponential backoff** for repeated violations from same source
+  - **Memory cleanup** removes old violations automatically
 
 ### Memory Management
 
--   **Violation buffer** limited to 1 hour of data in memory
--   **Automatic cleanup** runs every 100 requests (1% probability)
--   **Efficient storage** using Map data structures
+  - **Violation buffer** limited to 7 days of data in memory
+  - **Automatic cleanup** runs every 100 requests (1% probability)
+  - **Efficient storage** using Map data structures
 
 ### Database Impact
 
--   **No persistent storage** for real-time metrics (memory only)
--   **Optional logging** to database for long-term analysis
--   **Indexed queries** for historical data retrieval
+  - **No persistent storage** for real-time metrics (memory only)
+  - **Optional logging** to database for long-term analysis
+  - **Indexed queries** for historical data retrieval
 
 ## Security Considerations
 
@@ -427,28 +427,28 @@ CSP_ALERT_THRESHOLD=5              # violations per 10 minutes
 
 **⚠️ Data Collection Notice:**
 
--   **IP addresses** are collected and stored in memory for security monitoring
--   **User agent strings** are stored for browser compatibility analysis
--   **Legal basis**: Legitimate interest for security incident detection and prevention
--   **Retention**: In-memory storage only, automatically purged after 7 days or application restart
--   **Data minimization**: Only violation-related metadata is retained, not page content
+  - **IP addresses** are collected and stored in memory for security monitoring
+  - **User agent strings** are stored for browser compatibility analysis
+  - **Legal basis**: Legitimate interest for security incident detection and prevention
+  - **Retention**: In-memory storage only, automatically purged after 7 days or application restart
+  - **Data minimization**: Only violation-related metadata is retained, not page content
 
 **Planned Privacy Enhancements:**
 
--   IP anonymization options for GDPR compliance (roadmap)
--   User agent sanitization to remove sensitive information (roadmap)
+  - IP anonymization options for GDPR compliance (roadmap)
+  - User agent sanitization to remove sensitive information (roadmap)
 
 ### Rate-Limiting Protection
 
--   **Per-IP limits** prevent DoS attacks on reporting endpoint
--   **Content-type validation** ensures proper report format
--   **Request size limits** prevent memory exhaustion
+  - **Per-IP limits** prevent DoS attacks on reporting endpoint
+  - **Content-type validation** ensures proper report format
+  - **Request size limits** prevent memory exhaustion
 
 ### False Positive Handling
 
--   **Learning mode** for new deployments
--   **Whitelist support** for known legitimate violations
--   **Risk score adjustment** based on historical patterns
+  - **Learning mode** for new deployments
+  - **Whitelist support** for known legitimate violations
+  - **Risk score adjustment** based on historical patterns
 
 ## Troubleshooting
 
@@ -497,10 +497,10 @@ if (duration > 2000) {
 
 ## Related Documentation
 
--   [Enhanced CSP Implementation](./security/enhanced-csp.md)
--   [Security Monitoring](./security-monitoring.md)
--   [Security Headers](./security-headers.md)
--   [Rate Limiting](../lib/rateLimiter.ts)
+  - [Enhanced CSP Implementation](./security/enhanced-csp.md)
+  - [Security Monitoring](./security-monitoring.md)
+  - [Security Headers](./security-headers.md)
+  - [Rate Limiting](../lib/rateLimiter.ts)
 
 ## API Reference Summary
 
