@@ -78,7 +78,7 @@ export function middleware(request: NextRequest) {
       "accelerometer=()",
       "gyroscope=()",
       "magnetometer=()",
-      "ambient-light=()",
+      // Removed ambient-light as it's deprecated
       "encrypted-media=()",
       "autoplay=(self)",
     ].join(", ")
