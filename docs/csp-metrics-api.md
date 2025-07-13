@@ -6,11 +6,11 @@ This document describes the Content Security Policy (CSP) metrics and violation 
 
 The CSP Metrics API provides comprehensive monitoring of Content Security Policy violations, including:
 
-  - Real-time violation tracking and metrics
-  - Bypass attempt detection and risk assessment
-  - Policy optimization recommendations
-  - Historical trend analysis
-  - Export capabilities for security analysis
+- Real-time violation tracking and metrics
+- Bypass attempt detection and risk assessment
+- Policy optimization recommendations
+- Historical trend analysis
+- Export capabilities for security analysis
 
 ## API Endpoints
 
@@ -43,10 +43,10 @@ POST /api/csp-report
 
 #### Features
 
-  - **Rate Limiting**: 10 reports per minute per IP
-  - **Risk Assessment**: Automatic classification of violation severity
-  - **Bypass Detection**: Identifies potential CSP bypass attempts
-  - **Real-time Processing**: Immediate analysis and alerting
+- **Rate Limiting**: 10 reports per minute per IP
+- **Risk Assessment**: Automatic classification of violation severity
+- **Bypass Detection**: Identifies potential CSP bypass attempts
+- **Real-time Processing**: Immediate analysis and alerting
 
 ### CSP Metrics API
 
