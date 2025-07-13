@@ -52,9 +52,12 @@ export function buildCSP(config: CSPConfig = {}): string {
       : ["'self'"];
 
   // Style sources - use nonce in production when available
-  const styleSrc = nonce
-    ? ["'self'", `'nonce-${nonce}'`]
-    : ["'self'", "'unsafe-inline'"]; // Fallback for TailwindCSS
+  // Note: We need 'unsafe-inline' for third-party libraries like Sonner that inject styles dynamically
+  const styleSrc = isDevelopment
+    ? ["'self'", "'unsafe-inline'"]
+    : nonce
+      ? ["'self'", `'nonce-${nonce}'`, "'unsafe-inline'"] // Need unsafe-inline for Sonner/Leaflet
+      : ["'self'", "'unsafe-inline'"]; // Fallback for TailwindCSS
 
   // Image sources - allow self, data URIs, and specific trusted domains
   const imgSrc = [
@@ -69,8 +72,8 @@ export function buildCSP(config: CSPConfig = {}): string {
       .map((domain) => domain),
   ].filter(Boolean);
 
-  // Font sources - restrict to self and data URIs
-  const fontSrc = ["'self'", "data:"];
+  // Font sources - restrict to self, data URIs, and Google Fonts (for Leaflet)
+  const fontSrc = ["'self'", "data:", "https://fonts.gstatic.com"];
 
   // Connect sources - API endpoints and trusted domains
   const connectSrc = isDevelopment

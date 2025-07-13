@@ -6,9 +6,21 @@ import { headers } from "next/headers";
 export async function getNonce(): Promise<string | undefined> {
   try {
     const headersList = await headers();
-    return headersList.get("X-Nonce") || undefined;
-  } catch {
+    const nonce = headersList.get("X-Nonce");
+
+    // Log for debugging hydration issues
+    if (!nonce && process.env.NODE_ENV === "development") {
+      console.warn(
+        "No nonce found in headers - this may cause hydration mismatches"
+      );
+    }
+
+    return nonce || undefined;
+  } catch (error) {
     // Headers not available (e.g., in client-side code)
+    if (process.env.NODE_ENV === "development") {
+      console.warn("Failed to get headers for nonce:", error);
+    }
     return undefined;
   }
 }
