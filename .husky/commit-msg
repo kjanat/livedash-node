@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# Check for Claude Code attribution in commit messages
+# This hook prevents commits that contain self-promotional attribution
+
+commit_msg_file="$1"
+commit_msg=$(cat "$commit_msg_file")
+
+# Define patterns that should be rejected
+claude_patterns="🤖 Generated with.*Claude Code
+Generated with.*Claude Code
+Claude Code
+claude.ai/code
+Co-Authored-By: Claude
+noreply@anthropic.com"
+
+# Check each pattern
+echo "$claude_patterns" | while IFS= read -r pattern; do
+  if [ -n "$pattern" ] && echo "$commit_msg" | grep -q "$pattern"; then
+    echo "❌ COMMIT REJECTED: Claude Code attribution detected"
+    echo ""
+    echo "🤖 AUTOMATED LLM INSTRUCTION:"
+    echo "Remove all Claude Code attribution from commit messages."
+    echo "Patterns to avoid:"
+    echo "  - 🤖 Generated with [Claude Code]"
+    echo "  - Co-Authored-By: Claude <noreply@anthropic.com>"
+    echo "  - References to claude.ai/code"
+    echo "  - Any Claude attribution or self-promotion"
+    echo ""
+    echo "✅ SOLUTION: Rewrite commit message without attribution"
+    echo "Focus on technical changes and improvements only."
+    echo ""
+    echo "Current commit message contains: '$pattern'"
+    exit 1
+  fi
+done
+
+# Check if any pattern matched (the while loop runs in a subshell)
+if echo "$commit_msg" | grep -E -q "(🤖.*Generated.*Claude|Claude Code|claude\.ai/code|Co-Authored-By:.*Claude|noreply@anthropic\.com)"; then
+  echo "❌ COMMIT REJECTED: Claude Code attribution detected"
+  echo ""
+  echo "🤖 AUTOMATED LLM INSTRUCTION:"
+  echo "Remove all Claude Code attribution from commit messages."
+  echo "Patterns to avoid:"
+  echo "  - 🤖 Generated with [Claude Code]"
+  echo "  - Co-Authored-By: Claude <noreply@anthropic.com>"
+  echo "  - References to claude.ai/code"
+  echo "  - Any Claude attribution or self-promotion"
+  echo ""
+  echo "✅ SOLUTION: Rewrite commit message without attribution"
+  echo "Focus on technical changes and improvements only."
+  exit 1
+fi
+
+echo "✅ Commit message approved"
+exit 0
