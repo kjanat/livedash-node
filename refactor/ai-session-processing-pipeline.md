@@ -2,7 +2,7 @@
 
 > This is a significant but valuable refactoring project. A detailed, well-structured prompt is key for getting a good result from a code-focused AI like Claude.
 > **Project:** _LiveDash-Node_ (`~/Projects/livedash-node-max-branch`)
-> **Objective:** _Refactor our AI session processing pipeline to use the OpenAI Batch API for cost savings and higher throughput. Implement a new internal admin API under /api/admin/legacy/* to monitor and manage this new asynchronous workflow._
+> **Objective:** _Refactor our AI session processing pipeline to use the OpenAI Batch API for cost savings and higher throughput. Implement a new internal admin API under /api/admin/legacy/\* to monitor and manage this new asynchronous workflow._
 > **Assignee:** Claude Code
 
 ## Context
@@ -47,6 +47,7 @@ First, we need to update our database schema to track the state of batch jobs an
         @@index([companyId, status])
     }
 
+    // prettier-ignore
     enum AIBatchRequestStatus {
         PENDING           // We have created the batch in our DB, preparing to send to OpenAI
         UPLOADING         // Uploading the .jsonl file
@@ -75,6 +76,7 @@ First, we need to update our database schema to track the state of batch jobs an
         @@index([processingStatus]) // Add this index for efficient querying
     }
 
+    // prettier-ignore
     enum AIRequestStatus {
         PENDING_BATCHING      // Default state: waiting to be picked up by the batch creator
         BATCHING_IN_PROGRESS  // It has been assigned to a batch that is currently running
@@ -133,69 +135,71 @@ Functionality:
 
 Create a new set of internal API endpoints for monitoring and managing this process.
 
-*   Location: `app/api/admin/legacy/`
-*   Authentication: Protect all these endpoints with our most secure admin-level authentication middleware (e.g., from `lib/platform-auth.ts`). Access should be strictly limited.
+- Location: `app/api/admin/legacy/`
+- Authentication: Protect all these endpoints with our most secure admin-level authentication middleware (e.g., from `lib/platform-auth.ts`). Access should be strictly limited.
 
 ### Endpoint 1: Get Summary
 
-*   Route: `GET` `/api/admin/legacy/summary`
-*   Description: Returns a count of all `AIProcessingRequest` records, grouped by `processingStatus`.
-*   Response:
+- Route: `GET` `/api/admin/legacy/summary`
+- Description: Returns a count of all `AIProcessingRequest` records, grouped by `processingStatus`.
+- Response:
 
-    ```json
-    {
-      "ok": true,
-      "summary": {
-        "pending_batching": 15231,
-        "batching_in_progress": 2500,
-        "processing_complete": 85432,
-        "processing_failed": 78
-      }
+  ```json
+  {
+    "ok": true,
+    "summary": {
+      "pending_batching": 15231,
+      "batching_in_progress": 2500,
+      "processing_complete": 85432,
+      "processing_failed": 78
     }
-    ```
+  }
+  ```
 
 ### Endpoint 2: List Requests
 
-*   Route: `GET` `/api/admin/legacy/requests`
-*   Description: Retrieves a paginated list of `AIProcessingRequest` records, filterable by `status`.
-*   Query Params: `status` (required), `limit` (optional), `cursor` (optional).
-*   Response:
+- Route: `GET` `/api/admin/legacy/requests`
+- Description: Retrieves a paginated list of `AIProcessingRequest` records, filterable by `status`.
+- Query Params: `status` (required), `limit` (optional), `cursor` (optional).
+- Response:
 
-    ```json
-    {
-      "ok": true,
-      "requests": [
-        {
-          "id": "...",
-          "sessionId": "...",
-          "status": "processing_failed", ...
-        }
-      ],
-      "nextCursor": "..."
-    }
-    ```
+  ```json
+  {
+    "ok": true,
+    "requests": [
+      {
+        "id": "...",
+        "sessionId": "...",
+        "status": "processing_failed",
+        "failedAt": "2024-03-15T10:23:45Z",
+        "error": "Timeout during processing"
+      }
+    ],
+    "nextCursor": "..."
+  }
+  ```
 
 ### Endpoint 3: Re-queue Failed Requests
 
-*   Route: `POST` `/api/admin/legacy/requests/requeue`
-*   Description: Resets the status of specified failed requests back to `PENDING_BATCHING` so they can be re-processed in a new batch.
-*   Request Body:
+- Route: `POST` `/api/admin/legacy/requests/requeue`
+- Description: Resets the status of specified failed requests back to `PENDING_BATCHING` so they can be re-processed in a new batch.
+- Request Body:
 
-    ```json
-    {
-      "requestIds": ["req_id_1", "req_id_2", ...]
-    }
-    ```
+  ```json
+  {
+    "requestIds": ["req_id_1", "req_id_2"]
+  }
+  ```
 
-*   Response:
+- Response:
 
-    ```json
-    {
-      "ok": true,
-      "requeuedCount": 2,
-      "notFoundCount": 0
-    }
-    ```
+  ```json
+  {
+    "ok": true,
+    "requeuedCount": 2,
+    "notFoundCount": 0
+  }
+  ```
 
 ---
 

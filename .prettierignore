@@ -1,0 +1,14 @@
+# Don't ignore doc files - we'll use prettier-ignore comments instead
+
+## Ignore lockfile
+pnpm-lock.yaml
+package-lock.json
+
+## Ignore build outputs
+.next
+dist
+build
+out
+
+## Ignore dependencies
+node_modules

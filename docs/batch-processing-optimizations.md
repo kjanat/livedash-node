@@ -22,7 +22,7 @@ The following composite indexes were added to the `AIProcessingRequest` table in
 -- Optimize time-based status queries
 @@index([processingStatus, requestedAt])
 
--- Optimize batch-related queries  
+-- Optimize batch-related queries
 @@index([batchId])
 
 -- Composite index for batch status filtering
@@ -33,9 +33,9 @@ The following composite indexes were added to the `AIProcessingRequest` table in
 
 These indexes specifically optimize:
 
--   Finding pending requests by status and creation time
--   Batch-related lookups by batch ID
--   Combined status and batch filtering operations
+- Finding pending requests by status and creation time
+- Batch-related lookups by batch ID
+- Combined status and batch filtering operations
 
 ## Query Optimization Strategies
 
@@ -45,19 +45,22 @@ These indexes specifically optimize:
 
 ```typescript
 // Loaded full session with all messages
-include: {
-  session: {
-    include: {
-      messages: {
-        orderBy: { order: "asc" },
+const queryOptions = {
+  include: {
+    session: {
+      include: {
+        messages: {
+          orderBy: { order: "asc" },
+        },
       },
     },
   },
-}
+};
 ```
 
 **After:**
 
+<!-- prettier-ignore -->
 ```typescript
 // Only essential data with message count
 include: {
@@ -78,7 +81,7 @@ Implemented a 5-minute TTL cache for active companies to eliminate redundant dat
 ```typescript
 class CompanyCache {
   private readonly CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-  
+
   async getActiveCompanies(): Promise<CachedCompany[]> {
     // Returns cached data if available and fresh
     // Otherwise refreshes from database
@@ -105,7 +108,7 @@ for (const company of companies) {
 const allRequests = await prisma.aIProcessingRequest.findMany({
   where: {
     session: {
-      companyId: { in: companies.map(c => c.id) },
+      companyId: { in: companies.map((c) => c.id) },
     },
     processingStatus: AIRequestStatus.PENDING_BATCHING,
   },
@@ -119,10 +122,10 @@ const requestsByCompany = groupByCompany(allRequests);
 
 ### Query Count Reduction
 
--   **Company lookups:** Reduced from 4 separate queries per scheduler run to 1 cached lookup
--   **Pending requests:** Reduced from N queries (one per company) to 1 batch query
--   **Status checks:** Reduced from N queries to 1 batch query  
--   **Failed requests:** Reduced from N queries to 1 batch query
+- **Company lookups:** Reduced from 4 separate queries per scheduler run to 1 cached lookup
+- **Pending requests:** Reduced from N queries (one per company) to 1 batch query
+- **Status checks:** Reduced from N queries to 1 batch query
+- **Failed requests:** Reduced from N queries to 1 batch query
 
 ### Parallel Processing
 
@@ -138,9 +141,9 @@ const SCHEDULER_CONFIG = {
 
 ### Memory Optimization
 
--   Eliminated loading unnecessary message content
--   Used `select` instead of `include` where possible
--   Implemented automatic cache cleanup
+- Eliminated loading unnecessary message content
+- Used `select` instead of `include` where possible
+- Implemented automatic cache cleanup
 
 ## Integration Layer
 
@@ -151,7 +154,7 @@ Created a unified interface that can switch between original and optimized imple
 ```bash
 # Enable optimizations (default: true)
 ENABLE_BATCH_OPTIMIZATION=true
-ENABLE_BATCH_OPERATIONS=true  
+ENABLE_BATCH_OPERATIONS=true
 ENABLE_PARALLEL_PROCESSING=true
 
 # Fallback behavior
@@ -175,24 +178,24 @@ class PerformanceTracker {
 
 ### New Files
 
--   `lib/batchProcessorOptimized.ts` - Optimized query implementations
--   `lib/batchSchedulerOptimized.ts` - Optimized scheduler
--   `lib/batchProcessorIntegration.ts` - Integration layer with fallback
+- `lib/batchProcessorOptimized.ts` - Optimized query implementations
+- `lib/batchSchedulerOptimized.ts` - Optimized scheduler
+- `lib/batchProcessorIntegration.ts` - Integration layer with fallback
 
 ### Modified Files
 
--   `prisma/schema.prisma` - Added composite indexes
--   `server.ts` - Updated to use integration layer
--   `app/api/admin/batch-monitoring/route.ts` - Updated import
+- `prisma/schema.prisma` - Added composite indexes
+- `server.ts` - Updated to use integration layer
+- `app/api/admin/batch-monitoring/route.ts` - Updated import
 
 ## Monitoring
 
 The optimizations include comprehensive logging and monitoring:
 
--   Performance metrics for each operation type
--   Cache hit/miss statistics
--   Fallback events tracking
--   Query execution time monitoring
+- Performance metrics for each operation type
+- Cache hit/miss statistics
+- Fallback events tracking
+- Query execution time monitoring
 
 ## Rollback Strategy
 
@@ -205,10 +208,10 @@ The integration layer allows for easy rollback:
 
 ## Expected Performance Gains
 
--   **Database Query Count:** 60-80% reduction in scheduler operations
--   **Memory Usage:** 40-60% reduction from selective data loading
--   **Response Time:** 30-50% improvement for batch operations
--   **Cache Hit Rate:** 95%+ for company lookups after warmup
+- **Database Query Count:** 60-80% reduction in scheduler operations
+- **Memory Usage:** 40-60% reduction from selective data loading
+- **Response Time:** 30-50% improvement for batch operations
+- **Cache Hit Rate:** 95%+ for company lookups after warmup
 
 ## Testing
 

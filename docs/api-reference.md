@@ -37,56 +37,56 @@ GET /api/csrf-token
 
 ### Public Endpoints
 
--   `POST /api/csp-report` - CSP violation reporting (no auth required)
--   `OPTIONS /api/csp-report` - CORS preflight
+- `POST /api/csp-report` - CSP violation reporting (no auth required)
+- `OPTIONS /api/csp-report` - CORS preflight
 
 ### Authentication Endpoints
 
--   `POST /api/auth/[...nextauth]` - NextAuth.js authentication
--   `GET /api/csrf-token` - Get CSRF token
--   `POST /api/register` - User registration
--   `POST /api/forgot-password` - Password reset request
--   `POST /api/reset-password` - Password reset completion
+- `POST /api/auth/[...nextauth]` - NextAuth.js authentication
+- `GET /api/csrf-token` - Get CSRF token
+- `POST /api/register` - User registration
+- `POST /api/forgot-password` - Password reset request
+- `POST /api/reset-password` - Password reset completion
 
 ### Admin Endpoints (ADMIN role required)
 
--   `GET /api/admin/audit-logs` - Retrieve audit logs
--   `POST /api/admin/audit-logs/retention` - Manage audit log retention
--   `GET /api/admin/batch-monitoring` - Batch processing monitoring
--   `POST /api/admin/batch-monitoring/{id}/retry` - Retry failed batch job
+- `GET /api/admin/audit-logs` - Retrieve audit logs
+- `POST /api/admin/audit-logs/retention` - Manage audit log retention
+- `GET /api/admin/batch-monitoring` - Batch processing monitoring
+- `POST /api/admin/batch-monitoring/{id}/retry` - Retry failed batch job
 
 ### Platform Admin Endpoints (Platform admin only)
 
--   `GET /api/admin/security-monitoring` - Security monitoring metrics
--   `POST /api/admin/security-monitoring` - Update security configuration
--   `GET /api/admin/security-monitoring/alerts` - Alert management
--   `POST /api/admin/security-monitoring/alerts` - Acknowledge alerts
--   `GET /api/admin/security-monitoring/export` - Export security data
--   `POST /api/admin/security-monitoring/threat-analysis` - Threat analysis
+- `GET /api/admin/security-monitoring` - Security monitoring metrics
+- `POST /api/admin/security-monitoring` - Update security configuration
+- `GET /api/admin/security-monitoring/alerts` - Alert management
+- `POST /api/admin/security-monitoring/alerts` - Acknowledge alerts
+- `GET /api/admin/security-monitoring/export` - Export security data
+- `POST /api/admin/security-monitoring/threat-analysis` - Threat analysis
 
 ### Security Monitoring Endpoints
 
--   `GET /api/csp-metrics` - CSP violation metrics
--   `POST /api/csp-report` - CSP violation reporting
+- `GET /api/csp-metrics` - CSP violation metrics
+- `POST /api/csp-report` - CSP violation reporting
 
 ### Dashboard Endpoints
 
--   `GET /api/dashboard/sessions` - Session data
--   `GET /api/dashboard/session/{id}` - Individual session details
--   `GET /api/dashboard/metrics` - Dashboard metrics
--   `GET /api/dashboard/config` - Dashboard configuration
+- `GET /api/dashboard/sessions` - Session data
+- `GET /api/dashboard/session/{id}` - Individual session details
+- `GET /api/dashboard/metrics` - Dashboard metrics
+- `GET /api/dashboard/config` - Dashboard configuration
 
 ### Platform Management
 
--   `GET /api/platform/companies` - Company management
--   `POST /api/platform/companies` - Create company
--   `GET /api/platform/companies/{id}` - Company details
--   `GET /api/platform/companies/{id}/users` - Company users
--   `POST /api/platform/companies/{id}/users` - Add company user
+- `GET /api/platform/companies` - Company management
+- `POST /api/platform/companies` - Create company
+- `GET /api/platform/companies/{id}` - Company details
+- `GET /api/platform/companies/{id}/users` - Company users
+- `POST /api/platform/companies/{id}/users` - Add company user
 
 ### tRPC Endpoints
 
--   `POST /api/trpc/[trpc]` - tRPC procedure calls
+- `POST /api/trpc/[trpc]` - tRPC procedure calls
 
 ## Detailed Endpoint Documentation
 
@@ -102,14 +102,14 @@ GET /api/admin/audit-logs
 
 **Query Parameters**:
 
--   `page` (number, optional): Page number (default: 1)
--   `limit` (number, optional): Records per page, max 100 (default: 50)
--   `eventType` (string, optional): Filter by event type
--   `outcome` (string, optional): Filter by outcome (SUCCESS, FAILURE, BLOCKED, etc.)
--   `severity` (string, optional): Filter by severity (LOW, MEDIUM, HIGH, CRITICAL)
--   `userId` (string, optional): Filter by user ID
--   `startDate` (string, optional): Start date (ISO 8601)
--   `endDate` (string, optional): End date (ISO 8601)
+- `page` (number, optional): Page number (default: 1)
+- `limit` (number, optional): Records per page, max 100 (default: 50)
+- `eventType` (string, optional): Filter by event type
+- `outcome` (string, optional): Filter by outcome (SUCCESS, FAILURE, BLOCKED, etc.)
+- `severity` (string, optional): Filter by severity (LOW, MEDIUM, HIGH, CRITICAL)
+- `userId` (string, optional): Filter by user ID
+- `startDate` (string, optional): Start date (ISO 8601)
+- `endDate` (string, optional): End date (ISO 8601)
 
 **Response**:
 
@@ -117,7 +117,7 @@ GET /api/admin/audit-logs
 {
   "success": true,
   "data": {
-    "auditLogs": [...],
+    "auditLogs": ["// Array of audit log entries"],
     "pagination": {
       "page": 1,
       "limit": 50,
@@ -142,6 +142,7 @@ POST /api/admin/audit-logs/retention
 
 **Request Body**:
 
+<!-- prettier-ignore -->
 ```json
 {
   "action": "cleanup" | "configure" | "status",
@@ -176,10 +177,10 @@ GET /api/admin/security-monitoring
 
 **Query Parameters**:
 
--   `startDate` (string, optional): Start date (ISO 8601)
--   `endDate` (string, optional): End date (ISO 8601)
--   `companyId` (string, optional): Filter by company
--   `severity` (string, optional): Filter by severity
+- `startDate` (string, optional): Start date (ISO 8601)
+- `endDate` (string, optional): End date (ISO 8601)
+- `companyId` (string, optional): Filter by company
+- `severity` (string, optional): Filter by severity
 
 **Response**:
 
@@ -188,12 +189,18 @@ GET /api/admin/security-monitoring
   "metrics": {
     "securityScore": 85,
     "threatLevel": "LOW",
-    "eventCounts": {...},
-    "anomalies": [...]
+    "eventCounts": {
+      "// Event count statistics": null
+    },
+    "anomalies": ["// Array of security anomalies"]
   },
-  "alerts": [...],
-  "config": {...},
-  "timeRange": {...}
+  "alerts": ["// Array of security alerts"],
+  "config": {
+    "// Security configuration": null
+  },
+  "timeRange": {
+    "// Time range for the data": null
+  }
 }
 ```
 
@@ -232,7 +239,7 @@ POST /api/csp-report
 
 **Headers**:
 
--   `Content-Type`: `application/csp-report` or `application/json`
+- `Content-Type`: `application/csp-report` or `application/json`
 
 **Request Body** (automatic from browser):
 
@@ -262,10 +269,10 @@ GET /api/csp-metrics
 
 **Query Parameters**:
 
--   `timeRange` (string, optional): Time range (1h, 6h, 24h, 7d, 30d)
--   `format` (string, optional): Response format (json, csv)
--   `groupBy` (string, optional): Group by field (hour, directive, etc.)
--   `includeDetails` (boolean, optional): Include violation details
+- `timeRange` (string, optional): Time range (1h, 6h, 24h, 7d, 30d)
+- `format` (string, optional): Response format (json, csv)
+- `groupBy` (string, optional): Group by field (hour, directive, etc.)
+- `includeDetails` (boolean, optional): Include violation details
 
 **Response**:
 
@@ -279,10 +286,14 @@ GET /api/csp-metrics
       "highRiskViolations": 3,
       "bypassAttempts": 1
     },
-    "trends": {...},
-    "topViolations": [...],
-    "riskAnalysis": {...},
-    "violations": [...]
+    "trends": {
+      "// CSP trend data": null
+    },
+    "topViolations": ["// Array of top CSP violations"],
+    "riskAnalysis": {
+      "// CSP risk analysis data": null
+    },
+    "violations": ["// Array of CSP violations"]
   }
 }
 ```
@@ -299,12 +310,12 @@ GET /api/admin/batch-monitoring
 
 **Query Parameters**:
 
--   `timeRange` (string, optional): Time range (1h, 6h, 24h, 7d, 30d)
--   `status` (string, optional): Filter by status (pending, completed, failed)
--   `jobType` (string, optional): Filter by job type
--   `includeDetails` (boolean, optional): Include detailed job information
--   `page` (number, optional): Page number
--   `limit` (number, optional): Records per page
+- `timeRange` (string, optional): Time range (1h, 6h, 24h, 7d, 30d)
+- `status` (string, optional): Filter by status (pending, completed, failed)
+- `jobType` (string, optional): Filter by job type
+- `includeDetails` (boolean, optional): Include detailed job information
+- `page` (number, optional): Page number
+- `limit` (number, optional): Records per page
 
 **Response**:
 
@@ -316,11 +327,15 @@ GET /api/admin/batch-monitoring
       "totalJobs": 156,
       "completedJobs": 142,
       "failedJobs": 8,
-      "costSavings": {...}
+      "costSavings": {}
     },
-    "queues": {...},
-    "performance": {...},
-    "jobs": [...]
+    "queues": {
+      "// Queue statistics": null
+    },
+    "performance": {
+      "// Performance metrics": null
+    },
+    "jobs": ["// Array of batch jobs"]
   }
 }
 ```
@@ -366,7 +381,7 @@ GET /api/csrf-token
 
 **Headers Set**:
 
--   `Set-Cookie`: HTTP-only CSRF token cookie
+- `Set-Cookie`: HTTP-only CSRF token cookie
 
 ### Authentication
 
@@ -380,7 +395,7 @@ POST /api/register
 
 **Headers Required**:
 
--   `X-CSRF-Token`: CSRF token
+- `X-CSRF-Token`: CSRF token
 
 **Request Body**:
 
@@ -415,7 +430,7 @@ POST /api/forgot-password
 
 **Headers Required**:
 
--   `X-CSRF-Token`: CSRF token
+- `X-CSRF-Token`: CSRF token
 
 **Request Body**:
 
@@ -446,7 +461,7 @@ POST /api/reset-password
 
 **Headers Required**:
 
--   `X-CSRF-Token`: CSRF token
+- `X-CSRF-Token`: CSRF token
 
 **Request Body**:
 
@@ -475,56 +490,56 @@ POST /api/reset-password
   "success": false,
   "error": "Error message",
   "code": "ERROR_CODE",
-  "details": {...}
+  "details": {}
 }
 ```
 
 ### Common HTTP Status Codes
 
-| Status | Description | Common Causes |
-|--------|-------------|---------------|
-| 200 | OK | Successful request |
-| 201 | Created | Resource created successfully |
-| 204 | No Content | Successful request with no response body |
-| 400 | Bad Request | Invalid request parameters or body |
-| 401 | Unauthorized | Authentication required or invalid |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Resource already exists or conflict |
-| 422 | Unprocessable Entity | Validation errors |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
+| Status | Description           | Common Causes                            |
+| ------ | --------------------- | ---------------------------------------- |
+| 200    | OK                    | Successful request                       |
+| 201    | Created               | Resource created successfully            |
+| 204    | No Content            | Successful request with no response body |
+| 400    | Bad Request           | Invalid request parameters or body       |
+| 401    | Unauthorized          | Authentication required or invalid       |
+| 403    | Forbidden             | Insufficient permissions                 |
+| 404    | Not Found             | Resource not found                       |
+| 409    | Conflict              | Resource already exists or conflict      |
+| 422    | Unprocessable Entity  | Validation errors                        |
+| 429    | Too Many Requests     | Rate limit exceeded                      |
+| 500    | Internal Server Error | Server error                             |
 
 ### Error Codes
 
-| Code | Description | Resolution |
-|------|-------------|------------|
-| `UNAUTHORIZED` | No valid session | Login required |
-| `FORBIDDEN` | Insufficient permissions | Check user role |
-| `VALIDATION_ERROR` | Invalid input data | Check request format |
-| `RATE_LIMITED` | Too many requests | Wait and retry |
-| `CSRF_INVALID` | Invalid CSRF token | Get new token |
-| `NOT_FOUND` | Resource not found | Check resource ID |
-| `CONFLICT` | Resource conflict | Check existing data |
+| Code               | Description              | Resolution           |
+| ------------------ | ------------------------ | -------------------- |
+| `UNAUTHORIZED`     | No valid session         | Login required       |
+| `FORBIDDEN`        | Insufficient permissions | Check user role      |
+| `VALIDATION_ERROR` | Invalid input data       | Check request format |
+| `RATE_LIMITED`     | Too many requests        | Wait and retry       |
+| `CSRF_INVALID`     | Invalid CSRF token       | Get new token        |
+| `NOT_FOUND`        | Resource not found       | Check resource ID    |
+| `CONFLICT`         | Resource conflict        | Check existing data  |
 
 ## Rate Limiting
 
 ### Authentication Endpoints
 
--   **Login**: 5 attempts per 15 minutes per IP
--   **Registration**: 3 attempts per hour per IP  
--   **Password Reset**: 5 attempts per 15 minutes per IP
+- **Login**: 5 attempts per 15 minutes per IP
+- **Registration**: 3 attempts per hour per IP
+- **Password Reset**: 5 attempts per 15 minutes per IP
 
 ### Security Endpoints
 
--   **CSP Reports**: 10 reports per minute per IP
--   **Admin Endpoints**: 60 requests per minute per user
--   **Security Monitoring**: 30 requests per minute per user
+- **CSP Reports**: 10 reports per minute per IP
+- **Admin Endpoints**: 60 requests per minute per user
+- **Security Monitoring**: 30 requests per minute per user
 
 ### General API
 
--   **Dashboard Endpoints**: 120 requests per minute per user
--   **Platform Management**: 60 requests per minute per user
+- **Dashboard Endpoints**: 120 requests per minute per user
+- **Platform Management**: 60 requests per minute per user
 
 ## Security Headers
 
@@ -542,16 +557,16 @@ Content-Security-Policy: [CSP directives]
 
 ### Allowed Origins
 
--   Development: `http://localhost:3000`
--   Production: `https://your-domain.com`
+- Development: `http://localhost:3000`
+- Production: `https://your-domain.com`
 
 ### Allowed Methods
 
--   `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`
+- `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`
 
 ### Allowed Headers
 
--   `Content-Type`, `Authorization`, `X-CSRF-Token`, `X-Requested-With`
+- `Content-Type`, `Authorization`, `X-CSRF-Token`, `X-Requested-With`
 
 ## Pagination
 
@@ -559,7 +574,7 @@ Content-Security-Policy: [CSP directives]
 
 ```json
 {
-  "data": [...],
+  "data": ["// Array of response data"],
   "pagination": {
     "page": 1,
     "limit": 50,
@@ -573,23 +588,23 @@ Content-Security-Policy: [CSP directives]
 
 ### Pagination Parameters
 
--   `page`: Page number (1-based, default: 1)
--   `limit`: Records per page (default: 50, max: 100)
+- `page`: Page number (1-based, default: 1)
+- `limit`: Records per page (default: 50, max: 100)
 
 ## Filtering and Sorting
 
 ### Common Filter Parameters
 
--   `startDate` / `endDate`: Date range filtering (ISO 8601)
--   `status`: Status filtering
--   `userId` / `companyId`: Entity filtering
--   `eventType`: Event type filtering
--   `severity`: Severity level filtering
+- `startDate` / `endDate`: Date range filtering (ISO 8601)
+- `status`: Status filtering
+- `userId` / `companyId`: Entity filtering
+- `eventType`: Event type filtering
+- `severity`: Severity level filtering
 
 ### Sorting Parameters
 
--   `sortBy`: Field to sort by
--   `sortOrder`: `asc` or `desc` (default: `desc`)
+- `sortBy`: Field to sort by
+- `sortOrder`: `asc` or `desc` (default: `desc`)
 
 ## Response Caching
 
@@ -603,22 +618,22 @@ Expires: 0
 
 ### Cache Strategy
 
--   **Security data**: Never cached
--   **Static data**: Browser cache for 5 minutes
--   **User data**: No cache for security
+- **Security data**: Never cached
+- **Static data**: Browser cache for 5 minutes
+- **User data**: No cache for security
 
 ## API Versioning
 
 ### Current Version
 
--   Version: `v1` (implied, no version prefix required)
--   Introduced: January 2025
+- Version: `v1` (implied, no version prefix required)
+- Introduced: January 2025
 
 ### Future Versioning
 
--   Breaking changes will introduce new versions
--   Format: `/api/v2/endpoint`
--   Backward compatibility maintained for 12 months
+- Breaking changes will introduce new versions
+- Format: `/api/v2/endpoint`
+- Backward compatibility maintained for 12 months
 
 ## SDK and Client Libraries
 
@@ -627,32 +642,32 @@ Expires: 0
 ```javascript
 // Initialize client
 const client = new LiveDashClient({
-  baseURL: 'https://your-domain.com',
-  apiKey: 'your-api-key' // For future API key auth
+  baseURL: "https://your-domain.com",
+  apiKey: "your-api-key", // For future API key auth
 });
 
 // Get audit logs
 const auditLogs = await client.admin.getAuditLogs({
   page: 1,
   limit: 50,
-  eventType: 'login_attempt'
+  eventType: "login_attempt",
 });
 
 // Get security metrics
 const metrics = await client.security.getMetrics({
-  timeRange: '24h'
+  timeRange: "24h",
 });
 ```
 
 ### tRPC Client
 
 ```javascript
-import { createTRPCNext } from '@trpc/next';
+import { createTRPCNext } from "@trpc/next";
 
 const trpc = createTRPCNext({
   config() {
     return {
-      url: '/api/trpc',
+      url: "/api/trpc",
     };
   },
 });
@@ -682,13 +697,13 @@ http GET localhost:3000/api/csp-metrics \
 
 ```javascript
 // Example test
-describe('Admin Audit Logs API', () => {
-  test('should return paginated audit logs', async () => {
+describe("Admin Audit Logs API", () => {
+  test("should return paginated audit logs", async () => {
     const response = await request(app)
-      .get('/api/admin/audit-logs?page=1&limit=10')
-      .set('Cookie', 'next-auth.session-token=...')
+      .get("/api/admin/audit-logs?page=1&limit=10")
+      .set("Cookie", "next-auth.session-token=...")
       .expect(200);
-      
+
     expect(response.body.success).toBe(true);
     expect(response.body.data.auditLogs).toHaveLength(10);
     expect(response.body.data.pagination.page).toBe(1);
@@ -698,10 +713,10 @@ describe('Admin Audit Logs API', () => {
 
 ## Related Documentation
 
--   [Admin Audit Logs API](./admin-audit-logs-api.md)
--   [CSP Metrics API](./csp-metrics-api.md)
--   [Security Monitoring](./security-monitoring.md)
--   [CSRF Protection](./CSRF_PROTECTION.md)
--   [Batch Monitoring Dashboard](./batch-monitoring-dashboard.md)
+- [Admin Audit Logs API](./admin-audit-logs-api.md)
+- [CSP Metrics API](./csp-metrics-api.md)
+- [Security Monitoring](./security-monitoring.md)
+- [CSRF Protection](./CSRF_PROTECTION.md)
+- [Batch Monitoring Dashboard](./batch-monitoring-dashboard.md)
 
 This API reference provides comprehensive documentation for all endpoints in the LiveDash-Node application. For specific implementation details, refer to the individual documentation files for each feature area.

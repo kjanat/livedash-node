@@ -10,24 +10,24 @@ The Batch Monitoring Dashboard provides real-time visibility into the OpenAI Bat
 
 ### Real-time Monitoring
 
--   **Job Status Tracking**: Monitor batch jobs from creation to completion
--   **Queue Management**: View pending, running, and completed batch queues
--   **Processing Metrics**: Track throughput, success rates, and error patterns
--   **Cost Analysis**: Monitor API costs and savings compared to individual requests
+- **Job Status Tracking**: Monitor batch jobs from creation to completion
+- **Queue Management**: View pending, running, and completed batch queues
+- **Processing Metrics**: Track throughput, success rates, and error patterns
+- **Cost Analysis**: Monitor API costs and savings compared to individual requests
 
-### Performance Analytics  
+### Performance Analytics
 
--   **Batch Efficiency**: Analyze batch size optimization and processing times
--   **Success Rates**: Track completion and failure rates across different job types
--   **Resource Utilization**: Monitor API quota usage and rate limiting
--   **Historical Trends**: View processing patterns over time
+- **Batch Efficiency**: Analyze batch size optimization and processing times
+- **Success Rates**: Track completion and failure rates across different job types
+- **Resource Utilization**: Monitor API quota usage and rate limiting
+- **Historical Trends**: View processing patterns over time
 
 ### Administrative Controls
 
--   **Manual Intervention**: Pause, resume, or cancel batch operations
--   **Priority Management**: Adjust processing priorities for urgent requests
--   **Error Handling**: Review and retry failed batch operations
--   **Configuration Management**: Adjust batch parameters and thresholds
+- **Manual Intervention**: Pause, resume, or cancel batch operations
+- **Priority Management**: Adjust processing priorities for urgent requests
+- **Error Handling**: Review and retry failed batch operations
+- **Configuration Management**: Adjust batch parameters and thresholds
 
 ## API Endpoints
 
@@ -41,23 +41,26 @@ GET /api/admin/batch-monitoring
 
 #### Query Parameters
 
-| Parameter | Type | Description | Default | Example |
-|-----------|------|-------------|---------|---------|
-| `timeRange` | string | Time range for metrics | `24h` | `?timeRange=7d` |
-| `status` | string | Filter by batch status | - | `?status=completed` |
-| `jobType` | string | Filter by job type | - | `?jobType=ai_analysis` |
+| Parameter        | Type    | Description                      | Default | Example                |
+| ---------------- | ------- | -------------------------------- | ------- | ---------------------- |
+| `timeRange`      | string  | Time range for metrics           | `24h`   | `?timeRange=7d`        |
+| `status`         | string  | Filter by batch status           | -       | `?status=completed`    |
+| `jobType`        | string  | Filter by job type               | -       | `?jobType=ai_analysis` |
 | `includeDetails` | boolean | Include detailed job information | `false` | `?includeDetails=true` |
-| `page` | number | Page number for pagination | 1 | `?page=2` |
-| `limit` | number | Records per page (max 100) | 50 | `?limit=25` |
+| `page`           | number  | Page number for pagination       | 1       | `?page=2`              |
+| `limit`          | number  | Records per page (max 100)       | 50      | `?limit=25`            |
 
 #### Example Request
 
 ```javascript
-const response = await fetch('/api/admin/batch-monitoring?' + new URLSearchParams({
-  timeRange: '24h',
-  status: 'completed',
-  includeDetails: 'true'
-}));
+const response = await fetch(
+  "/api/admin/batch-monitoring?" +
+    new URLSearchParams({
+      timeRange: "24h",
+      status: "completed",
+      includeDetails: "true",
+    })
+);
 
 const data = await response.json();
 ```
@@ -114,7 +117,7 @@ const data = await response.json();
         "startedAt": "2024-01-01T10:05:00Z",
         "completedAt": "2024-01-01T10:35:00Z",
         "processingTimeMs": 1800000,
-        "costEstimate": 12.50,
+        "costEstimate": 12.5,
         "errorSummary": [
           {
             "error": "token_limit_exceeded",
@@ -138,26 +141,28 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 
 ```tsx
 // Real-time overview cards
-<MetricCard
-  title="Total Jobs"
-  value={data.summary.totalJobs}
-  change={"+12 from yesterday"}
-  trend="up"
-/>
+<>
+  <MetricCard
+    title="Total Jobs"
+    value={data.summary.totalJobs}
+    change={"+12 from yesterday"}
+    trend="up"
+  />
 
-<MetricCard
-  title="Success Rate"
-  value={`${data.summary.successRate}%`}
-  change={"+2.1% from last week"}
-  trend="up"
-/>
+  <MetricCard
+    title="Success Rate"
+    value={`${data.summary.successRate}%`}
+    change={"+2.1% from last week"}
+    trend="up"
+  />
 
-<MetricCard
-  title="Cost Savings"
-  value={`$${data.summary.costSavings.currentPeriod}`}
-  change={`${data.summary.costSavings.savingsPercentage}% vs individual API`}
-  trend="up"
-/>
+  <MetricCard
+    title="Cost Savings"
+    value={`$${data.summary.costSavings.currentPeriod}`}
+    change={`${data.summary.costSavings.savingsPercentage}% vs individual API`}
+    trend="up"
+  />
+</>
 ```
 
 #### Queue Status Visualization
@@ -174,6 +179,7 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 
 #### Performance Charts
 
+<!-- prettier-ignore -->
 ```tsx
 // Processing throughput over time
 <ThroughputChart
@@ -206,28 +212,28 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 
 ```javascript
 async function monitorBatchPerformance() {
-  const response = await fetch('/api/admin/batch-monitoring?timeRange=24h');
+  const response = await fetch("/api/admin/batch-monitoring?timeRange=24h");
   const data = await response.json();
-  
+
   const performance = data.data.performance;
-  
+
   // Check if performance is within acceptable ranges
   if (performance.efficiency.errorRate > 10) {
-    console.warn('High error rate detected:', performance.efficiency.errorRate + '%');
-    
+    console.warn("High error rate detected:", performance.efficiency.errorRate + "%");
+
     // Get failed jobs for analysis
-    const failedJobs = await fetch('/api/admin/batch-monitoring?status=failed');
+    const failedJobs = await fetch("/api/admin/batch-monitoring?status=failed");
     const failures = await failedJobs.json();
-    
+
     // Analyze common failure patterns
     const errorSummary = failures.data.jobs.reduce((acc, job) => {
-      job.errorSummary?.forEach(error => {
+      job.errorSummary?.forEach((error) => {
         acc[error.error] = (acc[error.error] || 0) + error.count;
       });
       return acc;
     }, {});
-    
-    console.log('Error patterns:', errorSummary);
+
+    console.log("Error patterns:", errorSummary);
   }
 }
 ```
@@ -236,17 +242,17 @@ async function monitorBatchPerformance() {
 
 ```javascript
 async function analyzeCostSavings() {
-  const response = await fetch('/api/admin/batch-monitoring?timeRange=30d&includeDetails=true');
+  const response = await fetch("/api/admin/batch-monitoring?timeRange=30d&includeDetails=true");
   const data = await response.json();
-  
+
   const savings = data.data.summary.costSavings;
-  
+
   return {
     currentSavings: savings.currentPeriod,
     projectedAnnual: savings.projectedMonthly * 12,
     savingsRate: savings.savingsPercentage,
     totalProcessed: data.data.summary.processedRequests,
-    averageCostPerRequest: savings.currentPeriod / data.data.summary.processedRequests
+    averageCostPerRequest: savings.currentPeriod / data.data.summary.processedRequests,
   };
 }
 ```
@@ -256,22 +262,22 @@ async function analyzeCostSavings() {
 ```javascript
 async function retryFailedJobs() {
   // Get failed jobs
-  const response = await fetch('/api/admin/batch-monitoring?status=failed');
+  const response = await fetch("/api/admin/batch-monitoring?status=failed");
   const data = await response.json();
-  
-  const retryableJobs = data.data.jobs.filter(job => {
+
+  const retryableJobs = data.data.jobs.filter((job) => {
     // Only retry jobs that failed due to temporary issues
-    const hasRetryableErrors = job.errorSummary?.some(error => 
-      ['rate_limit_exceeded', 'temporary_error', 'timeout'].includes(error.error)
+    const hasRetryableErrors = job.errorSummary?.some((error) =>
+      ["rate_limit_exceeded", "temporary_error", "timeout"].includes(error.error)
     );
     return hasRetryableErrors;
   });
-  
+
   // Retry jobs individually
   for (const job of retryableJobs) {
     try {
       await fetch(`/api/admin/batch-monitoring/${job.id}/retry`, {
-        method: 'POST'
+        method: "POST",
       });
       console.log(`Retried job ${job.id}`);
     } catch (error) {
@@ -287,29 +293,29 @@ async function retryFailedJobs() {
 function useRealtimeBatchMonitoring() {
   const [data, setData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('/api/admin/batch-monitoring?timeRange=1h');
+        const response = await fetch("/api/admin/batch-monitoring?timeRange=1h");
         const result = await response.json();
         setData(result.data);
       } catch (error) {
-        console.error('Failed to fetch batch monitoring data:', error);
+        console.error("Failed to fetch batch monitoring data:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     // Initial fetch
     fetchData();
-    
+
     // Update every 30 seconds
     const interval = setInterval(fetchData, 30000);
-    
+
     return () => clearInterval(interval);
   }, []);
-  
+
   return { data, isLoading };
 }
 ```
@@ -343,11 +349,11 @@ BATCH_ALERT_THRESHOLD_PROCESSING_TIME="3600"  # Alert if processing takes >1 hou
 ```javascript
 // Configure dashboard update intervals
 const DASHBOARD_CONFIG = {
-  refreshInterval: 30000,        // 30 seconds
-  alertRefreshInterval: 10000,   // 10 seconds for alerts
-  detailRefreshInterval: 60000,  // 1 minute for detailed views
-  maxRetries: 3,                 // Maximum retry attempts
-  retryDelay: 5000              // Delay between retries
+  refreshInterval: 30000, // 30 seconds
+  alertRefreshInterval: 10000, // 10 seconds for alerts
+  detailRefreshInterval: 60000, // 1 minute for detailed views
+  maxRetries: 3, // Maximum retry attempts
+  retryDelay: 5000, // Delay between retries
 };
 ```
 
@@ -361,24 +367,24 @@ The system automatically generates alerts for:
 const alertConditions = {
   highErrorRate: {
     threshold: 10, // Error rate > 10%
-    severity: 'high',
-    notification: 'immediate'
+    severity: "high",
+    notification: "immediate",
   },
   longProcessingTime: {
     threshold: 3600000, // > 1 hour
-    severity: 'medium',
-    notification: 'hourly'
+    severity: "medium",
+    notification: "hourly",
   },
   lowThroughput: {
     threshold: 0.5, // < 0.5 jobs per hour
-    severity: 'medium',
-    notification: 'daily'
+    severity: "medium",
+    notification: "daily",
   },
   batchFailure: {
     threshold: 1, // Any complete batch failure
-    severity: 'critical',
-    notification: 'immediate'
-  }
+    severity: "critical",
+    notification: "immediate",
+  },
 };
 ```
 
@@ -387,17 +393,17 @@ const alertConditions = {
 ```javascript
 // Configure custom alerts through the admin interface
 async function configureAlerts(alertConfig) {
-  const response = await fetch('/api/admin/batch-monitoring/alerts', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const response = await fetch("/api/admin/batch-monitoring/alerts", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       errorRateThreshold: alertConfig.errorRate,
       processingTimeThreshold: alertConfig.processingTime,
       notificationChannels: alertConfig.channels,
-      alertSuppression: alertConfig.suppression
-    })
+      alertSuppression: alertConfig.suppression,
+    }),
   });
-  
+
   return response.json();
 }
 ```
@@ -411,12 +417,12 @@ async function configureAlerts(alertConfig) {
 ```javascript
 // Investigate high error rates
 async function investigateErrors() {
-  const response = await fetch('/api/admin/batch-monitoring?status=failed&includeDetails=true');
+  const response = await fetch("/api/admin/batch-monitoring?status=failed&includeDetails=true");
   const data = await response.json();
-  
+
   // Group errors by type
   const errorAnalysis = data.data.jobs.reduce((acc, job) => {
-    job.errorSummary?.forEach(error => {
+    job.errorSummary?.forEach((error) => {
       if (!acc[error.error]) {
         acc[error.error] = { count: 0, jobs: [] };
       }
@@ -425,8 +431,8 @@ async function investigateErrors() {
     });
     return acc;
   }, {});
-  
-  console.log('Error analysis:', errorAnalysis);
+
+  console.log("Error analysis:", errorAnalysis);
   return errorAnalysis;
 }
 ```
@@ -436,15 +442,15 @@ async function investigateErrors() {
 ```javascript
 // Analyze processing bottlenecks
 async function analyzePerformance() {
-  const response = await fetch('/api/admin/batch-monitoring?timeRange=24h&includeDetails=true');
+  const response = await fetch("/api/admin/batch-monitoring?timeRange=24h&includeDetails=true");
   const data = await response.json();
-  
+
   const slowJobs = data.data.jobs
-    .filter(job => job.processingTimeMs > 3600000) // > 1 hour
+    .filter((job) => job.processingTimeMs > 3600000) // > 1 hour
     .sort((a, b) => b.processingTimeMs - a.processingTimeMs);
-  
-  console.log('Slowest jobs:', slowJobs.slice(0, 5));
-  
+
+  console.log("Slowest jobs:", slowJobs.slice(0, 5));
+
   // Analyze patterns
   const avgByType = slowJobs.reduce((acc, job) => {
     if (!acc[job.jobType]) {
@@ -454,11 +460,11 @@ async function analyzePerformance() {
     acc[job.jobType].count++;
     return acc;
   }, {});
-  
-  Object.keys(avgByType).forEach(type => {
+
+  Object.keys(avgByType).forEach((type) => {
     avgByType[type].average = avgByType[type].total / avgByType[type].count;
   });
-  
+
   return avgByType;
 }
 ```
@@ -470,9 +476,9 @@ async function analyzePerformance() {
 ```javascript
 // Analyze optimal batch sizes
 async function optimizeBatchSizes() {
-  const response = await fetch('/api/admin/batch-monitoring?timeRange=7d&includeDetails=true');
+  const response = await fetch("/api/admin/batch-monitoring?timeRange=7d&includeDetails=true");
   const data = await response.json();
-  
+
   // Group by batch size ranges
   const sizePerformance = data.data.jobs.reduce((acc, job) => {
     const sizeRange = Math.floor(job.requestCount / 50) * 50; // Group by 50s
@@ -481,25 +487,25 @@ async function optimizeBatchSizes() {
         jobs: 0,
         totalTime: 0,
         totalRequests: 0,
-        successRate: 0
+        successRate: 0,
       };
     }
-    
+
     acc[sizeRange].jobs++;
     acc[sizeRange].totalTime += job.processingTimeMs;
     acc[sizeRange].totalRequests += job.requestCount;
     acc[sizeRange].successRate += job.completedCount / job.requestCount;
-    
+
     return acc;
   }, {});
-  
+
   // Calculate averages
-  Object.keys(sizePerformance).forEach(range => {
+  Object.keys(sizePerformance).forEach((range) => {
     const perf = sizePerformance[range];
     perf.avgTimePerRequest = perf.totalTime / perf.totalRequests;
     perf.avgSuccessRate = perf.successRate / perf.jobs;
   });
-  
+
   return sizePerformance;
 }
 ```
@@ -513,10 +519,10 @@ All batch monitoring activities are logged through the security audit system:
 ```javascript
 // Automatic audit logging for monitoring activities
 await securityAuditLogger.logPlatformAdmin(
-  'batch_monitoring_access',
+  "batch_monitoring_access",
   AuditOutcome.SUCCESS,
   context,
-  'Admin accessed batch monitoring dashboard'
+  "Admin accessed batch monitoring dashboard"
 );
 ```
 
@@ -528,16 +534,16 @@ Monitoring API endpoints use the existing rate limiting system:
 // Protected by admin rate limiting
 const rateLimitResult = await rateLimiter.check(
   `admin-batch-monitoring:${userId}`,
-  60,  // 60 requests
-  60 * 1000  // per minute
+  60, // 60 requests
+  60 * 1000 // per minute
 );
 ```
 
 ## Related Documentation
 
--   [Batch Processing Optimizations](./batch-processing-optimizations.md)
--   [Security Monitoring](./security-monitoring.md)
--   [Admin Audit Logs API](./admin-audit-logs-api.md)
--   [OpenAI Batch API Integration](../lib/batchProcessor.ts)
+- [Batch Processing Optimizations](./batch-processing-optimizations.md)
+- [Security Monitoring](./security-monitoring.md)
+- [Admin Audit Logs API](./admin-audit-logs-api.md)
+- [OpenAI Batch API Integration](../lib/batchProcessor.ts)
 
 The batch monitoring dashboard provides comprehensive visibility into the AI processing pipeline, enabling administrators to optimize performance, monitor costs, and ensure reliable operation of the batch processing system.

@@ -8,54 +8,60 @@ This document outlines the comprehensive Content Security Policy implementation 
 
 The enhanced CSP implementation provides:
 
--   **Nonce-based script execution** for maximum security in production
--   **Strict mode policies** with configurable external domain allowlists
--   **Environment-specific configurations** for development vs production
--   **CSP violation reporting and monitoring** system with real-time analysis
--   **Advanced bypass detection and alerting** capabilities with risk assessment
--   **Comprehensive testing framework** with automated validation
--   **Performance metrics and policy recommendations**
--   **Framework compatibility** with Next.js, TailwindCSS, and Leaflet maps
+- **Nonce-based script execution** for maximum security in production
+- **Strict mode policies** with configurable external domain allowlists
+- **Environment-specific configurations** for development vs production
+- **CSP violation reporting and monitoring** system with real-time analysis
+- **Advanced bypass detection and alerting** capabilities with risk assessment
+- **Comprehensive testing framework** with automated validation
+- **Performance metrics and policy recommendations**
+- **Framework compatibility** with Next.js, TailwindCSS, and Leaflet maps
 
 ## Architecture
 
 ### Core Components
 
 1.  **CSP Utility Library** (`lib/csp.ts`)
-   -   Nonce generation with cryptographic security
-   -   Dynamic CSP building based on environment
-   -   Violation parsing and bypass detection
-   -   Policy validation and testing
+
+- Nonce generation with cryptographic security
+- Dynamic CSP building based on environment
+- Violation parsing and bypass detection
+- Policy validation and testing
 
 2.  **Middleware Implementation** (`middleware.ts`)
-   -   Automatic nonce generation per request
-   -   Environment-aware policy application
-   -   Enhanced security headers
-   -   Route-based CSP filtering
+
+- Automatic nonce generation per request
+- Environment-aware policy application
+- Enhanced security headers
+- Route-based CSP filtering
 
 3.  **Violation Reporting** (`app/api/csp-report/route.ts`)
-   -   Real-time violation monitoring with intelligent analysis
-   -   Rate-limited endpoint protection (10 reports/minute per IP)
-   -   Advanced bypass attempt detection with risk assessment
-   -   Automated alerting for critical violations with recommendations
+
+- Real-time violation monitoring with intelligent analysis
+- Rate-limited endpoint protection (10 reports/minute per IP)
+- Advanced bypass attempt detection with risk assessment
+- Automated alerting for critical violations with recommendations
 
 4.  **Monitoring Service** (`lib/csp-monitoring.ts`)
-   -   Violation tracking and metrics collection
-   -   Policy recommendation engine based on violation patterns
-   -   Export capabilities for external analysis (JSON/CSV)
-   -   Automatic cleanup of old violation data
+
+- Violation tracking and metrics collection
+- Policy recommendation engine based on violation patterns
+- Export capabilities for external analysis (JSON/CSV)
+- Automatic cleanup of old violation data
 
 5.  **Metrics API** (`app/api/csp-metrics/route.ts`)
-   -   Real-time CSP violation metrics (1h, 6h, 24h, 7d, 30d ranges)
-   -   Top violated directives and blocked URIs analysis
-   -   Violation trend tracking and visualization data
-   -   Policy optimization recommendations
+
+- Real-time CSP violation metrics (1h, 6h, 24h, 7d, 30d ranges)
+- Top violated directives and blocked URIs analysis
+- Violation trend tracking and visualization data
+- Policy optimization recommendations
 
 6.  **Testing Framework**
-   -   Comprehensive unit and integration tests
-   -   Enhanced CSP validation tools with security scoring
-   -   Automated compliance verification
-   -   Real-world scenario testing for application compatibility
+
+- Comprehensive unit and integration tests
+- Enhanced CSP validation tools with security scoring
+- Automated compliance verification
+- Real-world scenario testing for application compatibility
 
 ## CSP Policies
 
@@ -67,8 +73,14 @@ const productionCSP = {
   "default-src": ["'self'"],
   "script-src": ["'self'", "'nonce-{generated}'", "'strict-dynamic'"],
   "style-src": ["'self'", "'nonce-{generated}'"],
-  "img-src": ["'self'", "data:", "https://schema.org", "https://livedash.notso.ai", 
-             "https://*.basemaps.cartocdn.com", "https://*.openstreetmap.org"],
+  "img-src": [
+    "'self'",
+    "data:",
+    "https://schema.org",
+    "https://livedash.notso.ai",
+    "https://*.basemaps.cartocdn.com",
+    "https://*.openstreetmap.org",
+  ],
   "font-src": ["'self'", "data:"],
   "connect-src": ["'self'", "https://api.openai.com", "https://livedash.notso.ai", "https:"],
   "object-src": ["'none'"],
@@ -77,7 +89,7 @@ const productionCSP = {
   "frame-ancestors": ["'none'"],
   "upgrade-insecure-requests": true,
   "report-uri": ["/api/csp-report"],
-  "report-to": ["csp-endpoint"]
+  "report-to": ["csp-endpoint"],
 };
 ```
 
@@ -89,11 +101,8 @@ const strictCSP = buildCSP({
   isDevelopment: false,
   nonce: generateNonce(),
   strictMode: true,
-  allowedExternalDomains: [
-    "https://api.openai.com",
-    "https://schema.org"
-  ],
-  reportUri: "/api/csp-report"
+  allowedExternalDomains: ["https://api.openai.com", "https://schema.org"],
+  reportUri: "/api/csp-report",
 });
 
 // Results in:
@@ -118,15 +127,15 @@ const developmentCSP = {
 
 ### 1. Nonce-Based Script Execution
 
--   **128-bit cryptographically secure nonces** generated per request
--   **Strict-dynamic policy** prevents inline script execution
--   **Automatic nonce injection** into layout components
+- **128-bit cryptographically secure nonces** generated per request
+- **Strict-dynamic policy** prevents inline script execution
+- **Automatic nonce injection** into layout components
 
 ```tsx
 // Layout with nonce support
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getNonce();
-  
+
   return (
     <html>
       <head>
@@ -137,9 +146,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         />
       </head>
       <body>
-        <NonceProvider nonce={nonce}>
-          {children}
-        </NonceProvider>
+        <NonceProvider nonce={nonce}>{children}</NonceProvider>
       </body>
     </html>
   );
@@ -150,31 +157,32 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
 #### Script Sources
 
--   **Production**: Only `'self'` and nonce-approved scripts
--   **Development**: Additional `'unsafe-eval'` for dev tools
--   **Blocked**: All external CDNs, inline scripts without nonce
+- **Production**: Only `'self'` and nonce-approved scripts
+- **Development**: Additional `'unsafe-eval'` for dev tools
+- **Blocked**: All external CDNs, inline scripts without nonce
 
 #### Style Sources
 
--   **Production**: Nonce-based inline styles preferred
--   **Fallback**: `'unsafe-inline'` for TailwindCSS compatibility
--   **External**: Only self-hosted stylesheets
+- **Production**: Nonce-based inline styles preferred
+- **Fallback**: `'unsafe-inline'` for TailwindCSS compatibility
+- **External**: Only self-hosted stylesheets
 
 #### Image Sources
 
--   **Allowed**: Self, data URIs, schema.org, application domain
--   **Blocked**: All other external domains
+- **Allowed**: Self, data URIs, schema.org, application domain
+- **Blocked**: All other external domains
 
 #### Connection Sources
 
--   **Production**: Self, OpenAI API, application domain
--   **Development**: Additional WebSocket for HMR
--   **Blocked**: All other external connections
+- **Production**: Self, OpenAI API, application domain
+- **Development**: Additional WebSocket for HMR
+- **Blocked**: All other external connections
 
 ### 3. XSS Protection Mechanisms
 
 #### Inline Script Prevention
 
+<!-- prettier-ignore -->
 ```javascript
 // Blocked by CSP
 <script>alert('xss')</script>
@@ -185,6 +193,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
 
 #### Object Injection Prevention
 
+<!-- prettier-ignore -->
 ```javascript
 // Completely blocked
 object-src 'none'
@@ -192,6 +201,7 @@ object-src 'none'
 
 #### Base Tag Injection Prevention
 
+<!-- prettier-ignore -->
 ```javascript
 // Restricted to same origin
 base-uri 'self'
@@ -199,6 +209,7 @@ base-uri 'self'
 
 #### Clickjacking Protection
 
+<!-- prettier-ignore -->
 ```javascript
 // No framing allowed
 frame-ancestors 'none'
@@ -210,11 +221,11 @@ The system actively monitors for common CSP bypass attempts:
 
 ```javascript
 const bypassPatterns = [
-  /javascript:/i,           // Protocol injection
-  /data:text\/html/i,       // Data URI injection
-  /eval\(/i,                // Code evaluation
-  /Function\(/i,            // Constructor injection
-  /setTimeout.*string/i,    // Timer string execution
+  /javascript:/i, // Protocol injection
+  /data:text\/html/i, // Data URI injection
+  /eval\(/i, // Code evaluation
+  /Function\(/i, // Constructor injection
+  /setTimeout.*string/i, // Timer string execution
 ];
 ```
 
@@ -248,11 +259,11 @@ CSP violations are automatically reported to `/api/csp-report`:
 
 Violations are logged with:
 
--   Timestamp and source IP
--   User agent and referer
--   Violation type and blocked content
--   Risk level and bypass indicators
--   Response actions taken
+- Timestamp and source IP
+- User agent and referer
+- Violation type and blocked content
+- Risk level and bypass indicators
+- Response actions taken
 
 ## Testing and Validation
 
@@ -281,10 +292,10 @@ pnpm test:csp:full
 
 The validation framework provides a security score:
 
--   **90-100%**: Excellent implementation
--   **80-89%**: Good with minor improvements needed
--   **70-79%**: Needs attention
--   **<70%**: Serious security issues
+- **90-100%**: Excellent implementation
+- **80-89%**: Good with minor improvements needed
+- **70-79%**: Needs attention
+- **<70%**: Serious security issues
 
 ## Deployment Considerations
 
@@ -298,15 +309,15 @@ NODE_ENV=development # Enables permissive CSP
 
 ### Performance Impact
 
--   **Nonce generation**: ~0.1ms per request
--   **Header processing**: ~0.05ms per request
--   **Total overhead**: <1ms per request
+- **Nonce generation**: ~0.1ms per request
+- **Header processing**: ~0.05ms per request
+- **Total overhead**: <1ms per request
 
 ### Browser Compatibility
 
--   **Modern browsers**: Full CSP Level 3 support
--   **Legacy browsers**: Graceful degradation with X-XSS-Protection
--   **Reporting**: Supported in all major browsers
+- **Modern browsers**: Full CSP Level 3 support
+- **Legacy browsers**: Graceful degradation with X-XSS-Protection
+- **Reporting**: Supported in all major browsers
 
 ## Maintenance
 
@@ -339,24 +350,24 @@ For CSP violations:
 
 ### Development
 
--   Always test CSP changes in development first
--   Use nonce provider for new inline scripts
--   Validate external resources before adding
--   Monitor console for CSP violations
+- Always test CSP changes in development first
+- Use nonce provider for new inline scripts
+- Validate external resources before adding
+- Monitor console for CSP violations
 
 ### Production
 
--   Never disable CSP in production
--   Monitor violation rates and patterns
--   Keep nonce generation entropy high
--   Regular security audits
+- Never disable CSP in production
+- Monitor violation rates and patterns
+- Keep nonce generation entropy high
+- Regular security audits
 
 ### Code Review
 
--   Check all inline scripts have nonce
--   Verify external resources are approved
--   Ensure CSP tests pass
--   Document any policy changes
+- Check all inline scripts have nonce
+- Verify external resources are approved
+- Ensure CSP tests pass
+- Document any policy changes
 
 ## Troubleshooting
 
@@ -394,9 +405,9 @@ If CSP breaks production:
 
 This CSP implementation addresses:
 
--   **OWASP Top 10**: XSS prevention
--   **CSP Level 3**: Modern security standards
--   **GDPR**: Privacy-preserving monitoring
--   **SOC 2**: Security controls documentation
+- **OWASP Top 10**: XSS prevention
+- **CSP Level 3**: Modern security standards
+- **GDPR**: Privacy-preserving monitoring
+- **SOC 2**: Security controls documentation
 
 The enhanced CSP provides defense-in-depth against XSS attacks while maintaining application functionality and performance.

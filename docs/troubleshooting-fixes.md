@@ -24,9 +24,9 @@ import { Permission, createPermissionChecker } from "./authorization";
 
 ```typescript
 // Before
-error.errors.map((e) => `${e.path.join(".")}: ${e.message}`)
-// After  
-error.issues.map((e) => `${e.path.join(".")}: ${e.message}`)
+error.errors.map((e) => `${e.path.join(".")}: ${e.message}`);
+// After
+error.issues.map((e) => `${e.path.join(".")}: ${e.message}`);
 ```
 
 ### 3. Missing LRU Cache Dependency
@@ -45,6 +45,7 @@ pnpm add lru-cache
 **Error:** `Type 'K' does not satisfy the constraint '{}'`
 **Fix:** Added proper generic type constraints
 
+<!-- prettier-ignore -->
 ```typescript
 // Before
 <K = string, V = any>
@@ -58,6 +59,7 @@ pnpm add lru-cache
 **Error:** `can only be iterated through when using the '--downlevelIteration' flag`
 **Fix:** Used `Array.from()` pattern for compatibility
 
+<!-- prettier-ignore -->
 ```typescript
 // Before
 for (const [key, value] of map) { ... }
@@ -88,11 +90,11 @@ this.client = createClient({
 
 ```typescript
 // Before
-user.securityAuditLogs
-session.sessionImport
+user.securityAuditLogs;
+session.sessionImport;
 // After
-user.auditLogs  
-session.import
+user.auditLogs;
+session.import;
 ```
 
 ### 8. Missing Schema Fields
@@ -102,7 +104,7 @@ session.import
 **Fix:** Applied type casting where schema fields were missing
 
 ```typescript
-userId: (session as any).userId || null
+userId: (session as any).userId || null;
 ```
 
 ### 9. Deprecated Package Dependencies
@@ -111,6 +113,7 @@ userId: (session as any).userId || null
 **Error:** `Cannot find module 'critters'`
 **Fix:** Disabled CSS optimization feature that required critters
 
+<!-- prettier-ignore -->
 ```javascript
 experimental: {
   optimizeCss: false, // Disabled due to critters dependency
@@ -123,6 +126,7 @@ experimental: {
 **Error:** Build failed due to linting warnings
 **Fix:** Disabled ESLint during build since Biome is used for linting
 
+<!-- prettier-ignore -->
 ```javascript
 eslint: {
   ignoreDuringBuilds: true,
@@ -138,7 +142,7 @@ Added comprehensive user management fields to the User model:
 ```prisma
 model User {
   // ... existing fields
-  
+
   // User management fields
   lastLoginAt              DateTime? @db.Timestamptz(6)
   isActive                 Boolean   @default(true)
@@ -150,7 +154,7 @@ model User {
   preferences              Json?     @db.Json
   timezone                 String?   @db.VarChar(50)
   preferredLanguage        String?   @db.VarChar(10)
-  
+
   @@index([lastLoginAt])
   @@index([isActive])
   @@index([emailVerified])
@@ -161,39 +165,39 @@ model User {
 
 Enhanced UserRepository with new methods:
 
--   `updateLastLogin()` - Tracks user login times
--   `incrementFailedLoginAttempts()` - Security feature for account locking
--   `verifyEmail()` - Email verification management
--   `deactivateUser()` - Account management
--   `unlockUser()` - Security administration
--   `updatePreferences()` - User settings management
--   `findInactiveUsers()` - Now uses `lastLoginAt` instead of `createdAt`
+- `updateLastLogin()` - Tracks user login times
+- `incrementFailedLoginAttempts()` - Security feature for account locking
+- `verifyEmail()` - Email verification management
+- `deactivateUser()` - Account management
+- `unlockUser()` - Security administration
+- `updatePreferences()` - User settings management
+- `findInactiveUsers()` - Now uses `lastLoginAt` instead of `createdAt`
 
 ## Prevention Measures
 
 ### 1. Regular Dependency Updates
 
--   Monitor for breaking changes in dependencies like Zod
--   Use `pnpm outdated` to check for deprecated packages
--   Test builds after dependency updates
+- Monitor for breaking changes in dependencies like Zod
+- Use `pnpm outdated` to check for deprecated packages
+- Test builds after dependency updates
 
 ### 2. TypeScript Strict Checking
 
--   Enable strict TypeScript checking to catch type errors early
--   Use proper type imports and exports
--   Avoid `any` types where possible
+- Enable strict TypeScript checking to catch type errors early
+- Use proper type imports and exports
+- Avoid `any` types where possible
 
 ### 3. Build Pipeline Validation
 
--   Run `pnpm build` before committing
--   Include type checking in CI/CD pipeline
--   Separate linting from build process
+- Run `pnpm build` before committing
+- Include type checking in CI/CD pipeline
+- Separate linting from build process
 
 ### 4. Schema Management
 
--   Regenerate Prisma client after schema changes: `pnpm prisma:generate`
--   Validate schema changes with database migrations
--   Use proper TypeScript types for database operations
+- Regenerate Prisma client after schema changes: `pnpm prisma:generate`
+- Validate schema changes with database migrations
+- Use proper TypeScript types for database operations
 
 ### 5. Development Workflow
 
@@ -218,7 +222,7 @@ pnpm lint            # Check code quality (using Biome)
 # Check for TypeScript errors
 pnpm build
 
-# Check for outdated/deprecated packages  
+# Check for outdated/deprecated packages
 pnpm outdated
 
 # Regenerate Prisma client
@@ -233,5 +237,5 @@ pnpm install
 
 ---
 
-*Last updated: 2025-07-12*
-*Build Status: ✅ Success (47/47 pages generated)*
+_Last updated: 2025-07-12_
+_Build Status: ✅ Success (47/47 pages generated)_

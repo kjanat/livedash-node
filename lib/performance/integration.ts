@@ -403,6 +403,7 @@ function mergeOptions(
 /**
  * Create a performance-enhanced service instance
  */
+// prettier-ignore
 export function createEnhancedService<T>(
   ServiceClass: new (...args: unknown[]) => T,
   options: PerformanceIntegrationOptions = {}

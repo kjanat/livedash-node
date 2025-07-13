@@ -16,15 +16,16 @@ Successfully refactored the session processing pipeline from a simple status-bas
 
 ### Schema Changes Made
 
--   **Removed** old `status`, `errorMsg`, and `processedAt` columns from SessionImport
--   **Removed** `processed` field from Session  
--   **Added** new `SessionProcessingStatus` table with granular stage tracking
--   **Added** `ProcessingStage` and `ProcessingStatus` enums
+- **Removed** old `status`, `errorMsg`, and `processedAt` columns from SessionImport
+- **Removed** `processed` field from Session
+- **Added** new `SessionProcessingStatus` table with granular stage tracking
+- **Added** `ProcessingStage` and `ProcessingStatus` enums
 
 ## New Processing Pipeline
 
 ### Processing Stages
 
+<!-- prettier-ignore -->
 ```typescript
 enum ProcessingStage {
   CSV_IMPORT           // SessionImport created
@@ -45,55 +46,55 @@ enum ProcessingStatus {
 
 Centralized class for managing processing status with methods:
 
--   `initializeSession()` - Set up processing status for new sessions
--   `startStage()`, `completeStage()`, `failStage()`, `skipStage()` - Stage management
--   `getSessionsNeedingProcessing()` - Query sessions by stage and status
--   `getPipelineStatus()` - Get overview of entire pipeline
--   `getFailedSessions()` - Find sessions needing retry
--   `resetStageForRetry()` - Reset failed stages
+- `initializeSession()` - Set up processing status for new sessions
+- `startStage()`, `completeStage()`, `failStage()`, `skipStage()` - Stage management
+- `getSessionsNeedingProcessing()` - Query sessions by stage and status
+- `getPipelineStatus()` - Get overview of entire pipeline
+- `getFailedSessions()` - Find sessions needing retry
+- `resetStageForRetry()` - Reset failed stages
 
 #### 2. Updated Processing Scheduler
 
--   Integrated with new `ProcessingStatusManager`
--   Tracks AI analysis and question extraction stages
--   Records detailed processing metadata
--   Proper error handling and retry capabilities
+- Integrated with new `ProcessingStatusManager`
+- Tracks AI analysis and question extraction stages
+- Records detailed processing metadata
+- Proper error handling and retry capabilities
 
 #### 3. Migration System
 
--   Successfully migrated all 109 existing sessions
--   Determined current state based on existing data
--   Preserved all existing functionality
+- Successfully migrated all 109 existing sessions
+- Determined current state based on existing data
+- Preserved all existing functionality
 
 ## Current Pipeline Status
 
 After migration and refactoring:
 
--   **CSV_IMPORT**: 109 completed
--   **TRANSCRIPT_FETCH**: 109 completed  
--   **SESSION_CREATION**: 109 completed
--   **AI_ANALYSIS**: 16 completed, 93 pending
--   **QUESTION_EXTRACTION**: 11 completed, 98 pending
+- **CSV_IMPORT**: 109 completed
+- **TRANSCRIPT_FETCH**: 109 completed
+- **SESSION_CREATION**: 109 completed
+- **AI_ANALYSIS**: 16 completed, 93 pending
+- **QUESTION_EXTRACTION**: 11 completed, 98 pending
 
 ## Files Updated/Created
 
 ### New Files
 
--   `lib/processingStatusManager.ts` - Core processing status management
--   `check-refactored-pipeline-status.ts` - New pipeline status checker
--   `migrate-to-refactored-system.ts` - Migration script
--   `docs/processing-system-refactor.md` - This documentation
+- `lib/processingStatusManager.ts` - Core processing status management
+- `check-refactored-pipeline-status.ts` - New pipeline status checker
+- `migrate-to-refactored-system.ts` - Migration script
+- `docs/processing-system-refactor.md` - This documentation
 
 ### Updated Files
 
--   `prisma/schema.prisma` - Added new processing status tables
--   `lib/processingScheduler.ts` - Integrated with new status system
--   `debug-import-status.ts` - Updated to use new system
--   `fix-import-status.ts` - Updated to use new system
+- `prisma/schema.prisma` - Added new processing status tables
+- `lib/processingScheduler.ts` - Integrated with new status system
+- `debug-import-status.ts` - Updated to use new system
+- `fix-import-status.ts` - Updated to use new system
 
 ### Removed Files
 
--   `check-pipeline-status.ts` - Replaced by refactored version
+- `check-pipeline-status.ts` - Replaced by refactored version
 
 ## Benefits Achieved
 
@@ -140,9 +141,9 @@ npx tsx test-ai-processing.ts
 
 ## Migration Notes
 
--   All existing data preserved
--   No data loss during migration
--   Backward compatibility maintained where possible
--   System ready for production use
+- All existing data preserved
+- No data loss during migration
+- Backward compatibility maintained where possible
+- System ready for production use
 
 The refactored system provides much better visibility into the processing pipeline and makes it easy to identify and resolve any issues that arise during session processing.
