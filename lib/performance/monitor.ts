@@ -777,7 +777,7 @@ export class PerformanceUtils {
         throw new Error("Measured decorator can only be applied to methods");
       }
 
-      descriptor.value = async function (...args: any[]) {
+      descriptor.value = async function (...args: unknown[]) {
         const { result, duration } = await PerformanceUtils.measureAsync(
           metricName,
           () => originalMethod.apply(this, args)

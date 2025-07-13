@@ -13,7 +13,7 @@ import { TIME } from "../constants";
 export interface DeduplicationOptions {
   ttl?: number; // How long to keep results cached
   maxPending?: number; // Maximum pending requests per key
-  keyGenerator?: (...args: any[]) => string;
+  keyGenerator?: (...args: unknown[]) => string;
   timeout?: number; // Request timeout
 }
 
@@ -94,7 +94,7 @@ export class RequestDeduplicator {
   /**
    * Memoize a function with deduplication
    */
-  memoize<Args extends any[], Return>(
+  memoize<Args extends readonly unknown[], Return>(
     fn: (...args: Args) => Promise<Return>,
     options: DeduplicationOptions = {}
   ) {
@@ -212,7 +212,7 @@ export class RequestDeduplicator {
   /**
    * Generate a key from function arguments
    */
-  private generateKey(...args: any[]): string {
+  private generateKey(...args: unknown[]): string {
     try {
       return JSON.stringify(args);
     } catch {
@@ -351,7 +351,9 @@ class DeduplicationManager {
       ReturnType<RequestDeduplicator["getStats"]>
     > = {};
 
-    for (const [name, deduplicator] of Array.from(this.deduplicators.entries())) {
+    for (const [name, deduplicator] of Array.from(
+      this.deduplicators.entries()
+    )) {
       stats[name] = deduplicator.getStats();
     }
 
@@ -427,7 +429,7 @@ export class DeduplicationUtils {
   /**
    * Create a deduplicated version of an async function
    */
-  static deduplicate<T extends any[], R>(
+  static deduplicate<T extends readonly unknown[], R>(
     fn: (...args: T) => Promise<R>,
     deduplicatorName = "default",
     options: DeduplicationOptions = {}
@@ -464,7 +466,7 @@ export class DeduplicationUtils {
         options
       );
 
-      descriptor.value = function (...args: any[]) {
+      descriptor.value = function (...args: unknown[]) {
         const key = `${target.constructor.name}.${propertyKey}:${JSON.stringify(args)}`;
         return deduplicator.execute(
           key,

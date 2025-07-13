@@ -58,10 +58,11 @@ export {
   UserRole,
 } from "./handler";
 
+import { createPermissionChecker, type Permission } from "./authorization";
 // Re-import types for use in functions below
 import type { APIContext, APIHandler, APIHandlerOptions } from "./handler";
 import { createAPIHandler } from "./handler";
-import { Permission, createPermissionChecker } from "./authorization";
+
 // Response utilities
 export {
   type APIResponse,

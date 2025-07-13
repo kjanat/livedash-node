@@ -8,10 +8,10 @@ The Admin Audit Logs API provides secure access to security audit trails for adm
 
 ## Authentication & Authorization
 
-- **Authentication**: NextAuth.js session required
-- **Authorization**: ADMIN role required for all endpoints
-- **Rate Limiting**: Integrated with existing auth rate limiting system
-- **Audit Trail**: All API access is logged for security monitoring
+-   **Authentication**: NextAuth.js session required
+-   **Authorization**: ADMIN role required for all endpoints
+-   **Rate-Limiting**: Integrated with existing authentication rate-limiting system
+-   **Audit Trail**: All API access is logged for security monitoring
 
 ## API Endpoints
 
@@ -128,11 +128,13 @@ POST /api/admin/audit-logs/retention
 
 ```json
 {
-  "action": "cleanup" | "configure" | "status",
+  "action": "cleanup",
   "retentionDays": 90,
   "dryRun": true
 }
 ```
+
+**Note**: `action` field accepts one of: `"cleanup"`, `"configure"`, or `"status"`
 
 #### Parameters
 
@@ -145,6 +147,7 @@ POST /api/admin/audit-logs/retention
 #### Example Requests
 
 **Check retention status:**
+
 ```javascript
 const response = await fetch('/api/admin/audit-logs/retention', {
   method: 'POST',
@@ -154,6 +157,7 @@ const response = await fetch('/api/admin/audit-logs/retention', {
 ```
 
 **Configure retention policy:**
+
 ```javascript
 const response = await fetch('/api/admin/audit-logs/retention', {
   method: 'POST',
@@ -166,6 +170,7 @@ const response = await fetch('/api/admin/audit-logs/retention', {
 ```
 
 **Cleanup old logs (dry run):**
+
 ```javascript
 const response = await fetch('/api/admin/audit-logs/retention', {
   method: 'POST',
@@ -180,19 +185,22 @@ const response = await fetch('/api/admin/audit-logs/retention', {
 ## Security Features
 
 ### Access Control
-- **Role-based Access**: Only ADMIN users can access audit logs
-- **Company Isolation**: Users only see logs for their company
-- **Session Validation**: Active NextAuth session required
+
+-   **Role-based Access**: Only ADMIN users can access audit logs
+-   **Company Isolation**: Users only see logs for their company
+-   **Session Validation**: Active NextAuth session required
 
 ### Audit Trail
-- **Access Logging**: All audit log access is recorded
-- **Metadata Tracking**: Request parameters and results are logged
-- **IP Tracking**: Client IP addresses are recorded for all requests
+
+-   **Access Logging**: All audit log access is recorded
+-   **Metadata Tracking**: Request parameters and results are logged
+-   **IP Tracking**: Client IP addresses are recorded for all requests
 
 ### Rate Limiting
-- **Integrated Protection**: Uses existing authentication rate limiting
-- **Abuse Prevention**: Protects against excessive API usage
-- **Error Tracking**: Failed attempts are monitored
+
+-   **Integrated Protection**: Uses existing authentication rate-limiting
+-   **Abuse Prevention**: Protects against excessive API usage
+-   **Error Tracking**: Failed attempts are monitored
 
 ## Event Types
 
@@ -294,19 +302,22 @@ async function getUserActivity(userId, days = 7) {
 ## Performance Considerations
 
 ### Database Optimization
-- **Indexed Queries**: All filter columns are properly indexed
-- **Pagination**: Efficient offset-based pagination with limits
-- **Time Range Filtering**: Optimized for date range queries
+
+-   **Indexed Queries**: All filter columns are properly indexed
+-   **Pagination**: Efficient offset-based pagination with limits
+-   **Time Range Filtering**: Optimized for date range queries
 
 ### Memory Usage
-- **Limited Results**: Maximum 100 records per request
-- **Streaming**: Large exports use streaming for memory efficiency
-- **Connection Pooling**: Database connections are pooled
+
+-   **Limited Results**: Maximum 100 records per request
+-   **Streaming**: Large exports use streaming for memory efficiency
+-   **Connection Pooling**: Database connections are pooled
 
 ### Caching Considerations
-- **No Caching**: Audit logs are never cached for security reasons
-- **Fresh Data**: All queries hit the database for real-time results
-- **Read Replicas**: Consider using read replicas for heavy reporting
+
+-   **No Caching**: Audit logs are never cached for security reasons
+-   **Fresh Data**: All queries hit the database for real-time results
+-   **Read Replicas**: Consider using read replicas for heavy reporting
 
 ## Error Handling
 
@@ -335,7 +346,7 @@ try {
 }
 ```
 
-### Rate Limiting Handling
+### Rate-Limiting Handling
 
 ```javascript
 async function fetchWithRetry(url, options = {}) {
@@ -354,40 +365,45 @@ async function fetchWithRetry(url, options = {}) {
 ## Monitoring and Alerting
 
 ### Key Metrics to Monitor
-- **Request Volume**: Track API usage patterns
-- **Error Rates**: Monitor authentication and authorization failures
-- **Query Performance**: Track slow queries and optimize
-- **Data Growth**: Monitor audit log size and plan retention
+
+-   **Request Volume**: Track API usage patterns
+-   **Error Rates**: Monitor authentication and authorization failures
+-   **Query Performance**: Track slow queries and optimize
+-   **Data Growth**: Monitor audit log size and plan retention
 
 ### Alert Conditions
-- **High Error Rates**: >5% of requests failing
-- **Unusual Access Patterns**: Off-hours access, high volume
-- **Performance Degradation**: Query times >2 seconds
-- **Security Events**: Multiple failed admin access attempts
+
+-   **High Error Rates**: >5% of requests failing
+-   **Unusual Access Patterns**: Off-hours access, high-volume usage
+-   **Performance Degradation**: Query times >2 seconds
+-   **Security Events**: Multiple failed admin access attempts
 
 ## Best Practices
 
 ### Security
-- Always validate user permissions before displaying UI
-- Log all administrative access to audit logs
-- Use HTTPS in production environments
-- Implement proper error handling to avoid information leakage
+
+-   Always validate user permissions before displaying UI
+-   Log all administrative access to audit logs
+-   Use HTTPS in production environments
+-   Implement proper error handling to avoid information leakage
 
 ### Performance
-- Use appropriate page sizes (25-50 records typical)
-- Implement client-side pagination for better UX
-- Cache results only in memory, never persist
-- Use date range filters to limit query scope
+
+-   Use appropriate page sizes (25-50 records typical)
+-   Implement client-side pagination for better UX
+-   Cache results only in memory, never persist
+-   Use date range filters to limit query scope
 
 ### User Experience
-- Provide clear filtering options in the UI
-- Show loading states for long-running queries
-- Implement export functionality for reports
-- Provide search and sort capabilities
+
+-   Provide clear filtering options in the UI
+-   Show loading states for long-running queries
+-   Implement export functionality for reports
+-   Provide search and sort capabilities
 
 ## Related Documentation
 
-- [Security Audit Logging](./security-audit-logging.md)
-- [Security Monitoring](./security-monitoring.md)
-- [CSRF Protection](./CSRF_PROTECTION.md)
-- [Authentication System](../lib/auth.ts)
+-   [Security Audit Logging](./security-audit-logging.md)
+-   [Security Monitoring](./security-monitoring.md)
+-   [CSRF Protection](./CSRF_PROTECTION.md)
+-   [Authentication System](../lib/auth.ts)

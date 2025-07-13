@@ -5,14 +5,14 @@
  * to improve system performance based on real-time metrics.
  */
 
-import {
-  performanceMonitor,
-  type PerformanceMetrics,
-  type Bottleneck,
-} from "./monitor";
-import { cacheManager, type CacheStats } from "./cache";
-import { deduplicationManager } from "./deduplication";
 import { TIME } from "../constants";
+import { type CacheStats, cacheManager } from "./cache";
+import { deduplicationManager } from "./deduplication";
+import {
+  type Bottleneck,
+  type PerformanceMetrics,
+  performanceMonitor,
+} from "./monitor";
 
 /**
  * Optimization action types
@@ -40,8 +40,8 @@ export interface OptimizationResult {
     success: boolean;
     message: string;
     metrics?: {
-      before: any;
-      after: any;
+      before: Record<string, unknown>;
+      after: Record<string, unknown>;
       improvement: number; // Percentage
     };
   };
@@ -408,18 +408,17 @@ export class PerformanceOptimizer {
           },
           timestamp: new Date(),
         };
-      } else {
-        return {
-          action: OptimizationAction.TRIGGER_GARBAGE_COLLECTION,
-          target: "system",
-          applied: false,
-          result: {
-            success: false,
-            message: "Garbage collection not available (run with --expose-gc)",
-          },
-          timestamp: new Date(),
-        };
       }
+      return {
+        action: OptimizationAction.TRIGGER_GARBAGE_COLLECTION,
+        target: "system",
+        applied: false,
+        result: {
+          success: false,
+          message: "Garbage collection not available (run with --expose-gc)",
+        },
+        timestamp: new Date(),
+      };
     } catch (error) {
       return {
         action: OptimizationAction.TRIGGER_GARBAGE_COLLECTION,

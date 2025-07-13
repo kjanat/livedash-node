@@ -242,7 +242,10 @@ class SecurityMonitoringService {
    * Configure monitoring thresholds
    */
   updateConfig(config: DeepPartial<MonitoringConfig>): void {
-    this.config = this.deepMerge(this.config as any, config as any) as unknown as MonitoringConfig;
+    this.config = this.deepMerge(
+      this.config as any,
+      config as any
+    ) as unknown as MonitoringConfig;
   }
 
   /**
@@ -260,7 +263,10 @@ class SecurityMonitoringService {
         typeof source[key] === "object" &&
         !Array.isArray(source[key])
       ) {
-        result[key] = this.deepMerge(target[key] || {} as any, source[key] as any);
+        result[key] = this.deepMerge(
+          target[key] || ({} as any),
+          source[key] as any
+        );
       } else {
         result[key] = source[key];
       }

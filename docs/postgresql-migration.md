@@ -17,48 +17,48 @@ Successfully migrated the livedash-node application from SQLite to PostgreSQL us
 
 #### Production/Development
 
-- **Provider**: PostgreSQL (Neon)
-- **Environment Variable**: `DATABASE_URL`
-- **Connection**: Neon PostgreSQL cluster
+-   **Provider**: PostgreSQL (Neon)
+-   **Environment Variable**: `DATABASE_URL`
+-   **Connection**: Neon PostgreSQL cluster
 
 #### Testing
 
-- **Provider**: PostgreSQL (Neon - separate database)
-- **Environment Variable**: `DATABASE_URL_TEST`
-- **Test Setup**: Automatically switches to test database during test runs
+-   **Provider**: PostgreSQL (Neon - separate database)
+-   **Environment Variable**: `DATABASE_URL_TEST`
+-   **Test Setup**: Automatically switches to test database during test runs
 
 ### Files Modified
 
 1.  **`prisma/schema.prisma`**
 
-- Changed provider from `sqlite` to `postgresql`
-- Updated URL to use `env("DATABASE_URL")`
+-   Changed provider from `sqlite` to `postgresql`
+-   Updated URL to use `env("DATABASE_URL")`
 
 2.  **`tests/setup.ts`**
 
-- Added logic to use `DATABASE_URL_TEST` when available
-- Ensures test isolation with separate database
+-   Added logic to use `DATABASE_URL_TEST` when available
+-   Ensures test isolation with separate database
 
 3.  **`.env`** (created)
 
-- Contains `DATABASE_URL` for Prisma CLI operations
+-   Contains `DATABASE_URL` for Prisma CLI operations
 
 4.  **`.env.local`** (existing)
 
-- Contains both `DATABASE_URL` and `DATABASE_URL_TEST`
+-   Contains both `DATABASE_URL` and `DATABASE_URL_TEST`
 
 ### Database Schema
 
 All existing models and relationships were preserved:
 
-- **Company**: Multi-tenant root entity
-- **User**: Authentication and authorization
-- **Session**: Processed session data
-- **SessionImport**: Raw CSV import data
-- **Message**: Individual conversation messages
-- **Question**: Normalized question storage
-- **SessionQuestion**: Session-question relationships
-- **AIProcessingRequest**: AI cost tracking
+-   **Company**: Multi-tenant root entity
+-   **User**: Authentication and authorization
+-   **Session**: Processed session data
+-   **SessionImport**: Raw CSV import data
+-   **Message**: Individual conversation messages
+-   **Question**: Normalized question storage
+-   **SessionQuestion**: Session-question relationships
+-   **AIProcessingRequest**: AI cost tracking
 
 ### Migration Process
 
@@ -103,11 +103,11 @@ if (process.env.DATABASE_URL_TEST) {
 
 All tests pass successfully:
 
-- ✅ Environment configuration tests
-- ✅ Transcript fetcher tests
-- ✅ Database connection tests
-- ✅ Schema validation tests
-- ✅ CRUD operation tests
+-   ✅ Environment configuration tests
+-   ✅ Transcript fetcher tests
+-   ✅ Database connection tests
+-   ✅ Schema validation tests
+-   ✅ CRUD operation tests
 
 ### Next Steps
 

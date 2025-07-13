@@ -6,19 +6,19 @@
  */
 
 import {
-  PerformanceEnhanced,
-  PerformanceOptimized,
   Cached,
   Deduplicated,
   Monitored,
+  PerformanceEnhanced,
+  PerformanceOptimized,
 } from "../performance/integration";
+import { AuditOutcome, AuditSeverity } from "../securityAuditLogger";
+import { AlertChannel, type MonitoringConfig } from "../securityMonitoring";
+import type { Alert, SecurityEvent } from "../types/security";
+import { ThreatLevel } from "../types/security";
+import { AlertManagementService } from "./AlertManagementService";
 import { SecurityEventProcessor } from "./SecurityEventProcessor";
 import { ThreatDetectionService } from "./ThreatDetectionService";
-import { AlertManagementService } from "./AlertManagementService";
-import { AlertChannel, type MonitoringConfig } from "../securityMonitoring";
-import { AuditOutcome, AuditSeverity } from "../securityAuditLogger";
-import { ThreatLevel } from "../types/security";
-import type { SecurityEvent, Alert } from "../types/security";
 
 /**
  * Configuration for enhanced security service
@@ -161,26 +161,31 @@ export class EnhancedSecurityService {
       { metadata: event.metadata }, // Cast to AuditLogContext
       event.metadata
     );
-    
+
     // Return threat level based on detected threats
     if (result.threats.length === 0) {
       return ThreatLevel.LOW;
     }
-    
+
     // Find the highest severity threat
     const highestSeverity = result.threats.reduce((max, threat) => {
       const severityOrder = { LOW: 1, MEDIUM: 2, HIGH: 3, CRITICAL: 4 };
-      const current = severityOrder[threat.severity as keyof typeof severityOrder] || 1;
+      const current =
+        severityOrder[threat.severity as keyof typeof severityOrder] || 1;
       const maxVal = severityOrder[max as keyof typeof severityOrder] || 1;
       return current > maxVal ? threat.severity : max;
     }, "LOW" as any);
-    
+
     // Map AlertSeverity to ThreatLevel
     switch (highestSeverity) {
-      case "CRITICAL": return ThreatLevel.CRITICAL;
-      case "HIGH": return ThreatLevel.HIGH;
-      case "MEDIUM": return ThreatLevel.MEDIUM;
-      default: return ThreatLevel.LOW;
+      case "CRITICAL":
+        return ThreatLevel.CRITICAL;
+      case "HIGH":
+        return ThreatLevel.HIGH;
+      case "MEDIUM":
+        return ThreatLevel.MEDIUM;
+      default:
+        return ThreatLevel.LOW;
     }
   }
 
@@ -349,7 +354,7 @@ export class EnhancedSecurityService {
   //   cache: {
   //     enabled: true,
   //     ttl: 10 * 60 * 1000, // 10 minutes
-  //     keyGenerator: (query: any) => `search:${JSON.stringify(query)}`,
+  //     keyGenerator: (query: Record<string, unknown>) => `search:${JSON.stringify(query)}`,
   //   },
   //   deduplication: {
   //     enabled: true,
@@ -394,11 +399,11 @@ export class EnhancedSecurityService {
   private calculateThreatDistribution(
     events: SecurityEvent[]
   ): Record<ThreatLevel, number> {
-    return { 
-      [ThreatLevel.LOW]: 0, 
-      [ThreatLevel.MEDIUM]: 0, 
-      [ThreatLevel.HIGH]: 0, 
-      [ThreatLevel.CRITICAL]: 0 
+    return {
+      [ThreatLevel.LOW]: 0,
+      [ThreatLevel.MEDIUM]: 0,
+      [ThreatLevel.HIGH]: 0,
+      [ThreatLevel.CRITICAL]: 0,
     };
   }
 
@@ -441,7 +446,9 @@ export class EnhancedSecurityService {
     };
   }
 
-  private async performSearch(query: any): Promise<SecurityEvent[]> {
+  private async performSearch(
+    query: Record<string, unknown>
+  ): Promise<SecurityEvent[]> {
     // Mock search implementation
     return [];
   }

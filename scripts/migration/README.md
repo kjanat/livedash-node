@@ -6,58 +6,58 @@ This directory contains comprehensive migration scripts for deploying the new ar
 
 ### 1. Database Migrations
 
-- `01-schema-migrations.sql` - Prisma database schema migrations
-- `02-data-migrations.sql` - Data transformation scripts
-- `validate-database.ts` - Database validation and health checks
+-   `01-schema-migrations.sql` - Prisma database schema migrations
+-   `02-data-migrations.sql` - Data transformation scripts
+-   `validate-database.ts` - Database validation and health checks
 
 ### 2. Environment Configuration
 
-- `environment-migration.ts` - Environment variable migration guide
-- `config-validator.ts` - Configuration validation scripts
+-   `environment-migration.ts` - Environment variable migration guide
+-   `config-validator.ts` - Configuration validation scripts
 
 ### 3. Deployment Scripts
 
-- `deploy.ts` - Main deployment orchestrator
-- `pre-deployment-checks.ts` - Pre-deployment validation
-- `post-deployment-validation.ts` - Post-deployment verification
-- `rollback.ts` - Rollback procedures
+-   `deploy.ts` - Main deployment orchestrator
+-   `pre-deployment-checks.ts` - Pre-deployment validation
+-   `post-deployment-validation.ts` - Post-deployment verification
+-   `rollback.ts` - Rollback procedures
 
 ### 4. Health Checks
 
-- `health-checks.ts` - Comprehensive system health validation
-- `trpc-endpoint-tests.ts` - tRPC endpoint validation
-- `batch-processing-tests.ts` - Batch processing system tests
+-   `health-checks.ts` - Comprehensive system health validation
+-   `trpc-endpoint-tests.ts` - tRPC endpoint validation
+-   `batch-processing-tests.ts` - Batch processing system tests
 
 ### 5. Migration Utilities
 
-- `backup-database.ts` - Database backup procedures
-- `restore-database.ts` - Database restore procedures
-- `migration-logger.ts` - Migration logging utilities
+-   `backup-database.ts` - Database backup procedures
+-   `restore-database.ts` - Database restore procedures
+-   `migration-logger.ts` - Migration logging utilities
 
 ## Usage
 
 ### Pre-Migration
 
-1. Run database backup: `pnpm migration:backup`
-2. Validate environment: `pnpm migration:validate-env`
-3. Run pre-deployment checks: `pnpm migration:pre-check`
+1.  Run database backup: `pnpm migration:backup`
+2.  Validate environment: `pnpm migration:validate-env`
+3.  Run pre-deployment checks: `pnpm migration:pre-check`
 
 ### Migration
 
-1. Run schema migrations: `pnpm migration:schema`
-2. Run data migrations: `pnpm migration:data`
-3. Deploy application: `pnpm migration:deploy`
+1.  Run schema migrations: `pnpm migration:schema`
+2.  Run data migrations: `pnpm migration:data`
+3.  Deploy application: `pnpm migration:deploy`
 
 ### Post-Migration
 
-1. Validate deployment: `pnpm migration:validate`
-2. Run health checks: `pnpm migration:health-check`
-3. Test critical paths: `pnpm migration:test`
+1.  Validate deployment: `pnpm migration:validate`
+2.  Run health checks: `pnpm migration:health-check`
+3.  Test critical paths: `pnpm migration:test`
 
 ### Rollback (if needed)
 
-1. Rollback deployment: `pnpm migration:rollback`
-2. Restore database: `pnpm migration:restore`
+1.  Rollback deployment: `pnpm migration:rollback`
+2.  Restore database: `pnpm migration:restore`
 
 ## Environment Variables
 
@@ -86,17 +86,17 @@ MIGRATION_ROLLBACK_ENABLED=true
 
 The migration implements a blue-green deployment strategy:
 
-1. **Phase 1**: Deploy new code with feature flags disabled
-2. **Phase 2**: Run database migrations
-3. **Phase 3**: Enable tRPC endpoints progressively
-4. **Phase 4**: Enable batch processing system
-5. **Phase 5**: Full activation and old system decommission
+1.  **Phase 1**: Deploy new code with feature flags disabled
+2.  **Phase 2**: Run database migrations
+3.  **Phase 3**: Enable tRPC endpoints progressively
+4.  **Phase 4**: Enable batch processing system
+5.  **Phase 5**: Full activation and old system decommission
 
 ## Safety Features
 
-- Automatic database backups before migration
-- Rollback scripts for quick recovery
-- Health checks at each stage
-- Progressive feature enablement
-- Comprehensive logging and monitoring
-- Backwards compatibility maintained during migration
+-   Automatic database backups before migration
+-   Rollback scripts for quick recovery
+-   Health checks at each stage
+-   Progressive feature enablement
+-   Comprehensive logging and monitoring
+-   Backwards compatibility maintained during migration

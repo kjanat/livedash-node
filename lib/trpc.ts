@@ -9,8 +9,8 @@
 
 import { initTRPC, TRPCError } from "@trpc/server";
 import type { FetchCreateContextFnOptions } from "@trpc/server/adapters/fetch";
-import { getServerSession } from "next-auth/next";
 import type { NextRequest } from "next/server";
+import { getServerSession } from "next-auth/next";
 import superjson from "superjson";
 import type { z } from "zod";
 import { authOptions } from "./auth";

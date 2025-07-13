@@ -156,9 +156,12 @@ async function getPerformanceHistory(limit: number) {
               0
             ) / history.length
           : 0,
-      memoryTrend: calculateTrend(history, "memoryUsage.heapUsed"),
+      memoryTrend: calculateTrend(
+        history as unknown as Record<string, unknown>[],
+        "memoryUsage.heapUsed"
+      ),
       responseTrend: calculateTrend(
-        history,
+        history as unknown as Record<string, unknown>[],
         "requestMetrics.averageResponseTime"
       ),
     },
@@ -539,8 +542,8 @@ function _calculateAverage(
     : 0;
 }
 
-function calculateTrend(
-  history: Array<any>,
+function calculateTrend<T extends Record<string, unknown>>(
+  history: Array<T>,
   path: string
 ): "increasing" | "decreasing" | "stable" {
   if (history.length < 2) return "stable";
@@ -570,10 +573,18 @@ function calculateTrend(
   return "stable";
 }
 
-function getNestedPropertyValue(obj: any, path: string): number {
-  return (
-    path.split(".").reduce((current, key) => current?.[key] ?? 0, obj) || 0
-  );
+function getNestedPropertyValue(
+  obj: Record<string, unknown>,
+  path: string
+): number {
+  const result = path.split(".").reduce((current, key) => {
+    if (current && typeof current === "object" && key in current) {
+      return (current as Record<string, unknown>)[key];
+    }
+    return 0;
+  }, obj as unknown);
+
+  return typeof result === "number" ? result : 0;
 }
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {

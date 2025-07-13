@@ -17,7 +17,11 @@ export class APIError extends Error {
     message: string,
     public readonly statusCode: number = 500,
     public readonly code: string = "INTERNAL_ERROR",
-    public readonly details?: any,
+    public readonly details?:
+      | Record<string, unknown>
+      | string[]
+      | string
+      | number,
     public readonly logLevel: "info" | "warn" | "error" = "error"
   ) {
     super(message);
@@ -100,7 +104,10 @@ export class ConflictError extends APIError {
  * Database Error - for database operation failures
  */
 export class DatabaseError extends APIError {
-  constructor(message = "Database operation failed", details?: any) {
+  constructor(
+    message = "Database operation failed",
+    details?: Record<string, unknown> | string
+  ) {
     super(message, 500, "DATABASE_ERROR", details, "error");
   }
 }
@@ -112,7 +119,7 @@ export class ExternalServiceError extends APIError {
   constructor(
     service: string,
     message = "External service error",
-    details?: any
+    details?: Record<string, unknown>
   ) {
     super(
       `${service} service error: ${message}`,
@@ -138,7 +145,11 @@ function shouldExposeError(error: unknown): boolean {
 /**
  * Log error with appropriate level
  */
-function logError(error: unknown, requestId: string, context?: any): void {
+function logError(
+  error: unknown,
+  requestId: string,
+  context?: Record<string, unknown>
+): void {
   const logData = {
     requestId,
     error: error instanceof Error ? error.message : String(error),
@@ -170,7 +181,7 @@ function logError(error: unknown, requestId: string, context?: any): void {
 export function handleAPIError(
   error: unknown,
   requestId?: string,
-  context?: any
+  context?: Record<string, unknown>
 ): NextResponse {
   const id = requestId || crypto.randomUUID();
 
@@ -220,7 +231,7 @@ export function handleAPIError(
 /**
  * Async error handler for promise chains
  */
-export function asyncErrorHandler<T extends any[], R>(
+export function asyncErrorHandler<T extends readonly unknown[], R>(
   fn: (...args: T) => Promise<R>
 ) {
   return async (...args: T): Promise<R> => {
@@ -237,7 +248,7 @@ export function asyncErrorHandler<T extends any[], R>(
 /**
  * Error boundary for API route handlers
  */
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends readonly unknown[], R>(
   handler: (...args: T) => Promise<NextResponse> | NextResponse
 ) {
   return async (...args: T): Promise<NextResponse> => {

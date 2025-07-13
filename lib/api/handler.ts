@@ -91,10 +91,10 @@ export interface APIHandlerOptions {
 /**
  * API handler function type
  */
-export type APIHandler<T = any> = (
+export type APIHandler<T = unknown> = (
   context: APIContext,
-  validatedData?: any,
-  validatedQuery?: any
+  validatedData?: unknown,
+  validatedQuery?: unknown
 ) => Promise<T>;
 
 /**
@@ -226,7 +226,7 @@ async function validateInput<T>(
     if (error instanceof SyntaxError) {
       throw new ValidationError(["Invalid JSON in request body"]);
     }
-    throw new ValidationError(error as any);
+    throw new ValidationError(error as z.ZodError);
   }
 }
 
@@ -239,7 +239,7 @@ function validateQuery<T>(request: NextRequest, schema: z.ZodSchema<T>): T {
     const query = Object.fromEntries(searchParams.entries());
     return schema.parse(query);
   } catch (error) {
-    throw new ValidationError(error as any);
+    throw new ValidationError(error as z.ZodError);
   }
 }
 
@@ -285,7 +285,7 @@ function addCORSHeaders(
 /**
  * Main API handler factory
  */
-export function createAPIHandler<T = any>(
+export function createAPIHandler<T = unknown>(
   handler: APIHandler<T>,
   options: APIHandlerOptions = {}
 ) {
@@ -368,7 +368,7 @@ export function createAPIHandler<T = any>(
 /**
  * Utility function for GET endpoints
  */
-export function createGETHandler<T = any>(
+export function createGETHandler<T = unknown>(
   handler: APIHandler<T>,
   options: Omit<APIHandlerOptions, "validateInput"> = {}
 ) {
@@ -381,7 +381,7 @@ export function createGETHandler<T = any>(
 /**
  * Utility function for POST endpoints
  */
-export function createPOSTHandler<T = any>(
+export function createPOSTHandler<T = unknown>(
   handler: APIHandler<T>,
   options: APIHandlerOptions = {}
 ) {
@@ -394,7 +394,7 @@ export function createPOSTHandler<T = any>(
 /**
  * Utility function for authenticated endpoints
  */
-export function createAuthenticatedHandler<T = any>(
+export function createAuthenticatedHandler<T = unknown>(
   handler: APIHandler<T>,
   options: APIHandlerOptions = {}
 ) {
@@ -408,7 +408,7 @@ export function createAuthenticatedHandler<T = any>(
 /**
  * Utility function for admin endpoints
  */
-export function createAdminHandler<T = any>(
+export function createAdminHandler<T = unknown>(
   handler: APIHandler<T>,
   options: APIHandlerOptions = {}
 ) {

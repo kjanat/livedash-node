@@ -9,22 +9,25 @@ The Batch Monitoring Dashboard provides real-time visibility into the OpenAI Bat
 ## Features
 
 ### Real-time Monitoring
-- **Job Status Tracking**: Monitor batch jobs from creation to completion
-- **Queue Management**: View pending, running, and completed batch queues
-- **Processing Metrics**: Track throughput, success rates, and error patterns
-- **Cost Analysis**: Monitor API costs and savings compared to individual requests
+
+-   **Job Status Tracking**: Monitor batch jobs from creation to completion
+-   **Queue Management**: View pending, running, and completed batch queues
+-   **Processing Metrics**: Track throughput, success rates, and error patterns
+-   **Cost Analysis**: Monitor API costs and savings compared to individual requests
 
 ### Performance Analytics  
-- **Batch Efficiency**: Analyze batch size optimization and processing times
-- **Success Rates**: Track completion and failure rates across different job types
-- **Resource Utilization**: Monitor API quota usage and rate limiting
-- **Historical Trends**: View processing patterns over time
+
+-   **Batch Efficiency**: Analyze batch size optimization and processing times
+-   **Success Rates**: Track completion and failure rates across different job types
+-   **Resource Utilization**: Monitor API quota usage and rate limiting
+-   **Historical Trends**: View processing patterns over time
 
 ### Administrative Controls
-- **Manual Intervention**: Pause, resume, or cancel batch operations
-- **Priority Management**: Adjust processing priorities for urgent requests
-- **Error Handling**: Review and retry failed batch operations
-- **Configuration Management**: Adjust batch parameters and thresholds
+
+-   **Manual Intervention**: Pause, resume, or cancel batch operations
+-   **Priority Management**: Adjust processing priorities for urgent requests
+-   **Error Handling**: Review and retry failed batch operations
+-   **Configuration Management**: Adjust batch parameters and thresholds
 
 ## API Endpoints
 
@@ -132,6 +135,7 @@ const data = await response.json();
 The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) provides:
 
 #### Key Metrics Cards
+
 ```tsx
 // Real-time overview cards
 <MetricCard
@@ -157,6 +161,7 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 ```
 
 #### Queue Status Visualization
+
 ```tsx
 // Visual representation of batch job queues
 <QueueStatusChart
@@ -168,6 +173,7 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 ```
 
 #### Performance Charts
+
 ```tsx
 // Processing throughput over time
 <ThroughputChart
@@ -183,6 +189,7 @@ The main dashboard component (`components/admin/BatchMonitoringDashboard.tsx`) p
 ```
 
 #### Job Management Table
+
 ```tsx
 // Detailed job listing with actions
 <BatchJobTable
@@ -400,6 +407,7 @@ async function configureAlerts(alertConfig) {
 ### Common Issues
 
 #### High Error Rates
+
 ```javascript
 // Investigate high error rates
 async function investigateErrors() {
@@ -424,6 +432,7 @@ async function investigateErrors() {
 ```
 
 #### Slow Processing
+
 ```javascript
 // Analyze processing bottlenecks
 async function analyzePerformance() {
@@ -457,6 +466,7 @@ async function analyzePerformance() {
 ### Performance Optimization
 
 #### Batch Size Optimization
+
 ```javascript
 // Analyze optimal batch sizes
 async function optimizeBatchSizes() {
@@ -497,6 +507,7 @@ async function optimizeBatchSizes() {
 ## Integration with Existing Systems
 
 ### Security Audit Integration
+
 All batch monitoring activities are logged through the security audit system:
 
 ```javascript
@@ -510,6 +521,7 @@ await securityAuditLogger.logPlatformAdmin(
 ```
 
 ### Rate Limiting Integration
+
 Monitoring API endpoints use the existing rate limiting system:
 
 ```javascript
@@ -523,9 +535,9 @@ const rateLimitResult = await rateLimiter.check(
 
 ## Related Documentation
 
-- [Batch Processing Optimizations](./batch-processing-optimizations.md)
-- [Security Monitoring](./security-monitoring.md)
-- [Admin Audit Logs API](./admin-audit-logs-api.md)
-- [OpenAI Batch API Integration](../lib/batchProcessor.ts)
+-   [Batch Processing Optimizations](./batch-processing-optimizations.md)
+-   [Security Monitoring](./security-monitoring.md)
+-   [Admin Audit Logs API](./admin-audit-logs-api.md)
+-   [OpenAI Batch API Integration](../lib/batchProcessor.ts)
 
 The batch monitoring dashboard provides comprehensive visibility into the AI processing pipeline, enabling administrators to optimize performance, monitor costs, and ensure reliable operation of the batch processing system.

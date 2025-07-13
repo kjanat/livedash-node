@@ -5,10 +5,10 @@
  * caching, and deduplication into existing services and API endpoints.
  */
 
-import { PerformanceUtils, performanceMonitor } from "./monitor";
-import { caches, CacheUtils } from "./cache";
-import { deduplicators, DeduplicationUtils } from "./deduplication";
 import type { NextRequest, NextResponse } from "next/server";
+import { CacheUtils, caches } from "./cache";
+import { DeduplicationUtils, deduplicators } from "./deduplication";
+import { PerformanceUtils, performanceMonitor } from "./monitor";
 
 /**
  * Performance integration options
@@ -235,8 +235,8 @@ export function enhanceAPIRoute(
 export function PerformanceEnhanced(
   options: PerformanceIntegrationOptions = {}
 ) {
-  return function <T extends new (...args: any[]) => {}>(constructor: T) {
-    return class extends constructor {
+  return <T extends new (...args: any[]) => {}>(constructor: T) =>
+    class extends constructor {
       constructor(...args: any[]) {
         super(...args);
 
@@ -259,7 +259,6 @@ export function PerformanceEnhanced(
         });
       }
     };
-  };
 }
 
 /**
@@ -268,11 +267,11 @@ export function PerformanceEnhanced(
 export function PerformanceOptimized(
   options: PerformanceIntegrationOptions = {}
 ) {
-  return function (
+  return (
     target: unknown,
     propertyKey: string,
     descriptor: PropertyDescriptor
-  ) {
+  ) => {
     const originalMethod = descriptor.value;
 
     if (typeof originalMethod !== "function") {
@@ -280,7 +279,7 @@ export function PerformanceOptimized(
     }
 
     descriptor.value = enhanceServiceMethod(
-      `${(target as any).constructor.name}.${propertyKey}`,
+      `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`,
       originalMethod,
       options
     );
@@ -293,15 +292,15 @@ export function PerformanceOptimized(
  * Simple caching decorator
  */
 export function Cached(
-  cacheName: string = "default",
+  cacheName = "default",
   ttl: number = 5 * 60 * 1000,
   keyGenerator?: (...args: unknown[]) => string
 ) {
-  return function (
+  return (
     target: unknown,
     propertyKey: string,
     descriptor: PropertyDescriptor
-  ) {
+  ) => {
     const originalMethod = descriptor.value;
 
     if (typeof originalMethod !== "function") {
@@ -309,14 +308,14 @@ export function Cached(
     }
 
     descriptor.value = CacheUtils.cached(
-      `${(target as any).constructor.name}.${propertyKey}`,
+      `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`,
       originalMethod,
       {
         ttl,
         keyGenerator:
           keyGenerator ||
           ((...args) =>
-            `${(target as any).constructor.name}.${propertyKey}:${JSON.stringify(args)}`),
+            `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}:${JSON.stringify(args)}`),
       }
     );
 
@@ -328,7 +327,7 @@ export function Cached(
  * Simple deduplication decorator
  */
 export function Deduplicated(
-  deduplicatorName: string = "default",
+  deduplicatorName = "default",
   ttl: number = 2 * 60 * 1000
 ) {
   return DeduplicationUtils.deduplicatedMethod(deduplicatorName, { ttl });
@@ -349,15 +348,18 @@ function mergeOptions(
   overrides: PerformanceIntegrationOptions
 ): PerformanceIntegrationOptions {
   return {
-    cache: defaults.cache && overrides.cache 
-      ? { ...defaults.cache, ...overrides.cache }
-      : defaults.cache || overrides.cache,
-    deduplication: defaults.deduplication && overrides.deduplication
-      ? { ...defaults.deduplication, ...overrides.deduplication }
-      : defaults.deduplication || overrides.deduplication,
-    monitoring: defaults.monitoring && overrides.monitoring
-      ? { ...defaults.monitoring, ...overrides.monitoring }
-      : defaults.monitoring || overrides.monitoring,
+    cache:
+      defaults.cache && overrides.cache
+        ? { ...defaults.cache, ...overrides.cache }
+        : defaults.cache || overrides.cache,
+    deduplication:
+      defaults.deduplication && overrides.deduplication
+        ? { ...defaults.deduplication, ...overrides.deduplication }
+        : defaults.deduplication || overrides.deduplication,
+    monitoring:
+      defaults.monitoring && overrides.monitoring
+        ? { ...defaults.monitoring, ...overrides.monitoring }
+        : defaults.monitoring || overrides.monitoring,
   };
 }
 
@@ -367,7 +369,9 @@ function mergeOptions(
 export function createEnhancedService<T>(
   ServiceClass: new (...args: unknown[]) => T,
   options: PerformanceIntegrationOptions = {}
-): new (...args: unknown[]) => T {
+): new (
+  ...args: unknown[]
+) => T {
   return PerformanceEnhanced(options)(ServiceClass as never);
 }
 
@@ -436,10 +440,7 @@ export function getPerformanceIntegrationStatus() {
  * Initialize performance systems
  */
 export function initializePerformanceSystems(
-  options: {
-    monitoring?: boolean;
-    monitoringInterval?: number;
-  } = {}
+  options: { monitoring?: boolean; monitoringInterval?: number } = {}
 ) {
   if (options.monitoring !== false) {
     const interval = options.monitoringInterval || 30000;

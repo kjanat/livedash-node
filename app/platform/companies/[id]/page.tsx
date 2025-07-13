@@ -232,14 +232,14 @@ function useCompanyData(
       } else {
         const errorText = await response.text();
         const errorMessage = `Failed to load company data (${response.status}: ${response.statusText})`;
-        
+
         console.error("Failed to fetch company - HTTP Error:", {
           status: response.status,
           statusText: response.statusText,
           response: errorText,
           url: response.url,
         });
-        
+
         toast({
           title: "Error",
           description: errorMessage,
@@ -247,17 +247,18 @@ function useCompanyData(
         });
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-      
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
       console.error("Failed to fetch company - Network/Parse Error:", {
         message: errorMessage,
         error: error,
         stack: error instanceof Error ? error.stack : undefined,
         url: `/api/platform/companies/${params.id}`,
       });
-      
+
       toast({
-        title: "Error", 
+        title: "Error",
         description: `Failed to load company data: ${errorMessage}`,
         variant: "destructive",
       });
@@ -371,12 +372,13 @@ function renderCompanyInfoCard(
               onChange={(e) => {
                 const value = e.target.value;
                 const parsedValue = Number.parseInt(value, 10);
-                
+
                 // Validate input: must be a positive number
-                const maxUsers = !Number.isNaN(parsedValue) && parsedValue > 0 
-                  ? parsedValue 
-                  : 1; // Default to 1 for invalid/negative values
-                
+                const maxUsers =
+                  !Number.isNaN(parsedValue) && parsedValue > 0
+                    ? parsedValue
+                    : 1; // Default to 1 for invalid/negative values
+
                 state.setEditData((prev) => ({
                   ...prev,
                   maxUsers,

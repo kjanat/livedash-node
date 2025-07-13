@@ -68,7 +68,7 @@ export class SecurityMetricsService {
       .slice(0, 5);
 
     // User risk scores - transform data to match expected format
-    const transformedEvents = events.map(event => ({
+    const transformedEvents = events.map((event) => ({
       userId: event.userId || undefined,
       user: event.user ? { email: event.user.email } : undefined,
       eventType: event.eventType as SecurityEventType,
@@ -76,7 +76,8 @@ export class SecurityMetricsService {
       severity: event.severity as AuditSeverity,
       country: event.country || undefined,
     }));
-    const userRiskScores = await this.calculateUserRiskScores(transformedEvents);
+    const userRiskScores =
+      await this.calculateUserRiskScores(transformedEvents);
 
     // Calculate overall security score
     const securityScore = this.calculateSecurityScore({
@@ -122,7 +123,9 @@ export class SecurityMetricsService {
       country?: string;
     }>
   ): Promise<Array<{ userId: string; email: string; riskScore: number }>> {
-    const userEvents = events.filter((e) => e.userId) as Array<typeof events[0] & { userId: string }>;
+    const userEvents = events.filter((e) => e.userId) as Array<
+      (typeof events)[0] & { userId: string }
+    >;
     const userScores = new Map<
       string,
       { email: string; score: number; events: typeof userEvents }

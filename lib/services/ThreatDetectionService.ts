@@ -139,7 +139,7 @@ export class ThreatDetectionService {
     // Check for geographical anomalies
     if (context.country && context.userId) {
       // Transform historical events to match expected type
-      const transformedEvents = historicalEvents.map(event => ({
+      const transformedEvents = historicalEvents.map((event) => ({
         userId: event.userId || undefined,
         country: event.country || undefined,
       }));

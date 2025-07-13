@@ -7,20 +7,20 @@
 
 import { type NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/auth";
-import { sessionMetrics } from "../../../../lib/metrics";
-import { prisma } from "../../../../lib/prisma";
-import type { ChatSession } from "../../../../lib/types";
+import { withErrorHandling } from "@/lib/api/errors";
+import { createSuccessResponse } from "@/lib/api/response";
+import { caches } from "@/lib/performance/cache";
+import { deduplicators } from "@/lib/performance/deduplication";
 
 // Performance system imports
 import {
   PerformanceUtils,
   performanceMonitor,
 } from "@/lib/performance/monitor";
-import { caches } from "@/lib/performance/cache";
-import { deduplicators } from "@/lib/performance/deduplication";
-import { withErrorHandling } from "@/lib/api/errors";
-import { createSuccessResponse } from "@/lib/api/response";
+import { authOptions } from "../../../../lib/auth";
+import { sessionMetrics } from "../../../../lib/metrics";
+import { prisma } from "../../../../lib/prisma";
+import type { ChatSession, MetricsResult } from "../../../../lib/types";
 
 /**
  * Converts a Prisma session to ChatSession format for metrics
@@ -101,9 +101,14 @@ interface MetricsRequestParams {
 }
 
 interface MetricsResponse {
-  metrics: any;
+  metrics: MetricsResult;
   csvUrl: string | null;
-  company: any;
+  company: {
+    id: string;
+    name: string;
+    csvUrl: string;
+    status: string;
+  };
   dateRange: { minDate: string; maxDate: string } | null;
   performanceMetrics?: {
     cacheHit: boolean;
@@ -207,9 +212,16 @@ const fetchQuestionsWithDeduplication = deduplicators.database.memoize(
  */
 const calculateMetricsWithCache = async (
   chatSessions: ChatSession[],
-  companyConfig: any,
+  companyConfig: Record<string, unknown>,
   cacheKey: string
-): Promise<{ result: any; fromCache: boolean }> => {
+): Promise<{
+  result: {
+    metrics: MetricsResult;
+    calculatedAt: string;
+    sessionCount: number;
+  };
+  fromCache: boolean;
+}> => {
   return caches.metrics
     .getOrCompute(
       cacheKey,
@@ -326,7 +338,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     deduplicationHit = deduplicators.database.getStats().hitRate > 0;
 
     // Fetch questions with deduplication
-    const sessionIds = prismaSessions.map((s: any) => s.id);
+    const sessionIds = prismaSessions.map((s) => s.id);
     const questionsResult = await fetchQuestionsWithDeduplication(sessionIds);
     const sessionQuestions = questionsResult.result;
 
@@ -349,7 +361,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
     const { result: chatSessions } = await PerformanceUtils.measureAsync(
       "metrics-session-conversion",
       async () => {
-        return prismaSessions.map((ps: any) => {
+        return prismaSessions.map((ps) => {
           const questions = questionsBySession[ps.id] || [];
           return convertToMockChatSession(ps, questions);
         });
@@ -372,7 +384,7 @@ export const GET = withErrorHandling(async (request: NextRequest) => {
         if (prismaSessions.length === 0) return null;
 
         const dates = prismaSessions
-          .map((s: any) => new Date(s.startTime))
+          .map((s) => new Date(s.startTime))
           .sort((a: Date, b: Date) => a.getTime() - b.getTime());
 
         return {

@@ -231,10 +231,10 @@ export class UserRepository implements BaseRepository<User> {
     try {
       return await prisma.user.update({
         where: { id },
-        data: { 
+        data: {
           lastLoginAt: new Date(),
           failedLoginAttempts: 0, // Reset failed attempts on successful login
-          lockedAt: null // Unlock account if it was locked
+          lockedAt: null, // Unlock account if it was locked
         },
       });
     } catch (error) {
@@ -330,7 +330,9 @@ export class UserRepository implements BaseRepository<User> {
       ).length;
       const lastActivity = events.length > 0 ? events[0].timestamp : null;
       const countriesAccessed = Array.from(
-        new Set(events.map((e) => e.country).filter((c): c is string => c !== null))
+        new Set(
+          events.map((e) => e.country).filter((c): c is string => c !== null)
+        )
       );
 
       return {
@@ -406,7 +408,10 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Increment failed login attempts and lock account if threshold exceeded
    */
-  async incrementFailedLoginAttempts(email: string, maxAttempts = 5): Promise<User | null> {
+  async incrementFailedLoginAttempts(
+    email: string,
+    maxAttempts = 5
+  ): Promise<User | null> {
     try {
       const user = await prisma.user.findUnique({
         where: { email },
@@ -458,7 +463,11 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Set email verification token
    */
-  async setEmailVerificationToken(id: string, token: string, expiryHours = 24): Promise<User | null> {
+  async setEmailVerificationToken(
+    id: string,
+    token: string,
+    expiryHours = 24
+  ): Promise<User | null> {
     try {
       const expiry = new Date(Date.now() + expiryHours * 60 * 60 * 1000);
       return await prisma.user.update({
@@ -519,7 +528,10 @@ export class UserRepository implements BaseRepository<User> {
   /**
    * Update user preferences
    */
-  async updatePreferences(id: string, preferences: Record<string, unknown>): Promise<User | null> {
+  async updatePreferences(
+    id: string,
+    preferences: Record<string, unknown>
+  ): Promise<User | null> {
     try {
       return await prisma.user.update({
         where: { id },

@@ -26,7 +26,6 @@ export class BoundedBuffer<T extends { timestamp: Date }> {
    * Add item to buffer with automatic cleanup
    */
   push(item: T): void {
-
     this.buffer.push(item);
 
     // Trigger cleanup if threshold reached

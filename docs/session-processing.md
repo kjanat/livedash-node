@@ -15,22 +15,22 @@ The system now includes an automated process for analyzing chat session transcri
 
 ### Session Fetching
 
-- The system fetches session data from configured CSV URLs for each company
-- Unlike the previous implementation, it now only adds sessions that don't already exist in the database
-- This prevents duplicate sessions and allows for incremental updates
+-   The system fetches session data from configured CSV URLs for each company
+-   Unlike the previous implementation, it now only adds sessions that don't already exist in the database
+-   This prevents duplicate sessions and allows for incremental updates
 
 ### Transcript Processing
 
-- For sessions with transcript content that haven't been processed yet, the system calls OpenAI's API
-- The API analyzes the transcript and extracts the following information:
-  - Primary language used (ISO 639-1 code)
-  - Number of messages sent by the user
-  - Overall sentiment (positive, neutral, negative)
-  - Whether the conversation was escalated
-  - Whether HR contact was mentioned or provided
-  - Best-fitting category for the conversation
-  - Up to 5 paraphrased questions asked by the user
-  - A brief summary of the conversation
+-   For sessions with transcript content that haven't been processed yet, the system calls OpenAI's API
+-   The API analyzes the transcript and extracts the following information:
+    -   Primary language used (ISO 639-1 code)
+    -   Number of messages sent by the user
+    -   Overall sentiment (positive, neutral, negative)
+    -   Whether the conversation was escalated
+    -   Whether HR contact was mentioned or provided
+    -   Best-fitting category for the conversation
+    -   Up to 5 paraphrased questions asked by the user
+    -   A brief summary of the conversation
 
 ### Scheduling
 
@@ -43,10 +43,10 @@ The system includes two schedulers:
 
 The Session model has been updated with new fields to store the processed data:
 
-- `processed`: Boolean flag indicating whether the session has been processed
-- `sentimentCategory`: String value ("positive", "neutral", "negative") from OpenAI
-- `questions`: JSON array of questions asked by the user
-- `summary`: Brief summary of the conversation
+-   `processed`: Boolean flag indicating whether the session has been processed
+-   `sentimentCategory`: String value ("positive", "neutral", "negative") from OpenAI
+-   `questions`: JSON array of questions asked by the user
+-   `summary`: Brief summary of the conversation
 
 ## Configuration
 
@@ -62,9 +62,9 @@ OPENAI_API_KEY=your_api_key_here
 
 To run the application with schedulers enabled:
 
-- Development: `npm run dev`
-- Development (with schedulers disabled): `npm run dev:no-schedulers`
-- Production: `npm run start`
+-   Development: `npm run dev`
+-   Development (with schedulers disabled): `npm run dev:no-schedulers`
+-   Production: `npm run start`
 
 Note: These commands will start a custom Next.js server with the schedulers enabled. You'll need to have an OpenAI API key set in your `.env.local` file for the session processing to work.
 
@@ -82,5 +82,5 @@ This will process all unprocessed sessions that have transcript content.
 
 The processing logic can be customized by modifying:
 
-- `lib/processingScheduler.ts`: Contains the OpenAI processing logic
-- `scripts/process_sessions.ts`: Standalone script for manual processing
+-   `lib/processingScheduler.ts`: Contains the OpenAI processing logic
+-   `scripts/process_sessions.ts`: Standalone script for manual processing

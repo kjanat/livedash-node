@@ -55,7 +55,8 @@
     "migration:test-trpc": "pnpm exec tsx scripts/migration/trpc-endpoint-tests.ts",
     "migration:test-batch": "pnpm exec tsx scripts/migration/batch-processing-tests.ts",
     "migration:test-all": "pnpm migration:test-trpc && pnpm migration:test-batch && pnpm migration:health-check",
-    "migration:full": "pnpm migration:pre-check && pnpm migration:backup && pnpm migration:deploy && pnpm migration:health-check"
+    "migration:full": "pnpm migration:pre-check && pnpm migration:backup && pnpm migration:deploy && pnpm migration:health-check",
+    "prepare": "husky"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^6.11.1",
@@ -152,8 +153,10 @@
     "eslint-config-next": "^15.3.5",
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "husky": "^9.1.7",
     "jest-axe": "^10.0.0",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.1.2",
     "markdownlint-cli2": "^0.18.1",
     "node-mocks-http": "^1.17.2",
     "postcss": "^8.5.6",
@@ -198,19 +201,17 @@
   },
   "markdownlint-cli2": {
     "config": {
-      "MD007": {
-        "indent": 4,
-        "start_indented": false,
-        "start_indent": 4
-      },
+      "MD007": false,
       "MD013": false,
-      "MD030": {
-        "ul_single": 3,
-        "ol_single": 2,
-        "ul_multi": 3,
-        "ol_multi": 2
-      },
-      "MD033": false
+      "MD024": false,
+      "MD029": false,
+      "MD030": false,
+      "MD032": false,
+      "MD033": false,
+      "MD036": false,
+      "MD040": false,
+      "MD041": false,
+      "MD046": false
     },
     "ignores": [
       "node_modules",

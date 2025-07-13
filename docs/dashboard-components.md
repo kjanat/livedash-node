@@ -12,10 +12,10 @@ The WordCloud component visualizes categories or topics based on their frequency
 
 **Features:**
 
-- Dynamic sizing based on frequency
-- Colorful display with a pleasing color palette
-- Responsive design
-- Interactive hover effects
+-   Dynamic sizing based on frequency
+-   Colorful display with a pleasing color palette
+-   Responsive design
+-   Interactive hover effects
 
 ### 2. GeographicMap
 
@@ -25,10 +25,10 @@ This component displays a world map with circles representing the number of sess
 
 **Features:**
 
-- Interactive map using React Leaflet
-- Circle sizes scaled by session count
-- Tooltips showing country names and session counts
-- Responsive design
+-   Interactive map using React Leaflet
+-   Circle sizes scaled by session count
+-   Tooltips showing country names and session counts
+-   Responsive design
 
 ### 3. MetricCard
 
@@ -38,10 +38,10 @@ A modern, visually appealing card for displaying key metrics.
 
 **Features:**
 
-- Multiple design variants (default, primary, success, warning, danger)
-- Support for trend indicators
-- Icons and descriptions
-- Clean, modern styling
+-   Multiple design variants (default, primary, success, warning, danger)
+-   Support for trend indicators
+-   Icons and descriptions
+-   Clean, modern styling
 
 ### 4. DonutChart
 
@@ -51,10 +51,10 @@ An enhanced donut chart with better styling and a central text display capabilit
 
 **Features:**
 
-- Customizable colors
-- Center text area for displaying summaries
-- Interactive tooltips with percentages
-- Well-balanced legend display
+-   Customizable colors
+-   Center text area for displaying summaries
+-   Interactive tooltips with percentages
+-   Well-balanced legend display
 
 ### 5. ResponseTimeDistribution
 
@@ -64,10 +64,10 @@ Visualizes the distribution of response times as a histogram.
 
 **Features:**
 
-- Color-coded bars (green for fast, yellow for medium, red for slow)
-- Target time indicator
-- Automatic binning of response times
-- Clear labeling and scales
+-   Color-coded bars (green for fast, yellow for medium, red for slow)
+-   Target time indicator
+-   Automatic binning of response times
+-   Clear labeling and scales
 
 ## Dashboard Enhancements
 
@@ -85,7 +85,7 @@ The dashboard has been enhanced with:
 
 ## Usage Notes
 
-- The geographic map and response time distribution use simulated data where actual data is not available
-- All components are responsive and will adjust to different screen sizes
-- The dashboard automatically refreshes data when using the refresh button
-- Admin users have access to additional controls at the bottom of the dashboard
+-   The geographic map and response time distribution use simulated data where actual data is not available
+-   All components are responsive and will adjust to different screen sizes
+-   The dashboard automatically refreshes data when using the refresh button
+-   Admin users have access to additional controls at the bottom of the dashboard

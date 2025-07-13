@@ -47,7 +47,7 @@ export interface CacheStats {
 /**
  * High-performance memory cache with advanced features
  */
-export class PerformanceCache<K extends {} = string, V = any> {
+export class PerformanceCache<K extends {} = string, V = unknown> {
   private cache: LRUCache<K, CacheEntry<V>>;
   private stats: {
     hits: number;
@@ -245,7 +245,7 @@ class CacheManager {
   /**
    * Create or get a named cache instance
    */
-  getCache<K extends {} = string, V = any>(
+  getCache<K extends {} = string, V = unknown>(
     name: string,
     options: CacheOptions = {}
   ): PerformanceCache<K, V> {

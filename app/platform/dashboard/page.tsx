@@ -156,7 +156,9 @@ function usePlatformDashboardState() {
     adminPassword: "",
     maxUsers: 10,
   });
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>(
+    {}
+  );
 
   return {
     dashboardData,
@@ -210,22 +212,23 @@ function useFormIds() {
  */
 function validateEmail(email: string): string | undefined {
   if (!email) return undefined;
-  
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-  
+
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+
   if (!emailRegex.test(email)) {
     return "Please enter a valid email address";
   }
-  
+
   return undefined;
 }
 
 function validateUrl(url: string): string | undefined {
   if (!url) return undefined;
-  
+
   try {
     const urlObj = new URL(url);
-    if (!['http:', 'https:'].includes(urlObj.protocol)) {
+    if (!["http:", "https:"].includes(urlObj.protocol)) {
       return "URL must use HTTP or HTTPS protocol";
     }
     return undefined;
@@ -271,7 +274,7 @@ function renderCompanyFormFields(
               ...prev,
               csvUrl: value,
             }));
-            
+
             // Validate URL on change
             const error = validateUrl(value);
             setValidationErrors((prev) => ({
@@ -341,7 +344,7 @@ function renderCompanyFormFields(
               ...prev,
               adminEmail: value,
             }));
-            
+
             // Validate email on change
             const error = validateEmail(value);
             setValidationErrors((prev) => ({
@@ -683,13 +686,12 @@ export default function PlatformDashboard() {
       newCompanyData.adminEmail &&
       newCompanyData.adminName
     );
-    
+
     // Check for validation errors
     const hasValidationErrors = !!(
-      validationErrors.csvUrl ||
-      validationErrors.adminEmail
+      validationErrors.csvUrl || validationErrors.adminEmail
     );
-    
+
     return hasRequiredFields && !hasValidationErrors;
   };
 

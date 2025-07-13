@@ -346,7 +346,7 @@ export class SecurityAuditLogRepository
             if (!acc[key]) {
               acc[key] = {
                 userId: event.userId!,
-                email: event.user?.email || 'Unknown',
+                email: event.user?.email || "Unknown",
                 count: 0,
               };
             }

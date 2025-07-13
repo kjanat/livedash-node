@@ -99,12 +99,14 @@ node scripts/manual-triggers.js both
    ```
 
 2.  **If "Sessions with transcript" is 0:**
-   -   Sessions exist but transcripts haven't been fetched yet
-   -   Run session refresh: `node scripts/manual-triggers.js refresh`
+
+-   Sessions exist but transcripts haven't been fetched yet
+-   Run session refresh: `node scripts/manual-triggers.js refresh`
 
 3.  **If "Ready for processing" is 0 but "Sessions with transcript" > 0:**
-   -   All sessions with transcripts have already been processed
-   -   Check if `OPENAI_API_KEY` is set in environment
+
+-   All sessions with transcripts have already been processed
+-   Check if `OPENAI_API_KEY` is set in environment
 
 ### Common Issues
 
