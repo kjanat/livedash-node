@@ -150,7 +150,7 @@ export function TRPCDemo() {
               </div>
             ) : (
               <div className="space-y-1">
-                {overview?.sentimentDistribution.map((item) => (
+                {overview?.sentimentDistribution?.map((item) => (
                   <div
                     key={item.sentiment}
                     className="flex justify-between text-sm"
@@ -226,7 +226,7 @@ export function TRPCDemo() {
             </div>
           ) : (
             <div className="space-y-4">
-              {sessions?.sessions.map((session) => (
+              {sessions?.sessions?.map((session) => (
                 <div key={session.id} className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
