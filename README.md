@@ -12,46 +12,46 @@ A comprehensive real-time analytics dashboard for monitoring user sessions with 
 
 ### Core Analytics
 
--   **Real-time Session Monitoring**: Track and analyze user sessions as they happen
--   **Interactive Visualizations**: Geographic maps, response time distributions, and advanced charts
--   **AI-Powered Analysis**: OpenAI integration with 50% cost reduction through batch processing
--   **Advanced Analytics**: Detailed metrics and insights about user behavior patterns
--   **Session Details**: In-depth analysis of individual user sessions with transcript parsing
+- **Real-time Session Monitoring**: Track and analyze user sessions as they happen
+- **Interactive Visualizations**: Geographic maps, response time distributions, and advanced charts
+- **AI-Powered Analysis**: OpenAI integration with 50% cost reduction through batch processing
+- **Advanced Analytics**: Detailed metrics and insights about user behavior patterns
+- **Session Details**: In-depth analysis of individual user sessions with transcript parsing
 
 ### Security & Admin Features
 
--   **Enterprise Security**: Multi-layer security with CSRF protection, CSP, and rate limiting
--   **Security Monitoring**: Real-time threat detection and alerting system
--   **Audit Logging**: Comprehensive security audit trails with retention management
--   **Admin Dashboard**: Advanced administration tools for user and system management
--   **Geographic Threat Detection**: IP-based threat analysis and anomaly detection
+- **Enterprise Security**: Multi-layer security with CSRF protection, CSP, and rate limiting
+- **Security Monitoring**: Real-time threat detection and alerting system
+- **Audit Logging**: Comprehensive security audit trails with retention management
+- **Admin Dashboard**: Advanced administration tools for user and system management
+- **Geographic Threat Detection**: IP-based threat analysis and anomaly detection
 
 ### Platform Management
 
--   **Multi-tenant Architecture**: Company-based data isolation and management
--   **User Management**: Role-based access control with platform admin capabilities
--   **Batch Processing**: Optimized AI processing pipeline with automated scheduling
--   **Data Export**: CSV/JSON export capabilities for analytics and audit data
+- **Multi-tenant Architecture**: Company-based data isolation and management
+- **User Management**: Role-based access control with platform admin capabilities
+- **Batch Processing**: Optimized AI processing pipeline with automated scheduling
+- **Data Export**: CSV/JSON export capabilities for analytics and audit data
 
 ## Tech Stack
 
--   **Frontend**: React 19, Next.js 15, TailwindCSS 4
--   **Backend**: Next.js API Routes, tRPC, Custom Node.js server
--   **Database**: PostgreSQL with Prisma ORM and connection pooling
--   **Authentication**: NextAuth.js with enhanced security features
--   **Security**: CSRF protection, CSP with nonce-based scripts, comprehensive rate limiting
--   **AI Processing**: OpenAI API with batch processing for cost optimization
--   **Visualization**: D3.js, React Leaflet, Recharts, custom chart components
--   **Monitoring**: Real-time security monitoring, audit logging, threat detection
--   **Data Processing**: Node-cron schedulers for automated batch processing and AI analysis
+- **Frontend**: React 19, Next.js 15, TailwindCSS 4
+- **Backend**: Next.js API Routes, tRPC, Custom Node.js server
+- **Database**: PostgreSQL with Prisma ORM and connection pooling
+- **Authentication**: NextAuth.js with enhanced security features
+- **Security**: CSRF protection, CSP with nonce-based scripts, comprehensive rate limiting
+- **AI Processing**: OpenAI API with batch processing for cost optimization
+- **Visualization**: D3.js, React Leaflet, Recharts, custom chart components
+- **Monitoring**: Real-time security monitoring, audit logging, threat detection
+- **Data Processing**: Node-cron schedulers for automated batch processing and AI analysis
 
 ## Getting Started
 
 ### Prerequisites
 
--   Node.js 18+ (LTS version recommended)
--   pnpm (recommended package manager)
--   PostgreSQL 13+ database
+- Node.js 18+ (LTS version recommended)
+- pnpm (recommended package manager)
+- PostgreSQL 13+ database
 
 ### Installation
 
@@ -126,61 +126,61 @@ BATCH_RESULT_PROCESSING_INTERVAL="*/1 * * * *"
 
 ## Project Structure
 
--   `app/`: Next.js App Router pages and API routes
-    -   `api/`: API endpoints including admin, security, and tRPC routes
-    -   `dashboard/`: Main analytics dashboard pages
-    -   `platform/`: Platform administration interface
--   `components/`: Reusable React components
-    -   `admin/`: Administrative dashboard components
-    -   `security/`: Security monitoring UI components
-    -   `forms/`: CSRF-protected forms and form utilities
-    -   `providers/`: Context providers (CSRF, tRPC, themes)
--   `lib/`: Core utilities and business logic
-    -   Security modules (CSRF, CSP, rate limiting, audit logging)
-    -   Processing pipelines (batch processing, AI analysis)
-    -   Database utilities and authentication
--   `server/`: tRPC server configuration and routers
--   `prisma/`: Database schema, migrations, and seed scripts
--   `tests/`: Comprehensive test suite (unit, integration, E2E)
--   `docs/`: Detailed project documentation
--   `scripts/`: Migration and utility scripts
+- `app/`: Next.js App Router pages and API routes
+  - `api/`: API endpoints including admin, security, and tRPC routes
+  - `dashboard/`: Main analytics dashboard pages
+  - `platform/`: Platform administration interface
+- `components/`: Reusable React components
+  - `admin/`: Administrative dashboard components
+  - `security/`: Security monitoring UI components
+  - `forms/`: CSRF-protected forms and form utilities
+  - `providers/`: Context providers (CSRF, tRPC, themes)
+- `lib/`: Core utilities and business logic
+  - Security modules (CSRF, CSP, rate limiting, audit logging)
+  - Processing pipelines (batch processing, AI analysis)
+  - Database utilities and authentication
+- `server/`: tRPC server configuration and routers
+- `prisma/`: Database schema, migrations, and seed scripts
+- `tests/`: Comprehensive test suite (unit, integration, E2E)
+- `docs/`: Detailed project documentation
+- `scripts/`: Migration and utility scripts
 
 ## Available Scripts
 
 ### Development
 
--   `pnpm dev`: Start development server with all features
--   `pnpm dev:next-only`: Start Next.js only (no background schedulers)
--   `pnpm build`: Build the application for production
--   `pnpm start`: Run the production build
+- `pnpm dev`: Start development server with all features
+- `pnpm dev:next-only`: Start Next.js only (no background schedulers)
+- `pnpm build`: Build the application for production
+- `pnpm start`: Run the production build
 
 ### Code Quality
 
--   `pnpm lint`: Run ESLint
--   `pnpm lint:fix`: Fix ESLint issues automatically
--   `pnpm format`: Format code with Prettier
--   `pnpm format:check`: Check code formatting
+- `pnpm lint`: Run ESLint
+- `pnpm lint:fix`: Fix ESLint issues automatically
+- `pnpm format`: Format code with Prettier
+- `pnpm format:check`: Check code formatting
 
 ### Database
 
--   `pnpm prisma:studio`: Open Prisma Studio to view database
--   `pnpm prisma:migrate`: Run database migrations
--   `pnpm prisma:generate`: Generate Prisma client
--   `pnpm prisma:seed`: Seed database with test data
+- `pnpm prisma:studio`: Open Prisma Studio to view database
+- `pnpm prisma:migrate`: Run database migrations
+- `pnpm prisma:generate`: Generate Prisma client
+- `pnpm prisma:seed`: Seed database with test data
 
 ### Testing
 
--   `pnpm test`: Run all tests (Vitest + Playwright)
--   `pnpm test:vitest`: Run unit and integration tests
--   `pnpm test:coverage`: Run tests with coverage reports
--   `pnpm test:security`: Run security-specific tests
--   `pnpm test:csp`: Test CSP implementation
+- `pnpm test`: Run all tests (Vitest + Playwright)
+- `pnpm test:vitest`: Run unit and integration tests
+- `pnpm test:coverage`: Run tests with coverage reports
+- `pnpm test:security`: Run security-specific tests
+- `pnpm test:csp`: Test CSP implementation
 
 ### Security & Migration
 
--   `pnpm migration:backup`: Create database backup
--   `pnpm migration:health-check`: Run system health checks
--   `pnpm test:security-headers`: Test HTTP security headers
+- `pnpm migration:backup`: Create database backup
+- `pnpm migration:health-check`: Run system health checks
+- `pnpm test:security-headers`: Test HTTP security headers
 
 ## Contributing
 
@@ -196,9 +196,9 @@ This project is not licensed for commercial use without explicit permission. Fre
 
 ## Acknowledgments
 
--   [Next.js](https://nextjs.org/)
--   [Prisma](https://prisma.io/)
--   [TailwindCSS](https://tailwindcss.com/)
--   [Chart.js](https://www.chartjs.org/)
--   [D3.js](https://d3js.org/)
--   [React Leaflet](https://react-leaflet.js.org/)
+- [Next.js](https://nextjs.org/)
+- [Prisma](https://prisma.io/)
+- [TailwindCSS](https://tailwindcss.com/)
+- [Chart.js](https://www.chartjs.org/)
+- [D3.js](https://d3js.org/)
+- [React Leaflet](https://react-leaflet.js.org/)

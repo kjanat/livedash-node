@@ -167,7 +167,11 @@ function startMonitoringIfEnabled(enabled?: boolean): void {
 /**
  * Helper function to record request metrics if enabled
  */
-function recordRequestIfEnabled(timer: ReturnType<typeof PerformanceUtils.createTimer>, isError: boolean, enabled?: boolean): void {
+function recordRequestIfEnabled(
+  timer: ReturnType<typeof PerformanceUtils.createTimer>,
+  isError: boolean,
+  enabled?: boolean
+): void {
   if (enabled) {
     performanceMonitor.recordRequest(timer.end(), isError);
   }
@@ -185,7 +189,7 @@ async function executeRequestWithOptimizations(
   if (opts.cache?.enabled || opts.deduplication?.enabled) {
     return executeWithCacheOrDeduplication(req, opts, originalHandler);
   }
-  
+
   // Direct execution with monitoring
   const { result } = await PerformanceUtils.measureAsync(routeName, () =>
     originalHandler(req)
@@ -216,18 +220,16 @@ async function executeWithCacheOrDeduplication(
       opts.cache.ttl
     );
   }
-  
+
   // Deduplication only
   const deduplicator =
     deduplicators[
       opts.deduplication?.deduplicatorName as keyof typeof deduplicators
     ] || deduplicators.api;
 
-  return deduplicator.execute(
-    cacheKey,
-    () => originalHandler(req),
-    { ttl: opts.deduplication?.ttl }
-  );
+  return deduplicator.execute(cacheKey, () => originalHandler(req), {
+    ttl: opts.deduplication?.ttl,
+  });
 }
 
 /**
@@ -247,7 +249,12 @@ export function enhanceAPIRoute(
 
     try {
       startMonitoringIfEnabled(opts.monitoring?.enabled);
-      const response = await executeRequestWithOptimizations(req, opts, routeName, originalHandler);
+      const response = await executeRequestWithOptimizations(
+        req,
+        opts,
+        routeName,
+        originalHandler
+      );
       recordRequestIfEnabled(timer, false, opts.monitoring?.recordRequests);
       return response;
     } catch (error) {
@@ -263,8 +270,10 @@ export function enhanceAPIRoute(
 export function PerformanceEnhanced(
   options: PerformanceIntegrationOptions = {}
 ) {
-  return <T extends new (...args: any[]) => {}>(constructor: T) =>
-    class extends constructor {
+  // biome-ignore lint/suspicious/noExplicitAny: Required for mixin class pattern - TypeScript requires any[] for constructor parameters in mixins
+  return <T extends new (...args: any[]) => {}>(Constructor: T) =>
+    class extends Constructor {
+      // biome-ignore lint/suspicious/noExplicitAny: Required for mixin class pattern - TypeScript requires any[] for constructor parameters in mixins
       constructor(...args: any[]) {
         super(...args);
 
@@ -279,7 +288,7 @@ export function PerformanceEnhanced(
           if (typeof originalMethod === "function") {
             (this as Record<string, unknown>)[methodName] =
               enhanceServiceMethod(
-                `${constructor.name}.${methodName}`,
+                `${Constructor.name}.${methodName}`,
                 originalMethod.bind(this),
                 options
               );

@@ -181,7 +181,8 @@ class PerformanceMonitor {
     // Placeholder for analytics integration
     // You could send this to Google Analytics, Vercel Analytics, etc.
     if (typeof window !== "undefined" && "gtag" in window) {
-      (window as any).gtag("event", "core_web_vital", {
+      const gtag = (window as { gtag?: (...args: unknown[]) => void }).gtag;
+      gtag?.("event", "core_web_vital", {
         name: metricName,
         value: Math.round(value),
         metric_rating: this.getRating(metricName, value),

@@ -15,10 +15,10 @@ The migration will be performed incrementally to minimize disruption. We will st
 
 ### Why tRPC?
 
--   **End-to-End Type Safety:** Eliminates a class of runtime errors by ensuring the client and server conform to the same data contracts. TypeScript errors will appear at build time if the client and server are out of sync.
--   **Improved Developer Experience:** Provides autocompletion for API procedures and their data types directly in the editor.
--   **Simplified Data Fetching:** Replaces manual `fetch` calls and `useEffect` hooks with clean, declarative tRPC hooks (`useQuery`, `useMutation`).
--   **No Code Generation:** Leverages TypeScript inference, avoiding a separate schema definition or code generation step.
+- **End-to-End Type Safety:** Eliminates a class of runtime errors by ensuring the client and server conform to the same data contracts. TypeScript errors will appear at build time if the client and server are out of sync.
+- **Improved Developer Experience:** Provides autocompletion for API procedures and their data types directly in the editor.
+- **Simplified Data Fetching:** Replaces manual `fetch` calls and `useEffect` hooks with clean, declarative tRPC hooks (`useQuery`, `useMutation`).
+- **No Code Generation:** Leverages TypeScript inference, avoiding a separate schema definition or code generation step.
 
 ### Integration Strategy: Gradual Adoption
 
@@ -240,11 +240,11 @@ export default function UsersPage() {
 
 ## 4. Next Steps & Future Enhancements
 
--   **Authentication & Context:** Implement a `createContext` function to pass session data (e.g., from NextAuth.js) to your tRPC procedures. This will allow for protected procedures.
--   **Input Validation:** Extensively use `zod` in the `.input()` part of procedures to validate all incoming data.
--   **Error Handling:** Implement robust error handling on both the client and server.
--   **Mutations:** Begin migrating `POST`, `PUT`, and `DELETE` endpoints to tRPC mutations.
--   **Optimistic UI:** For mutations, implement optimistic updates to provide a faster user experience.
+- **Authentication & Context:** Implement a `createContext` function to pass session data (e.g., from NextAuth.js) to your tRPC procedures. This will allow for protected procedures.
+- **Input Validation:** Extensively use `zod` in the `.input()` part of procedures to validate all incoming data.
+- **Error Handling:** Implement robust error handling on both the client and server.
+- **Mutations:** Begin migrating `POST`, `PUT`, and `DELETE` endpoints to tRPC mutations.
+- **Optimistic UI:** For mutations, implement optimistic updates to provide a faster user experience.
 
 ---
 

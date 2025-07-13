@@ -155,34 +155,36 @@ export class RequestDeduplicator {
     }> = [];
 
     // Create the main promise
-    const promise = new Promise<T>(async (resolve, reject) => {
+    const promise = new Promise<T>((resolve, reject) => {
       resolvers.push({ resolve, reject });
 
-      try {
-        const result = await fn();
+      // Execute the async function
+      fn()
+        .then((result) => {
+          // Cache the result
+          if (options.ttl && options.ttl > 0) {
+            this.results.set(key, {
+              value: result,
+              timestamp: Date.now(),
+              ttl: options.ttl,
+            });
+          }
 
-        // Cache the result
-        if (options.ttl && options.ttl > 0) {
-          this.results.set(key, {
-            value: result,
-            timestamp: Date.now(),
-            ttl: options.ttl,
-          });
-        }
+          // Resolve all waiting promises
+          resolvers.forEach(({ resolve: res }) => res(result));
+        })
+        .catch((error) => {
+          this.stats.errors++;
 
-        // Resolve all waiting promises
-        resolvers.forEach(({ resolve: res }) => res(result));
-      } catch (error) {
-        this.stats.errors++;
-
-        // Reject all waiting promises
-        const errorToReject =
-          error instanceof Error ? error : new Error(String(error));
-        resolvers.forEach(({ reject: rej }) => rej(errorToReject));
-      } finally {
-        // Clean up pending request
-        this.pendingRequests.delete(key);
-      }
+          // Reject all waiting promises
+          const errorToReject =
+            error instanceof Error ? error : new Error(String(error));
+          resolvers.forEach(({ reject: rej }) => rej(errorToReject));
+        })
+        .finally(() => {
+          // Clean up pending request
+          this.pendingRequests.delete(key);
+        });
     });
 
     // Set up timeout if specified

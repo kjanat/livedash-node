@@ -281,6 +281,84 @@ function addCORSHeaders(
 }
 
 /**
+ * Process authentication and authorization
+ */
+async function processAuthAndAuthz(
+  context: APIContext,
+  options: APIHandlerOptions
+): Promise<void> {
+  if (options.requireAuth) {
+    await validateAuthentication(context);
+  }
+
+  if (options.requiredRole || options.requirePlatformAccess) {
+    await validateAuthorization(context, options);
+  }
+}
+
+/**
+ * Process input validation
+ */
+async function processValidation(
+  request: NextRequest,
+  options: APIHandlerOptions
+): Promise<{ validatedData: unknown; validatedQuery: unknown }> {
+  let validatedData: unknown;
+  if (options.validateInput && request.method !== "GET") {
+    validatedData = await validateInput(request, options.validateInput);
+  }
+
+  let validatedQuery: unknown;
+  if (options.validateQuery) {
+    validatedQuery = validateQuery(request, options.validateQuery);
+  }
+
+  return { validatedData, validatedQuery };
+}
+
+/**
+ * Create and configure response
+ */
+function createAPIResponse<T>(
+  result: T,
+  context: APIContext,
+  options: APIHandlerOptions
+): NextResponse {
+  const response = NextResponse.json(
+    createSuccessResponse(result, { requestId: context.requestId })
+  );
+
+  response.headers.set("X-Request-ID", context.requestId);
+
+  if (options.cacheControl) {
+    response.headers.set("Cache-Control", options.cacheControl);
+  }
+
+  addCORSHeaders(response, options);
+  return response;
+}
+
+/**
+ * Handle request execution with audit logging
+ */
+async function executeWithAudit<T>(
+  handler: APIHandler<T>,
+  context: APIContext,
+  validatedData: unknown,
+  validatedQuery: unknown,
+  request: NextRequest,
+  options: APIHandlerOptions
+): Promise<T> {
+  const result = await handler(context, validatedData, validatedQuery);
+
+  if (options.auditLog) {
+    await logAPIAccess(context, "success", request.url);
+  }
+
+  return result;
+}
+
+/**
  * Main API handler factory
  */
 export function createAPIHandler<T = unknown>(
@@ -291,64 +369,32 @@ export function createAPIHandler<T = unknown>(
     let context: APIContext | undefined;
 
     try {
-      // 1. Create request context
       context = await createAPIContext(request);
 
-      // 2. Apply rate limiting
       if (options.rateLimit) {
         await applyRateLimit(context, options.rateLimit);
       }
 
-      // 3. Validate authentication
-      if (options.requireAuth) {
-        await validateAuthentication(context);
-      }
+      await processAuthAndAuthz(context, options);
 
-      // 4. Validate authorization
-      if (options.requiredRole || options.requirePlatformAccess) {
-        await validateAuthorization(context, options);
-      }
-
-      // 5. Validate input
-      let validatedData;
-      if (options.validateInput && request.method !== "GET") {
-        validatedData = await validateInput(request, options.validateInput);
-      }
-
-      // 6. Validate query parameters
-      let validatedQuery;
-      if (options.validateQuery) {
-        validatedQuery = validateQuery(request, options.validateQuery);
-      }
-
-      // 7. Execute handler
-      const result = await handler(context, validatedData, validatedQuery);
-
-      // 8. Audit logging
-      if (options.auditLog) {
-        await logAPIAccess(context, "success", request.url);
-      }
-
-      // 9. Create response
-      const response = NextResponse.json(
-        createSuccessResponse(result, { requestId: context.requestId })
+      const { validatedData, validatedQuery } = await processValidation(
+        request,
+        options
       );
 
-      // 10. Add headers
-      response.headers.set("X-Request-ID", context.requestId);
+      const result = await executeWithAudit(
+        handler,
+        context,
+        validatedData,
+        validatedQuery,
+        request,
+        options
+      );
 
-      if (options.cacheControl) {
-        response.headers.set("Cache-Control", options.cacheControl);
-      }
-
-      addCORSHeaders(response, options);
-
-      return response;
+      return createAPIResponse(result, context, options);
     } catch (error) {
-      // Handle errors consistently
       const requestId = context?.requestId || crypto.randomUUID();
 
-      // Log failed requests
       if (options.auditLog && context) {
         await logAPIAccess(context, "error", request.url, error as Error);
       }

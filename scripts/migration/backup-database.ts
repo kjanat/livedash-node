@@ -450,7 +450,7 @@ Examples:
         `);
         process.exit(1);
     }
-  }
+  };
 
   runCommand()
     .then((result) => {

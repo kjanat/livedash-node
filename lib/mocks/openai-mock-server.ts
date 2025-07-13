@@ -15,6 +15,26 @@ import {
   type MockResponseType,
 } from "./openai-responses";
 
+interface ChatCompletionParams {
+  model: string;
+  messages: Array<{ role: string; content: string }>;
+  temperature?: number;
+  max_tokens?: number;
+  [key: string]: unknown;
+}
+
+interface BatchCreateParams {
+  input_file_id: string;
+  endpoint: string;
+  completion_window: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface FileCreateParams {
+  file: string; // File content as string for mock purposes
+  purpose: string;
+}
+
 interface MockOpenAIConfig {
   enabled: boolean;
   baseDelay: number; // Base delay in ms to simulate API latency
@@ -115,12 +135,9 @@ class OpenAIMockServer {
   /**
    * Mock chat completions endpoint
    */
-  async mockChatCompletion(request: {
-    model: string;
-    messages: Array<{ role: string; content: string }>;
-    temperature?: number;
-    max_tokens?: number;
-  }): Promise<MockChatCompletion> {
+  async mockChatCompletion(
+    request: ChatCompletionParams
+  ): Promise<MockChatCompletion> {
     this.requestCount++;
 
     await this.simulateDelay();
@@ -172,12 +189,9 @@ class OpenAIMockServer {
   /**
    * Mock batch creation endpoint
    */
-  async mockCreateBatch(request: {
-    input_file_id: string;
-    endpoint: string;
-    completion_window: string;
-    metadata?: Record<string, string>;
-  }): Promise<MockBatchResponse> {
+  async mockCreateBatch(
+    request: BatchCreateParams
+  ): Promise<MockBatchResponse> {
     await this.simulateDelay();
 
     if (this.shouldSimulateError()) {
@@ -214,10 +228,7 @@ class OpenAIMockServer {
   /**
    * Mock file upload endpoint
    */
-  async mockUploadFile(request: {
-    file: string; // File content
-    purpose: string;
-  }): Promise<{
+  async mockUploadFile(request: FileCreateParams): Promise<{
     id: string;
     object: string;
     purpose: string;
@@ -364,23 +375,42 @@ export const openAIMock = new OpenAIMockServer();
 /**
  * Drop-in replacement for OpenAI client that uses mocks when enabled
  */
-export class MockOpenAIClient {
-  private realClient: unknown;
+interface OpenAIClient {
+  chat: {
+    completions: {
+      create: (params: ChatCompletionParams) => Promise<MockChatCompletion>;
+    };
+  };
+  batches: {
+    create: (params: BatchCreateParams) => Promise<MockBatchResponse>;
+    retrieve: (batchId: string) => Promise<MockBatchResponse>;
+  };
+  files: {
+    create: (params: FileCreateParams) => Promise<{
+      id: string;
+      object: string;
+      purpose: string;
+      filename: string;
+    }>;
+    content: (fileId: string) => Promise<string>;
+  };
+}
 
-  constructor(realClient: unknown) {
+export class MockOpenAIClient {
+  private realClient: OpenAIClient;
+
+  constructor(realClient: OpenAIClient) {
     this.realClient = realClient;
   }
 
   get chat() {
     return {
       completions: {
-        create: async (params: any) => {
+        create: async (params: ChatCompletionParams) => {
           if (openAIMock.isEnabled()) {
-            return openAIMock.mockChatCompletion(params as any);
+            return openAIMock.mockChatCompletion(params);
           }
-          return (this.realClient as any).chat.completions.create(
-            params as any
-          );
+          return this.realClient.chat.completions.create(params);
         },
       },
     };
@@ -388,34 +418,34 @@ export class MockOpenAIClient {
 
   get batches() {
     return {
-      create: async (params: any) => {
+      create: async (params: BatchCreateParams) => {
         if (openAIMock.isEnabled()) {
-          return openAIMock.mockCreateBatch(params as any);
+          return openAIMock.mockCreateBatch(params);
         }
-        return (this.realClient as any).batches.create(params as any);
+        return this.realClient.batches.create(params);
       },
       retrieve: async (batchId: string) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockGetBatch(batchId);
         }
-        return (this.realClient as any).batches.retrieve(batchId);
+        return this.realClient.batches.retrieve(batchId);
       },
     };
   }
 
   get files() {
     return {
-      create: async (params: any) => {
+      create: async (params: FileCreateParams) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockUploadFile(params);
         }
-        return (this.realClient as any).files.create(params);
+        return this.realClient.files.create(params);
       },
       content: async (fileId: string) => {
         if (openAIMock.isEnabled()) {
           return openAIMock.mockGetFileContent(fileId);
         }
-        return (this.realClient as any).files.content(fileId);
+        return this.realClient.files.content(fileId);
       },
     };
   }

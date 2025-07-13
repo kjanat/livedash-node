@@ -169,6 +169,10 @@ const ConfigSchema = z.object({
 
 export type AppConfig = z.infer<typeof ConfigSchema>;
 
+type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
+};
+
 /**
  * Configuration provider class
  */
@@ -230,8 +234,8 @@ class ConfigProvider {
   /**
    * Get environment-specific configuration
    */
-  forEnvironment(env: Environment): Partial<AppConfig> {
-    const overrides: Record<Environment, any> = {
+  forEnvironment(env: Environment): DeepPartial<AppConfig> {
+    const overrides: Record<Environment, DeepPartial<AppConfig>> = {
       development: {
         app: {
           logLevel: "debug",
@@ -291,6 +295,169 @@ class ConfigProvider {
   }
 
   /**
+   * Extract app configuration from environment
+   */
+  private extractAppConfig(env: NodeJS.ProcessEnv, environment: Environment) {
+    return {
+      name: env.APP_NAME || "LiveDash",
+      version: env.APP_VERSION || "1.0.0",
+      environment,
+      baseUrl: env.NEXTAUTH_URL || "http://localhost:3000",
+      port: Number.parseInt(env.PORT || "3000", 10),
+      logLevel:
+        (env.LOG_LEVEL as "debug" | "info" | "warn" | "error") || "info",
+      features: {
+        enableMetrics: env.ENABLE_METRICS !== "false",
+        enableAnalytics: env.ENABLE_ANALYTICS !== "false",
+        enableCaching: env.ENABLE_CACHING !== "false",
+        enableCompression: env.ENABLE_COMPRESSION !== "false",
+      },
+    };
+  }
+
+  /**
+   * Extract database configuration from environment
+   */
+  private extractDatabaseConfig(env: NodeJS.ProcessEnv) {
+    return {
+      url: env.DATABASE_URL || "",
+      directUrl: env.DATABASE_URL_DIRECT,
+      maxConnections: Number.parseInt(env.DB_MAX_CONNECTIONS || "10", 10),
+      connectionTimeout: Number.parseInt(
+        env.DB_CONNECTION_TIMEOUT || "30000",
+        10
+      ),
+      queryTimeout: Number.parseInt(env.DB_QUERY_TIMEOUT || "60000", 10),
+      retryAttempts: Number.parseInt(env.DB_RETRY_ATTEMPTS || "3", 10),
+      retryDelay: Number.parseInt(env.DB_RETRY_DELAY || "1000", 10),
+    };
+  }
+
+  /**
+   * Extract auth configuration from environment
+   */
+  private extractAuthConfig(env: NodeJS.ProcessEnv) {
+    return {
+      secret: env.NEXTAUTH_SECRET || "",
+      url: env.NEXTAUTH_URL || "http://localhost:3000",
+      sessionMaxAge: Number.parseInt(env.AUTH_SESSION_MAX_AGE || "86400", 10),
+      providers: {
+        credentials: env.AUTH_CREDENTIALS_ENABLED !== "false",
+        github: env.AUTH_GITHUB_ENABLED === "true",
+        google: env.AUTH_GOOGLE_ENABLED === "true",
+      },
+    };
+  }
+
+  /**
+   * Extract security configuration from environment
+   */
+  private extractSecurityConfig(env: NodeJS.ProcessEnv) {
+    return {
+      csp: {
+        enabled: env.CSP_ENABLED !== "false",
+        reportUri: env.CSP_REPORT_URI,
+        reportOnly: env.CSP_REPORT_ONLY === "true",
+      },
+      csrf: {
+        enabled: env.CSRF_ENABLED !== "false",
+        tokenExpiry: Number.parseInt(env.CSRF_TOKEN_EXPIRY || "3600", 10),
+      },
+      rateLimit: {
+        enabled: env.RATE_LIMIT_ENABLED !== "false",
+        windowMs: Number.parseInt(env.RATE_LIMIT_WINDOW_MS || "900000", 10),
+        maxRequests: Number.parseInt(env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
+      },
+      audit: {
+        enabled: env.AUDIT_ENABLED !== "false",
+        retentionDays: Number.parseInt(env.AUDIT_RETENTION_DAYS || "90", 10),
+        bufferSize: Number.parseInt(env.AUDIT_BUFFER_SIZE || "1000", 10),
+      },
+    };
+  }
+
+  /**
+   * Extract OpenAI configuration from environment
+   */
+  private extractOpenAIConfig(env: NodeJS.ProcessEnv) {
+    return {
+      apiKey: env.OPENAI_API_KEY || "",
+      organization: env.OPENAI_ORGANIZATION,
+      mockMode: env.OPENAI_MOCK_MODE === "true",
+      defaultModel: env.OPENAI_DEFAULT_MODEL || "gpt-3.5-turbo",
+      maxTokens: Number.parseInt(env.OPENAI_MAX_TOKENS || "1000", 10),
+      temperature: Number.parseFloat(env.OPENAI_TEMPERATURE || "0.1"),
+      batchConfig: {
+        enabled: env.OPENAI_BATCH_ENABLED !== "false",
+        maxRequestsPerBatch: Number.parseInt(
+          env.OPENAI_BATCH_MAX_REQUESTS || "1000",
+          10
+        ),
+        statusCheckInterval: Number.parseInt(
+          env.OPENAI_BATCH_STATUS_INTERVAL || "60000",
+          10
+        ),
+        maxTimeout: Number.parseInt(
+          env.OPENAI_BATCH_MAX_TIMEOUT || "86400000",
+          10
+        ),
+      },
+    };
+  }
+
+  /**
+   * Extract scheduler configuration from environment
+   */
+  private extractSchedulerConfig(env: NodeJS.ProcessEnv) {
+    return {
+      enabled: env.SCHEDULER_ENABLED !== "false",
+      csvImport: {
+        enabled: env.CSV_IMPORT_SCHEDULER_ENABLED !== "false",
+        interval: env.CSV_IMPORT_INTERVAL || "*/5 * * * *",
+      },
+      importProcessor: {
+        enabled: env.IMPORT_PROCESSOR_ENABLED !== "false",
+        interval: env.IMPORT_PROCESSOR_INTERVAL || "*/2 * * * *",
+      },
+      sessionProcessor: {
+        enabled: env.SESSION_PROCESSOR_ENABLED !== "false",
+        interval: env.SESSION_PROCESSOR_INTERVAL || "*/3 * * * *",
+        batchSize: Number.parseInt(
+          env.SESSION_PROCESSOR_BATCH_SIZE || "50",
+          10
+        ),
+      },
+      batchProcessor: {
+        enabled: env.BATCH_PROCESSOR_ENABLED !== "false",
+        createInterval: env.BATCH_CREATE_INTERVAL || "*/5 * * * *",
+        statusInterval: env.BATCH_STATUS_INTERVAL || "*/2 * * * *",
+        resultInterval: env.BATCH_RESULT_INTERVAL || "*/1 * * * *",
+      },
+    };
+  }
+
+  /**
+   * Extract email configuration from environment
+   */
+  private extractEmailConfig(env: NodeJS.ProcessEnv) {
+    return {
+      enabled: env.EMAIL_ENABLED === "true",
+      smtp: {
+        host: env.SMTP_HOST,
+        port: Number.parseInt(env.SMTP_PORT || "587", 10),
+        secure: env.SMTP_SECURE === "true",
+        user: env.SMTP_USER,
+        password: env.SMTP_PASSWORD,
+      },
+      from: env.EMAIL_FROM || "noreply@livedash.com",
+      templates: {
+        passwordReset: env.EMAIL_TEMPLATE_PASSWORD_RESET || "password-reset",
+        userInvitation: env.EMAIL_TEMPLATE_USER_INVITATION || "user-invitation",
+      },
+    };
+  }
+
+  /**
    * Extract configuration from environment variables
    */
   private extractFromEnvironment(): Partial<AppConfig> {
@@ -298,130 +465,13 @@ class ConfigProvider {
     const environment = (env.NODE_ENV as Environment) || "development";
 
     return {
-      app: {
-        name: env.APP_NAME || "LiveDash",
-        version: env.APP_VERSION || "1.0.0",
-        environment,
-        baseUrl: env.NEXTAUTH_URL || "http://localhost:3000",
-        port: Number.parseInt(env.PORT || "3000", 10),
-        logLevel: (env.LOG_LEVEL as any) || "info",
-        features: {
-          enableMetrics: env.ENABLE_METRICS !== "false",
-          enableAnalytics: env.ENABLE_ANALYTICS !== "false",
-          enableCaching: env.ENABLE_CACHING !== "false",
-          enableCompression: env.ENABLE_COMPRESSION !== "false",
-        },
-      },
-      database: {
-        url: env.DATABASE_URL || "",
-        directUrl: env.DATABASE_URL_DIRECT,
-        maxConnections: Number.parseInt(env.DB_MAX_CONNECTIONS || "10", 10),
-        connectionTimeout: Number.parseInt(
-          env.DB_CONNECTION_TIMEOUT || "30000",
-          10
-        ),
-        queryTimeout: Number.parseInt(env.DB_QUERY_TIMEOUT || "60000", 10),
-        retryAttempts: Number.parseInt(env.DB_RETRY_ATTEMPTS || "3", 10),
-        retryDelay: Number.parseInt(env.DB_RETRY_DELAY || "1000", 10),
-      },
-      auth: {
-        secret: env.NEXTAUTH_SECRET || "",
-        url: env.NEXTAUTH_URL || "http://localhost:3000",
-        sessionMaxAge: Number.parseInt(env.AUTH_SESSION_MAX_AGE || "86400", 10),
-        providers: {
-          credentials: env.AUTH_CREDENTIALS_ENABLED !== "false",
-          github: env.AUTH_GITHUB_ENABLED === "true",
-          google: env.AUTH_GOOGLE_ENABLED === "true",
-        },
-      },
-      security: {
-        csp: {
-          enabled: env.CSP_ENABLED !== "false",
-          reportUri: env.CSP_REPORT_URI,
-          reportOnly: env.CSP_REPORT_ONLY === "true",
-        },
-        csrf: {
-          enabled: env.CSRF_ENABLED !== "false",
-          tokenExpiry: Number.parseInt(env.CSRF_TOKEN_EXPIRY || "3600", 10),
-        },
-        rateLimit: {
-          enabled: env.RATE_LIMIT_ENABLED !== "false",
-          windowMs: Number.parseInt(env.RATE_LIMIT_WINDOW_MS || "900000", 10),
-          maxRequests: Number.parseInt(
-            env.RATE_LIMIT_MAX_REQUESTS || "100",
-            10
-          ),
-        },
-        audit: {
-          enabled: env.AUDIT_ENABLED !== "false",
-          retentionDays: Number.parseInt(env.AUDIT_RETENTION_DAYS || "90", 10),
-          bufferSize: Number.parseInt(env.AUDIT_BUFFER_SIZE || "1000", 10),
-        },
-      },
-      openai: {
-        apiKey: env.OPENAI_API_KEY || "",
-        organization: env.OPENAI_ORGANIZATION,
-        mockMode: env.OPENAI_MOCK_MODE === "true",
-        defaultModel: env.OPENAI_DEFAULT_MODEL || "gpt-3.5-turbo",
-        maxTokens: Number.parseInt(env.OPENAI_MAX_TOKENS || "1000", 10),
-        temperature: Number.parseFloat(env.OPENAI_TEMPERATURE || "0.1"),
-        batchConfig: {
-          enabled: env.OPENAI_BATCH_ENABLED !== "false",
-          maxRequestsPerBatch: Number.parseInt(
-            env.OPENAI_BATCH_MAX_REQUESTS || "1000",
-            10
-          ),
-          statusCheckInterval: Number.parseInt(
-            env.OPENAI_BATCH_STATUS_INTERVAL || "60000",
-            10
-          ),
-          maxTimeout: Number.parseInt(
-            env.OPENAI_BATCH_MAX_TIMEOUT || "86400000",
-            10
-          ),
-        },
-      },
-      scheduler: {
-        enabled: env.SCHEDULER_ENABLED !== "false",
-        csvImport: {
-          enabled: env.CSV_IMPORT_SCHEDULER_ENABLED !== "false",
-          interval: env.CSV_IMPORT_INTERVAL || "*/5 * * * *",
-        },
-        importProcessor: {
-          enabled: env.IMPORT_PROCESSOR_ENABLED !== "false",
-          interval: env.IMPORT_PROCESSOR_INTERVAL || "*/2 * * * *",
-        },
-        sessionProcessor: {
-          enabled: env.SESSION_PROCESSOR_ENABLED !== "false",
-          interval: env.SESSION_PROCESSOR_INTERVAL || "*/3 * * * *",
-          batchSize: Number.parseInt(
-            env.SESSION_PROCESSOR_BATCH_SIZE || "50",
-            10
-          ),
-        },
-        batchProcessor: {
-          enabled: env.BATCH_PROCESSOR_ENABLED !== "false",
-          createInterval: env.BATCH_CREATE_INTERVAL || "*/5 * * * *",
-          statusInterval: env.BATCH_STATUS_INTERVAL || "*/2 * * * *",
-          resultInterval: env.BATCH_RESULT_INTERVAL || "*/1 * * * *",
-        },
-      },
-      email: {
-        enabled: env.EMAIL_ENABLED === "true",
-        smtp: {
-          host: env.SMTP_HOST,
-          port: Number.parseInt(env.SMTP_PORT || "587", 10),
-          secure: env.SMTP_SECURE === "true",
-          user: env.SMTP_USER,
-          password: env.SMTP_PASSWORD,
-        },
-        from: env.EMAIL_FROM || "noreply@livedash.com",
-        templates: {
-          passwordReset: env.EMAIL_TEMPLATE_PASSWORD_RESET || "password-reset",
-          userInvitation:
-            env.EMAIL_TEMPLATE_USER_INVITATION || "user-invitation",
-        },
-      },
+      app: this.extractAppConfig(env, environment),
+      database: this.extractDatabaseConfig(env),
+      auth: this.extractAuthConfig(env),
+      security: this.extractSecurityConfig(env),
+      openai: this.extractOpenAIConfig(env),
+      scheduler: this.extractSchedulerConfig(env),
+      email: this.extractEmailConfig(env),
     };
   }
 

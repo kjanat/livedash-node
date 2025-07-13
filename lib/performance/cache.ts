@@ -169,7 +169,7 @@ export class PerformanceCache<K extends {} = string, V = unknown> {
   /**
    * Memoize a function with caching
    */
-  memoize<Args extends any[], Return extends V>(
+  memoize<Args extends unknown[], Return extends V>(
     fn: (...args: Args) => Promise<Return> | Return,
     keyGenerator?: (...args: Args) => K,
     ttl?: number
@@ -421,7 +421,7 @@ export class CacheUtils {
   /**
    * Cache the result of an async function
    */
-  static cached<T extends any[], R>(
+  static cached<T extends unknown[], R>(
     cacheName: string,
     fn: (...args: T) => Promise<R>,
     options: CacheOptions & {

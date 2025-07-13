@@ -20,29 +20,29 @@ Can't reach database server at `ep-tiny-math-a2zsshve-pooler.eu-central-1.aws.ne
 
 ### 1. Connection Retry Logic (`lib/database-retry.ts`)
 
--   **Automatic retry** for connection errors
--   **Exponential backoff** (1s → 2s → 4s → 10s max)
--   **Smart error detection** (only retry connection issues)
--   **Configurable retry attempts** (default: 3 retries)
+- **Automatic retry** for connection errors
+- **Exponential backoff** (1s → 2s → 4s → 10s max)
+- **Smart error detection** (only retry connection issues)
+- **Configurable retry attempts** (default: 3 retries)
 
 ### 2. Enhanced Schedulers
 
--   **Import Processor**: Added retry wrapper around main processing
--   **Session Processor**: Added retry wrapper around AI processing
--   **Graceful degradation** when database is temporarily unavailable
+- **Import Processor**: Added retry wrapper around main processing
+- **Session Processor**: Added retry wrapper around AI processing
+- **Graceful degradation** when database is temporarily unavailable
 
 ### 3. Singleton Pattern Enforced
 
--   **All schedulers now use** `import { prisma } from "./prisma.js"`
--   **No more separate** `new PrismaClient()` instances
--   **Shared connection pool** across all operations
+- **All schedulers now use** `import { prisma } from "./prisma.js"`
+- **No more separate** `new PrismaClient()` instances
+- **Shared connection pool** across all operations
 
 ### 4. Neon-Specific Optimizations
 
--   **Connection limit guidance**: 15 connections (below Neon's 20 limit)
--   **Extended timeouts**: 30s for cold start handling
--   **SSL mode requirements**: `sslmode=require` for Neon
--   **Application naming**: For better monitoring
+- **Connection limit guidance**: 15 connections (below Neon's 20 limit)
+- **Extended timeouts**: 30s for cold start handling
+- **SSL mode requirements**: `sslmode=require` for Neon
+- **Application naming**: For better monitoring
 
 ## Immediate Actions Needed
 
@@ -83,17 +83,17 @@ pnpm db:check
 
 ## Monitoring
 
--   **Health Endpoint**: `/api/admin/database-health`
--   **Connection Logs**: Enhanced logging for pool events
--   **Retry Logs**: Detailed retry attempt logging
--   **Error Classification**: Retryable vs non-retryable errors
+- **Health Endpoint**: `/api/admin/database-health`
+- **Connection Logs**: Enhanced logging for pool events
+- **Retry Logs**: Detailed retry attempt logging
+- **Error Classification**: Retryable vs non-retryable errors
 
 ## Files Modified
 
--   `lib/database-retry.ts` - New retry utilities
--   `lib/importProcessor.ts` - Added retry wrapper
--   `lib/processingScheduler.ts` - Added retry wrapper
--   `docs/neon-database-optimization.md` - Neon-specific guide
--   `scripts/check-database-config.ts` - Configuration checker
+- `lib/database-retry.ts` - New retry utilities
+- `lib/importProcessor.ts` - Added retry wrapper
+- `lib/processingScheduler.ts` - Added retry wrapper
+- `docs/neon-database-optimization.md` - Neon-specific guide
+- `scripts/check-database-config.ts` - Configuration checker
 
 The connection issues should be significantly reduced with these fixes! 🎯

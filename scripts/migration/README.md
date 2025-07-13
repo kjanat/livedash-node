@@ -6,33 +6,33 @@ This directory contains comprehensive migration scripts for deploying the new ar
 
 ### 1. Database Migrations
 
--   `01-schema-migrations.sql` - Prisma database schema migrations
--   `02-data-migrations.sql` - Data transformation scripts
--   `validate-database.ts` - Database validation and health checks
+- `01-schema-migrations.sql` - Prisma database schema migrations
+- `02-data-migrations.sql` - Data transformation scripts
+- `validate-database.ts` - Database validation and health checks
 
 ### 2. Environment Configuration
 
--   `environment-migration.ts` - Environment variable migration guide
--   `config-validator.ts` - Configuration validation scripts
+- `environment-migration.ts` - Environment variable migration guide
+- `config-validator.ts` - Configuration validation scripts
 
 ### 3. Deployment Scripts
 
--   `deploy.ts` - Main deployment orchestrator
--   `pre-deployment-checks.ts` - Pre-deployment validation
--   `post-deployment-validation.ts` - Post-deployment verification
--   `rollback.ts` - Rollback procedures
+- `deploy.ts` - Main deployment orchestrator
+- `pre-deployment-checks.ts` - Pre-deployment validation
+- `post-deployment-validation.ts` - Post-deployment verification
+- `rollback.ts` - Rollback procedures
 
 ### 4. Health Checks
 
--   `health-checks.ts` - Comprehensive system health validation
--   `trpc-endpoint-tests.ts` - tRPC endpoint validation
--   `batch-processing-tests.ts` - Batch processing system tests
+- `health-checks.ts` - Comprehensive system health validation
+- `trpc-endpoint-tests.ts` - tRPC endpoint validation
+- `batch-processing-tests.ts` - Batch processing system tests
 
 ### 5. Migration Utilities
 
--   `backup-database.ts` - Database backup procedures
--   `restore-database.ts` - Database restore procedures
--   `migration-logger.ts` - Migration logging utilities
+- `backup-database.ts` - Database backup procedures
+- `restore-database.ts` - Database restore procedures
+- `migration-logger.ts` - Migration logging utilities
 
 ## Usage
 
@@ -94,9 +94,9 @@ The migration implements a blue-green deployment strategy:
 
 ## Safety Features
 
--   Automatic database backups before migration
--   Rollback scripts for quick recovery
--   Health checks at each stage
--   Progressive feature enablement
--   Comprehensive logging and monitoring
--   Backwards compatibility maintained during migration
+- Automatic database backups before migration
+- Rollback scripts for quick recovery
+- Health checks at each stage
+- Progressive feature enablement
+- Comprehensive logging and monitoring
+- Backwards compatibility maintained during migration

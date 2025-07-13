@@ -191,7 +191,7 @@ export const DynamicAuditLogsPanel = createDynamicComponent(
 
 // React wrapper for React.lazy with Suspense
 export function createLazyComponent<
-  T extends Record<string, any> = Record<string, any>,
+  T extends Record<string, unknown> = Record<string, unknown>,
 >(
   importFunc: () => Promise<{ default: ComponentType<T> }>,
   fallback: ComponentType = LoadingSpinner

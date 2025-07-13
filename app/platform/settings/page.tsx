@@ -37,7 +37,7 @@ function usePlatformSession() {
     const abortController = new AbortController();
 
     const handleAuthSuccess = (sessionData: {
-      user?: { 
+      user?: {
         id?: string;
         email?: string;
         name?: string;
@@ -50,14 +50,14 @@ function usePlatformSession() {
       if (sessionData?.user?.isPlatformUser) {
         setSession({
           user: {
-            id: sessionData.user.id || '',
-            email: sessionData.user.email || '',
+            id: sessionData.user.id || "",
+            email: sessionData.user.email || "",
             name: sessionData.user.name,
-            role: sessionData.user.role || '',
+            role: sessionData.user.role || "",
             companyId: sessionData.user.companyId,
             isPlatformUser: sessionData.user.isPlatformUser,
             platformRole: sessionData.user.platformRole,
-          }
+          },
         });
         setStatus("authenticated");
       } else {

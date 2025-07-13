@@ -777,9 +777,8 @@ export class PerformanceUtils {
       }
 
       descriptor.value = async function (...args: unknown[]) {
-        const { result } = await PerformanceUtils.measureAsync(
-          metricName,
-          () => originalMethod.apply(this, args)
+        const { result } = await PerformanceUtils.measureAsync(metricName, () =>
+          originalMethod.apply(this, args)
         );
         return result;
       };

@@ -8,43 +8,43 @@ This guide provides step-by-step instructions for migrating LiveDash Node to ver
 
 ### tRPC Implementation
 
--   **Type-safe APIs**: End-to-end TypeScript safety from client to server
--   **Improved Performance**: Optimized query batching and caching
--   **Better Developer Experience**: Auto-completion and type checking
--   **Simplified Authentication**: Integrated with existing NextAuth.js setup
+- **Type-safe APIs**: End-to-end TypeScript safety from client to server
+- **Improved Performance**: Optimized query batching and caching
+- **Better Developer Experience**: Auto-completion and type checking
+- **Simplified Authentication**: Integrated with existing NextAuth.js setup
 
 ### OpenAI Batch API Integration
 
--   **50% Cost Reduction**: Batch processing reduces OpenAI API costs by half
--   **Enhanced Rate Limiting**: Better throughput management
--   **Improved Reliability**: Automatic retry mechanisms and error handling
--   **Automated Processing**: Background batch job lifecycle management
+- **50% Cost Reduction**: Batch processing reduces OpenAI API costs by half
+- **Enhanced Rate Limiting**: Better throughput management
+- **Improved Reliability**: Automatic retry mechanisms and error handling
+- **Automated Processing**: Background batch job lifecycle management
 
 ### Enhanced Security & Performance
 
--   **Rate Limiting**: In-memory rate limiting for all authentication endpoints
--   **Input Validation**: Comprehensive Zod schemas for all user inputs
--   **Performance Monitoring**: Built-in metrics collection and monitoring
--   **Database Optimizations**: New indexes and query optimizations
+- **Rate Limiting**: In-memory rate limiting for all authentication endpoints
+- **Input Validation**: Comprehensive Zod schemas for all user inputs
+- **Performance Monitoring**: Built-in metrics collection and monitoring
+- **Database Optimizations**: New indexes and query optimizations
 
 ## 📋 Pre-Migration Checklist
 
 ### System Requirements
 
--   [ ] Node.js 18+ installed
--   [ ] PostgreSQL 13+ database
--   [ ] `pg_dump` and `pg_restore` utilities available
--   [ ] Git repository with clean working directory
--   [ ] OpenAI API key (for production)
--   [ ] Sufficient disk space for backups (at least 2GB)
+- [ ] Node.js 18+ installed
+- [ ] PostgreSQL 13+ database
+- [ ] `pg_dump` and `pg_restore` utilities available
+- [ ] Git repository with clean working directory
+- [ ] OpenAI API key (for production)
+- [ ] Sufficient disk space for backups (at least 2GB)
 
 ### Environment Preparation
 
--   [ ] Review current environment variables
--   [ ] Ensure database connection is working
--   [ ] Verify all tests are passing
--   [ ] Create a backup of your current deployment
--   [ ] Notify team members of planned downtime
+- [ ] Review current environment variables
+- [ ] Ensure database connection is working
+- [ ] Verify all tests are passing
+- [ ] Create a backup of your current deployment
+- [ ] Notify team members of planned downtime
 
 ## 🔧 Migration Process
 
@@ -246,31 +246,31 @@ tail -f logs/migration.log
 
 #### 2. tRPC Performance
 
--   Monitor response times for tRPC endpoints
--   Check error rates in application logs
--   Verify type safety is working correctly
+- Monitor response times for tRPC endpoints
+- Check error rates in application logs
+- Verify type safety is working correctly
 
 #### 3. Batch Processing
 
--   Monitor batch job completion rates
--   Check OpenAI API cost reduction
--   Verify AI processing pipeline functionality
+- Monitor batch job completion rates
+- Check OpenAI API cost reduction
+- Verify AI processing pipeline functionality
 
 ### Key Metrics to Monitor
 
 #### Performance Metrics
 
--   **Response Times**: tRPC endpoints should respond within 500ms
--   **Database Queries**: Complex queries should complete within 1s
--   **Memory Usage**: Should remain below 80% of allocated memory
--   **CPU Usage**: Process should remain responsive
+- **Response Times**: tRPC endpoints should respond within 500ms
+- **Database Queries**: Complex queries should complete within 1s
+- **Memory Usage**: Should remain below 80% of allocated memory
+- **CPU Usage**: Process should remain responsive
 
 #### Business Metrics
 
--   **AI Processing Cost**: Should see ~50% reduction in OpenAI costs
--   **Processing Throughput**: Batch processing should handle larger volumes
--   **Error Rates**: Should remain below 1% for critical operations
--   **User Experience**: No degradation in dashboard performance
+- **AI Processing Cost**: Should see ~50% reduction in OpenAI costs
+- **Processing Throughput**: Batch processing should handle larger volumes
+- **Error Rates**: Should remain below 1% for critical operations
+- **User Experience**: No degradation in dashboard performance
 
 ## 🛠 Troubleshooting
 
@@ -366,69 +366,69 @@ pnpm prisma db pull --print
 
 ### Immediate Tasks (First 24 Hours)
 
--   [ ] Monitor application logs for errors
--   [ ] Verify all tRPC endpoints are responding correctly
--   [ ] Check batch processing job completion
--   [ ] Validate AI cost reduction in OpenAI dashboard
--   [ ] Run full test suite to ensure no regressions
--   [ ] Update documentation and team knowledge
+- [ ] Monitor application logs for errors
+- [ ] Verify all tRPC endpoints are responding correctly
+- [ ] Check batch processing job completion
+- [ ] Validate AI cost reduction in OpenAI dashboard
+- [ ] Run full test suite to ensure no regressions
+- [ ] Update documentation and team knowledge
 
 ### Medium-term Tasks (First Week)
 
--   [ ] Optimize batch processing parameters based on usage
--   [ ] Fine-tune rate limiting settings
--   [ ] Set up monitoring alerts for new components
--   [ ] Train team on new tRPC APIs
--   [ ] Plan gradual feature adoption
+- [ ] Optimize batch processing parameters based on usage
+- [ ] Fine-tune rate limiting settings
+- [ ] Set up monitoring alerts for new components
+- [ ] Train team on new tRPC APIs
+- [ ] Plan gradual feature adoption
 
 ### Long-term Tasks (First Month)
 
--   [ ] Analyze cost savings and performance improvements
--   [ ] Consider additional tRPC endpoint implementations
--   [ ] Optimize batch processing schedules
--   [ ] Review and adjust security settings
--   [ ] Plan next phase improvements
+- [ ] Analyze cost savings and performance improvements
+- [ ] Consider additional tRPC endpoint implementations
+- [ ] Optimize batch processing schedules
+- [ ] Review and adjust security settings
+- [ ] Plan next phase improvements
 
 ## 🔒 Security Considerations
 
 ### New Security Features
 
--   **Enhanced Rate Limiting**: Applied to all authentication endpoints
--   **Input Validation**: Comprehensive Zod schemas prevent injection attacks
--   **Secure Headers**: HTTPS enforcement in production
--   **Token Security**: JWT with proper expiration and rotation
+- **Enhanced Rate Limiting**: Applied to all authentication endpoints
+- **Input Validation**: Comprehensive Zod schemas prevent injection attacks
+- **Secure Headers**: HTTPS enforcement in production
+- **Token Security**: JWT with proper expiration and rotation
 
 ### Security Checklist
 
--   [ ] Verify rate limiting is working correctly
--   [ ] Test input validation on all forms
--   [ ] Ensure HTTPS is enforced in production
--   [ ] Validate JWT token handling
--   [ ] Check for proper error message sanitization
--   [ ] Verify OpenAI API key is not exposed in logs
+- [ ] Verify rate limiting is working correctly
+- [ ] Test input validation on all forms
+- [ ] Ensure HTTPS is enforced in production
+- [ ] Validate JWT token handling
+- [ ] Check for proper error message sanitization
+- [ ] Verify OpenAI API key is not exposed in logs
 
 ## 📈 Expected Improvements
 
 ### Performance Improvements
 
--   **50% reduction** in OpenAI API costs through batch processing
--   **30% improvement** in API response times with tRPC
--   **25% reduction** in database query time with new indexes
--   **Enhanced scalability** for processing larger session volumes
+- **50% reduction** in OpenAI API costs through batch processing
+- **30% improvement** in API response times with tRPC
+- **25% reduction** in database query time with new indexes
+- **Enhanced scalability** for processing larger session volumes
 
 ### Developer Experience
 
--   **Type Safety**: End-to-end TypeScript types from client to server
--   **Better APIs**: Self-documenting tRPC procedures
--   **Improved Testing**: More reliable test suite with better validation
--   **Enhanced Monitoring**: Detailed health checks and reporting
+- **Type Safety**: End-to-end TypeScript types from client to server
+- **Better APIs**: Self-documenting tRPC procedures
+- **Improved Testing**: More reliable test suite with better validation
+- **Enhanced Monitoring**: Detailed health checks and reporting
 
 ### Operational Benefits
 
--   **Automated Batch Processing**: Reduced manual intervention
--   **Better Error Handling**: Comprehensive retry mechanisms
--   **Improved Monitoring**: Real-time health status and metrics
--   **Simplified Deployment**: Automated migration and rollback procedures
+- **Automated Batch Processing**: Reduced manual intervention
+- **Better Error Handling**: Comprehensive retry mechanisms
+- **Improved Monitoring**: Real-time health status and metrics
+- **Simplified Deployment**: Automated migration and rollback procedures
 
 ---
 

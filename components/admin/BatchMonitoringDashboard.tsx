@@ -104,11 +104,7 @@ function SystemHealthCard({
   schedulerStatus,
 }: {
   health: { status: string; message: string };
-  schedulerStatus: {
-    csvImport?: boolean;
-    processing?: boolean;
-    batch?: boolean;
-  };
+  schedulerStatus: SchedulerStatus;
 }) {
   return (
     <Card>
@@ -125,25 +121,33 @@ function SystemHealthCard({
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span>CSV Import Scheduler:</span>
+            <span>Batch Creation:</span>
             <Badge
-              variant={schedulerStatus?.csvImport ? "default" : "secondary"}
+              variant={
+                schedulerStatus?.createBatchesRunning ? "default" : "secondary"
+              }
             >
-              {schedulerStatus?.csvImport ? "Running" : "Stopped"}
+              {schedulerStatus?.createBatchesRunning ? "Running" : "Stopped"}
             </Badge>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Processing Scheduler:</span>
+            <span>Status Check:</span>
             <Badge
-              variant={schedulerStatus?.processing ? "default" : "secondary"}
+              variant={
+                schedulerStatus?.checkStatusRunning ? "default" : "secondary"
+              }
             >
-              {schedulerStatus?.processing ? "Running" : "Stopped"}
+              {schedulerStatus?.checkStatusRunning ? "Running" : "Stopped"}
             </Badge>
           </div>
           <div className="flex justify-between text-sm">
-            <span>Batch Scheduler:</span>
-            <Badge variant={schedulerStatus?.batch ? "default" : "secondary"}>
-              {schedulerStatus?.batch ? "Running" : "Stopped"}
+            <span>Result Processing:</span>
+            <Badge
+              variant={
+                schedulerStatus?.processResultsRunning ? "default" : "secondary"
+              }
+            >
+              {schedulerStatus?.processResultsRunning ? "Running" : "Stopped"}
             </Badge>
           </div>
         </div>
@@ -155,7 +159,7 @@ function SystemHealthCard({
 function CircuitBreakerCard({
   circuitBreakerStatus,
 }: {
-  circuitBreakerStatus: Record<string, string> | null;
+  circuitBreakerStatus: Record<string, CircuitBreakerStatus> | null;
 }) {
   return (
     <Card>
@@ -172,10 +176,8 @@ function CircuitBreakerCard({
             {Object.entries(circuitBreakerStatus).map(([key, status]) => (
               <div key={key} className="flex justify-between text-sm">
                 <span>{key}:</span>
-                <Badge
-                  variant={status === "CLOSED" ? "default" : "destructive"}
-                >
-                  {status as string}
+                <Badge variant={!status.isOpen ? "default" : "destructive"}>
+                  {status.isOpen ? "OPEN" : "CLOSED"}
                 </Badge>
               </div>
             ))}
@@ -412,13 +414,8 @@ export default function BatchMonitoringDashboard() {
 
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <SystemHealthCard
-          health={health}
-          schedulerStatus={schedulerStatus as any}
-        />
-        <CircuitBreakerCard
-          circuitBreakerStatus={circuitBreakerStatus as any}
-        />
+        <SystemHealthCard health={health} schedulerStatus={schedulerStatus} />
+        <CircuitBreakerCard circuitBreakerStatus={circuitBreakerStatus} />
       </div>
     );
   };
