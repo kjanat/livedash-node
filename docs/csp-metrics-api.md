@@ -64,6 +64,7 @@ GET /api/csp-metrics
 | `format`         | string  | Response format           | `json`  | `?format=csv`          |
 | `groupBy`        | string  | Group results by field    | `hour`  | `?groupBy=directive`   |
 | `includeDetails` | boolean | Include violation details | `false` | `?includeDetails=true` |
+| `offset`         | string  | Shift the queried time-window backwards by the given duration (for comparisons) | `0`     | `?offset=24h` |
 
 #### Time Range Options
 
@@ -412,6 +413,7 @@ CSP_ALERT_THRESHOLD=5              # violations per 10 minutes
 ### Memory Management
 
   - **Violation buffer** limited to 7 days of data in memory
+  - **Hard cap** of 10,000 violation entries to prevent memory exhaustion
   - **Automatic cleanup** runs every 100 requests (1% probability)
   - **Efficient storage** using Map data structures
 
