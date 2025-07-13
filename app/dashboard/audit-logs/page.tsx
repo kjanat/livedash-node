@@ -184,7 +184,10 @@ export default function AuditLogsPage() {
   }, [session?.user?.role, hasFetched, fetchAuditLogs]);
 
   // Function to refresh audit logs (for filter changes)
-  const refreshAuditLogs = useCallback(() => {
+  const refreshAuditLogs = useCallback((newPage?: number) => {
+    if (newPage !== undefined) {
+      setPagination((prev) => ({ ...prev, page: newPage }));
+    }
     setHasFetched(false);
   }, []);
 
@@ -445,8 +448,8 @@ export default function AuditLogsPage() {
                 size="sm"
                 disabled={!pagination.hasPrev}
                 onClick={() => {
-                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }));
-                  refreshAuditLogs();
+                  const newPage = pagination.page - 1;
+                  refreshAuditLogs(newPage);
                 }}
               >
                 Previous
@@ -456,8 +459,8 @@ export default function AuditLogsPage() {
                 size="sm"
                 disabled={!pagination.hasNext}
                 onClick={() => {
-                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }));
-                  refreshAuditLogs();
+                  const newPage = pagination.page + 1;
+                  refreshAuditLogs(newPage);
                 }}
               >
                 Next

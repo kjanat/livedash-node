@@ -234,8 +234,14 @@ test.describe("Data Visualization", () => {
       const geoMap = page.locator('[data-testid="geographic-map"]');
       await expect(geoMap).toBeVisible();
 
-      // Wait for map to load
-      await page.waitForTimeout(2000);
+      // Wait for map to load - wait for map container or country data to be rendered
+      await page.waitForSelector('[data-testid="country-data"], .leaflet-container, .geo-map-loaded', { 
+        timeout: 10000,
+        state: 'visible' 
+      }).catch(() => {
+        // Fallback: wait for any map-related element to indicate map is loaded
+        return page.waitForSelector('.map, [class*="map"], [data-map]', { timeout: 5000 }).catch(() => null);
+      });
 
       // Check if country data is displayed
       const countryData = page.locator('[data-testid="country-data"]');
@@ -350,8 +356,14 @@ test.describe("Data Visualization", () => {
         // Select date range
         await page.click('[data-testid="date-last-week"]');
 
-        // Should update charts
-        await page.waitForTimeout(1000);
+        // Wait for charts to update after date filter application
+        await page.waitForSelector('[data-testid="filter-applied"], [data-testid="charts-updated"], .loading:not(.visible)', { 
+          timeout: 5000,
+          state: 'visible' 
+        }).catch(() => {
+          // Fallback: wait for any indication that filtering is complete
+          return page.waitForFunction(() => !document.querySelector('.loading, [data-loading="true"]'), { timeout: 3000 }).catch(() => null);
+        });
 
         // Check that data is filtered
         await expect(
@@ -366,8 +378,14 @@ test.describe("Data Visualization", () => {
       if (await sentimentFilter.isVisible()) {
         await sentimentFilter.selectOption("POSITIVE");
 
-        // Should update all visualizations
-        await page.waitForTimeout(1000);
+        // Wait for visualizations to update after sentiment filter
+        await page.waitForSelector('[data-testid="active-filters"], [data-testid="sentiment-applied"], .charts-container:not(.updating)', { 
+          timeout: 5000,
+          state: 'visible' 
+        }).catch(() => {
+          // Fallback: wait for filter processing to complete
+          return page.waitForFunction(() => !document.querySelector('.updating, [data-updating="true"], .filter-loading'), { timeout: 3000 }).catch(() => null);
+        });
 
         // Check filter is applied
         await expect(

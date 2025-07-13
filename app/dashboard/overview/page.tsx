@@ -470,7 +470,7 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [metrics, setMetrics] = useState<MetricsResult | null>(null);
-  const [company] = useState<Company | null>(null);
+  // Remove unused company state that was causing skeleton view to always show
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isInitialLoad, setIsInitialLoad] = useState<boolean>(true);
 
@@ -501,12 +501,39 @@ function DashboardContent() {
       // Map overview data to metrics format expected by the component
       const mappedMetrics: Partial<MetricsResult> = {
         totalSessions: overviewData.totalSessions,
-        avgSessionsPerDay: 0, // Will be computed properly later
-        avgSessionLength: null,
-        days: {},
-        languages: {},
-        countries: {},
-        belowThresholdCount: 0,
+        avgSessionsPerDay: overviewData.avgSessionsPerDay || 0,
+        avgSessionLength: overviewData.avgSessionLength || 0,
+        days:
+          overviewData.timeSeriesData?.reduce(
+            (acc, item) => {
+              if (item.date) {
+                acc[item.date] = item.sessionCount || 0;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        languages:
+          overviewData.languageDistribution?.reduce(
+            (acc, item) => {
+              if (item.language) {
+                acc[item.language] = item.count;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        countries:
+          overviewData.geographicDistribution?.reduce(
+            (acc, item) => {
+              if (item.country) {
+                acc[item.country] = item.count;
+              }
+              return acc;
+            },
+            {} as Record<string, number>
+          ) || {},
+        belowThresholdCount: overviewData.belowThresholdCount || 0,
         // Map sentiment data to individual counts
         sentimentPositiveCount:
           overviewData.sentimentDistribution?.find(
@@ -541,12 +568,6 @@ function DashboardContent() {
     }
   }, [overviewData, isInitialLoad]);
 
-  useEffect(() => {
-    if (metricsError) {
-      console.error("Error fetching metrics:", metricsError);
-    }
-  }, [metricsError]);
-
   // Admin refresh sessions mutation
   const refreshSessionsMutation = trpc.admin.refreshSessions.useMutation({
     onSuccess: () => {
@@ -566,6 +587,30 @@ function DashboardContent() {
     }
     // tRPC queries handle data fetching automatically
   }, [status, router]);
+
+  // Enhanced error handling with user feedback
+  if (metricsError) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-4">
+          <div className="text-red-600 text-lg font-semibold">
+            Failed to load dashboard data
+          </div>
+          <p className="text-gray-600">
+            There was an error loading your dashboard metrics. Please try
+            refreshing the page.
+          </p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   async function handleRefresh() {
     if (isAuditor) return;
@@ -594,14 +639,14 @@ function DashboardContent() {
     );
   }
 
-  if (!metrics || !company) {
+  if (!metrics) {
     return <DashboardSkeleton />;
   }
 
   return (
     <div className="space-y-8">
       <DashboardHeader
-        company={company}
+        company={{ name: "Analytics Dashboard" } as Company}
         metrics={metrics}
         isAuditor={isAuditor}
         refreshing={refreshing}

@@ -52,23 +52,14 @@ interface SecurityAlert {
 }
 
 /**
- * Custom hook for security monitoring state
+ * Custom hook for security monitoring UI state (UI-only, no data fetching)
  */
 function useSecurityMonitoringState() {
-  const [metrics, setMetrics] = useState<SecurityMetrics | null>(null);
-  const [alerts, setAlerts] = useState<SecurityAlert[]>([]);
-  const [loading, setLoading] = useState(true);
   const [selectedTimeRange, setSelectedTimeRange] = useState("24h");
   const [showConfig, setShowConfig] = useState(false);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   return {
-    metrics,
-    setMetrics,
-    alerts,
-    setAlerts,
-    loading,
-    setLoading,
     selectedTimeRange,
     setSelectedTimeRange,
     showConfig,

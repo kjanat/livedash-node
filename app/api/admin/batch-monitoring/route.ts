@@ -9,6 +9,26 @@ import {
 import { getCircuitBreakerStatus } from "@/lib/batchProcessor";
 import { getBatchSchedulerStatus } from "@/lib/batchProcessorIntegration";
 
+// Helper function for proper CSV escaping
+function escapeCSVField(field: string | number | boolean): string {
+  if (typeof field === "number" || typeof field === "boolean") {
+    return String(field);
+  }
+
+  const strField = String(field);
+
+  // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+  if (
+    strField.includes(",") ||
+    strField.includes('"') ||
+    strField.includes("\n")
+  ) {
+    return `"${strField.replace(/"/g, '""')}"`;
+  }
+
+  return strField;
+}
+
 /**
  * GET /api/admin/batch-monitoring
  * Get comprehensive batch processing monitoring data
@@ -23,8 +43,30 @@ export async function GET(request: NextRequest) {
 
     const url = new URL(request.url);
     const companyId = url.searchParams.get("companyId");
-    const operation = url.searchParams.get("operation") as BatchOperation;
+    const operationParam = url.searchParams.get("operation");
     const format = url.searchParams.get("format") || "json";
+
+    // Validate operation parameter
+    const isValidBatchOperation = (
+      value: string | null
+    ): value is BatchOperation => {
+      return (
+        value !== null &&
+        Object.values(BatchOperation).includes(value as BatchOperation)
+      );
+    };
+
+    if (operationParam && !isValidBatchOperation(operationParam)) {
+      return NextResponse.json(
+        {
+          error: "Invalid operation parameter",
+          validOperations: Object.values(BatchOperation),
+        },
+        { status: 400 }
+      );
+    }
+
+    const operation = operationParam as BatchOperation | null;
 
     // Get batch processing metrics
     const metrics = batchLogger.getMetrics(companyId || undefined);
@@ -75,15 +117,15 @@ export async function GET(request: NextRequest) {
 
       const rows = Object.entries(metrics).map(([companyId, metric]) =>
         [
-          companyId,
-          new Date(metric.operationStartTime).toISOString(),
-          metric.requestCount,
-          metric.successCount,
-          metric.failureCount,
-          metric.retryCount,
-          metric.totalCost.toFixed(4),
-          metric.averageLatency.toFixed(2),
-          metric.circuitBreakerTrips,
+          escapeCSVField(companyId),
+          escapeCSVField(new Date(metric.operationStartTime).toISOString()),
+          escapeCSVField(metric.requestCount),
+          escapeCSVField(metric.successCount),
+          escapeCSVField(metric.failureCount),
+          escapeCSVField(metric.retryCount),
+          escapeCSVField(metric.totalCost.toFixed(4)),
+          escapeCSVField(metric.averageLatency.toFixed(2)),
+          escapeCSVField(metric.circuitBreakerTrips),
         ].join(",")
       );
 
@@ -132,10 +174,55 @@ export async function POST(request: NextRequest) {
       end: new Date(endDate),
     };
 
-    const exportData = batchLogger.exportLogs(timeRange);
+    const exportDataJson = batchLogger.exportLogs(timeRange);
 
     if (format === "csv") {
-      return new NextResponse(exportData, {
+      // Convert JSON to CSV format
+      const data = JSON.parse(exportDataJson);
+
+      // Flatten the data structure for CSV
+      const csvRows: string[] = [];
+
+      // Add headers
+      csvRows.push(
+        "Metric,Company ID,Operation,Batch ID,Request Count,Success Count,Failure Count,Average Latency,Last Updated"
+      );
+
+      // Add metrics data
+      if (data.metrics) {
+        interface MetricData {
+          companyId?: string;
+          operation?: string;
+          batchId?: string;
+          requestCount?: number;
+          successCount?: number;
+          failureCount?: number;
+          averageLatency?: number;
+          lastUpdated?: string;
+        }
+
+        Object.entries(data.metrics).forEach(
+          ([key, metric]: [string, MetricData]) => {
+            csvRows.push(
+              [
+                escapeCSVField(key),
+                escapeCSVField(metric.companyId || ""),
+                escapeCSVField(metric.operation || ""),
+                escapeCSVField(metric.batchId || ""),
+                escapeCSVField(metric.requestCount || 0),
+                escapeCSVField(metric.successCount || 0),
+                escapeCSVField(metric.failureCount || 0),
+                escapeCSVField(metric.averageLatency || 0),
+                escapeCSVField(metric.lastUpdated || ""),
+              ].join(",")
+            );
+          }
+        );
+      }
+
+      const csvContent = csvRows.join("\n");
+
+      return new NextResponse(csvContent, {
         headers: {
           "Content-Type": "text/csv",
           "Content-Disposition": `attachment; filename="batch-logs-${startDate}-${endDate}.csv"`,
@@ -143,7 +230,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    return new NextResponse(exportData, {
+    return new NextResponse(exportDataJson, {
       headers: {
         "Content-Type": "application/json",
         "Content-Disposition": `attachment; filename="batch-logs-${startDate}-${endDate}.json"`,

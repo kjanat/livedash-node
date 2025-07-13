@@ -14,6 +14,31 @@ import {
   type ThreatLevel,
 } from "@/lib/securityMonitoring";
 
+interface ThreatAnalysisResults {
+  ipThreatAnalysis?: {
+    ipAddress: string;
+    threatLevel: ThreatLevel;
+    isBlacklisted: boolean;
+    riskFactors: string[];
+    recommendations: string[];
+  };
+  timeRangeAnalysis?: {
+    timeRange: { start: Date; end: Date };
+    securityScore: number;
+    threatLevel: string;
+    topThreats: Array<{ type: AlertType; count: number }>;
+    geoDistribution: Record<string, number>;
+    riskUsers: Array<{ userId: string; email: string; riskScore: number }>;
+  };
+  overallThreatLandscape?: {
+    currentThreatLevel: string;
+    securityScore: number;
+    activeAlerts: number;
+    criticalEvents: number;
+    recommendations: string[];
+  };
+}
+
 const threatAnalysisSchema = z.object({
   ipAddress: z.string().optional(),
   userId: z.string().uuid().optional(),
@@ -36,31 +61,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const analysis = threatAnalysisSchema.parse(body);
     const context = await createAuditContext(request, session);
-
-    interface ThreatAnalysisResults {
-      ipThreatAnalysis?: {
-        ipAddress: string;
-        threatLevel: ThreatLevel;
-        isBlacklisted: boolean;
-        riskFactors: string[];
-        recommendations: string[];
-      };
-      timeRangeAnalysis?: {
-        timeRange: { start: Date; end: Date };
-        securityScore: number;
-        threatLevel: string;
-        topThreats: Array<{ type: AlertType; count: number }>;
-        geoDistribution: Record<string, number>;
-        riskUsers: Array<{ userId: string; email: string; riskScore: number }>;
-      };
-      overallThreatLandscape?: {
-        currentThreatLevel: string;
-        securityScore: number;
-        activeAlerts: number;
-        criticalEvents: number;
-        recommendations: string[];
-      };
-    }
 
     const results: ThreatAnalysisResults = {};
 

@@ -129,7 +129,7 @@ CSRF_SECRET=your-csrf-secret-key
 export const CSRF_CONFIG = {
   cookieName: "csrf-token",
   headerName: "x-csrf-token",
-  secret: env.CSRF_SECRET,
+  secret: env.CSRF_SECRET || env.NEXTAUTH_SECRET,
   cookie: {
     httpOnly: true,
     secure: env.NODE_ENV === "production",

@@ -431,9 +431,10 @@ CSP_ALERT_THRESHOLD=5              # violations per 10 minutes
 
 - **IP addresses** are collected and stored in memory for security monitoring
 - **User agent strings** are stored for browser compatibility analysis
-- **Legal basis**: Legitimate interest for security incident detection and prevention
+- **Legal basis**: Processing is necessary for legitimate interests (GDPR Article 6(1)(f)) - specifically for security incident detection, prevention of CSP bypass attacks, and protection of website integrity
 - **Retention**: In-memory storage only, automatically purged after 7 days or application restart
 - **Data minimization**: Only violation-related metadata is retained, not page content
+- **Balancing test**: The processing is limited to security purposes, uses temporary storage, and employs data minimization principles to ensure user privacy rights are respected
 
 **Planned Privacy Enhancements:**
 
