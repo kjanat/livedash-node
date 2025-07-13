@@ -28,7 +28,7 @@
     "prisma:push:force": "prisma db push --force-reset",
     "prisma:studio": "prisma studio",
     "db:check": "pnpm exec tsx scripts/check-database-config.ts",
-    "start": "node server.mjs",
+    "start": "tsx server.ts",
     "test": "concurrently 'vitest run' 'playwright test'",
     "test:coverage": "concurrently \"vitest run --coverage\" \"echo 'To add playwright coverage thingy'\"",
     "test:vitest": "vitest run",
