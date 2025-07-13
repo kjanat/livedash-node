@@ -53,13 +53,13 @@ function mapPrismaSessionToChatSession(prismaSession: {
     country: prismaSession.country ?? null,
     ipAddress: prismaSession.ipAddress ?? null,
     sentiment: prismaSession.sentiment ?? null,
-    messagesSent: prismaSession.messagesSent ?? undefined, // Maintain consistency with other nullable fields
+    messagesSent: prismaSession.messagesSent ?? undefined,
     avgResponseTime: prismaSession.avgResponseTime ?? null,
-    escalated: prismaSession.escalated ?? false,
-    forwardedHr: prismaSession.forwardedHr ?? false,
+    escalated: prismaSession.escalated ?? undefined,
+    forwardedHr: prismaSession.forwardedHr ?? undefined,
     initialMsg: prismaSession.initialMsg ?? undefined,
-    fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? undefined,
-    summary: prismaSession.summary ?? undefined, // New field
+    fullTranscriptUrl: prismaSession.fullTranscriptUrl ?? null,
+    summary: prismaSession.summary ?? null,
     transcriptContent: undefined, // Not available in Session model
     messages:
       prismaSession.messages?.map((msg) => ({
